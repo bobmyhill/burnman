@@ -123,3 +123,12 @@ class SolidSolution(Mineral):
 
     def calcpartialgibbsexcesses(self, pressure, temperature, molar_fraction):
         return self.solution_model.excess_partial_gibbs_free_energies(self, pressure, temperature, molar_fraction)
+
+    def replace_endmember(self, old_index, new_mineral):
+
+        new_endmembers, new_model=self.solution_model.replace_endmember(old_index, new_mineral, self.endmembers, self.molar_fraction)
+
+        new_solid_solution=SolidSolution(new_endmembers, new_model)
+        new_model.name=self.name
+
+        return new_model

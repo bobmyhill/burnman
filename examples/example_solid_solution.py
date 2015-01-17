@@ -47,9 +47,33 @@ import burnman
 from burnman import minerals
 
 if __name__ == "__main__":
+
+
     '''
+    The addition of grossular garnet (Ca-Al garnet) illustrates the use of asymmetric solution models
+    '''
+    class CFMASO_garnet(burnman.SolidSolution):
+        def __init__(self):
+            self.name='Asymmetric pyrope-almandine-grossular garnet'
+            endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],[minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'], [minerals.HP_2011_ds62.andr(), '[Ca]3[Fe]2Si3O12']]
+            alphas=[1.0, 1.0, 2.7, 2.7]
+            enthalpy_interaction=[[2.5e3,30.1e3, 0.0],[1.0e3, 0.0],[0.0]]
+            volume_interaction=[[0.,0.169e-5, 0.0],[0.122e-5, 0.0], [0.0]]
+            burnman.SolidSolution.__init__(self, endmembers, \
+                          burnman.solutionmodel.AsymmetricRegularSolution(endmembers, alphas, enthalpy_interaction, volume_interaction) )
+
+
+    g=CFMASO_garnet()
+    g.set_composition([0.2,0.2,0.2,0.4])
+    g_new_set=g.replace_endmember(3, ['sk', '[Fe]3[Fe]2Si3O12'])
+    print g_new_set.molar_fraction
+    print g_new_set.endmembers[3][0].params
+    print g_new_set.solution_model.enthalpy_interaction
+
+    '''
+    """
     First, let's pick a starting pressure and temperature
-    '''
+    """
     P=1.e5
     T=1000.
 
@@ -91,7 +115,7 @@ if __name__ == "__main__":
     plt.legend(loc='lower right')
     plt.show()
 
-    '''
+    """
     Not included in this example document are ways to create solid solutions with spin transitions,
     vacancies and mixed valence states. However, the formula parsing in BurnMan is comprehensive,
     so any model should be reproducable. Some formatted formulae examples follow:
@@ -101,13 +125,13 @@ if __name__ == "__main__":
       different configurational entropy to the previous model because there is no distinction 
       between Fe2+ and Fe3+.
     - [Fels]O: Low spin wuestite. Another example illustrating the free-form approach to element definition.
-    '''
+    """
 
 
-    '''
+    """
     The solid solution corresponding to the pyrope-almandine join is actually not quite ideal. 
     It can be well-approximated with a symmetric regular solid solution model
-    '''
+    """
     class mg_fe_garnet_2(burnman.SolidSolution):
         def __init__(self):
             self.name='Symmetric pyrope-almandine garnet'
@@ -132,7 +156,7 @@ if __name__ == "__main__":
     plt.legend(loc='upper left')
     plt.show()
 
-    '''
+    """
     Adding more endmembers is very straightforward.
     Interaction terms must be added in the order [[12,13,14,...],[23,24,...],[34,...],...]
     Here, the new endmember is majorite, illustrating the addition of endmembers with 
@@ -149,7 +173,7 @@ if __name__ == "__main__":
     DQF[0] = H_excess
     DQF[1] = -S_excess
     DQF[2] = V_excess
-    '''
+    """
     class hp_mg_fe_garnet(burnman.SolidSolution):
         def __init__(self):
             self.name='Symmetric pyrope-almandine-majorite garnet'
@@ -179,9 +203,9 @@ if __name__ == "__main__":
     plt.legend(loc='upper left')
     plt.show()
 
-    '''
+    """
     The addition of grossular garnet (Ca-Al garnet) illustrates the use of asymmetric solution models
-    '''
+    """
     class mg_fe_ca_garnet(burnman.SolidSolution):
         def __init__(self):
             self.name='Asymmetric pyrope-almandine-grossular garnet'
@@ -217,3 +241,4 @@ if __name__ == "__main__":
     plt.legend(loc='lower left')
     plt.show()
 
+    '''
