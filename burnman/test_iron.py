@@ -288,9 +288,60 @@ print pcov
 H_0 and S_0 for HCP can be obtained from the reaction line of Komabayashi et al., 2009
 '''
 
+def find_pressure(mineral):
+    def pressure(arg, volume, T):
+        P=arg[0]
+        mineral.set_state(P, T) 
+        return mineral.V - volume
+    return pressure
 
 
 
+hcp_fcc_data=[]
+for line in open('Komabayashi_et_al_2009_HCP_FCC.dat'):
+    content=line.translate(None, ')(').strip().split()
+    if content[0] != '%':
+        hcp_fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3]), float(content[4]), float(content[5]), content[6]])
+
+P, Perr, T, Terr, V, Verr, note = zip(*hcp_fcc_data)
+
+transition_pressures=np.empty_like(T)
+for i, temperature in enumerate(T):
+    transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(V[i]*(nA/Z/voltoa), temperature))[0]
+
+
+in_pressures=[]
+in_temperatures=[]
+in_temperature_error=[]
+out_pressures=[]
+out_temperatures=[]
+out_temperature_error=[]
+for pressure, temperature, temperature_error, label in zip(transition_pressures, T, Terr, note):
+    if label=='field-in':
+        in_pressures.append(pressure)
+        in_temperatures.append(temperature)
+        in_temperature_error.append(temperature_error)
+    else:
+        out_pressures.append(pressure)
+        out_temperatures.append(temperature)
+        out_temperature_error.append(temperature_error)
+
+in_pressures=np.array(in_pressures)
+in_temperatures=np.array(in_temperatures)
+in_temperature_error=np.array(in_temperature_error)
+out_pressures=np.array(out_pressures)
+out_temperatures=np.array(out_temperatures)
+out_temperature_error=np.array(out_temperature_error)
+
+plt.plot( in_pressures/1.e9, in_temperatures, marker=".", linestyle="None", label='in')
+plt.errorbar( in_pressures/1.e9, in_temperatures, yerr=in_temperature_error, linestyle="None")
+plt.plot( out_pressures/1.e9, out_temperatures, marker="+", linestyle="None", label='out')
+plt.errorbar( out_pressures/1.e9, out_temperatures, yerr=out_temperature_error, linestyle="None")
+plt.title('Iron phase diagram')
+plt.ylabel("Temperature (K)")
+plt.xlabel("Pressure (GPa)")
+plt.legend(loc='lower right')
+plt.show()
 
 
 '''
