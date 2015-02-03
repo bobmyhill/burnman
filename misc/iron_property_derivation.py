@@ -147,7 +147,7 @@ They used the MgO pressure standard of Matsui et al., 2000
 '''
 
 fcc_data=[]
-for line in open('Tsujino_et_al_2013.dat'):
+for line in open('../burnman/data/input_iron_allotropes/Tsujino_et_al_2013.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append(map(float, content))
@@ -270,7 +270,7 @@ Z=2.
 hcp=hcp_iron()
 
 hcp_data=[]
-for line in open('Yamazaki_et_al_2012.dat'):
+for line in open('../burnman/data/input_iron_allotropes/Yamazaki_et_al_2012.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_data.append(map(float, content))
@@ -279,7 +279,7 @@ for line in open('Yamazaki_et_al_2012.dat'):
 T, VAu, VAuerr, P, Perr, a, aerr, c, cerr, V, Verr = zip(*hcp_data)
 
 hcp_data=[]
-for line in open('Dewaele_et_al_2006.dat'):
+for line in open('../burnman/data/input_iron_allotropes/Dewaele_et_al_2006.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_data.append([float(content[0]), float(content[1]), float(content[2])*Z, float(content[3])*Z])
@@ -355,7 +355,7 @@ def find_pressure(mineral):
 
 
 hcp_fcc_data=[]
-for line in open('Komabayashi_et_al_2009_HCP_FCC.dat'):
+for line in open('../burnman/data/input_iron_allotropes/Komabayashi_et_al_2009_HCP_FCC.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3]), float(content[4]), float(content[5]), content[6]])
