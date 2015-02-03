@@ -413,7 +413,8 @@ for i, pressure in enumerate(hcp_fcc_pressures):
     hcp_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(hcp, fcc), 1000., args=(pressure))[0]
 
 '''
-Plot FCC-HCP transition
+Almost finished! Let's plot the modelled FCC-HCP transition along with the experimental data, to
+see how well the inversion worked.
 '''
 
 in_pressures=[]
@@ -451,7 +452,7 @@ plt.legend(loc='lower right')
 plt.show()
 
 '''
-Print mineral classes
+Finally, let's print our updated mineral classes
 '''
 
 tools.print_mineral_class(fcc, 'fcc_iron')
