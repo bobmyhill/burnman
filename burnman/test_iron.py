@@ -112,7 +112,7 @@ class fcc_iron (Mineral):
             'Cp': Cp_fcc ,
             'a_0': 3.56e-05 ,
             'K_0': 1.64e+11 ,
-            'Kprime_0': 5.16 ,
+            'Kprime_0': 5.2 ,
             'Kdprime_0': -3.1e-11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
@@ -165,11 +165,10 @@ pt=np.array(zip(np.array(P)*1.e9, T))
 
 # Initial guess.
 def fitV(mineral):
-    def fit(data, V_0, K_0, Kprime_0, a_0):
+    def fit(data, V_0, K_0, a_0):
         mineral.params['V_0'] = V_0 
         mineral.params['K_0'] = K_0
-        mineral.params['Kprime_0'] = Kprime_0
-        mineral.params['Kdprime_0'] = -Kprime_0/K_0
+        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
         mineral.params['a_0'] = a_0
         
         vols=[]
@@ -179,7 +178,37 @@ def fitV(mineral):
         return vols
     return fit
 
-guesses=np.array([fcc.params['V_0'], fcc.params['K_0'], fcc.params['Kprime_0'], fcc.params['a_0']])
+def fitV_w_Kprime(mineral):
+    def fit(data, V_0, K_0, Kprime_0, a_0):
+        mineral.params['V_0'] = V_0 
+        mineral.params['K_0'] = K_0
+        mineral.params['Kprime_0'] = Kprime_0
+        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
+        mineral.params['a_0'] = a_0
+        
+        vols=[]
+        for i, datum in enumerate(data):
+            mineral.set_state(datum[0], datum[1])
+            vols.append(mineral.V)
+        return vols
+    return fit
+
+def fitV_T0(mineral):
+    def fit(pressures, V_0, K_0, Kprime_0):
+        mineral.params['V_0'] = V_0 
+        mineral.params['K_0'] = K_0
+        mineral.params['Kprime_0'] = Kprime_0
+        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
+        
+        vols=[]
+        for pressure in pressures:
+            mineral.set_state(pressure, 298.15)
+            vols.append(mineral.V)
+        return vols
+    return fit
+
+guesses=np.array([fcc.params['V_0'], fcc.params['K_0'], fcc.params['a_0']])
+
 popt, pcov = optimize.curve_fit(fitV(fcc), pt, volumes, guesses, sigma)
 
 print ''
@@ -187,9 +216,9 @@ print 'Fitted FCC parameters'
 print "V0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "m^3/mol"
 print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "A^3"
 print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
-print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
-print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
-print "a0 :", popt[3], "+/-", np.sqrt(pcov[3][3]), "K^-1"
+print "k0':", fcc.params['Kprime_0'], '[fixed]'
+print "k0\":", -1.e9*fcc.params['Kprime_0']/popt[1], "GPa^-1"
+print "a0 :", popt[2], "+/-", np.sqrt(pcov[2][2]), "K^-1"
 
 
 Vdiff=np.empty_like(volumes)
@@ -224,10 +253,10 @@ class hcp_iron (Mineral):
             'name': 'HCP iron',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -0.0 ,
-            'S_0': 27.09 ,
-            'V_0': 7.09e-06 ,
-            'Cp': [46.2, 0.005159, 723100.0, -556.2] ,
+            'H_0': 5050. ,
+            'S_0': 29.90 ,
+            'V_0': 6.733e-06 ,
+            'Cp': fcc.params['Cp'] ,
             'a_0': 3.56e-05 ,
             'K_0': 1.64e+11 ,
             'Kprime_0': 5.16 ,
@@ -236,6 +265,7 @@ class hcp_iron (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
+Z=2.
 hcp=hcp_iron()
 
 hcp_data=[]
@@ -247,14 +277,23 @@ for line in open('Yamazaki_et_al_2012.dat'):
 # T (K) V (Au) P a-axis (A) c-axis (A) V (e-Fe [HCP] angstroms^3)
 T, VAu, VAuerr, P, Perr, a, aerr, c, cerr, V, Verr = zip(*hcp_data)
 
-Z=2.
-volumes=np.array(V)*(nA/Z/voltoa)
-sigma=np.array(Verr)*(nA/Z/voltoa)
-pt=np.array(zip(np.array(P)*1.e9, T))
+hcp_data=[]
+for line in open('Dewaele_et_al_2006.dat'):
+    content=line.translate(None, ')(').strip().split()
+    if content[0] != '%':
+        hcp_data.append([float(content[0]), float(content[1]), float(content[2])*Z, float(content[3])*Z])
+
+# T (K) V (Au) P a-axis (A) c-axis (A) V (e-Fe [HCP] angstroms^3)
+T_D, P_D, V_D, Verr_D = zip(*hcp_data)
+
+
+volumes=np.array(V + V_D)*(nA/Z/voltoa)
+sigma=np.array(Verr + Verr_D)*(nA/Z/voltoa)
+pt=np.array(zip(np.array(P + P_D)*1.e9, np.array(T+T_D)))
 
 # Initial guess.
 guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0'], hcp.params['a_0']])
-popt, pcov = optimize.curve_fit(fitV(hcp), pt, volumes, guesses, sigma)
+popt, pcov = optimize.curve_fit(fitV_w_Kprime(hcp), pt, volumes, guesses, sigma)
 
 print ''
 print 'Fitted HCP parameters'
@@ -266,12 +305,29 @@ print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
 print "a0 :", popt[3], "+/-", np.sqrt(pcov[3][3]), "K^-1"
 
 
+volumes=np.array(V_D)*(nA/Z/voltoa)
+sigma=np.array(Verr_D)*(nA/Z/voltoa)
+p=np.array(P_D)*1.e9
+
+# Initial guess.
+guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0']])
+popt, pcov = optimize.curve_fit(fitV_T0(hcp), p, volumes, guesses, sigma)
+
+print ''
+print 'Fitted HCP parameters (Dewaele et al., 2006)'
+print "V0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "m^3/mol"
+print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "A^3"
+print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
+print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
+print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
+
+
 Vdiff=np.empty_like(volumes)
-for i, datum in enumerate(pt):
-        hcp.set_state(datum[0], datum[1])
+for i, pressure in enumerate(p):
+        hcp.set_state(pressure, 298.15)
         Vdiff[i]=(hcp.V - volumes[i])/volumes[i]*100.
 
-plt.plot( np.array(P), Vdiff , marker=".", linestyle="None")
+plt.plot( np.array(P_D), Vdiff , marker=".", linestyle="None")
 plt.title('Volume fit')
 plt.xlabel("Pressure (GPa)")
 plt.ylabel("Percentage volume difference (m^3/mol)")
@@ -283,6 +339,7 @@ print
 
 print "Covariance matrix:"
 print pcov
+
 
 '''
 H_0 and S_0 for HCP can be obtained from the reaction line of Komabayashi et al., 2009
@@ -304,11 +361,56 @@ for line in open('Komabayashi_et_al_2009_HCP_FCC.dat'):
         hcp_fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3]), float(content[4]), float(content[5]), content[6]])
 
 P, Perr, T, Terr, V, Verr, note = zip(*hcp_fcc_data)
+transition_temperatures=np.array(T)
+transition_temperature_uncertainties=np.array(Terr)
+transition_volumes=np.array(V)*(nA/Z/voltoa)
 
 transition_pressures=np.empty_like(T)
-for i, temperature in enumerate(T):
-    transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(V[i]*(nA/Z/voltoa), temperature))[0]
+for i, temperature in enumerate(transition_temperatures):
+    transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(transition_volumes[i], transition_temperatures[i]))[0]
 
+def equilibrium_boundary_T(mineral1, mineral2):
+    def eqm(arg, P):
+        T=arg[0]
+        mineral1.set_state(P,T)
+        mineral2.set_state(P,T)
+        return [mineral1.gibbs - mineral2.gibbs]
+    return eqm
+
+def fit_H_S(mineral1, mineral2):
+    def find_H_S(data, H, S, a):
+        mineral1.params['H_0']= H
+        mineral1.params['S_0']= S
+        mineral1.params['a_0']= a
+        calc_temperatures=[]
+        for pressure in data:
+            calc_temperatures.append(optimize.fsolve(equilibrium_boundary_T(mineral1, mineral2), 1000., args=(pressure))[0])
+        return calc_temperatures
+    return find_H_S
+
+print ''
+print 'FCC parameters'
+print "H0: ", fcc.params['H_0'], "J/mol"
+print "S0: ", fcc.params['S_0'], "J/K/mol"
+
+guesses=np.array([hcp.params['H_0'], hcp.params['S_0'], hcp.params['a_0']])
+popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), transition_pressures, transition_temperatures, guesses, transition_temperature_uncertainties)
+
+print ''
+print 'Fitted HCP parameters'
+print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
+print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
+print "a0: ", popt[2], "+/-", np.sqrt(pcov[2][2]), "/K"
+
+hcp_fcc_pressures=np.linspace(10.e9, 70.e9, 101)
+hcp_fcc_temperatures=np.empty_like(hcp_fcc_pressures)
+
+for i, pressure in enumerate(hcp_fcc_pressures):
+    hcp_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(hcp, fcc), 1000., args=(pressure))[0]
+
+'''
+Plot FCC-HCP transition
+'''
 
 in_pressures=[]
 in_temperatures=[]
@@ -316,7 +418,7 @@ in_temperature_error=[]
 out_pressures=[]
 out_temperatures=[]
 out_temperature_error=[]
-for pressure, temperature, temperature_error, label in zip(transition_pressures, T, Terr, note):
+for pressure, temperature, temperature_error, label in zip(transition_pressures, transition_temperatures, transition_temperature_uncertainties, note):
     if label=='field-in':
         in_pressures.append(pressure)
         in_temperatures.append(temperature)
@@ -333,6 +435,7 @@ out_pressures=np.array(out_pressures)
 out_temperatures=np.array(out_temperatures)
 out_temperature_error=np.array(out_temperature_error)
 
+plt.plot( hcp_fcc_pressures/1.e9, hcp_fcc_temperatures, 'b-', linewidth=1, label='FCC-HCP transition')
 plt.plot( in_pressures/1.e9, in_temperatures, marker=".", linestyle="None", label='in')
 plt.errorbar( in_pressures/1.e9, in_temperatures, yerr=in_temperature_error, linestyle="None")
 plt.plot( out_pressures/1.e9, out_temperatures, marker="+", linestyle="None", label='out')
@@ -343,39 +446,3 @@ plt.xlabel("Pressure (GPa)")
 plt.legend(loc='lower right')
 plt.show()
 
-
-'''
-
-
-def fcc_hcp_eqm(arg, T):
-    P=arg[0]
-    hcp.set_state(P,T)
-    fcc.set_state(P,T)
-    return [hcp.gibbs - fcc.gibbs]
-
-
-temperatures=np.linspace(400.,2400.,101)
-hcp_fcc_pressures=np.empty_like(temperatures)
-
-for idx, T in enumerate(temperatures):
-    hcp_fcc_pressures[idx]=optimize.fsolve(fcc_hcp_eqm, 1.e9, args=(T))[0]
-
-
-f=open('Fe-O_boundaries_int.dat', 'r')
-datastream = f.read()  # We need to re-open the file
-f.close()
-datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
-phase_boundaries=np.array(datalines, np.float32).T
-phase_boundaries[0]=[1.0-x_to_y(phase_boundaries[0][i]) for i in range(len(phase_boundaries[0]))]
-
-
-plt.plot( hcp_fcc_pressures/1.e9, temperatures, 'r-', linewidth=3., label='HCP-FCC')
-
-
-plt.title('Iron phase diagram')
-plt.ylabel("Temperature (K)")
-plt.xlabel("Pressure (GPa)")
-plt.legend(loc='lower right')
-plt.show()
-
-'''
