@@ -6,6 +6,7 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 
 import burnman
 from burnman import minerals
+from burnman import tools
 from burnman.mineral import Mineral
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
@@ -257,7 +258,7 @@ class hcp_iron (Mineral):
             'S_0': 29.90 ,
             'V_0': 6.733e-06 ,
             'Cp': fcc.params['Cp'] ,
-            'a_0': 3.56e-05 ,
+            'a_0': 4.4e-05 ,
             'K_0': 1.64e+11 ,
             'Kprime_0': 5.16 ,
             'Kdprime_0': -3.1e-11 ,
@@ -321,7 +322,6 @@ print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
 print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
 
-
 Vdiff=np.empty_like(volumes)
 for i, pressure in enumerate(p):
         hcp.set_state(pressure, 298.15)
@@ -365,10 +365,6 @@ transition_temperatures=np.array(T)
 transition_temperature_uncertainties=np.array(Terr)
 transition_volumes=np.array(V)*(nA/Z/voltoa)
 
-transition_pressures=np.empty_like(T)
-for i, temperature in enumerate(transition_temperatures):
-    transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(transition_volumes[i], transition_temperatures[i]))[0]
-
 def equilibrium_boundary_T(mineral1, mineral2):
     def eqm(arg, P):
         T=arg[0]
@@ -383,7 +379,10 @@ def fit_H_S(mineral1, mineral2):
         mineral1.params['S_0']= S
         mineral1.params['a_0']= a
         calc_temperatures=[]
-        for pressure in data:
+        for datum in data:
+            volume=datum[0]
+            temperature=datum[1]
+            pressure = optimize.fsolve(find_pressure(hcp), 1.e9, args=(volume, temperature))[0]
             calc_temperatures.append(optimize.fsolve(equilibrium_boundary_T(mineral1, mineral2), 1000., args=(pressure))[0])
         return calc_temperatures
     return find_H_S
@@ -394,7 +393,8 @@ print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
 guesses=np.array([hcp.params['H_0'], hcp.params['S_0'], hcp.params['a_0']])
-popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), transition_pressures, transition_temperatures, guesses, transition_temperature_uncertainties)
+popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
+
 
 print ''
 print 'Fitted HCP parameters'
@@ -402,9 +402,13 @@ print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
 print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
 print "a0: ", popt[2], "+/-", np.sqrt(pcov[2][2]), "/K"
 
+transition_pressures=np.empty_like(T)
+for i, temperature in enumerate(transition_temperatures):
+    transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(transition_volumes[i], transition_temperatures[i]))[0]
+
+
 hcp_fcc_pressures=np.linspace(10.e9, 70.e9, 101)
 hcp_fcc_temperatures=np.empty_like(hcp_fcc_pressures)
-
 for i, pressure in enumerate(hcp_fcc_pressures):
     hcp_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(hcp, fcc), 1000., args=(pressure))[0]
 
@@ -446,3 +450,9 @@ plt.xlabel("Pressure (GPa)")
 plt.legend(loc='lower right')
 plt.show()
 
+'''
+Print mineral classes
+'''
+
+tools.print_mineral_class(fcc, 'fcc_iron')
+tools.print_mineral_class(hcp, 'hcp_iron')
