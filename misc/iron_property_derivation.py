@@ -318,6 +318,14 @@ def equilibrium_boundary_T(mineral1, mineral2):
         return [mineral1.gibbs - mineral2.gibbs]
     return eqm
 
+def equilibrium_boundary_P(mineral1, mineral2):
+    def eqm(arg, T):
+        P=arg[0]
+        mineral1.set_state(P,T)
+        mineral2.set_state(P,T)
+        return [mineral1.gibbs - mineral2.gibbs]
+    return eqm
+
 '''
 def fit_H_S(mineral1, mineral2):
     def find_H_S(data, H, S, a):
@@ -359,6 +367,19 @@ hcp_fcc_temperatures=np.empty_like(hcp_fcc_pressures)
 for i, pressure in enumerate(hcp_fcc_pressures):
     hcp_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(hcp, fcc), 1000., args=(pressure))[0]
 
+bcc_fcc_pressures=np.linspace(1.e5, 10.e9, 21)
+bcc_fcc_temperatures=np.empty_like(bcc_fcc_pressures)
+for i, pressure in enumerate(bcc_fcc_pressures):
+    bcc_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(bcc, fcc), 1000., args=(pressure))[0]
+
+
+bcc_hcp_temperatures=np.linspace(300., 870., 21)
+bcc_hcp_pressures=np.empty_like(bcc_hcp_temperatures)
+for i, temperature in enumerate(bcc_hcp_temperatures):
+    bcc_hcp_pressures[i]=optimize.fsolve(equilibrium_boundary_P(bcc, hcp), 1000., args=(temperature))[0]
+
+
+
 '''
 Almost finished! Let's plot the modelled FCC-HCP transition along with the experimental data, to
 see how well the inversion worked.
@@ -387,6 +408,8 @@ out_pressures=np.array(out_pressures)
 out_temperatures=np.array(out_temperatures)
 out_temperature_error=np.array(out_temperature_error)
 
+plt.plot( bcc_fcc_pressures/1.e9, bcc_fcc_temperatures, 'b-', linewidth=1, label='BCC-FCC transition')
+plt.plot( bcc_hcp_pressures/1.e9, bcc_hcp_temperatures, 'b-', linewidth=1, label='BCC-HCP transition')
 plt.plot( hcp_fcc_pressures/1.e9, hcp_fcc_temperatures, 'b-', linewidth=1, label='FCC-HCP transition')
 plt.plot( in_pressures/1.e9, in_temperatures, marker=".", linestyle="None", label='in')
 plt.errorbar( in_pressures/1.e9, in_temperatures, yerr=in_temperature_error, linestyle="None")
@@ -395,6 +418,7 @@ plt.errorbar( out_pressures/1.e9, out_temperatures, yerr=out_temperature_error, 
 plt.title('Iron phase diagram')
 plt.ylabel("Temperature (K)")
 plt.xlabel("Pressure (GPa)")
+plt.ylim(300., 2700.)
 plt.legend(loc='lower right')
 plt.show()
 
