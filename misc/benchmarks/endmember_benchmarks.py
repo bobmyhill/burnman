@@ -9,6 +9,8 @@ from burnman.minerals import Sundman_1991
 from burnman import constants
 import numpy as np
 
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 def p(v1, v2):
     return (v2-v1)/v1
@@ -137,7 +139,6 @@ for T in temperatures:
     fcc_gibbs_model.append(gibbs_fcc_1bar(T))
     bcc_gibbs_model.append(gibbs_bcc_1bar(T))
 
-import matplotlib.pyplot as plt
 plt.plot( temperatures, np.array(fcc_gibbs)-np.array(bcc_gibbs), 'r-', linewidth=1., label='FCC-BCC')
 plt.plot( temperatures, np.array(fcc_gibbs_model)-np.array(bcc_gibbs_model), 'b-', linewidth=1., label='FCC-BCC model')
 
@@ -147,4 +148,24 @@ plt.xlabel("Temperature (K)")
 plt.xlim(1100, 1700)
 plt.ylim(-10, 0)
 plt.legend(loc='lower left')
+plt.show()
+
+
+stv=HP_2011_ds62.stv()
+pressures=np.linspace(1.e5, 2500.e8, 101)
+stv_volumes=np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    stv.set_state(P, 298.15)
+    stv_volumes[i]=stv.V
+
+fig1 = mpimg.imread('stv_HP_2011.png')
+plt.imshow(fig1, extent=[0.0, 2300.,0.96e-5,1.42e-5], aspect='auto')
+plt.plot( pressures/1.e8, stv_volumes, 'b-', linewidth=1., label='Fit')
+
+plt.title("Stishovite volume")
+plt.ylabel("V (m^3/mol)")
+plt.xlabel("Pressure (kbar)")
+plt.ylim(0.96e-5, 1.42e-5)
+plt.xlim(0., 2300.)
+plt.legend(loc='upper right')
 plt.show()

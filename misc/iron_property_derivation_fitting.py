@@ -99,7 +99,7 @@ volumes=np.array(V)*nA/voltoa/Z
 pt=np.array(zip(np.array(P)*1.e9, T))
 '''
 
-scaling=1.0
+scaling=0.9895
 for line in open('Nishihara_et_al_2012_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
@@ -221,7 +221,7 @@ def fitV_T0(mineral):
         return vols
     return fit
 
-'''
+
 guesses=np.array([fcc.params['V_0'], fcc.params['K_0'], fcc.params['a_0']])
 
 popt, pcov = optimize.curve_fit(fitV(fcc), pt, volumes, guesses, sigmas)
@@ -238,7 +238,7 @@ print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", fcc.params['Kprime_0'], '[fixed]'
 print "k0\":", -1.e9*fcc.params['Kprime_0']/popt[1], "GPa^-1"
 print "a0 :", popt[2], "+/-", np.sqrt(pcov[2][2]), "K^-1"
-'''
+
 
 bcc_expt_temperatures=[]
 bcc_expt_volumes=[]
@@ -350,9 +350,7 @@ pt=np.array(zip(np.array(P + P_D)*1.e9, np.array(T+T_D)))
 # Initial guess.
 guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0'], hcp.params['a_0']])
 popt, pcov = optimize.curve_fit(fitV_w_Kprime(hcp), pt, volumes, guesses, sigma)
-'''
 
-'''
 print ''
 print 'Fitted HCP parameters'
 print "V0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "m^3/mol"
@@ -361,14 +359,13 @@ print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
 print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
 print "a0 :", popt[3], "+/-", np.sqrt(pcov[3][3]), "K^-1"
-'''
 
+'''
 
 volumes=np.array(V_D)*(nA/Z/voltoa)
 sigma=np.array(Verr_D)*(nA/Z/voltoa)
 p=np.array(P_D)*1.e9
 
-'''
 # Initial guess.
 guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0']])
 popt, pcov = optimize.curve_fit(fitV_T0(hcp), p, volumes, guesses, sigma)
@@ -380,7 +377,7 @@ print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "
 print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
 print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
-'''
+
 
 
 Vdiff=np.empty_like(volumes)
@@ -438,7 +435,7 @@ def equilibrium_boundary_P(mineral1, mineral2):
         mineral2.set_state(P,T)
         return [mineral1.gibbs - mineral2.gibbs]
     return eqm
-'''
+
 
 def fit_H_S(mineral1, mineral2):
     def find_H_S(data, a, K):
@@ -460,7 +457,7 @@ print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
 
-hcp.params['S_0']= 30.7 # To match BCC-HCP phase boundary
+hcp.params['S_0']= 30.7 # To match phase boundary
 guesses=np.array([hcp.params['a_0'], fcc.params['K_0']])
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
@@ -470,7 +467,7 @@ print 'Fitted HCP parameters'
 print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
 print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
 print popt
-'''
+
 '''
 hcp.params['V_0']=11.214*(nA/voltoa)
 print hcp.params['V_0']
