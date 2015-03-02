@@ -243,7 +243,9 @@ print "a0 :", popt[2], "+/-", np.sqrt(pcov[2][2]), "K^-1"
 bcc_expt_temperatures=[]
 bcc_expt_volumes=[]
 
+'''
 bcc.params['a_0'] = 3.8e-5
+'''
 
 for line in open('Stuart_et_al_1966_bcc_iron.dat'):
     content=line.strip().split()
