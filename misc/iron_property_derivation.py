@@ -20,6 +20,8 @@ import matplotlib.image as mpimg
 from scipy import optimize
 atomic_masses=read_masses()
 
+nA=6.02214e23
+voltoa=1.e30
 Pr=1.e5
 
 '''
@@ -29,6 +31,45 @@ N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar ex
 
 bcc=Myhill_calibration_iron.bcc_iron()
 fcc=Myhill_calibration_iron.fcc_iron()
+
+bcc_expt_temperatures=[]
+bcc_expt_volumes=[]
+for line in open('bcc_iron_volumes.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        bcc_expt_temperatures.append(float(content[0]))
+        bcc_expt_volumes.append(float (content[1]))
+
+fcc_expt_temperatures=[]
+fcc_expt_volumes=[]
+for line in open('fcc_iron_volumes.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        fcc_expt_temperatures.append(float(content[0]))
+        fcc_expt_volumes.append(float(content[1]))
+
+
+temperatures=np.linspace(50., 2000., 101)
+bcc_volume=np.empty_like(temperatures)
+fcc_volume=np.empty_like(temperatures)
+for i, T in enumerate(temperatures):
+    bcc.set_state(Pr, T)
+    fcc.set_state(Pr, T)
+    fcc_volume[i] = fcc.V
+    bcc_volume[i] = bcc.V
+
+plt.plot( fcc_expt_temperatures, fcc_expt_volumes, c='r', marker='o', linestyle='none', label='fcc volumes')
+plt.plot( bcc_expt_temperatures, bcc_expt_volumes, c='b', marker='o', linestyle='none', label='bcc volumes')
+
+plt.plot( temperatures, fcc_volume/nA*voltoa, 'r-', linewidth=1., label='fcc volume')
+plt.plot( temperatures, bcc_volume/nA*voltoa, 'b-', linewidth=1., label='bcc volume')
+plt.title('1 bar iron model')
+plt.legend(loc='lower right')
+plt.xlabel("Temperature (C)")
+plt.ylabel("Volume (Angstroms^3/mol)")
+plt.show()
+
+
 
 temperatures=np.linspace(300., 2000., 101)
 bcc_gibbs=np.empty_like(temperatures)
@@ -90,8 +131,6 @@ T, V, Verr, P, Perr, relV, relVerr = zip(*fcc_data)
 
 
 Z=4.
-nA=6.02214e23
-voltoa=1.e30
 
 volumes=np.array(V)*(nA/Z/voltoa)
 sigma=np.array(Verr)*(nA/Z/voltoa)
