@@ -1,0 +1,10 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.1.2
+B	0.2f0.1:X@-Mg@- observed:/0.2f0.1:X@-Mg@- calculated:SWen
+J	X
+JX	X2.5i
+R	0/1/0/1
+X	-0.25c
+Y	0.25c
+L	8
+END
