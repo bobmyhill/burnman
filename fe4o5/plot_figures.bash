@@ -6,25 +6,25 @@ gmtset FONT_LABEL			= 16p,4,black
 
 
 base=P-fO2
-
-psxy P-fO2.dat -JX15/10 -R0/24/-12/4 -K -P > ${base}.ps
+psxy new_phase_region.dat -JX15/10 -R0/24/-12/4 -G230/230/230 -K -P > ${base}.ps
+psxy P-fO2.dat -J -R -O -K >> ${base}.ps
 
 echo "17 -9 Fe" | pstext -J -R -O -K >> ${base}.ps
 echo "8 -7 Fe@-1-y@-O" | pstext -J -R -O -K >> ${base}.ps
-echo "21 -0.5 Fe@-5@-O@-6@-" | pstext -J -R -O -K >> ${base}.ps
+echo "21.5 -0.8 Fe@-5@-O@-6@-" | pstext -J -R -O -K >> ${base}.ps
 echo "20 2 Fe@-4@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
 echo "2 -4 Fe@-3@-O@-4@-" | pstext -J -R -O -K >> ${base}.ps
 echo "6 1 Fe@-2@-O@-3@-" | pstext -J -R -O -K >> ${base}.ps
 echo "1.5 -6 Re-ReO@-2@-" | pstext -F+a20+f10 -J -R -O -K >> ${base}.ps
 echo "22 -2.65 Mo-MoO@-2@-" | pstext -F+a20+f10 -J -R -O -K >> ${base}.ps
-echo "1.7 3 q" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "6.0 3 coe" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "12  3 stv" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "6.0 -11.2 coe" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "12  -11.2 stv" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "2.5 -9.2 fa" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-echo "12 -5.6 frw" | pstext -F+f10,grey -J -R -O -K >> ${base}.ps
-
+echo "1.7 3 q" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "6.0 3 coe" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "12  3 stv" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "6.0 -11.2 coe" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "12  -11.2 stv" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "2.5 -9.2 fa" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "12 -5.6 frw" | pstext -F+f10,blue -J -R -O -K >> ${base}.ps
+echo "22 1 \`EMOD'" | pstext -F+a25+f10,red -J -R -O -K >> ${base}.ps
 psbasemap -J -R -O -B4f2:"Pressure (GPa)":/4f2:"log@-10@-(@%6%f@%4%O@-2@-)":SWen >> ${base}.ps
 
 ps2epsi ${base}.ps
@@ -92,6 +92,67 @@ echo "630 4.0 w\374s+mt" | pstext -J -R -F+jLT -O -K >> ${base}.ps
 echo "630 7.7 Fe@-4@-O@-5@-+mt" | pstext -J -R -F+jLT -O -K >> ${base}.ps
 echo "630 11.6 Fe@-4@-O@-5@-+hem" | pstext -J -R -F+jLT -O -K >> ${base}.ps
 echo "1100 19.5 Fe@-4@-O@-5@-+ReO@-2@-" | pstext -F+jLT -J -R -O >> ${base}.ps
+
+ps2epsi ${base}.ps
+epstopdf ${base}.epsi
+rm ${base}.ps ${base}.epsi
+
+convert -density 600 ${base}.pdf ${base}.jpg
+evince ${base}.pdf
+
+
+base="ol_opx_fe4o5"
+
+psxy ${base}.dat -JX15/10 -R8/18/-4/6 -K -P > ${base}.ps
+echo "10.5 1.2 ol + opx + (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
+echo "16.25 5.4 wad + opx +" | pstext -J -R -O -K >> ${base}.ps 
+echo "16.25 4.8 (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
+echo "16.25 0.6 rw + opx +" | pstext -J -R -O -K >> ${base}.ps
+echo "16.25 0. (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
+
+echo "8.25 -0.95 0.80" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 -0.20 0.85" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 0.90 0.90" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 2.80 0.95" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
+
+echo "14.9 1.6 0.90" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
+echo "15.75 3.6 0.95" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
+
+echo "17.70 3.45 0.85" | pstext -F+a25+f10,grey -J -R -O -K >> ${base}.ps
+
+
+pslegend -J -R -O -K -Dx0/10/0/0/TL -C0.1i/0.1i -L1.2 << EOF >> ${base}.ps
+N 1
+S 0.3c - 0.5c - 1,blue 0.7c QFM (metastable)
+S 0.3c - 0.5c - 1,red 0.7c \`EMOD' (HP-cen + magnesite + ol/wad/rw + diamond)
+S 0.3c - 0.5c - 0.5,grey 0.7c Mg/(Mg+Fe) (ol/wad/rw + opx)
+EOF
+
+
+psbasemap -J -R -O -B2f1:"Pressure (GPa)":/2f1:"log@-10@-(@%6%f@%4%O@-2@-)":SWen >> ${base}.ps
+
+ps2epsi ${base}.ps
+epstopdf ${base}.epsi
+rm ${base}.ps ${base}.epsi
+
+convert -density 600 ${base}.pdf ${base}.jpg
+evince ${base}.pdf
+
+
+base="gt_compositions"
+
+psbasemap -JX15/10 -R8/13/0.5/1 -K -P -B1f0.5:"Pressure (GPa)":/0.1f0.05:"Fe@+3+@+/sum Fe":SWn > ${base}.ps
+
+awk 'NR>1 {print $1, $2}' ${base}.dat | psxy -J -R -O -K -W1,black >> ${base}.ps
+awk '{print $1, $3}' ${base}.dat |  psxy -J -R -O -K -W1,blue >> ${base}.ps
+
+psbasemap -J -R -O -K -B1f0.5:"":/0.1f0.05:"p@-py@-":E >> ${base}.ps
+
+pslegend -J -R -O -Dx0/0/0/0/BL -C0.1i/0.1i -L1.2 << EOF >> ${base}.ps
+N 1
+S 0.3c - 0.5c - 1,black 0.7c Fe@+3+@+/sum Fe
+S 0.3c - 0.5c - 1,blue 0.7c p@-py@-
+EOF
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
