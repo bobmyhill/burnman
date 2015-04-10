@@ -1,0 +1,8 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.1.2
+B	a0.2f0.1:X@-Mg2SiO4/3@-:/a500f100:Temperature (@~\260@~C):SWen
+J	X
+JX	X10/10
+R	0/1/1000/2500
+L	20
+END
