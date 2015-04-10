@@ -401,3 +401,108 @@ class SubregularSolution (IdealSolution):
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         H_excess=np.dot(molar_fractions, self._non_ideal_function(self.Wh, molar_fractions))
         return H_excess + pressure*self.excess_volume (pressure, temperature, molar_fractions)
+
+class AsymmetricRegularSolution (IdealSolution):
+    """
+    Solution model implementing the asymmetric regular solution model formulation (Haselton and Newton, 1980)
+    """
+
+    def __init__( self, endmembers, lambdas, enthalpy_interaction, volume_interaction = None, entropy_interaction = None ): 
+
+        self.n_endmembers = len(endmembers)
+
+        # Create array of asymmetry parameters
+        self.lambdas=np.array(lambdas)
+
+        # Create 2D arrays of interaction parameters
+        self.Wh=np.zeros(shape=(self.n_endmembers,self.n_endmembers))
+        self.Ws=np.zeros(shape=(self.n_endmembers,self.n_endmembers))
+        self.Wv=np.zeros(shape=(self.n_endmembers,self.n_endmembers))
+
+        #setup excess enthalpy interaction matrix
+        for i in range(self.n_endmembers):
+            for j in range(i+1, self.n_endmembers):
+                self.Wh[i][j]=enthalpy_interaction[i][j-i-1][0]
+                self.Wh[j][i]=enthalpy_interaction[i][j-i-1][1]
+
+        if entropy_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i+1, self.n_endmembers):
+                    self.Ws[i][j]=entropy_interaction[i][j-i-1][0]
+                    self.Ws[j][i]=entropy_interaction[i][j-i-1][1]
+
+        if volume_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i+1, self.n_endmembers):
+                    self.Wv[i][j]=volume_interaction[i][j-i-1][0]
+                    self.Wv[j][i]=volume_interaction[i][j-i-1][1]
+
+        #initialize ideal solution model
+        IdealSolution.__init__(self, endmembers)
+
+    def _non_ideal_function(self, W, tweaked_molar_fractions):
+        print 'WARNING, NOT CORRECT FOR LAMBDAS!=1'
+
+        # equation (6') of Helffrich and Wood, 1989
+        n=len(tweaked_molar_fractions)
+        RTlny=np.zeros(n)
+        for l in range(n):
+            val=0.
+            for i in range(0,n):
+                if i != l:
+                    val+=0.5*tweaked_molar_fractions[i]*(W[l][i]*(1-tweaked_molar_fractions[l] + tweaked_molar_fractions[i] + 2.*tweaked_molar_fractions[l]*(tweaked_molar_fractions[l] - tweaked_molar_fractions[i] - 1)) + W[i][l]*(1.-tweaked_molar_fractions[l] - tweaked_molar_fractions[i] - 2.*tweaked_molar_fractions[l]*(tweaked_molar_fractions[l] - tweaked_molar_fractions[i] - 1)))
+                    for j in range(i+1,n):
+                        if j != l:
+                            val+=tweaked_molar_fractions[i]*tweaked_molar_fractions[j]*(W[i][j]*(tweaked_molar_fractions[i] - tweaked_molar_fractions[j] - 0.5) + W[j][i]*(tweaked_molar_fractions[j] - tweaked_molar_fractions[i] - 0.5))
+            RTlny[l] = val
+        return RTlny
+
+    def _non_ideal_interactions(self, tweaked_molar_fractions):
+        # equation (6') of Helffrich and Wood, 1989
+        Hint=self._non_ideal_function(self.Wh, tweaked_molar_fractions)
+        Sint=self._non_ideal_function(self.Ws, tweaked_molar_fractions)
+        Vint=self._non_ideal_function(self.Wv, tweaked_molar_fractions)
+        return Hint, Sint, Vint
+
+    def _non_ideal_excess_partial_gibbs(self, pressure, temperature, tweaked_molar_fractions) :
+        Hint, Sint, Vint = self._non_ideal_interactions(tweaked_molar_fractions)
+        return Hint - temperature*Sint + pressure*Vint
+
+    def excess_partial_gibbs_free_energies(self, pressure, temperature, molar_fractions):
+        tweaked_molar_fractions=np.empty_like(molar_fractions)
+        for i, f in enumerate(molar_fractions):
+            tweaked_molar_fractions[i]=self.lambdas[i]*molar_fractions[i]
+        tweaked_molar_fractions=tweaked_molar_fractions/sum(tweaked_molar_fractions)
+
+        ideal_gibbs = IdealSolution._ideal_excess_partial_gibbs (self, temperature, molar_fractions)
+        non_ideal_gibbs = self._non_ideal_excess_partial_gibbs(pressure, temperature, tweaked_molar_fractions)
+        return ideal_gibbs + non_ideal_gibbs
+
+    def excess_volume (self, pressure, temperature, molar_fractions):
+        tweaked_molar_fractions=np.empty_like(molar_fractions)
+        for i, f in enumerate(molar_fractions):
+            tweaked_molar_fractions[i]=self.lambdas[i]*molar_fractions[i]
+        tweaked_molar_fractions=tweaked_molar_fractions/sum(tweaked_molar_fractions)
+
+        V_excess=np.dot(tweaked_molar_fractions, self._non_ideal_function(self.Wv, molar_fractions))
+        return V_excess
+
+    def excess_entropy(self, pressure, temperature, molar_fractions):
+        tweaked_molar_fractions=np.empty_like(molar_fractions)
+        for i, f in enumerate(molar_fractions):
+            tweaked_molar_fractions[i]=self.lambdas[i]*molar_fractions[i]
+        tweaked_molar_fractions=tweaked_molar_fractions/sum(tweaked_molar_fractions)
+
+        S_conf=-constants.gas_constant*np.dot(IdealSolution._log_ideal_activities(self, molar_fractions), molar_fractions)
+        S_excess=np.dot(molar_fractions, self._non_ideal_function(self.Ws, tweaked_molar_fractions))
+        return S_conf + S_excess
+
+    def excess_enthalpy(self, pressure, temperature, molar_fractions):
+        tweaked_molar_fractions=np.empty_like(molar_fractions)
+        for i, f in enumerate(molar_fractions):
+            tweaked_molar_fractions[i]=self.lambdas[i]*molar_fractions[i]
+        tweaked_molar_fractions=tweaked_molar_fractions/sum(tweaked_molar_fractions)
+
+        H_excess=np.dot(tweaked_molar_fractions, self._non_ideal_function(self.Wh, tweaked_molar_fractions))
+        return H_excess + pressure*self.excess_volume (pressure, temperature, tweaked_molar_fractions)
+
