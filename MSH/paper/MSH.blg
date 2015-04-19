@@ -1,42 +1,40 @@
-This is BibTeX, Version 0.99d (TeX Live 2013/Debian)
-Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+This is BibTeX, Version 0.99c (TeX Live 2009/Debian)
 The top-level auxiliary file: MSH.aux
 The style file: model2-names.bst.bst
 Database file #1: references_MSH.bib
-Reallocated singl_function (elt_size=4) to 100 items from 50.
 You've used 27 entries,
-            2990 wiz_defined-function locations,
-            969 strings with 12138 characters,
-and the built_in function-call counts, 18920 in all, are:
-= -- 1501
+            2761 wiz_defined-function locations,
+            800 strings with 9902 characters,
+and the built_in function-call counts, 17503 in all, are:
+= -- 1424
 > -- 666
 < -- 20
 + -- 260
 - -- 229
-* -- 2131
-:= -- 2703
-add.period$ -- 104
+* -- 2028
+:= -- 2648
+add.period$ -- 80
 call.type$ -- 27
 change.case$ -- 213
 chr.to.int$ -- 27
 cite$ -- 27
-duplicate$ -- 1382
-empty$ -- 1404
+duplicate$ -- 1139
+empty$ -- 1188
 format.name$ -- 334
-if$ -- 3537
+if$ -- 3217
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 268
-newline$ -- 173
+missing$ -- 241
+newline$ -- 144
 num.names$ -- 110
-pop$ -- 430
+pop$ -- 237
 preamble$ -- 1
 purify$ -- 184
 quote$ -- 0
-skip$ -- 387
+skip$ -- 363
 stack$ -- 0
 substring$ -- 950
-swap$ -- 1040
+swap$ -- 988
 text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
@@ -44,4 +42,4 @@ type$ -- 243
 warning$ -- 0
 while$ -- 123
 width$ -- 0
-write$ -- 442
+write$ -- 388

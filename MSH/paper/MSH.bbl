@@ -1,14 +1,9 @@
 \begin{thebibliography}{27}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
-\providecommand{\url}[1]{\texttt{#1}}
-\providecommand{\href}[2]{#2}
-\providecommand{\path}[1]{#1}
-\providecommand{\DOIprefix}{doi:}
-\providecommand{\ArXivprefix}{arXiv:}
-\providecommand{\URLprefix}{URL: }
-\providecommand{\Pubmedprefix}{pmid:}
-\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
-\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\eprint}[2][]{\url{#2}}
 \providecommand{\bibinfo}[2]{#2}
 \ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
 %Type = Article
@@ -18,7 +13,6 @@
   Simulations}}.
 \newblock \bibinfo{journal}{Physical Review Letters} \bibinfo{volume}{94},
   \bibinfo{pages}{235701}.
-\newblock \DOIprefix\doi{10.1103/PhysRevLett.94.235701}.
 %Type = Article
 \bibitem[{{Cohen} and {Gong}(1994)}]{CG1994}
 \bibinfo{author}{{Cohen}, R.E.}, \bibinfo{author}{{Gong}, Z.},
@@ -27,7 +21,6 @@
   pressures}}.
 \newblock \bibinfo{journal}{Physcial Review Letters B} \bibinfo{volume}{50},
   \bibinfo{pages}{12301--12311}.
-\newblock \DOIprefix\doi{10.1103/PhysRevB.50.12301}.
 %Type = Article
 \bibitem[{{de Koker} et~al.(2013){de Koker}, {Karki} and {Stixrude}}]{KKS2013}
 \bibinfo{author}{{de Koker}, N.}, \bibinfo{author}{{Karki}, B.B.},
@@ -36,7 +29,6 @@
   Earth's lowermost mantle from first principles}}.
 \newblock \bibinfo{journal}{Earth and Planetary Science Letters}
   \bibinfo{volume}{361}, \bibinfo{pages}{58--63}.
-\newblock \DOIprefix\doi{10.1016/j.epsl.2012.11.026}.
 %Type = Article
 \bibitem[{{Dolej\v{s}} and {Manning}(2010)}]{DM2010}
 \bibinfo{author}{{Dolej\v{s}}, D.}, \bibinfo{author}{{Manning}, C.E.},
@@ -46,7 +38,6 @@
   systems}}.
 \newblock \bibinfo{journal}{Geofluids} \bibinfo{volume}{10},
   \bibinfo{pages}{20--40}.
-\newblock \DOIprefix\doi{10.1111/j.1468-8123.2010.00282.x}.
 %Type = Article
 \bibitem[{{Frost} et~al.(2004){Frost}, {Poe}, {Tr{\o}nnes}, {Liebske}, {Duba}
   and {Rubie}}]{FPTLDR2004}
@@ -57,7 +48,6 @@
 \newblock \bibinfo{title}{{A new large-volume multianvil system}}.
 \newblock \bibinfo{journal}{Physics of the Earth and Planetary Interiors}
   \bibinfo{volume}{143}, \bibinfo{pages}{507--514}.
-\newblock \DOIprefix\doi{10.1016/j.pepi.2004.03.003}.
 %Type = Article
 \bibitem[{Fukui et~al.(2005)Fukui, Inoue, Yasui, Katsura, Funakoshi and
   Ohtaka}]{FIYKFO2005}
@@ -69,7 +59,6 @@
   high MgO-solubility in the liquid phase}}.
 \newblock \bibinfo{journal}{European Journal of Mineralogy}
   \bibinfo{volume}{17}, \bibinfo{pages}{261--267}.
-\newblock \DOIprefix\doi{10.1127/0935-1221/2005/0017-0261}.
 %Type = Article
 \bibitem[{{Holland} and {Powell}(2011)}]{HP2011}
 \bibinfo{author}{{Holland}, T.J.B.}, \bibinfo{author}{{Powell}, R.},
@@ -79,7 +68,6 @@
   equation of state for solids}.
 \newblock \bibinfo{journal}{Journal of Metamorphic Geology}
   \bibinfo{volume}{29}, \bibinfo{pages}{333--383}.
-\newblock \DOIprefix\doi{10.1111/j.1525-1314.2010.00923.x}.
 %Type = Article
 \bibitem[{{Hunt} and {Manning}(2012)}]{HM2012}
 \bibinfo{author}{{Hunt}, J.D.}, \bibinfo{author}{{Manning}, C.E.},
@@ -89,7 +77,6 @@
   solubility experiments at 500-1100 $^{\circ}$C and 5--20 kbar}}.
 \newblock \bibinfo{journal}{Geochemica and Cosmochemica Acta}
   \bibinfo{volume}{86}, \bibinfo{pages}{196--213}.
-\newblock \DOIprefix\doi{10.1016/j.gca.2012.03.006}.
 %Type = Incollection
 \bibitem[{Keppler and Frost(2005)}]{KF2005}
 \bibinfo{author}{Keppler, H.}, \bibinfo{author}{Frost, D.J.},
@@ -108,7 +95,6 @@
   interior}}.
 \newblock \bibinfo{journal}{Earth and Planetary Science Letters}
   \bibinfo{volume}{345}, \bibinfo{pages}{159--170}.
-\newblock \DOIprefix\doi{10.1016/j.epsl.2012.06.038}.
 %Type = Article
 \bibitem[{{Lyzenga} et~al.(1983){Lyzenga}, {Ahrens} and {Mitchell}}]{LAM1983}
 \bibinfo{author}{{Lyzenga}, G.A.}, \bibinfo{author}{{Ahrens}, T.J.},
@@ -117,7 +103,6 @@
   geophysical implications}}.
 \newblock \bibinfo{journal}{Journal of Geophysical Research}
   \bibinfo{volume}{88}, \bibinfo{pages}{2431--2444}.
-\newblock \DOIprefix\doi{10.1029/JB088iB03p02431}.
 %Type = Article
 \bibitem[{{Melekhova} et~al.(2007){Melekhova}, {Schmidt}, {Ulmer} and
   {Pettke}}]{MSUP2007}
@@ -129,7 +114,6 @@
   in the MgO-SiO$_2$-{H$_2$O} system}}.
 \newblock \bibinfo{journal}{Geochemica and Cosmochemica Acta}
   \bibinfo{volume}{71}, \bibinfo{pages}{3348--3360}.
-\newblock \DOIprefix\doi{10.1016/j.gca.2007.03.034}.
 %Type = Article
 \bibitem[{{Millot} et~al.(2015){Millot}, {Dubrovinskaia}, {\v{C}ernok},
   {Blaha}, {Dubrovinsky}, {Braun}, {Celliers}, {Collins}, {Eggert} and
@@ -144,14 +128,12 @@
   at planetary interior conditions}.
 \newblock \bibinfo{journal}{Science} \bibinfo{volume}{347},
   \bibinfo{pages}{418--420}.
-\newblock \DOIprefix\doi{10.1126/science.1261507}.
 %Type = Article
 \bibitem[{Nagano(2002)}]{Nagano2002}
 \bibinfo{author}{Nagano, Y.}, \bibinfo{year}{2002}.
 \newblock \bibinfo{title}{{Standard enthalpy of formation of platinic acid}}.
 \newblock \bibinfo{journal}{The Journal of Chemical Thermodynamics}
   \bibinfo{volume}{34}, \bibinfo{pages}{1745--1750}.
-\newblock \DOIprefix\doi{10.1016/S0021-9614(02)00163-5}.
 %Type = Article
 \bibitem[{{Newton} and {Manning}(2008)}]{NM2008}
 \bibinfo{author}{{Newton}, R.C.}, \bibinfo{author}{{Manning}, C.E.},
@@ -160,7 +142,6 @@
   upper critical end point from quartz solubility measurements at 10 kbar}}.
 \newblock \bibinfo{journal}{Earth and Planetary Science Letters}
   \bibinfo{volume}{274}, \bibinfo{pages}{241--249}.
-\newblock \DOIprefix\doi{10.1016/j.epsl.2008.07.028}.
 %Type = Article
 \bibitem[{Pitzer and Sterner(1995)}]{PS1995}
 \bibinfo{author}{Pitzer, K.}, \bibinfo{author}{Sterner, S.},
@@ -169,8 +150,6 @@
   extreme pressures with H2O and CO2 as examples}}.
 \newblock \bibinfo{journal}{International Journal of Thermophysics}
   \bibinfo{volume}{16}, \bibinfo{pages}{511–518}.
-\newblock \URLprefix \url{http://dx.doi.org/10.1007/BF01441917},
-  \DOIprefix\doi{10.1007/BF01441917}.
 %Type = Article
 \bibitem[{{Presnall} and {Gasparik}(1990)}]{PG1990}
 \bibinfo{author}{{Presnall}, D.C.}, \bibinfo{author}{{Gasparik}, T.},
@@ -180,7 +159,6 @@
   Implications for the origin of the mantle}}.
 \newblock \bibinfo{journal}{Journal of Geophysical Research: Solid Earth}
   \bibinfo{volume}{95}, \bibinfo{pages}{15771--15777}.
-\newblock \DOIprefix\doi{10.1029/JB095iB10p15771}.
 %Type = Article
 \bibitem[{{Presnall} and {Walter}(1993)}]{PW1993}
 \bibinfo{author}{{Presnall}, D.C.}, \bibinfo{author}{{Walter}, M.J.},
@@ -189,7 +167,6 @@
   16.5 GPa}}.
 \newblock \bibinfo{journal}{Journal of Geophysical Research}
   \bibinfo{volume}{98}, \bibinfo{pages}{19777}.
-\newblock \DOIprefix\doi{10.1029/93JB01007}.
 %Type = Article
 \bibitem[{Shen and Keppler(1995)}]{SK1995}
 \bibinfo{author}{Shen, A.}, \bibinfo{author}{Keppler, H.},
@@ -206,14 +183,12 @@
 \newblock \bibinfo{title}{{A Thermodynamic Model for Hydrous Silicate Melts}}.
 \newblock \bibinfo{journal}{Journal of Geology} \bibinfo{volume}{93},
   \bibinfo{pages}{161--177}.
-\newblock \DOIprefix\doi{10.1086/628938}.
 %Type = Article
 \bibitem[{{Stolper}(1982)}]{Stolper1982}
 \bibinfo{author}{{Stolper}, E.}, \bibinfo{year}{1982}.
 \newblock \bibinfo{title}{{The speciation of water in silicate melts}}.
 \newblock \bibinfo{journal}{Geochemica Cosmochemica Acta} \bibinfo{volume}{46},
   \bibinfo{pages}{2609--2620}.
-\newblock \DOIprefix\doi{10.1016/0016-7037(82)90381-7}.
 %Type = Article
 \bibitem[{{Tenner} et~al.(2012){Tenner}, {Hirschmann} and {Humayun}}]{THH2012}
 \bibinfo{author}{{Tenner}, T.J.}, \bibinfo{author}{{Hirschmann}, M.M.},
@@ -222,7 +197,6 @@
   peridotite at 3.5 GPa}}.
 \newblock \bibinfo{journal}{Geochemistry, Geophysics, Geosystems}
   \bibinfo{volume}{13}, \bibinfo{pages}{3016}.
-\newblock \DOIprefix\doi{10.1029/2011GC003942}.
 %Type = Article
 \bibitem[{Yamada et~al.(2004)Yamada, Inoue and Irifune}]{YII2004}
 \bibinfo{author}{Yamada, A.}, \bibinfo{author}{Inoue, T.},
@@ -231,7 +205,6 @@
   conditions}}.
 \newblock \bibinfo{journal}{Physics of the Earth and Planetary Interiors}
   \bibinfo{volume}{147}, \bibinfo{pages}{45–56}.
-\newblock \DOIprefix\doi{10.1016/j.pepi.2004.05.005}.
 %Type = Article
 \bibitem[{{Zerr} and {Boehler}(1994)}]{ZB1994}
 \bibinfo{author}{{Zerr}, A.}, \bibinfo{author}{{Boehler}, R.},
@@ -240,7 +213,6 @@
   mantle from high-pressure experiments on MgO and magnesiow{\"u}stite}}.
 \newblock \bibinfo{journal}{Nature} \bibinfo{volume}{371},
   \bibinfo{pages}{506--508}.
-\newblock \DOIprefix\doi{10.1038/371506a0}.
 %Type = Article
 \bibitem[{Zhang et~al.(1993)Zhang, Liebermann, Gasparik, Herzberg and
   Fei}]{ZLGHF1993}
@@ -251,7 +223,6 @@
   GPa}}.
 \newblock \bibinfo{journal}{Journal of Geophysical Research: Solid Earth}
   \bibinfo{volume}{98}, \bibinfo{pages}{19785--19793}.
-\newblock \DOIprefix\doi{10.1029/93JB02218}.
 %Type = Article
 \bibitem[{{Zhang} and {Fei}(2008)}]{ZF2008}
 \bibinfo{author}{{Zhang}, L.}, \bibinfo{author}{{Fei}, Y.},
@@ -260,7 +231,6 @@
   pressure}}.
 \newblock \bibinfo{journal}{Geophysical Research Letters} \bibinfo{volume}{35},
   \bibinfo{pages}{13302}.
-\newblock \DOIprefix\doi{10.1029/2008GL034585}.
 %Type = Article
 \bibitem[{Zotov and Keppler(1998)}]{ZK1998}
 \bibinfo{author}{Zotov, N.}, \bibinfo{author}{Keppler, H.},
