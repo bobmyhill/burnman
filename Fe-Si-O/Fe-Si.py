@@ -20,6 +20,39 @@ import matplotlib.image as mpimg
 from scipy import optimize
 atomic_masses=read_masses()
 
+
+fo=minerals.HP_2011_ds62.fo()
+
+temperatures=np.linspace(5., 1700., 100)
+alphastar_L=np.empty_like(temperatures)
+alphastar_V=np.empty_like(temperatures)
+fo.set_state(1.e5, 293.)
+L_293=np.power(fo.V, 1./3.)
+V_293=fo.V
+
+for i, T in enumerate(temperatures):
+    deltaT=0.1
+    fo.set_state(1.e5, T-deltaT)
+    L_T0=np.power(fo.V, 1./3.)
+    V_T0=fo.V
+    fo.set_state(1.e5, T+deltaT)
+    L_T1=np.power(fo.V, 1./3.)
+    V_T1=fo.V
+    DeltaL=L_T1 - L_T0
+    DeltaV=V_T1 - V_T0
+    DeltaT=2.*deltaT
+    alphastar_L[i]=(1./L_293)*(DeltaL/DeltaT)
+    alphastar_V[i]=(1./V_293)*(DeltaV/DeltaT)
+
+plt.plot( temperatures, alphastar_L, linewidth=1, label='Linear')
+plt.plot( temperatures, alphastar_V, linewidth=1, label='Volumetric')
+plt.title('Heat Capacity fit')
+plt.xlabel("Temperature (K)")
+plt.ylabel("Thermal expansivity (10^-6 K^-1)")
+plt.legend("lower left")
+plt.show()
+
+
 Pr=1.e5
 nA=6.02214e23
 voltoa=1.e30
@@ -376,3 +409,4 @@ plt.title('Heat Capacity fit')
 plt.xlabel("Temperature (K)")
 plt.ylabel("Thermal expansivity (10^-6 K^-1)")
 plt.show()
+
