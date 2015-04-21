@@ -323,11 +323,11 @@ Si_fcc_P_V, Si_fcc_V = zip(*Si_fcc_volume_ab_initio)
 
 
 guesses=np.array([70.e9, 4.])
-popt, pcov = optimize.curve_fit(fitK_p0(Si_hcp), np.array(Si_hcp_P_V)*1.e9,  np.array(Si_hcp_V), guesses)
+popt, pcov = optimize.curve_fit(fitK_p0(Si_hcp, Si_A4), np.array(Si_hcp_P_V)*1.e9,  np.array(Si_hcp_V), guesses)
 print 'HCP fit:', Si_hcp.params['K_0'], Si_hcp.params['Kprime_0'], Si_hcp.params['V_0']/Si_A4.params['V_0']
 
 guesses=np.array([70.e9, 4.])
-popt, pcov = optimize.curve_fit(fitK_p0(Si_fcc), np.array(Si_fcc_P_V)*1.e9,  np.array(Si_fcc_V), guesses)
+popt, pcov = optimize.curve_fit(fitK_p0(Si_fcc, Si_A4), np.array(Si_fcc_P_V)*1.e9,  np.array(Si_fcc_V), guesses)
 print 'FCC fit:', Si_fcc.params['K_0'], Si_fcc.params['Kprime_0'], Si_fcc.params['V_0']/Si_A4.params['V_0']
 
 pressures=np.linspace(1.e5, 250.e9, 100)

@@ -1,3 +1,5 @@
+import numpy as np
+
 def fit_PVT_data(mineral):
     def fit_data(PT, V_0, K_0, a_0):
         mineral.params['V_0'] = V_0
@@ -44,28 +46,28 @@ def fitalpha(mineral):
         return alphastar
     return fit
 
-def fitK0(mineral):
+def fitK0(mineral, standard_mineral):
     def fit(pressures, K_0):
         mineral.params['K_0']=K_0
         fractional_volumes=[]
         for i, P in enumerate(pressures):
             mineral.set_state(P, 300.)
-            fractional_volumes.append(mineral.V/Si_A4.params['V_0'])
+            fractional_volumes.append(mineral.V/standard_mineral.params['V_0'])
         return np.array(fractional_volumes)
     return fit
 
-def fitK0_V0(mineral):
+def fitK0_V0(mineral, standard_mineral):
     def fit(pressures, K_0, V_0):
         mineral.params['K_0']=K_0
         mineral.params['V_0']=V_0
         fractional_volumes=[]
         for i, P in enumerate(pressures):
             mineral.set_state(P, 300.)
-            fractional_volumes.append(mineral.V/Si_A4.params['V_0'])
+            fractional_volumes.append(mineral.V/standard_mineral.params['V_0'])
         return np.array(fractional_volumes)
     return fit
 
-def fitK_p0(mineral):
+def fitK_p0(mineral, standard_mineral):
     def fit(pressures, K_0, Kprime_0):
         mineral.params['K_0']=K_0
         mineral.params['Kprime_0']=Kprime_0
@@ -73,11 +75,11 @@ def fitK_p0(mineral):
         fractional_volumes=[]
         for i, P in enumerate(pressures):
             mineral.set_state(P, 300.)
-            fractional_volumes.append(mineral.V/Si_A4.params['V_0'])
+            fractional_volumes.append(mineral.V/standard_mineral.params['V_0'])
         return np.array(fractional_volumes)
     return fit
 
-def fit_EOS(mineral):
+def fit_EOS(mineral, standard_mineral):
     def fit(pressures, V_0, K_0, Kprime_0):
         mineral.params['V_0']=V_0
         mineral.params['K_0']=K_0
@@ -85,17 +87,17 @@ def fit_EOS(mineral):
         fractional_volumes=[]
         for i, P in enumerate(pressures):
             mineral.set_state(P, 300.)
-            fractional_volumes.append(mineral.V/Si_A4.params['V_0'])
+            fractional_volumes.append(mineral.V/standard_mineral.params['V_0'])
         return np.array(fractional_volumes)
     return fit
 
-def fitV0(mineral):
+def fitV0(mineral, standard_mineral):
     def fit(pressures, V_0):
         mineral.params['V_0']=V_0
         fractional_volumes=[]
         for i, P in enumerate(pressures):
             mineral.set_state(P, 300.)
-            fractional_volumes.append(mineral.V/Si_A4.params['V_0'])
+            fractional_volumes.append(mineral.V/standard_mineral.params['V_0'])
         return np.array(fractional_volumes)
     return fit
 
