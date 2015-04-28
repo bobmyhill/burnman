@@ -14,7 +14,7 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 atomic_masses=read_masses()
 
 
-class FeSi_B20 (Mineral):
+class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin...
     def __init__(self):
         formula='Fe1.0Si1.0'
         formula = dictionarize_formula(formula)
@@ -31,7 +31,10 @@ class FeSi_B20 (Mineral):
             'Kprime_0': 4.0 ,
             'Kdprime_0': -4.0/2.057e+11 ,
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'curie_temperature': [521.5, 0.0] ,
+            'magnetic_moment': [1.11, 0.0] ,
+            'magnetic_structural_parameter': 0.4 }
         Mineral.__init__(self)
 
 class FeSi_B2 (Mineral):
@@ -51,7 +54,10 @@ class FeSi_B2 (Mineral):
             'Kprime_0': 4.0 ,
             'Kdprime_0': -4.0/2.199e+11 ,
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'curie_temperature': [521.5, 0.0] ,
+            'magnetic_moment': [1.11, 0.0] ,
+            'magnetic_structural_parameter': 0.4 }
         Mineral.__init__(self)
 
 class Si_diamond_A4 (Mineral):

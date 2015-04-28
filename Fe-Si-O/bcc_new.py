@@ -20,6 +20,10 @@ from scipy import optimize
 
 R=constants.gas_constant
 
+"""
+kronecker delta function for integers
+"""
+kd = lambda x, y: 1 if x == y else 0
 
 '''
 # Order-disorder model for FeSi
@@ -45,6 +49,85 @@ Si    (A2)  [Si]0.5[Si]0.5
 Another complication is the magnetism in the phase. Lacaze and Sundman (1991) proposed a quadratic compositional dependence of the Curie temperature and linear dependence on the magnetic moment (i.e. no effect of ordering).
 
 '''
+def _phi( molar_fractions, alpha):
+    phi=np.array([alpha[i]*molar_fractions[i] for i in range(len(molar_fractions))])
+    phi=np.divide(phi, np.sum(phi))
+    return phi
+
+def _magnetic_gibbs(temperature, Tc, magnetic_moment, structural_parameter):
+    """
+    Returns the magnetic contribution to the Gibbs free energy [J/mol]
+    Expressions are those used by Chin, Hertzman and Sundman (1987)
+    as reported in Sundman in the Journal of Phase Equilibria (1991)
+    """
+    tau=temperature/Tc
+
+    A = (518./1125.) + (11692./15975.)*((1./structural_parameter) - 1.)
+    if tau < 1: 
+        f=1.-(1./A)*(79./(140.*structural_parameter*tau) + (474./497.)*(1./structural_parameter - 1.)*(np.power(tau, 3.)/6. + np.power(tau, 9.)/135. + np.power(tau, 15.)/600.))
+    else:
+        f=-(1./A)*(np.power(tau,-5)/10. + np.power(tau,-15)/315. + np.power(tau, -25)/1500.)
+    return constants.gas_constant*temperature*np.log(magnetic_moment + 1.)*f
+        
+
+def magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature):
+
+    phi=_phi(X, endmember_alphas)
+
+    # magnetic_moment and tc value at X
+    Tc=np.dot(endmember_tcs.T, X) + np.dot(endmember_alphas.T,X)*np.dot(phi.T,np.dot(WTcs,phi))
+
+    if Tc > 1.e-12:
+        tau=temperature/Tc
+        magnetic_moment=np.dot(endmember_magnetic_moments, X) + np.dot(endmember_alphas.T,X)*np.dot(phi.T,np.dot(WBs,phi))
+        Gmag=_magnetic_gibbs(temperature, Tc, magnetic_moment, structural_parameter)
+
+        A = (518./1125.) + (11692./15975.)*((1./structural_parameter) - 1.)
+        if tau < 1: 
+            f=1.-(1./A)*(79./(140.*structural_parameter*tau) + (474./497.)*(1./structural_parameter - 1.)*(np.power(tau, 3.)/6. + np.power(tau, 9.)/135. + np.power(tau, 15.)/600.))
+        else:
+            f=-(1./A)*(np.power(tau,-5)/10. + np.power(tau,-15)/315. + np.power(tau, -25)/1500.)
+        b=(474./497.)*(1./structural_parameter - 1.)
+        a=[-79./(140.*structural_parameter), -b/6., -b/135., -b/600., -1./10., -1./315., -1./1500.]
+            
+        # Now calculate local change in B, Tc with respect to X_1
+        # Endmember excesses
+            
+        dtaudtc=-temperature/(Tc*Tc)
+        if tau < 1: 
+            dfdtau=(1./A)*(-a[0]/(tau*tau) + 3.*a[1]*np.power(tau, 2.) + 9.*a[2]*np.power(tau, 8.) + 15.*a[3]*np.power(tau, 14.))
+        else:
+            dfdtau=(1./A)*(-5.*a[4]*np.power(tau,-6) - 15.*a[5]*np.power(tau,-16) - 25.*a[6]*np.power(tau, -26))
+    else:
+        Gmag=dfdtau=dtaudtc=magnetic_moment=f=0.0
+            
+    partial_B=np.zeros(len(X))
+    partial_Tc=np.zeros(len(X))
+    endmember_Gmag=np.zeros(len(X))
+    for l in range(len(X)):
+        if endmember_tcs[l] > 1.e-12:
+            endmember_Gmag[l] = _magnetic_gibbs(temperature, endmember_tcs[l], endmember_magnetic_moments[l], structural_parameter)
+
+        q=np.array([kd(i,l)-phi[i] for i in range(len(X))])
+        partial_B[l]=endmember_magnetic_moments[l]-endmember_alphas[l]*np.dot(q,np.dot(WBs,q))
+        partial_Tc[l]=endmember_tcs[l]-endmember_alphas[l]*np.dot(q,np.dot(WTcs,q))
+
+    tc_diff = partial_Tc - Tc
+    magnetic_moment_diff= partial_B - magnetic_moment
+
+    dGdXdist=constants.gas_constant*temperature*(magnetic_moment_diff*f/(magnetic_moment + 1.) + dfdtau*dtaudtc*tc_diff*np.log(magnetic_moment + 1.))
+
+    endmember_contributions=np.dot(endmember_Gmag, X) 
+
+    # Calculate partials
+    return Gmag - endmember_contributions + dGdXdist, Gmag - endmember_contributions
+
+endmember_magnetic_moments=np.array([2.2, 1.1, 0.0])
+endmember_tcs=np.array([1043., 521.5, 0.])
+endmember_alphas=np.array([1.0, 1.0, 1.0])
+WBs = np.array([[0.0, 0.0, 0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]])
+WTcs = np.array([[0.0, 0.0, 0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]])
+structural_parameter=0.4
 
 '''
 
@@ -65,20 +148,19 @@ def eqm_order(Q, X, T, m, n, DeltaH, W): # Wab, Wao, Wbo
     Kd=(1.-pa)*(1.-pb)/(pa*pb)
     return A + B*Q + C*X + m*n*R*T*np.log(Kd)
 
-'''
+
 
 # Test diopside jadeite
 X=0.5
 m=1.
 n=1.
 DeltaH=-6000.
-W=[26000., 16000., 16000.]
+W=[26000., 16000., 16000.] # convergent ordering
 
 temperatures=np.linspace(373.15, 1373.15, 101)
 order=np.empty_like(temperatures)
 for i, T in enumerate(temperatures):
     order[i]=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))
-
 
 plt.plot( temperatures, order, linewidth=1, label='order')
 plt.title('FeSi ordering')
@@ -86,48 +168,143 @@ plt.xlabel("Temperature")
 plt.ylabel("Order")
 plt.legend(loc='upper right')
 plt.show()
-'''
 
 '''
-class dummy (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'dummy endmember',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': 0 ,
-            'S_0': 0 ,
-            'V_0': 1.e-5 ,
-            'Cp': [0, 0, 0, 0] ,
-            'a_0': 0. ,
-            'K_0': 100.e9 ,
-            'Kprime_0': 4. ,
-            'Kdprime_0': 0. ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-        Mineral.__init__(self)
+# Check correct activity calculation
+def rt_activity_b(X, T):
+    Q=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))
+    po=Q
+    pa=1. - X - 0.5*Q
+    pb=X - 0.5*Q
+    RTlngSi=pa*(1.-pb)*W[0] - pa*po*W[1] + (1.-pb)*po*W[2]
+    RTlnaidealSi=constants.gas_constant*T*np.log(pb*(1.-pa))
+    
+    return np.sqrt(np.exp((RTlngSi + RTlnaidealSi)/(constants.gas_constant*T)))
 
-class dummy_2 (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'dummy endmember',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -6000. ,
-            'S_0': 0 ,
-            'V_0': 1.e-5 ,
-            'Cp': [0, 0, 0, 0] ,
-            'a_0': 0. ,
-            'K_0': 100.e9 ,
-            'Kprime_0': 4. ,
-            'Kdprime_0': 0. ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-        Mineral.__init__(self)
+compositions=np.linspace(0.001, 0.09, 20)
+rtactivity_4=np.empty_like(compositions)
+rtactivity_6=np.empty_like(compositions)
+rtactivity_8=np.empty_like(compositions)
+rtactivity_10=np.empty_like(compositions)
+for i, X in enumerate(compositions):
+    rtactivity_4[i]=rt_activity_b(X, 4000/constants.gas_constant)
+    rtactivity_6[i]=rt_activity_b(X, 6000/constants.gas_constant)
+    rtactivity_8[i]=rt_activity_b(X, 8000/constants.gas_constant)
+    rtactivity_10[i]=rt_activity_b(X, 10000/constants.gas_constant)
+
+fig1 = mpimg.imread('data/a-x_ordering_Holland_Powell_fig3.png')
+plt.imshow(fig1, extent=[0,1,0,1], aspect='auto')
+plt.plot( compositions, rtactivity_4, linewidth=1, label='4')
+plt.plot( compositions, rtactivity_6, linewidth=1, label='6')
+plt.plot( compositions, rtactivity_8, linewidth=1, label='8')
+plt.plot( compositions, rtactivity_10, linewidth=1, label='10')
+plt.title('FeSi ordering')
+plt.xlabel("Compositions")
+plt.ylabel("Sqrt activity")
+plt.legend(loc='upper right')
+plt.show()
+'''
+
+# Convergent ordering for B2:
+m=n=0.5
+
+X0=0.2
+Tc0=1673.15 # X=0.2
+
+'''
+X=0.5
+Tc=Tc0*(X*(1.-X))/(X0*(1.-X0)) # convert critical temperature
+W[0]=-45.8e3
+#W[0]=-43.5e3
+B = -constants.gas_constant*Tc # (X=0.5)
+# B = (0.5*Wab - Wao - Wbo) = (0.5*Wab - 2.0*Wao)
+
+W[1] = (0.5*W[0] - B)/2.0
+W[2] = W[1]
+DeltaH=0.5*W[0] - W[1] # A+CX = 0, thus A=0
+
+print DeltaH, W, B, Tc 
+'''
+
+Si_activity_data=[]
+for line in open('data/Sakao_Elliott_1975_activity_coeff_Si_bcc.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        Si_activity_data.append(map(float,content))
+
+Si_activity_data = zip(*Si_activity_data)
+
+def activity_coefficient_Si(X, T, m, n, DeltaH, W):
+    Q=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
+    po=Q
+    pa=1. - X - 0.5*Q
+    pb=X - 0.5*Q
+    RTlngSi=pa*(1.-pb)*W[0] - pa*po*W[1] + (1.-pb)*po*W[2]
+
+    magnetic_Si_activity_contribution=magnetic([1.-X, 0., X], endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter,T)[0][2]
+
+    #RTlnaidealSi=0.5*constants.gas_constant*T*np.log(pb*(1.-pa))
+    
+    #return (RTlngSi + RTlnaidealSi)/(constants.gas_constant*T)
+    return (RTlngSi+magnetic_Si_activity_contribution)/(constants.gas_constant*T)
+
+
+def fit_Ws(data, Wh, Ws):
+    RTlngSi=[]
+    for datum in data:
+        T, X = datum
+        W = [Wh - T*Ws, 0., 0.] 
+        DeltaH = 0.5*W[0]
+        RTlngSi.append(activity_coefficient_Si(X, T, m, n, DeltaH, W))
+    return np.array(RTlngSi)
+        
+temperatures = Si_activity_data[0]
+compositions = Si_activity_data[1]
+
+xdata= zip(*[temperatures, compositions])
+ydata = np.array(Si_activity_data[2])
+
+
+popt, pcov = optimize.curve_fit(fit_Ws, xdata, ydata)
+Wh, Ws = popt
+
+print 'Interaction parameters:', Wh, Ws
+
+plt.plot( Si_activity_data[1], Si_activity_data[2], marker='.', linestyle='none', label='Sakao and Elliott, 1975')
+
+compositions=np.linspace(0.01, 0.09, 20)
+lnactivity=np.empty_like(compositions)
+for T in [1373.15, 1473.15, 1573.15, 1623.15]:
+    for i, X in enumerate(compositions):
+        W = [Wh - T*Ws, 0., 0.] 
+        DeltaH = 0.5*W[0]
+        lnactivity[i]=activity_coefficient_Si(X, T, m, n, DeltaH, W)
+    plt.plot( compositions, lnactivity, linewidth=1, label=str(T)+' K')
+
+
+plt.title('FeSi ordering')
+plt.xlabel("Composition")
+plt.ylabel("log gamma_Si")
+plt.legend(loc='lower right')
+plt.show()
+
+
+temperatures=np.linspace(Tc0-50., Tc0+50., 101)
+order=np.empty_like(temperatures)
+X=0.2
+m=n=0.5
+for i, T in enumerate(temperatures):
+    W = [Wh - T*Ws, 0., 0.] 
+    DeltaH = 0.5*W[0]
+    order[i]=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
+
+plt.plot( temperatures, order, linewidth=1, label='order')
+plt.title('FeSi ordering')
+plt.xlabel("Temperature")
+plt.ylabel("Order")
+plt.legend(loc='upper right')
+plt.show()
+
 
 
 from burnman.solidsolution import SolidSolution
@@ -138,78 +315,65 @@ atomic_masses=read_masses()
 class bcc_Fe_Si(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='BCC Fe-Si solid solution'
-        endmembers = [[dummy(), '[Fe][Fe]'],[dummy_2(), '[Fe][Si]'],[dummy(), '[Si][Si]']]
-        enthalpy_interaction=[[16.e3, 26.e3],[16.e3]]
+        structural_parameter=0.4
+        magnetic_moments=[2.22, 1.11, 0.0]
+        Tcs=[1043., 521.5, 0.]
+        magnetic_moment_excesses=[[0., 0.], [0.]]
+        Tc_excesses=[[0., 0.], [0.]]
+        magnetic_parameters=[structural_parameter, magnetic_moments, Tcs, magnetic_moment_excesses, Tc_excesses]
+
+        endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), '[Fe]0.5[Fe]0.5'],[minerals.Fe_Si_O.FeSi_B2(), '[Fe]0.5[Si]0.5'],[minerals.Fe_Si_O.Si_bcc_A2(), '[Si]0.5[Si]0.5']]
+        enthalpy_interaction=[[0.e3, -60.e3],[0.e3]]
+        entropy_interaction=[[0.e3, 0.e3],[0.e3]]
+        volume_interaction=[[0.e3, 0.e3],[0.e3]]
         burnman.SolidSolution.__init__(self, endmembers, \
-                                           burnman.solutionmodel.SymmetricRegularSolution(endmembers, enthalpy_interaction), molar_fractions)
+                                           burnman.solutionmodel.SymmetricRegularSolution_w_magnetism(endmembers, magnetic_parameters, enthalpy_interaction, volume_interaction, entropy_interaction), molar_fractions)
 
 
 bcc=bcc_Fe_Si()
 
-
-def eqm_order(Q, X, T):
-    bcc.set_composition()
-    bcc.set_state(1.e5, T)
-    return bcc.gibbs
+bcc.set_composition([0.9, 0.0, 0.1])
+bcc.set_state(1.e5, 1000.)
+print bcc.gibbs
 
 
-'''
+X=np.array([0.5, 0.0, 0.5])
+temperature=1273.15
 
 
-def eqm_order_2(order_parameters, deltaHs, Ws, X, T):
-    Q1, Q2 = order_parameters
-    deltaH0, deltaH1 = deltaHs
-    W=Ws
-
-# Proportions
-    p=[1.-X-0.5*Q1-0.75*Q2,Q2, Q1, X-0.5*Q1-0.25*Q2]
-    
-# Non ideal activities
-    RTlng=[0., 0., 0., 0.]
-    RTlng[0] = (1-p[0])*(-p[1]*W[0][1] - p[2]*W[0][2] - p[3]*W[0][3]) -p[1]*(-p[2]*W[1][2] - p[3]*W[1][3]) - p[2]*(-p[3]*W[2][3])
-    RTlng[1] = (1-p[1])*(-p[2]*W[1][2] - p[3]*W[1][3] - p[0]*W[0][1]) -p[2]*(-p[3]*W[2][3] - p[0]*W[0][2]) - p[3]*(-p[0]*W[0][3])
-    RTlng[2] = (1-p[2])*(-p[3]*W[2][3] - p[0]*W[0][2] - p[1]*W[1][2]) -p[3]*(-p[0]*W[0][3] - p[1]*W[1][3]) - p[0]*(-p[1]*W[0][1])
-    RTlng[3] = (1-p[3])*(-p[0]*W[0][3] - p[1]*W[1][3] - p[2]*W[2][3]) -p[0]*(-p[1]*W[0][1] - p[2]*W[0][2]) - p[1]*(-p[2]*W[1][2])
-
-    XAFe=1. - X + 0.5*Q1 + 0.25*Q2
-    XBFe=1. - X - 0.5*Q1 + 0.25*Q2
-    XCFe=1. - X - 0.5*Q1 - 0.75*Q2
-
-    XASi=1.-XAFe
-    XBSi=1.-XBFe
-    XCSi=1.-XCFe
-
-    lnKd0=(1./8.)*np.log((XAFe*XAFe*XBSi*XCSi)/(XASi*XASi*XBFe*XCFe))
-    
-    lnKd1=(1./16.)*np.log((XAFe*XAFe*XBFe*XCSi*XCSi*XCSi)/(XASi*XASi*XBSi*XCFe*XCFe*XCFe))
-
-    # mu_i = G_i + RTlna
-    
-    # 0 = Fe0.5Si0.5 - 0.5 Fe - 0.5 Si
-    # deltaH = H_reaction
-    eqn0=deltaH0 - (RTlng[2] - 0.5*RTlng[0] - 0.5*RTlng[3]) + R*T*lnKd0
-    eqn1=deltaH1 - (RTlng[1] - 0.75*RTlng[0] - 0.25*RTlng[3]) + R*T*lnKd1
-
-    return [eqn0, eqn1]
-
-# Fe, Fe3Si, FeSi, Si
-Ws=[[0., 0., 16000., 26000.],[0., 0., 0., 0.],[0., 0., 0., 16000.]]
-deltaHs=[-6000., -6000.]
-T=2200.
-X=0.3
+compositions=np.linspace(0, 1, 101)
+val=np.empty_like(compositions)
+val2=np.empty_like(compositions)
+val3=np.empty_like(compositions)
+val4=np.empty_like(compositions)
+for i, X0 in enumerate(compositions):
+    X=np.array([X0, 1.-X0, 0.0]) # FeSi (ordered) to Fe
+    val[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]
+    X=np.array([0.5+X0/2., 0.0, 0.5-X0/2.]) # FeSi (disordered) to Fe
+    val2[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]
+    X=np.array([X0, 0.0, 1.0-X0]) # Si to Fe (disordered) 
+    val3[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]    
+    val4[i]=np.dot(np.array(bcc.solution_model._magnetic_excess_partial_gibbs( 1.e5, temperature, X)), X)
 
 
-# Test
-m=0.5
-n=0.5
-DeltaH=-6000.
-W=[26000., 16000., 16000.]
 
-order=optimize.fsolve(eqm_order, [0.599], args=(X, T, m, n, DeltaH, W))
-print eqm_order(order, X, T, m, n, DeltaH, W)
-print order
+plt.plot( compositions, val, 'g.', linewidth=1, label='FeSi (ordered) to Fe')
+plt.plot( compositions, val2, 'r-', linewidth=1, label='FeSi (disordered) to Fe')
+plt.plot( compositions, val3, 'b-', linewidth=1, label='Si to Fe')
+plt.plot( compositions, val4, 'b.', linewidth=1, label='Si to Fe, solution model')
+plt.title('Magnetic gibbs')
+plt.xlabel("X (Fe)")
+plt.ylabel("Magnetic gibbs contribution (J/mol)")
+plt.legend(loc='upper right')
+plt.show()
 
 
-order=optimize.fsolve(eqm_order_2, [0.999, 0.199], args=(deltaHs, Ws, X, T))
-print eqm_order_2(order, deltaHs, Ws, X, T)
-print order
+
+# Calculate Gibbs of the bcc phase at the composition and temperature of interest...
+
+# 1) Calculate equilibrium order
+# 2) Calculate gibbs
+# 3) Calculate activities
+
+
+
