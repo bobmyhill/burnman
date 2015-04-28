@@ -169,41 +169,7 @@ plt.ylabel("Order")
 plt.legend(loc='upper right')
 plt.show()
 
-'''
-# Check correct activity calculation
-def rt_activity_b(X, T):
-    Q=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))
-    po=Q
-    pa=1. - X - 0.5*Q
-    pb=X - 0.5*Q
-    RTlngSi=pa*(1.-pb)*W[0] - pa*po*W[1] + (1.-pb)*po*W[2]
-    RTlnaidealSi=constants.gas_constant*T*np.log(pb*(1.-pa))
-    
-    return np.sqrt(np.exp((RTlngSi + RTlnaidealSi)/(constants.gas_constant*T)))
 
-compositions=np.linspace(0.001, 0.09, 20)
-rtactivity_4=np.empty_like(compositions)
-rtactivity_6=np.empty_like(compositions)
-rtactivity_8=np.empty_like(compositions)
-rtactivity_10=np.empty_like(compositions)
-for i, X in enumerate(compositions):
-    rtactivity_4[i]=rt_activity_b(X, 4000/constants.gas_constant)
-    rtactivity_6[i]=rt_activity_b(X, 6000/constants.gas_constant)
-    rtactivity_8[i]=rt_activity_b(X, 8000/constants.gas_constant)
-    rtactivity_10[i]=rt_activity_b(X, 10000/constants.gas_constant)
-
-fig1 = mpimg.imread('data/a-x_ordering_Holland_Powell_fig3.png')
-plt.imshow(fig1, extent=[0,1,0,1], aspect='auto')
-plt.plot( compositions, rtactivity_4, linewidth=1, label='4')
-plt.plot( compositions, rtactivity_6, linewidth=1, label='6')
-plt.plot( compositions, rtactivity_8, linewidth=1, label='8')
-plt.plot( compositions, rtactivity_10, linewidth=1, label='10')
-plt.title('FeSi ordering')
-plt.xlabel("Compositions")
-plt.ylabel("Sqrt activity")
-plt.legend(loc='upper right')
-plt.show()
-'''
 
 # Convergent ordering for B2:
 m=n=0.5
@@ -270,23 +236,7 @@ Wh, Ws = popt
 
 print 'Interaction parameters:', Wh, Ws
 
-plt.plot( Si_activity_data[1], Si_activity_data[2], marker='.', linestyle='none', label='Sakao and Elliott, 1975')
 
-compositions=np.linspace(0.01, 0.09, 20)
-lnactivity=np.empty_like(compositions)
-for T in [1373.15, 1473.15, 1573.15, 1623.15]:
-    for i, X in enumerate(compositions):
-        W = [Wh - T*Ws, 0., 0.] 
-        DeltaH = 0.5*W[0]
-        lnactivity[i]=activity_coefficient_Si(X, T, m, n, DeltaH, W)
-    plt.plot( compositions, lnactivity, linewidth=1, label=str(T)+' K')
-
-
-plt.title('FeSi ordering')
-plt.xlabel("Composition")
-plt.ylabel("log gamma_Si")
-plt.legend(loc='lower right')
-plt.show()
 
 
 temperatures=np.linspace(Tc0-50., Tc0+50., 101)
@@ -323,8 +273,8 @@ class bcc_Fe_Si(burnman.SolidSolution):
         magnetic_parameters=[structural_parameter, magnetic_moments, Tcs, magnetic_moment_excesses, Tc_excesses]
 
         endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), '[Fe]0.5[Fe]0.5'],[minerals.Fe_Si_O.FeSi_B2(), '[Fe]0.5[Si]0.5'],[minerals.Fe_Si_O.Si_bcc_A2(), '[Si]0.5[Si]0.5']]
-        enthalpy_interaction=[[0.e3, -60.e3],[0.e3]]
-        entropy_interaction=[[0.e3, 0.e3],[0.e3]]
+        enthalpy_interaction=[[0.e3, -59.650e3],[0.e3]]
+        entropy_interaction=[[0.e3, -9.494],[0.e3]]
         volume_interaction=[[0.e3, 0.e3],[0.e3]]
         burnman.SolidSolution.__init__(self, endmembers, \
                                            burnman.solutionmodel.SymmetricRegularSolution_w_magnetism(endmembers, magnetic_parameters, enthalpy_interaction, volume_interaction, entropy_interaction), molar_fractions)
@@ -332,35 +282,45 @@ class bcc_Fe_Si(burnman.SolidSolution):
 
 bcc=bcc_Fe_Si()
 
-bcc.set_composition([0.9, 0.0, 0.1])
-bcc.set_state(1.e5, 1000.)
-print bcc.gibbs
 
 
-X=np.array([0.5, 0.0, 0.5])
-temperature=1273.15
+plt.plot( Si_activity_data[1], Si_activity_data[2], marker='.', linestyle='none', label='Sakao and Elliott, 1975')
+
+compositions=np.linspace(0.01, 0.09, 20)
+lnactivity=np.empty_like(compositions)
+for T in [1373.15, 1473.15, 1573.15, 1623.15]:
+    for i, X in enumerate(compositions):
+        bcc.set_composition([1.-X, 0.0, X])
+        bcc.set_state(1.e5, T)
+        lnactivity[i]=bcc.log_activity_coefficients[2]
+    plt.plot( compositions, lnactivity, linewidth=1, label=str(T)+' K')
 
 
+plt.title('FeSi ordering')
+plt.xlabel("Composition")
+plt.ylabel("log gamma_Si")
+plt.legend(loc='lower right')
+plt.show()
+
+
+
+temperature=1473.15
 compositions=np.linspace(0, 1, 101)
-val=np.empty_like(compositions)
+val1=np.empty_like(compositions)
 val2=np.empty_like(compositions)
 val3=np.empty_like(compositions)
-val4=np.empty_like(compositions)
 for i, X0 in enumerate(compositions):
-    X=np.array([X0, 1.-X0, 0.0]) # FeSi (ordered) to Fe
-    val[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]
-    X=np.array([0.5+X0/2., 0.0, 0.5-X0/2.]) # FeSi (disordered) to Fe
-    val2[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]
-    X=np.array([X0, 0.0, 1.0-X0]) # Si to Fe (disordered) 
-    val3[i]=magnetic(X, endmember_magnetic_moments, endmember_tcs, endmember_alphas, WBs, WTcs, structural_parameter, temperature)[1]    
-    val4[i]=np.dot(np.array(bcc.solution_model._magnetic_excess_partial_gibbs( 1.e5, temperature, X)), X)
+    X=[X0, 1.-X0, 0.0] # FeSi (ordered) to Fe
+    val1[i]=np.dot(np.array(bcc.solution_model._magnetic_excess_partial_gibbs( 1.e5, temperature, X)), np.array(X))
+    X=[0.5+X0/2., 0.0, 0.5-X0/2.] # FeSi (disordered) to Fe
+    val2[i]=np.dot(np.array(bcc.solution_model._magnetic_excess_partial_gibbs( 1.e5, temperature, X)), np.array(X))
+    X=[X0, 0.0, 1.0-X0] # Si to Fe (disordered)     
+    val3[i]=np.dot(np.array(bcc.solution_model._magnetic_excess_partial_gibbs( 1.e5, temperature, X)), np.array(X))
 
 
-
-plt.plot( compositions, val, 'g.', linewidth=1, label='FeSi (ordered) to Fe')
+plt.plot( compositions, val1, 'g-', linewidth=1, label='FeSi (ordered) to Fe')
 plt.plot( compositions, val2, 'r-', linewidth=1, label='FeSi (disordered) to Fe')
 plt.plot( compositions, val3, 'b-', linewidth=1, label='Si to Fe')
-plt.plot( compositions, val4, 'b.', linewidth=1, label='Si to Fe, solution model')
 plt.title('Magnetic gibbs')
 plt.xlabel("X (Fe)")
 plt.ylabel("Magnetic gibbs contribution (J/mol)")

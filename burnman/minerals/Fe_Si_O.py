@@ -13,8 +13,8 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 
 atomic_masses=read_masses()
 
-
-class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin...
+# Lacaze and Sundman (1991) suggest  0.5*Fe(nonmag) + 0.5*Si - 36380.6 + 2.22T
+class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin
     def __init__(self):
         formula='Fe1.0Si1.0'
         formula = dictionarize_formula(formula)
