@@ -169,7 +169,41 @@ plt.ylabel("Order")
 plt.legend(loc='upper right')
 plt.show()
 
+'''
+# Check correct activity calculation
+def rt_activity_b(X, T):
+    Q=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))
+    po=Q
+    pa=1. - X - 0.5*Q
+    pb=X - 0.5*Q
+    RTlngSi=pa*(1.-pb)*W[0] - pa*po*W[1] + (1.-pb)*po*W[2]
+    RTlnaidealSi=constants.gas_constant*T*np.log(pb*(1.-pa))
+    
+    return np.sqrt(np.exp((RTlngSi + RTlnaidealSi)/(constants.gas_constant*T)))
 
+compositions=np.linspace(0.001, 0.09, 20)
+rtactivity_4=np.empty_like(compositions)
+rtactivity_6=np.empty_like(compositions)
+rtactivity_8=np.empty_like(compositions)
+rtactivity_10=np.empty_like(compositions)
+for i, X in enumerate(compositions):
+    rtactivity_4[i]=rt_activity_b(X, 4000/constants.gas_constant)
+    rtactivity_6[i]=rt_activity_b(X, 6000/constants.gas_constant)
+    rtactivity_8[i]=rt_activity_b(X, 8000/constants.gas_constant)
+    rtactivity_10[i]=rt_activity_b(X, 10000/constants.gas_constant)
+
+fig1 = mpimg.imread('data/a-x_ordering_Holland_Powell_fig3.png')
+plt.imshow(fig1, extent=[0,1,0,1], aspect='auto')
+plt.plot( compositions, rtactivity_4, linewidth=1, label='4')
+plt.plot( compositions, rtactivity_6, linewidth=1, label='6')
+plt.plot( compositions, rtactivity_8, linewidth=1, label='8')
+plt.plot( compositions, rtactivity_10, linewidth=1, label='10')
+plt.title('FeSi ordering')
+plt.xlabel("Compositions")
+plt.ylabel("Sqrt activity")
+plt.legend(loc='upper right')
+plt.show()
+'''
 
 # Convergent ordering for B2:
 m=n=0.5
@@ -237,8 +271,6 @@ Wh, Ws = popt
 print 'Interaction parameters:', Wh, Ws
 
 
-
-
 temperatures=np.linspace(Tc0-50., Tc0+50., 101)
 order=np.empty_like(temperatures)
 X=0.2
@@ -273,16 +305,20 @@ class bcc_Fe_Si(burnman.SolidSolution):
         magnetic_parameters=[structural_parameter, magnetic_moments, Tcs, magnetic_moment_excesses, Tc_excesses]
 
         endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), '[Fe]0.5[Fe]0.5'],[minerals.Fe_Si_O.FeSi_B2(), '[Fe]0.5[Si]0.5'],[minerals.Fe_Si_O.Si_bcc_A2(), '[Si]0.5[Si]0.5']]
-        enthalpy_interaction=[[0.e3, -59.650e3],[0.e3]]
-        entropy_interaction=[[0.e3, -9.494],[0.e3]]
-        volume_interaction=[[0.e3, 0.e3],[0.e3]]
+        enthalpy_interaction=[[0.e3, -59650.],[0.e3]]
+        entropy_interaction=[[0.e3, -9.4943],[0.e3]]
+        volume_interaction=[[0.e3, ((7.31 - (9.2+7.09)/2.)*1.e-6)*4],[0.e3]] # V (Fe0.5Si0.5 dis) from Brosh et al., 2009, Pearson
         burnman.SolidSolution.__init__(self, endmembers, \
                                            burnman.solutionmodel.SymmetricRegularSolution_w_magnetism(endmembers, magnetic_parameters, enthalpy_interaction, volume_interaction, entropy_interaction), molar_fractions)
 
-
 bcc=bcc_Fe_Si()
 
-
+# Check that deltaH = 0.5*W[0]
+bcc.set_composition([0.0, 1.0, 0.0])
+temperatures=np.linspace(1000., 2000., 2)
+for T in temperatures:
+    bcc.set_state(1.e5, T)
+    print bcc.gibbs - (0.5*bcc.endmembers[0][0].gibbs + 0.5*bcc.endmembers[2][0].gibbs), (Wh - T*Ws)/2.
 
 plt.plot( Si_activity_data[1], Si_activity_data[2], marker='.', linestyle='none', label='Sakao and Elliott, 1975')
 
@@ -301,7 +337,6 @@ plt.xlabel("Composition")
 plt.ylabel("log gamma_Si")
 plt.legend(loc='lower right')
 plt.show()
-
 
 
 temperature=1473.15
@@ -328,7 +363,6 @@ plt.legend(loc='upper right')
 plt.show()
 
 
-
 # Calculate Gibbs of the bcc phase at the composition and temperature of interest...
 
 # 1) Calculate equilibrium order
@@ -336,4 +370,25 @@ plt.show()
 # 3) Calculate activities
 
 
+
+X=0.2
+temperatures=np.linspace(600., 2800., 101)
+order=np.empty_like(temperatures)
+m=n=0.5
+
+for i, T in enumerate(temperatures):
+    W = [Wh - T*Ws, 0., 0.]
+    bcc.set_composition([0.5, 0.0, 0.5])
+    bcc.set_state(1.e5, T)
+    DeltaH = bcc.endmembers[1][0].gibbs - 0.5*(bcc.endmembers[0][0].gibbs+bcc.endmembers[2][0].gibbs)
+    DeltaH -= bcc.endmembers[1][0].method._magnetic_gibbs(1.e5, T, bcc.endmembers[1][0].params) - 0.5*(bcc.endmembers[0][0].method._magnetic_gibbs(1.e5, T, bcc.endmembers[0][0].params))
+    order[i]=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
+
+
+plt.plot( temperatures, order, linewidth=1, label='order')
+plt.title('FeSi ordering')
+plt.xlabel("Temperature (K)")
+plt.ylabel("Order")
+plt.legend(loc='upper right')
+plt.show()
 
