@@ -492,6 +492,8 @@ class AsymmetricRegularSolution_w_magnetism (IdealSolution):
 
         return Gmag - endmember_contributions + XdGdX
 
+    def excess_magnetic_gibbs_free_energy( self, pressure, temperature, molar_fractions):
+        return np.dot(self._magnetic_excess_partial_gibbs(pressure, temperature, molar_fractions),molar_fractions)
 
     def excess_partial_gibbs_free_energies( self, pressure, temperature, molar_fractions ):
         ideal_gibbs = IdealSolution._ideal_excess_partial_gibbs (self, temperature, molar_fractions)

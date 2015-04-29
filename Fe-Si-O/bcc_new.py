@@ -323,18 +323,20 @@ class bcc_Fe_Si(burnman.SolidSolution):
         magnetic_parameters=[structural_parameter, magnetic_moments, Tcs, magnetic_moment_excesses, Tc_excesses]
 
         endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), '[Fe]0.5[Fe]0.5'],[minerals.Fe_Si_O.FeSi_B2(), '[Fe]0.5[Si]0.5'],[minerals.Fe_Si_O.Si_bcc_A2(), '[Si]0.5[Si]0.5']]
-        enthalpy_interaction=[[0.e3, -60.e3],[0.e3]]
-        entropy_interaction=[[0.e3, 0.e3],[0.e3]]
-        volume_interaction=[[0.e3, 0.e3],[0.e3]]
+        enthalpy_interaction=[[0.e3, -59650.],[0.e3]]
+        entropy_interaction=[[0.e3, -9.4943],[0.e3]]
+        volume_interaction=[[0.e3, ((7.31 - (9.2+7.09)/2.)*1.e-6)*4],[0.e3]] # V (Fe0.5Si0.5 dis) from Brosh et al., 2009, Pearson
         burnman.SolidSolution.__init__(self, endmembers, \
                                            burnman.solutionmodel.SymmetricRegularSolution_w_magnetism(endmembers, magnetic_parameters, enthalpy_interaction, volume_interaction, entropy_interaction), molar_fractions)
 
-
 bcc=bcc_Fe_Si()
 
-bcc.set_composition([0.9, 0.0, 0.1])
-bcc.set_state(1.e5, 1000.)
-print bcc.gibbs
+# Check that deltaH = 0.5*W[0]
+bcc.set_composition([0.0, 1.0, 0.0])
+temperatures=np.linspace(1000., 2000., 2)
+for T in temperatures:
+    bcc.set_state(1.e5, T)
+    print bcc.gibbs - (0.5*bcc.endmembers[0][0].gibbs + 0.5*bcc.endmembers[2][0].gibbs), (Wh - T*Ws)/2.
 
 
 X=np.array([0.5, 0.0, 0.5])
@@ -376,4 +378,24 @@ plt.show()
 # 3) Calculate activities
 
 
+
+X=0.15
+temperatures=np.linspace(600., 2800., 101)
+order=np.empty_like(temperatures)
+m=n=0.5
+
+for i, T in enumerate(temperatures):
+    W = [Wh - T*Ws, 0., 0.]
+    bcc.set_composition([0.5, 0.0, 0.5])
+    bcc.set_state(1.e5, T)
+    DeltaH = bcc.endmembers[1][0].gibbs - (0.5*(bcc.endmembers[0][0].gibbs+bcc.endmembers[2][0].gibbs) + bcc.excess_magnetic_gibbs)
+    order[i]=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
+
+
+plt.plot( temperatures, order, linewidth=1, label='order')
+plt.title('FeSi ordering')
+plt.xlabel("Temperature (K)")
+plt.ylabel("Order")
+plt.legend(loc='upper right')
+plt.show()
 
