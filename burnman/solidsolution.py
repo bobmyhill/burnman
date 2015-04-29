@@ -7,7 +7,7 @@ import numpy as np
 from burnman import Mineral
 from solutionmodel import SolutionModel
 from solutionmodel import kd
-
+import constants
 
 class SolidSolution(Mineral):
     """
@@ -122,6 +122,8 @@ class SolidSolution(Mineral):
         self.partial_gibbs = np.array([self.endmembers[i][0].gibbs for i in range(self.n_endmembers)]) + self.excess_partial_gibbs
         self.gibbs= sum([ self.endmembers[i][0].gibbs * self.molar_fractions[i] for i in range(self.n_endmembers) ]) + self.excess_gibbs
         self.excess_magnetic_gibbs= self.solution_model.excess_magnetic_gibbs_free_energy( pressure, temperature, self.molar_fractions)
+
+        self.log_activity_coefficients = self.solution_model._non_ideal_excess_partial_gibbs( pressure, temperature, self.molar_fractions)/(constants.gas_constant*temperature)
 
         self.excess_enthalpy = self.solution_model.excess_enthalpy( pressure, temperature, self.molar_fractions)
         self.excess_entropy = self.solution_model.excess_entropy( pressure, temperature, self.molar_fractions)

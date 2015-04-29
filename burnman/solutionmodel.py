@@ -418,7 +418,10 @@ class AsymmetricRegularSolution_w_magnetism (IdealSolution):
     def _non_ideal_excess_partial_gibbs( self, pressure, temperature, molar_fractions) :
 
         Hint, Sint, Vint = self._non_ideal_interactions( molar_fractions )
-        return Hint - temperature*Sint + pressure*Vint
+
+        magnetic_gibbs = self._magnetic_excess_partial_gibbs(pressure, temperature, molar_fractions)  
+
+        return Hint - temperature*Sint + pressure*Vint + magnetic_gibbs
 
     def _magnetic_params(self, structural_parameter):
         A = (518./1125.) + (11692./15975.)*((1./structural_parameter) - 1.)
@@ -497,9 +500,8 @@ class AsymmetricRegularSolution_w_magnetism (IdealSolution):
 
     def excess_partial_gibbs_free_energies( self, pressure, temperature, molar_fractions ):
         ideal_gibbs = IdealSolution._ideal_excess_partial_gibbs (self, temperature, molar_fractions)
-        non_ideal_gibbs = self._non_ideal_excess_partial_gibbs(pressure, temperature, molar_fractions)
-        magnetic_gibbs = self._magnetic_excess_partial_gibbs(pressure, temperature, molar_fractions)    
-        return ideal_gibbs + non_ideal_gibbs + magnetic_gibbs
+        non_ideal_gibbs = self._non_ideal_excess_partial_gibbs(pressure, temperature, molar_fractions)  
+        return ideal_gibbs + non_ideal_gibbs
 
     def excess_volume ( self, pressure, temperature, molar_fractions ):
         phi=self._phi(molar_fractions)
