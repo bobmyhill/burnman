@@ -25,7 +25,7 @@ class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin
             'H_0': -78852. , # Barin
             'S_0': 44.685 , # Barin
             'V_0': 1.359e-05 ,
-            'Cp': [38.6770e+01, 0.0217569, -159.151, 0.0060376],
+            'Cp': [38.6770, 0.0217569, -159.151, 0.00586],
             'a_0': 2.811e-05 ,
             'K_0': 2.057e+11 ,
             'Kprime_0': 4.0 ,

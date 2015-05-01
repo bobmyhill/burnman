@@ -39,7 +39,6 @@ voltoa=1.e30
 Z_B2=1. # Fm-3m
 Z_B20=4. # P2_13
 
-
 '''
 Now we read in Fischer et al. PVT data for the B20 and B2 FeSi polymorphs
 '''
