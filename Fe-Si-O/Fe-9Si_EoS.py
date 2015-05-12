@@ -37,11 +37,10 @@ class dummy (Mineral):
             'S_0': 18.820 + 20.8, # Barin, SGTE data
             'V_0': 7.0e-06 , # hcp Fe is 6.766e-06, Si is 8.8e-6
             'Cp': [22.826, 0.003856857, -353888.416, -0.0596068], # Barin
-            'a_0': 7.757256e-06 , # Fit to Roberts, 1981
-            'T_einstein': 764., # Fit to Roberts, 1981
+            'a_0': 7.757256e-06 ,
             'K_0': 57.44e9 , # 72 = Duclos et al 
-            'Kprime_0': 5.87 , # Fit to Mujica et al. # 3.9 for Duclos et al 
-            'Kdprime_0': -5.87/57.44e9 , # Duclos et al 
+            'Kprime_0': 5.28 , # Fit to Mujica et al. # 3.9 for Duclos et al 
+            'Kdprime_0': -5.28/57.44e9 , # Duclos et al 
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
