@@ -32,7 +32,9 @@ N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar ex
 bcc=Myhill_calibration_iron.bcc_iron()
 fcc=Myhill_calibration_iron.fcc_iron()
 
-
+bcc.set_state(Pr, 1000.)
+fcc.set_state(Pr, 1000.)
+print bcc.gibbs, fcc.gibbs
 
 temperatures=np.linspace(300., 2000., 101)
 bcc_gibbs=np.empty_like(temperatures)
