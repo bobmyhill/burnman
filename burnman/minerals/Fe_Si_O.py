@@ -26,7 +26,7 @@ class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin
             'S_0': 44.685 , # Barin
             'V_0': 1.359e-05 ,
             'Cp': [38.6770, 0.0217569, -159.151, 0.00586],
-            'a_0': 2.811e-05 ,
+            'a_0': 3.057e-05 ,
             'K_0': 2.057e+11 ,
             'Kprime_0': 4.0 ,
             'Kdprime_0': -4.0/2.057e+11 ,
@@ -47,10 +47,10 @@ class FeSi_B2 (Mineral): # enthalpy and entropy calculated from A2-structured Fe
             'equation_of_state': 'hp_tmt',
             'H_0': (9149.0 + 47000.)/2. -59650/2., # includes enthalpy of ordering
             'S_0': (36.868 + 18.820 + 22.5)/2. -9.4943/2., # includes entropy of ordering
-            'V_0': 1.300e-05/2. ,
+            'V_0': 1.298e-05/2. ,
             'Cp': [(21.09 + 22.826)/2., (0.0101455 + 0.003856857)/2., (-221508.+-353888.416)/2., (47.1947 + -0.0596068)/2.],
-            'a_0': 3.064e-05 ,
-            'K_0': 2.199e+11 ,
+            'a_0': 3.580e-05 ,
+            'K_0': 2.208e+11 ,
             'Kprime_0': 4.0 ,
             'Kdprime_0': -4.0/2.199e+11 ,
             'n': sum(formula.values()),

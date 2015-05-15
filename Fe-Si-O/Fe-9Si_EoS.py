@@ -110,12 +110,30 @@ covera_err_hcp=np.array(covera_err_hcp)
 V_hcp=(np.sqrt(3.)/2.)*a_hcp*a_hcp*a_hcp*covera_hcp*(nA/Z_hcp/voltoa)
 Verr_hcp=V_hcp*(np.sqrt(3.)/2.)*np.sqrt((3.*a_err_hcp/a_hcp)*(3.*a_err_hcp/a_hcp)+(covera_err_hcp/covera_hcp)*(covera_err_hcp/covera_hcp))
 
-
+'''
 # Guesses
 guesses=[Fe9Si_hcp.params['V_0'], Fe9Si_hcp.params['K_0'], Fe9Si_hcp.params['a_0']]
 
 popt, pcov = optimize.curve_fit(fit_PVT_data(Fe9Si_hcp), PT_hcp, V_hcp, guesses, Verr_hcp)
 print 'HCP params:', popt
+'''
+
+def fit_excess_V(data, Vex):
+    V = []
+
+    for datum in data:
+        P, T = datum
+        Si_hcp.set_state(P, T)
+        Fe_hcp.set_state(P, T)
+        V.append(Fe_hcp.V*composition[0] + Si_hcp.V*composition[1] + Vex*composition[0]*composition[1])
+    return V
+
+guesses=[0.0]
+popt, pcov = optimize.curve_fit(fit_excess_V, zip(*PT_hcp), V_hcp, guesses, Verr_hcp)
+
+Vex_hcp=popt[0]
+Vex_hcp_err=np.sqrt(pcov[0][0])
+print Vex_hcp, '+/-', Vex_hcp_err
 
 diff=np.empty_like(V_hcp)
 for i, P in enumerate(P_hcp):
@@ -124,7 +142,7 @@ for i, P in enumerate(P_hcp):
     Si_hcp.set_state(P, T)
     Fe_hcp.set_state(P, T)
 
-    diff[i]=(Fe9Si_hcp.V - (Fe_hcp.V*composition[0] + Si_hcp.V*composition[1]))/Fe9Si_hcp.V
+    diff[i]=(Fe_hcp.V*composition[0] + Si_hcp.V*composition[1] + Vex_hcp*composition[0]*composition[1]) - V_hcp[i]
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -135,12 +153,34 @@ ax = fig.add_subplot(111, projection='3d')
 
 ax.scatter(P_hcp/1.e9, T_hcp, diff, c='r', marker='o')
 
-ax.set_xlabel('P')
-ax.set_ylabel('T')
-ax.set_zlabel('Fractional volume difference')
+ax.set_xlabel('P (GPa)')
+ax.set_ylabel('T (K)')
+ax.set_zlabel('Volume difference (m^3/mol)')
 
 plt.show()
 
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.scatter(P_hcp/1.e9, T_hcp, diff/Verr_hcp, c='r', marker='o')
+
+ax.set_xlabel('P (GPa)')
+ax.set_ylabel('T (K)')
+ax.set_zlabel('(Model-Obs)/uncertainty')
+
+plt.show()
+
+'''
+plt.plot(P_hcp, diff/Verr_hcp, marker='.', linestyle='none', label='Fe-9Si HCP')
+plt.xlabel("P (GPa)")
+plt.ylabel("(Model-Obs)/uncertainty")
+plt.legend(loc='lower right')
+plt.title('Volume difference (m^3/mol)')
+plt.show()
+'''
+
+'''
 # HCP Si data in Hu et al., 1986
 P=41.5e9
 T=300.
@@ -156,3 +196,34 @@ Si_hcp.set_state(P, T)
 a=2.444
 b=4.152
 print a*a*b*np.sqrt(3)/2.*(nA/Z_hcp/voltoa),  Si_hcp.V
+'''
+
+
+
+
+# Check for FeSi volumes
+FeSi_B2=minerals.Fe_Si_O.FeSi_B2()
+FeSi_B20=minerals.Fe_Si_O.FeSi_B20()
+
+T=2500. # K
+pressures=np.linspace(1.e5, 200.e9, 101)
+B2_volume=[]
+B20_volume=[]
+HCP_volume=[]
+for P in pressures:
+    FeSi_B2.set_state(P, T)
+    FeSi_B20.set_state(P, T)
+    Si_hcp.set_state(P, T)
+    Fe_hcp.set_state(P, T)
+    B2_volume.append(FeSi_B2.V)
+    B20_volume.append(FeSi_B20.V/2.)
+    HCP_volume.append(Fe_hcp.V*0.5 + Si_hcp.V*0.5 + Vex_hcp*0.25)
+
+plt.plot(pressures/1.e9, B20_volume, linewidth=1, label='B20')
+plt.plot(pressures/1.e9, B2_volume, linewidth=1, label='B2')
+plt.plot(pressures/1.e9, HCP_volume, linewidth=1, label='HCP')
+plt.xlabel("P (GPa)")
+plt.ylabel("Volume (m^3/mol)")
+plt.legend(loc='lower right')
+plt.title('FeSi volumes')
+plt.show()

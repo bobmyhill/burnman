@@ -438,10 +438,10 @@ def equilibrium_boundary_P(mineral1, mineral2):
 
 
 def fit_H_S(mineral1, mineral2):
-    def find_H_S(data, a, K):
+    def find_H_S(data, a):
 
         mineral1.params['a_0']= a
-        mineral2.params['K_0']= K
+        #mineral2.params['K_0']= K
         calc_temperatures=[]
         for datum in data:
             volume=datum[0]
@@ -458,14 +458,14 @@ print "S0: ", fcc.params['S_0'], "J/K/mol"
 
 
 hcp.params['S_0']= 30.7 # To match phase boundary
-guesses=np.array([hcp.params['a_0'], fcc.params['K_0']])
+guesses=np.array([hcp.params['a_0']])
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
 
 print ''
-print 'Fitted HCP parameters'
-print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
-print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
+print 'Fitted parameters'
+print "a0 (HCP): ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
+#print "K0 (FCC): ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
 print popt
 
 '''
@@ -490,6 +490,10 @@ bcc_fcc_temperatures=np.empty_like(bcc_fcc_pressures)
 for i, pressure in enumerate(bcc_fcc_pressures):
     bcc_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(bcc, fcc), 1000., args=(pressure))[0]
 
+delta_fcc_pressures=np.linspace(1.e5, 10.e9, 21)
+delta_fcc_temperatures=np.empty_like(delta_fcc_pressures)
+for i, pressure in enumerate(delta_fcc_pressures):
+    delta_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(bcc, fcc), 1600., args=(pressure))[0]
 
 bcc_hcp_temperatures=np.linspace(300., 870., 21)
 bcc_hcp_pressures=np.empty_like(bcc_hcp_temperatures)
@@ -527,6 +531,7 @@ out_temperatures=np.array(out_temperatures)
 out_temperature_error=np.array(out_temperature_error)
 
 plt.plot( bcc_fcc_pressures/1.e9, bcc_fcc_temperatures, 'b-', linewidth=1, label='BCC-FCC transition')
+plt.plot( delta_fcc_pressures/1.e9, delta_fcc_temperatures, 'b-', linewidth=1, label='BCC-FCC transition')
 plt.plot( bcc_hcp_pressures/1.e9, bcc_hcp_temperatures, 'b-', linewidth=1, label='BCC-HCP transition')
 plt.plot( hcp_fcc_pressures/1.e9, hcp_fcc_temperatures, 'b-', linewidth=1, label='FCC-HCP transition')
 plt.plot( in_pressures/1.e9, in_temperatures, marker=".", linestyle="None", label='in')
@@ -539,6 +544,14 @@ plt.xlabel("Pressure (GPa)")
 plt.ylim(300., 2700.)
 plt.legend(loc='lower right')
 plt.show()
+
+
+np.savetxt('bcc-fcc.dat', zip(*[bcc_fcc_pressures/1.e9, bcc_fcc_temperatures]))
+np.savetxt('delta-fcc.dat', zip(*[delta_fcc_pressures/1.e9, delta_fcc_temperatures]))
+np.savetxt('bcc-hcp.dat', zip(*[bcc_hcp_pressures/1.e9, bcc_hcp_temperatures]))
+np.savetxt('hcp-fcc.dat', zip(*[hcp_fcc_pressures/1.e9, hcp_fcc_temperatures]))
+np.savetxt('fcc_in.dat', zip(*[in_pressures/1.e9, in_temperatures, in_temperature_error]))
+np.savetxt('fcc_out.dat', zip(*[out_pressures/1.e9, out_temperatures, out_temperature_error]))
 
 '''
 Finally, let's print our updated mineral classes

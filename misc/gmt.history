@@ -1,0 +1,8 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.1.2
+B	20f10:Pressure (GPa):/500f100:Temperature (K):SWen
+J	X
+JX	X12/10
+R	0/80/300/2700
+L	7
+END
