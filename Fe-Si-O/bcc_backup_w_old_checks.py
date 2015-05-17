@@ -78,6 +78,8 @@ print DeltaH, W, B, Tc
 '''
 
 
+print 'WARNING, STILL NEED TO SET MIXING PARAMETERS VALUES IN SOLUTION MODEL'
+
 '''
 # First, we fit the activity data to simple symmetric disordered mixing between Fe and Si
 # (Q is zero at the low Si contents and high temperatures of Sakao and Elliott)
@@ -90,9 +92,10 @@ for line in open('data/Sakao_Elliott_1975_activity_coeff_Si_bcc.dat'):
         Si_activity_data.append(map(float,content))
 Si_activity_data = zip(*Si_activity_data)
 
+dH = -81000./2.
 Wh = -59670.9616111 
 Ws = -9.50500004066
-
+Whod = (Wh/2. - dH)
 
 def eqm_order(Q, X, T, m, n, DeltaH, W): # Wab, Wao, Wbo
 
@@ -140,28 +143,8 @@ popt, pcov = optimize.curve_fit(fit_Ws, xdata, ydata)
 Wh, Ws = popt
 
 print 'Interaction parameters:', Wh, Ws
-
-
 '''
-# Plot the equilibrium state of order assuming perfectly symmetric convergent ordering
-'''
-Tc0=1673.15
-temperatures=np.linspace(Tc0-50., Tc0+50., 101)
-order=np.empty_like(temperatures)
-X=0.2
-m=n=0.5
-for i, T in enumerate(temperatures):
-    W = [Wh - T*Ws, 0., 0.] 
-    DeltaH = 0.5*W[0]
-    order[i]=optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
 
-plt.plot( temperatures, order, linewidth=1, label='order')
-plt.title('FeSi ordering')
-plt.xlabel("Temperature")
-plt.ylabel("Order")
-plt.legend(loc='upper right')
-plt.show()
-'''
 
 '''
 Now we can make the bcc solid solution
@@ -179,22 +162,57 @@ class bcc_Fe_Si(burnman.SolidSolution):
         magnetic_parameters=[structural_parameter, magnetic_moments, Tcs, magnetic_moment_excesses, Tc_excesses]
 
         endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), '[Fe]0.5[Fe]0.5'],[minerals.Fe_Si_O.FeSi_B2(), '[Fe]0.5[Si]0.5'],[minerals.Fe_Si_O.Si_bcc_A2(), '[Si]0.5[Si]0.5']]
-        enthalpy_interaction=[[0.e3, -59670.],[0.e3]]
-        entropy_interaction=[[0.e3, -9.505],[0.e3]]
+        enthalpy_interaction=[[Whod, Wh],[Whod]]
+        entropy_interaction=[[0.e3, Ws],[0.e3]]
         volume_interaction=[[0., 0.],[0.]] # [[0.e3, ((7.31 - (9.2+7.09)/2.)*1.e-6)*4],[0.e3]] # V (Fe0.5Si0.5 dis) from Brosh et al., 2009, Pearson
         burnman.SolidSolution.__init__(self, endmembers, \
                                            burnman.solutionmodel.SymmetricRegularSolution_w_magnetism(endmembers, magnetic_parameters, enthalpy_interaction, volume_interaction, entropy_interaction), molar_fractions)
 
 bcc=bcc_Fe_Si()
+FeSi_B20=minerals.Fe_Si_O.FeSi_B20()
+
+
+T=300.
+pressures=np.linspace(1.e5, 100.e9, 10)
+bcc.set_composition([0.0, 1.0, 0.0])
+for P in pressures:
+    bcc.set_state(P, T)
+    FeSi_B20.set_state(P, T)
+    print P/1.e9, bcc.gibbs*2. - FeSi_B20.gibbs, bcc.gibbs*2., FeSi_B20.gibbs
+
 
 '''
-# Check that deltaH = 0.5*W[0]
-bcc.set_composition([0.0, 1.0, 0.0])
-temperatures=np.linspace(1000., 2000., 2)
-for T in temperatures:
-    bcc.set_state(1.e5, T)
-    print bcc.gibbs - (0.5*bcc.endmembers[0][0].gibbs + 0.5*bcc.endmembers[2][0].gibbs), (Wh - T*Ws)/2.
+Plot equilibrium state of order for bcc Fe-Si alloy 
 '''
+
+def bcc_order(X, P, T):
+    bcc.set_composition([0.5, 0.0, 0.5])
+    bcc.set_state(P, T)
+    Wab=Wh-T*Ws
+    DeltaH = bcc.endmembers[1][0].gibbs - 0.5*(bcc.endmembers[0][0].gibbs+bcc.endmembers[2][0].gibbs)
+    DeltaH -= bcc.endmembers[1][0].method._magnetic_gibbs(P, T, bcc.endmembers[1][0].params) - 0.5*(bcc.endmembers[0][0].method._magnetic_gibbs(P, T, bcc.endmembers[0][0].params))
+    Wao=Wbo=n*Wab - (m+n)*DeltaH
+    W = [Wab, Wao, Wbo]
+    return optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0]
+
+X=0.2
+temperatures=np.linspace(600., 3200., 101)
+order=np.empty_like(temperatures)
+m=n=0.5
+
+for i, T in enumerate(temperatures):
+    order[i]=bcc_order(X, 1.e5, T)
+
+plt.plot( temperatures, order, linewidth=1, label='order')
+plt.title('FeSi ordering')
+plt.xlabel("Temperature (K)")
+plt.ylabel("Order")
+plt.legend(loc='upper right')
+plt.show()
+
+
+print bcc_order(0.5, 1.e5, 2400.)
+
 
 '''
 Plot activity coefficients of dilute Fe-Si alloys
@@ -206,7 +224,9 @@ compositions=np.linspace(0.01, 0.09, 20)
 lnactivity=np.empty_like(compositions)
 for T in [1373.15, 1473.15, 1573.15, 1623.15]:
     for i, X in enumerate(compositions):
-        bcc.set_composition([1.-X, 0.0, X])
+        Q=bcc_order(X, 1.e5, T)
+        #print X, T, Q
+        bcc.set_composition([1.-X-0.5*Q, Q, X-0.5*Q])
         bcc.set_state(1.e5, T)
         lnactivity[i]=bcc.log_activity_coefficients[2]
     plt.plot( compositions, lnactivity, linewidth=1, label=str(T)+' K')
@@ -244,40 +264,11 @@ plt.ylabel("Magnetic gibbs contribution (J/mol)")
 plt.legend(loc='upper right')
 plt.show()
 
-'''
-Plot equilibrium state of order for bcc Fe-Si alloy 
-'''
 
-def bcc_order(X, P, T):
-    W = [Wh - T*Ws, 0., 0.]
-    bcc.set_composition([0.5, 0.0, 0.5])
-    bcc.set_state(P, T)
-    DeltaH = bcc.endmembers[1][0].gibbs - 0.5*(bcc.endmembers[0][0].gibbs+bcc.endmembers[2][0].gibbs)
-    DeltaH -= bcc.endmembers[1][0].method._magnetic_gibbs(P, T, bcc.endmembers[1][0].params) - 0.5*(bcc.endmembers[0][0].method._magnetic_gibbs(P, T, bcc.endmembers[0][0].params))
-    return optimize.fsolve(eqm_order, 0.999*X*2, args=(X, T, m, n, DeltaH, W))[0] 
-
-X=0.2
-temperatures=np.linspace(600., 2800., 101)
-order=np.empty_like(temperatures)
-m=n=0.5
-
-for i, T in enumerate(temperatures):
-    order[i]=bcc_order(X, 1.e5, T)
-
-plt.plot( temperatures, order, linewidth=1, label='order')
-plt.title('FeSi ordering')
-plt.xlabel("Temperature (K)")
-plt.ylabel("Order")
-plt.legend(loc='upper right')
-plt.show()
-
-
-print bcc_order(0.5, 1.e5, 2400.)
 
 '''
 Plot equilibrium compositions of bcc alloy in equilibrium with FeSi in the B20 structure
 '''
-FeSi_B20=minerals.Fe_Si_O.FeSi_B20()
 
 def eqm_comp_bcc_w_FeSi_B20(arg, P, T):
     X_bcc = arg[0]
@@ -288,24 +279,55 @@ def eqm_comp_bcc_w_FeSi_B20(arg, P, T):
     FeSi_B20.set_state(P, T)
     return [mu_FeSi - FeSi_B20.gibbs]
 
+def eqm_T_B20_B2(arg, P):
+    T=arg[0]
+    X=0.5
+    Q = bcc_order(X, P, T)
+    bcc.set_composition([1.-X-0.5*Q, Q, X-0.5*Q])
+    bcc.set_state(P, T)
+    FeSi_B20.set_state(P, T)
+    return [bcc.gibbs*2. - FeSi_B20.gibbs]
 
-print '...'
-T=2700. # K
-P=1.e5 # Pa
-FeSi_B20.set_state(P, T)
-bcc.set_composition([0.5, 0.0, 0.5])
-bcc.set_state(P, T)
-print bcc.gibbs*2., FeSi_B20.gibbs 
-    #print P/1.e9, optimize.fsolve(eqm_comp_bcc_w_FeSi_B20, [0.50], args=(P, T))
+pressures=np.linspace(1.e5, 80.e9, 100)
+temperatures=np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    T=optimize.fsolve(eqm_T_B20_B2, [2500.], args=(P))[0]
+    X=0.5
+    Q = bcc_order(X, P, T)
+    bcc.set_composition([1.-X-0.5*Q, Q, X-0.5*Q])
+    bcc.set_state(P, T)
+    FeSi_B20.set_state(P, T)
+    temperatures[i]=T
+    #print P/1.e9, T, Q, bcc.gibbs*2., FeSi_B20.gibbs
 
 
-T=300. # K
-P=100.e9 # Pa
-FeSi_B20.set_state(P, T)
-bcc.set_composition([0.0, 1.0, 0.0])
-bcc.set_state(P, T)
-print bcc.gibbs*2., FeSi_B20.gibbs 
-print '...'
+B20_data=[]
+B20_B2_data=[]
+B2_data=[]
+for line in open('data/FeSi_Lord_2010.dat'):
+    content=line.strip().split()
+    if content[2] == 'B20':
+        B20_data.append([float(content[0]), float(content[1])])
+    if content[2] == 'B20_B2':
+        B20_B2_data.append([float(content[0]), float(content[1])])
+    if content[2] == 'B2':
+        B2_data.append([float(content[0]), float(content[1])])
+
+        
+B20_data = zip(*B20_data)
+B20_B2_data = zip(*B20_B2_data)
+B2_data = zip(*B2_data)
+
+plt.plot( pressures/1.e9, temperatures, linewidth=1, label='ordered')
+plt.plot( B20_data[0], B20_data[1], marker='.', linestyle='None', label='B20' )
+plt.plot( B20_B2_data[0], B20_B2_data[1], marker='.', linestyle='None', label='B20_B2' )
+plt.plot( B2_data[0], B2_data[1], marker='.', linestyle='None', label='B2' )
+plt.title('FeSi reactions')
+plt.xlabel("Pressure (GPa)")
+plt.ylabel("Temperature")
+plt.legend(loc='upper right')
+plt.show()
+
 
 
 

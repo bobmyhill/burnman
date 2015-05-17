@@ -68,6 +68,7 @@ B20 PVT fitting
 
 # Pressures and Temperatures
 PT_B20=np.array([P_B20,T_B20])
+P_B20=np.array(P_B20)
 
 a_B20=np.array(a_B20)
 a_err_B20=np.array(a_err_B20)
@@ -107,7 +108,7 @@ print 'B2 params:', popt
 Plotting PVT data at room temperature 
 '''
 
-pressures=[]
+pressures_B20=[]
 volumes_calculated_B20=[]
 volumes_observed_B20=[]
 
@@ -115,11 +116,15 @@ for i, PT in enumerate(zip(*PT_B20)):
     P, T = PT
     B20.set_state(P, T)
     if (T-300.)*(T-300.) < 0.1:
-        pressures.append(P)
+        pressures_B20.append(P)
         volumes_calculated_B20.append(B20.V)
         volumes_observed_B20.append(V_B20[i])
 
-pressures_B2=np.linspace(10.e9, 100.e9, 101)
+pressures_B20=np.array(pressures_B20)
+volumes_calculated_B20=np.array(volumes_calculated_B20)
+volumes_observed_B20=np.array(volumes_observed_B20)
+        
+pressures_B2=np.linspace(1.e5, 150.e9, 101)
 volumes_calculated_B2=np.empty_like(pressures_B2)
 
 T=300.
@@ -128,9 +133,10 @@ for i, P in enumerate(pressures_B2):
     pressures_B2[i] = P
     volumes_calculated_B2[i] = B2.V
 
-plt.plot( np.array(pressures)/1.e9, volumes_calculated_B20, linewidth=1)
-plt.plot( np.array(pressures)/1.e9, volumes_observed_B20, marker=".", linestyle="None")
-plt.plot( pressures_B2/1.e9, volumes_calculated_B2, linewidth=1)
+
+plt.plot( pressures_B20/1.e9, volumes_calculated_B20/2., linewidth=1)
+plt.plot( pressures_B20/1.e9, volumes_observed_B20/2., marker=".", linestyle="None")
+plt.plot( pressures_B2/1.e9, volumes_calculated_B2/2., linewidth=1)
 
 plt.title('Volume fit')
 plt.xlabel("Pressure (GPa)")

@@ -14,7 +14,7 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 atomic_masses=read_masses()
 
 # Lacaze and Sundman (1991) suggest  0.5*Fe(nonmag) + 0.5*Si - 36380.6 + 2.22T
-class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin
+class FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up Barin
     def __init__(self):
         formula='Fe1.0Si1.0'
         formula = dictionarize_formula(formula)
@@ -31,10 +31,7 @@ class FeSi_B20 (Mineral): # WARNING, magnetic properties screw up Barin
             'Kprime_0': 4.0 ,
             'Kdprime_0': -4.0/2.057e+11 ,
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'curie_temperature': [521.5, 0.0] ,
-            'magnetic_moment': [1.11, 0.0] ,
-            'magnetic_structural_parameter': 0.4 }
+            'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
 
 class FeSi_B2 (Mineral): # enthalpy and entropy calculated from A2-structured Fe and Si
@@ -45,8 +42,8 @@ class FeSi_B2 (Mineral): # enthalpy and entropy calculated from A2-structured Fe
             'name': 'Fe0.5Si0.5 B2',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': (9149.0 + 47000.)/2. -59650/2., # includes enthalpy of ordering
-            'S_0': (36.868 + 18.820 + 22.5)/2. -9.4943/2., # includes entropy of ordering
+            'H_0': (9149.0 + 47000.)/2. -81000./2., # -59650./2. includes enthalpy of ordering
+            'S_0': (36.868 + 18.820 + 22.5)/2. -9.5050/2., # includes entropy of ordering
             'V_0': 1.298e-05/2. ,
             'Cp': [(21.09 + 22.826)/2., (0.0101455 + 0.003856857)/2., (-221508.+-353888.416)/2., (47.1947 + -0.0596068)/2.],
             'a_0': 3.580e-05 ,
@@ -167,4 +164,26 @@ class Si_hcp_A3 (Mineral):
             'Kdprime_0': -5.87/57.44e9 , # Duclos et al 
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+
+
+# Half; Lacaze and Sundman (1991) suggest  0.5*Fe(nonmag) + 0.5*Si - 36380.6 + 2.22T
+class half_FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up Barin
+    def __init__(self):
+        formula='Fe0.5Si0.5'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeSi B20',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -78852./2. , # Barin
+            'S_0': 44.685/2. , # Barin
+            'V_0': 1.359e-05/2. ,
+            'Cp': [38.6770/2., 0.0217569/2., -159.151/2., 0.00586/2.],
+            'a_0': 3.057e-05 ,
+            'K_0': 2.057e+11 ,
+            'Kprime_0': 4.0 ,
+            'Kdprime_0': -4.0/2.057e+11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)

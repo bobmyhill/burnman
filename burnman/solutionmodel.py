@@ -35,6 +35,31 @@ class SolutionModel(object):
         """
         pass
 
+    def excess_magnetic_gibbs_free_energy( self, pressure, temperature, molar_fractions):
+        """
+        Given a list of molar fractions of different phases,
+        compute the excess magnetic Gibbs free energy of the solution.
+        The base class implementation assumes that the excess magnetic gibbs
+        free energy is zero.
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure at which to evaluate the solution model. [Pa]
+
+        temperature : float
+            Temperature at which to evaluate the solution. [K]
+
+        molar_fractions : list of floats
+            List of molar fractions of the different endmembers in solution
+
+        Returns
+        -------
+        G_excess : float
+            The excess Gibbs free energy
+        """
+        return 0.
+
     def excess_gibbs_free_energy( self, pressure, temperature, molar_fractions):
         """
         Given a list of molar fractions of different phases,
