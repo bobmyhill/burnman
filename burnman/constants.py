@@ -29,5 +29,10 @@ Boltzmann = 1.3806488e-23
 """
 Newtonian constant of gravitation (G) in m^3 kg^-1 s^-2
 """
-
 G = scipy.constants.G
+
+
+"""
+Dirac constant (hbar, Planck constant / 2*pi) in J s^-1
+"""
+Dirac = 1.054571726e-34
