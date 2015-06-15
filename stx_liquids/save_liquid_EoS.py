@@ -5,7 +5,7 @@ import burnman
 from burnman.processchemistry import *
 from burnman import constants
 import numpy as np
-from scipy.misc import factorial
+
 
 atomic_masses=read_masses()
 
@@ -64,27 +64,64 @@ def _bonding_energy(temperature, volume, params): # F_xs, eq. S2
             params['a'][i][j]/(np.math.factorial(i)*np.math.factorial(j)) * np.power(_finite_strain(temperature, volume, params), i) * np.power(_theta(temperature, volume, params), j)
 '''
 
-# Weird element order correcting:
-def vector_to_array(a, Of, Otheta):
-    array=np.empty([Of, Otheta])
-    for i in range(Of):
-        for j in range(Otheta):
-            n=int(i*(i+1.)/2. + j) # (i=0, 0; i=1, 1; i=2, 3)
-            array[i][j]=a[n]
-    return array
+def energy_excess_coefficients(f, theta):
+    bf=np.empty([36])
+    bf[0]  = 1.     # 0 0
+    bf[1]  = f    # 1 0  volume functional [finite strain)
+    bf[2]  = theta   # 0 1  temperature functional
+
+    bf[3]  = (1./2.)*(np.power(f,2.))   # 2 0
+    bf[4]  = (f)*(theta)       # 1 1
+    bf[5]  = (1./2.)*(np.power(theta,2.))  # 0 2
+    
+    bf[6]  = (1./6.)*(np.power(f,3.))           # 3 0
+    bf[7]  = (1./2.)*(np.power(f,2.))*(theta)   # 2 1
+    bf[8]  = (1./2.)*(f)*(np.power(theta,2.))   # 1 2
+    bf[9] = (1./6.)*(np.power(theta,3.))          # 0 3
+    
+    bf[10] = (1./24.)*(np.power(f,4.))               # 4 0
+    bf[11] = (1./ 6.)*(np.power(f,3.))*(theta)       # 3 1
+    bf[12] = (1./ 4.)*(np.power(f,2.))*(np.power(theta,2.))   # 2 2
+    bf[13] = (1./ 6.)*(f)*(np.power(theta,3.))       # 1 3
+    bf[14] = (1./24.)*(np.power(theta,4.))              # 0 4
+    
+    bf[15] = (1./120.)*(np.power(f,5.))               # 5 0
+    bf[16] = (1./ 24.)*(np.power(f,4.))*(theta)       # 4 1
+    bf[17] = (1./ 12.)*(np.power(f,3.))*(np.power(theta,2.))   # 3 2
+    bf[18] = (1./ 12.)*(np.power(f,2.))*(np.power(theta,3.))   # 2 3
+    bf[19] = (1./ 24.)*(f)*(np.power(theta,4.))       # 1 4
+    bf[20] = (1./120.)*(np.power(theta,5.))              # 0 5
+    
+    bf[21] = (1./720.)*(np.power(f,6.))               # 6 0
+    bf[22] = (1./120.)*(np.power(f,5.))*(theta)       # 5 1
+    bf[23] = (1./ 48.)*(np.power(f,4.))*(np.power(theta,2.))   # 4 2
+    bf[24] = (1./ 36.)*(np.power(f,3.))*(np.power(theta,3.))   # 3 3
+    bf[25] = (1./ 48.)*(np.power(f,2.))*(np.power(theta,4.))   # 2 4
+    bf[26] = (1./120.)*(f)*(np.power(theta,5.))       # 1 5
+    bf[27] = (1./720.)*(np.power(theta,6.))              # 0 6
+    
+    bf[28] = (1./5040.)*(np.power(f,7.))               # 7 0
+    bf[29] = (1./ 720.)*(np.power(f,6.))*(theta)       # 6 1
+    bf[30] = (1./ 240.)*(np.power(f,5.))*(np.power(theta,2.))   # 5 2
+    bf[31] = (1./ 144.)*(np.power(f,4.))*(np.power(theta,3.))   # 4 3
+    bf[32] = (1./ 144.)*(np.power(f,3.))*(np.power(theta,4.))   # 3 4
+    bf[33] = (1./ 240.)*(np.power(f,2.))*(np.power(theta,5.))   # 2 5
+    bf[34] = (1./ 720.)*(f)*(np.power(theta,6.))       # 1 6
+    bf[35] = (1./5040.)*(np.power(theta,7.))              # 0 7
+    
+    return bf
 
 
 def _bonding_energy(temperature, volume, params): # F_xs, eq. S2
     f=_finite_strain(temperature, volume, params)
     theta=_theta(temperature, volume, params)
-    energy = 0.
+    bf=energy_excess_coefficients(f, theta)
+
+    ffun_fcl340 = 0.
     for i in range(len(params['a'])):
-        ifact=factorial(i, exact=False)
-        for j in range(len(params['a'][0])):
-            jfact=factorial(j, exact=False)
-            energy += params['a'][i][j]*np.power(f, i)*np.power(theta, j)/ifact/jfact
-            
-    return energy
+        ffun_fcl340 += params['a'][i]*bf[i]
+        
+    return ffun_fcl340
 
 '''
 def bonding_pressure(temperature, volume, params): # P_xs, eq. 3.17 of de Koker thesis
@@ -100,8 +137,10 @@ class SiO2_liquid():
                  'T_0': 0.3000000000E+04, # F_cl (1,2) # K
                  'E_0': -.2360007614E+04, # F_cl (1,3) # J/mol
                  'S_0': -.1380253514E+00, # F_cl (1,4) # J/K/mol
+                 'O_f':2, # F_cl (3) # expansion order
                  'm':0.91, # F_cl (5)
-                 'a': vector_to_array([-.1945931560E+04, -.2266835978E+03, 0.4550286309E+03, 0.2015652870E+04, -.2005850460E+03, -.2166028187E+03, 0.4836972992E+05, 0.4415340414E+03, 0.7307765325E+02, 0.0000000000E+00, -.6515876520E+06, 0.2070169954E+05, 0.8921220900E+03, 0.0000000000E+00, 0.0000000000E+00, 0.4100181286E+07, -.1282587237E+06, -.1228478753E+04, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00], 2, 5),
+                 'O_theta':5, # expansion order
+                 'a': [-.1945931560E+04, -.2266835978E+03, 0.4550286309E+03, 0.2015652870E+04, -.2005850460E+03, -.2166028187E+03, 0.4836972992E+05, 0.4415340414E+03, 0.7307765325E+02, 0.0000000000E+00, -.6515876520E+06, 0.2070169954E+05, 0.8921220900E+03, 0.0000000000E+00, 0.0000000000E+00, 0.4100181286E+07, -.1282587237E+06, -.1228478753E+04, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00, 0.0000000000E+00], # element order for a is a little weird; see function "energy_excess_coefficients", above
                  'zeta_0':0.4266056389E-03, # F_el (1)
                  'xi':0.8639433047E+00, # F_el (2)
                  'Tel_0':0.5651204964E+04, # F_el (3)
