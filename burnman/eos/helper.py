@@ -4,6 +4,7 @@
 
 import inspect
 import slb
+import dks_liquid as dks
 import mie_grueneisen_debye as mgd
 import birch_murnaghan as bm
 import modified_tait as mt
@@ -26,6 +27,8 @@ def create(method):
             return mgd.MGD3()
         elif method == "slb3":
             return slb.SLB3()
+        elif method == "dks":
+            return dks.DKS()
         elif method == "bm2":
             return bm.BM2()
         elif method == "bm3":
