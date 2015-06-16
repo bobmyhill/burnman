@@ -1,6 +1,7 @@
 from liquid_EoS import _finite_strain
 
 import numpy as np
+from scipy.optimize import fsolve
 
 def helmholtz_solid(volume, temperature, params):
     return params['E_0'] - params['T_0']*params['S_0'] \
@@ -39,6 +40,11 @@ def pressure_solid(volume, temperature, params):
         + params['C_V'] * (temperature - params['T_0']) \
         * gamma(volume, temperature, params) / volume
 
+def _volume_at_pressure(volume, pressure, temperature, params):
+    return pressure - pressure_solid(volume[0], temperature, params)
+    
+def volume_solid(pressure, temperature, params):
+    return fsolve(_volume_at_pressure, 0.8e-6, args=(pressure, temperature, params), xtol=1e-12, full_output=True)[0][0]
 
 def gamma(volume, temperature, params):
     return params['gamma_0']*np.power(volume/params['V_0'], params['q_0'])
@@ -54,6 +60,10 @@ def energy_solid(volume, temperature, params):
 def entropy_solid(volume, temperature, params):
     return params['S_0'] + int_aKt_dV(volume, temperature, params) + params['C_V']*np.log(temperature/params['T_0'])
 
+def gibbs_solid(pressure, temperature, params):
+    volume=fsolve(_volume_at_pressure, params['V_0']/2., args=(pressure, temperature, params))[0]
+    return helmholtz_solid(volume, temperature, params) + pressure*volume
+    
 '''
 # An alternative way of calculating the internal energy
 def energy_2(volume, temperature, params):

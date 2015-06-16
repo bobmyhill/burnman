@@ -24,6 +24,9 @@ from . import SLB_2011
 from . import SLB_2011_ZSB_2013
 from . import SLB_2005
 
+# de Koker and Stixrude
+import DKS_2013_liquids
+
 # Murakami and coworkers
 from . import Murakami_etal_2012
 from . import Murakami_2013
