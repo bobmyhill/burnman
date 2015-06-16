@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(1,os.path.abspath('..'))
 
 import burnman
-from eos.liquid_EoS import _pressure, _electronic_excitation_entropy, helmholtz_free_energy
+from eos.liquid_EoS import _pressure_liquid, _electronic_excitation_entropy, energy_liquid
 from minerals.deKoker_liquids import *
 from burnman import constants
 import numpy as np
@@ -20,11 +20,11 @@ MgO_liq=MgO_liquid()
 # Energy (E, not F or G) should be ca. -1560 kJ/mol
 temperature=7000. # K
 volume=11e-6 # m^3/mol
-print _pressure(volume, temperature, SiO2_liq.params)/1e9
+print _pressure_liquid(volume, temperature, SiO2_liq.params)/1e9
 
 temperature=3000. # K
 volume=0.2780000000E+02*1e-6 # m^3/mol
-print _pressure(volume, temperature, SiO2_liq.params)/1e9
+print _pressure_liquid(volume, temperature, SiO2_liq.params)/1e9
 
 
 fig1 = mpimg.imread('figures/SiO2_liquid_PVT.png')
@@ -35,7 +35,7 @@ volumes=np.linspace(9e-6, 30e-6, 101)
 pressures=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        pressures[i]=_pressure(volume, temperature, SiO2_liq.params)/1e9
+        pressures[i]=_pressure_liquid(volume, temperature, SiO2_liq.params)/1e9
     plt.plot(volumes*1e6, pressures, linewidth=2, label=str(temperature)+'K')
 
 plt.legend(loc='upper right')
@@ -66,10 +66,7 @@ volumes=np.linspace(9e-6, 30e-6, 101)
 energies=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        dT=1e-4
-        F = helmholtz_free_energy(volume, temperature, SiO2_liq.params)
-        S = (F - helmholtz_free_energy(volume, temperature+dT, SiO2_liq.params))/dT
-        energies[i]=F + temperature*S
+        energies[i]=energy_liquid(volume, temperature, SiO2_liq.params)
     plt.plot(volumes*1e6, energies/1e3, linewidth=2, label=str(temperature)+'K')
 
 plt.legend(loc='upper right')
@@ -85,12 +82,12 @@ volumes=np.linspace(7e-6, 18e-6, 101)
 pressures=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        pressures[i]=_pressure(volume, temperature, MgO_liq.params)/1e9
+        pressures[i]=_pressure_liquid(volume, temperature, MgO_liq.params)/1e9
     plt.plot(volumes*1e6, pressures, linewidth=2, label=str(temperature)+'K')
 
 temperature = 10000. # K
 for i, volume in enumerate(volumes):
-    pressures[i]=_pressure(volume, temperature, MgO_liq.params)/1e9
+    pressures[i]=_pressure_liquid(volume, temperature, MgO_liq.params)/1e9
 plt.plot(volumes*1e6, pressures, linewidth=2, label=str(temperature)+'K')
 
     
@@ -131,18 +128,12 @@ volumes=np.linspace(7e-6, 18e-6, 101)
 energies=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        dT=1e-4
-        F = helmholtz_free_energy(volume, temperature, MgO_liq.params)
-        S = (F - helmholtz_free_energy(volume, temperature+dT, MgO_liq.params))/dT
-        energies[i]=F + temperature*S
+        energies[i]=energy_liquid(volume, temperature, MgO_liq.params)
     plt.plot(volumes*1e6, energies/1e3, linewidth=2, label=str(temperature)+'K')
 
 temperature=10000. # K
 for i, volume in enumerate(volumes):
-    dT=1e-4
-    F = helmholtz_free_energy(volume, temperature, MgO_liq.params)
-    S = (F - helmholtz_free_energy(volume, temperature+dT, MgO_liq.params))/dT
-    energies[i]=F + temperature*S
+    energies[i]=energy_liquid(volume, temperature, MgO_liq.params)
 plt.plot(volumes*1e6, energies/1e3, linewidth=2, label=str(temperature)+'K')
 
 plt.legend(loc='upper right')

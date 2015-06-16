@@ -21,7 +21,6 @@ class stishovite():
     a3 = 2.*params['p_fit'][1]/(9.*params['K_0']*params['V_0']) * 1.e3
     params['K_prime_0'] = 4. + (a3/3.)
     params['K_dprime_0'] = (-143./9. - params['K_prime_0']*(params['K_prime_0'] - 7.))/params['K_0']
-    print params['K_0']/1e9, params['K_prime_0'], params['K_dprime_0']
     # PVT parameters
     params['gamma_0'] = params['ak_fit'][0]
     params['q_0'] = params['ak_fit'][1]
@@ -42,7 +41,6 @@ class perovskite():
     a3 = 2.*params['p_fit'][1]/(9.*params['K_0']*params['V_0']) * 1.e3
     params['K_prime_0'] = 4. + (a3/3.)
     params['K_dprime_0'] = (-143./9. - params['K_prime_0']*(params['K_prime_0'] - 7.))/params['K_0']
-    print params['K_0']/1e9, params['K_prime_0'], params['K_dprime_0']
     # PVT parameters
     params['gamma_0'] = params['ak_fit'][0]
     params['q_0'] = params['ak_fit'][1]
@@ -63,7 +61,6 @@ class periclase():
     a3 = 2.*params['p_fit'][1]/(9.*params['K_0']*params['V_0']) * 1.e3
     params['K_prime_0'] = 4. + (a3/3.)
     params['K_dprime_0'] = (-143./9. - params['K_prime_0']*(params['K_prime_0'] - 7.))/params['K_0']
-    print params['K_0']/1e9, params['K_prime_0'], params['K_dprime_0']
     # PVT parameters
     params['gamma_0'] = params['ak_fit'][0]
     params['q_0'] = params['ak_fit'][1]
