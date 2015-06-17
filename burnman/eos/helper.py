@@ -5,9 +5,11 @@
 from __future__ import absolute_import
 
 import inspect
+<<<<<<< HEAD
 
 from . import slb
-from . import dks_liquid as dks
+from . import dks_liquid 
+from . import dks_solid
 from . import mie_grueneisen_debye as mgd
 from . import birch_murnaghan as bm
 from . import birch_murnaghan_4th as bm4
@@ -34,8 +36,10 @@ def create(method):
             return mgd.MGD3()
         elif method == "slb3":
             return slb.SLB3()
-        elif method == "dks":
-            return dks.DKS()
+        elif method == "dks_l":
+            return dks_liquid.DKS_L()
+        elif method == "dks_s":
+            return dks_solid.DKS_S()
         elif method == "bm2":
             return bm.BM2()
         elif method == "bm3":
