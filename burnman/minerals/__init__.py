@@ -36,3 +36,4 @@ import HHPH_2013
 
 # Other
 import other
+import majorite
