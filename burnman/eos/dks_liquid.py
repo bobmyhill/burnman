@@ -29,16 +29,18 @@ class DKS_L(eos.EquationOfState):
         # ideal gas
         entropy_sum=0.
         for element, N in params['formula'].iteritems(): # N is a.p.f.u
-            q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
-            entropy_sum+=N*(1. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
+            if N > 1.e-5:
+                q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
+                entropy_sum+=N*(1. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
         return -constants.gas_constant*temperature*entropy_sum
 
     def _atomic_entropy(self, temperature, volume, params): # F_ig, eq. S6
         # ideal gas
         entropy_sum=0.
         for element, N in params['formula'].iteritems(): # N is a.p.f.u
-            q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
-            entropy_sum+=N*(5./2. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
+            if N > 1.e-5:
+                q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
+                entropy_sum+=N*(5./2. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
         return constants.gas_constant*entropy_sum
 
 
