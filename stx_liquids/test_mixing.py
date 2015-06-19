@@ -99,8 +99,9 @@ for p, t in pts:
         Sex = phase.S/sum_cations - (fSi*SiO2_S + (1.-fSi)*MgO_S)
 
         Vex = phase.V/sum_cations - (fSi*SiO2_V + (1.-fSi)*MgO_V)
-        K_Tex = phase.K_T - (fSi*SiO2_K_T + (1.-fSi)*MgO_K_T)
+
         K_T = phase.K_T
+        K_Tex = (phase.K_T - (fSi*SiO2_K_T + (1.-fSi)*MgO_K_T))/K_T
 
         fSis.append(fSi)
         Gexs.append(Gex)
@@ -124,12 +125,12 @@ for p, t in pts:
     plt.title('Excess Volumes') 
     plt.plot(fSis, Vexs, marker='o', linestyle='None', label=str(p)+' GPa, '+str(t)+' K')
     plt.subplot(235)
-    plt.title('Excess Isothermal Bulk Moduli') 
+    plt.title('Fractional excess K_T') 
     plt.plot(fSis, K_Texs, marker='o', linestyle='None', label=str(p)+' GPa, '+str(t)+' K')
     plt.subplot(236)
-    plt.title('Isothermal Bulk Moduli') 
+    plt.title('K_T') 
     plt.plot(fSis, K_Ts, marker='o', linestyle='None', label=str(p)+' GPa, '+str(t)+' K')
 
-#plt.legend(loc='lower right')
+plt.legend(loc='lower right')
 plt.show()
 
