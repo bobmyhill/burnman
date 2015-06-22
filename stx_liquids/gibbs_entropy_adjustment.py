@@ -5,7 +5,8 @@ import burnman
 from burnman.minerals import \
     DKS_2013_liquids, \
     DKS_2013_solids, \
-    SLB_2011
+    SLB_2011, \
+    HP_2011_ds62
 from burnman import constants
 import numpy as np
 from scipy.optimize import fsolve
@@ -25,7 +26,9 @@ Find stishovite delta gibbs and delta entropy
 print 'Corrections to solids'
 print '.....................'
 
-phases=[[SLB_2011.stishovite(), DKS_2013_solids.stishovite()],
+phases=[[HP_2011_ds62.fo(), SLB_2011.forsterite()],
+        [HP_2011_ds62.stv(), DKS_2013_solids.stishovite()],
+        [SLB_2011.stishovite(), DKS_2013_solids.stishovite()],
         [SLB_2011.periclase(), DKS_2013_solids.periclase()],
         [SLB_2011.mg_perovskite(), DKS_2013_solids.perovskite()]]
 
@@ -46,10 +49,49 @@ for SLB_phase, MD_phase in phases:
     for temperature in temperatures:
         SLB_phase.set_state(pressure, temperature)
         MD_phase.set_state(pressure, temperature)
-        print temperature, MD_phase.S - SLB_phase.S
+        print temperature, MD_phase.S - SLB_phase.S, MD_phase.gibbs - SLB_phase.gibbs
     print ''
 
 print ''
+
+
+# check coesite-stishovite
+coe=SLB_2011.coesite()
+stv=DKS_2013_solids.stishovite()
+
+pressure_c_s = 13.8e9 # Pa
+temperature_c_s = 2800. + 273.15 # K
+
+stv.set_state(pressure_c_s, temperature_c_s)
+coe.set_state(pressure_c_s, temperature_c_s)
+correction = stv.gibbs - coe.gibbs
+print 'corr', correction
+
+
+def find_stv_coe_temperature(T, P):
+    stv.set_state(P, T[0])
+    coe.set_state(P, T[0])
+    return stv.gibbs - coe.gibbs - correction
+
+pressures=np.linspace(8.e9, 17.e9, 10)
+for pressure in pressures:
+    print pressure, fsolve(find_stv_coe_temperature, 2000.,  args=(pressure))
+
+stv=SLB_2011.stishovite()
+correction = 0.
+print 'corr:', correction
+pressures=np.linspace(8.e9, 17.e9, 10)
+for pressure in pressures:
+    print pressure, fsolve(find_stv_coe_temperature, 2000.,  args=(pressure))
+
+print 'coesite  - SiO2_liquid volumes'
+pressure = 10.e9 # Pa
+temperature = 3120. # K
+SiO2_liq=DKS_2013_liquids.SiO2_liquid()
+coe.set_state(pressure, temperature)
+SiO2_liq.set_state(pressure, temperature)
+
+print 'Volumes', coe.V, SiO2_liq.V
 
 
 print 'Liquid entropy of melting'
