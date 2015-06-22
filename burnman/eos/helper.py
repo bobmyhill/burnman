@@ -6,6 +6,7 @@ import inspect
 import slb
 import dks_liquid
 import dks_solid
+import mie_grueneisen as mg
 import mie_grueneisen_debye as mgd
 import birch_murnaghan as bm
 import modified_tait as mt
@@ -22,6 +23,8 @@ def create(method):
     if isinstance(method, basestring):
         if method == "slb2":
             return slb.SLB2()
+        elif method == "mg":
+            return mg.MG()
         elif method == "mgd2":
             return mgd.MGD2()
         elif method == "mgd3":

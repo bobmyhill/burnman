@@ -26,7 +26,8 @@ print 'Corrections to solids'
 print '.....................'
 
 phases=[[SLB_2011.stishovite(), DKS_2013_solids.stishovite()],
-        [SLB_2011.periclase(), DKS_2013_solids.periclase()]]
+        [SLB_2011.periclase(), DKS_2013_solids.periclase()],
+        [SLB_2011.mg_perovskite(), DKS_2013_solids.perovskite()]]
 
 for SLB_phase, MD_phase in phases:
     print SLB_phase.params['name']
@@ -53,6 +54,20 @@ print ''
 
 print 'Liquid entropy of melting'
 print '.........................'
+
+pv=DKS_2013_solids.perovskite()
+pv_liq=DKS_2013_liquids.MgSiO3_liquid()
+pressure = 24.e9 # Pa
+T_melt = fsolve(find_temperature, 5000., args=(pressure, pv, pv_liq))[0]
+print 'Perovskite T_melt (24 GPa):', T_melt, 'K'
+
+'''
+fo=SLB_2011.forsterite()
+fo_liq=DKS_2013_liquids.Mg2SiO4_liquid()
+pressure = 14.e9 # Pa
+T_melt = fsolve(find_temperature, 5000., args=(pressure, fo, fo_liq))[0]
+print 'Forsterite T_melt:', T_melt, 'K'
+'''
 
 
 stv=DKS_2013_solids.stishovite()

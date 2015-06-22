@@ -25,6 +25,7 @@ import SLB_2005
 # de Koker and Stixrude
 import DKS_2013_liquids
 import DKS_2013_solids
+import DKS_2008_fo
 
 # Murakami and coworkers
 import Murakami_etal_2012
