@@ -385,14 +385,14 @@ class DKS_L(eos.EquationOfState):
         """
         Returns the Gibbs free energy at the pressure and temperature of the mineral [J/mol]
         """
-        G = self.helmholtz_free_energy( pressure, temperature, volume, params) + pressure * volume
+        G = self.helmholtz_free_energy( pressure, temperature, volume, params) + pressure * volume 
         return G
 
     def entropy( self, pressure, temperature, volume, params):
         """
         Returns the entropy at the pressure and temperature of the mineral [J/K/mol]
         """
-        S = self._atomic_entropy(temperature, volume, params) + \
+        S = params['S_0'] + self._atomic_entropy(temperature, volume, params) + \
             self._electronic_excitation_entropy(temperature, volume, params) + \
             self._bonding_entropy(temperature, volume, params)
         return S 
@@ -410,7 +410,7 @@ class DKS_L(eos.EquationOfState):
         """
         Returns the Helmholtz free energy at the pressure and temperature of the mineral [J/mol]
         """
-        F = self._atomic_momenta(temperature, volume, params) + \
+        F = params['F_0'] + self._atomic_momenta(temperature, volume, params) + \
             self._electronic_excitation_energy(temperature, volume, params) + \
             self._bonding_energy(temperature, volume, params)
         return F
@@ -426,7 +426,7 @@ class DKS_L(eos.EquationOfState):
         """
   
         #check that all the required keys are in the dictionary
-        expected_keys = ['V_0', 'T_0', 'E_0', 'S_0', 'O_theta', 'O_f', 'm', 'a', 'zeta_0', 'xi', 'Tel_0', 'eta', 'el_V_0']
+        expected_keys = ['V_0', 'T_0', 'F_0', 'S_0', 'O_theta', 'O_f', 'm', 'a', 'zeta_0', 'xi', 'Tel_0', 'eta', 'el_V_0']
         for k in expected_keys:
             if k not in params:
                 raise KeyError('params object missing parameter : ' + k)
