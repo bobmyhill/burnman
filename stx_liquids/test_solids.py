@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(1,os.path.abspath('..'))
 
 import burnman
-from burnman.minerals import DKS_2013_solids
+from burnman.minerals import DKS_2013_solids, DKS_2008_fo
 from burnman import constants
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,9 +12,13 @@ import matplotlib.image as mpimg
 SOLIDS
 '''
 
+# Vxfo = fo.params['V_x']*1.e6
+#['forsterite', DKS_2008_fo.forsterite(), [0.67*Vxfo, 1.03*Vxfo, -15, 55], [0.67*Vxfo, 1.03*Vxfo, -2400, -1800]], \
+#['fo_liquid', DKS_2008_fo.fo_liquid(), [0.48*Vxfo, 1.23*Vxfo, -5, 205], [0.48*Vxfo, 1.23*Vxfo, -2400, -1800]], \
+          
 phases = [['stishovite', DKS_2013_solids.stishovite(), [10, 18, -25, 175], [10, 18, -2400, -1800]], \
-              ['perovskite', DKS_2013_solids.perovskite(), [14.5, 27.5, 0, 344], [14.5, 27.5, -3600, -2000]], \
-              ['periclase', DKS_2013_solids.periclase(), [6.5, 14, -25, 275], [6.5, 14, -1200, -560]]]
+          ['perovskite', DKS_2013_solids.perovskite(), [14.5, 27.5, 0, 344], [14.5, 27.5, -3600, -2000]], \
+          ['periclase', DKS_2013_solids.periclase(), [6.5, 14, -25, 275], [6.5, 14, -1200, -560]]]
 
 for name, phase, PVT_range, EVT_range in phases:
     print name
@@ -24,7 +28,7 @@ for name, phase, PVT_range, EVT_range in phases:
     fig1 = mpimg.imread('figures/'+name+'_PVT.png')
     plt.imshow(fig1, extent=PVT_range, aspect='auto')
     
-    temperatures=np.linspace(2000., 6000., 5)
+    temperatures=np.linspace(1000., 6000., 6)
     volumes=np.linspace(PVT_range[0]*1.e-6, PVT_range[1]*1.e-6, 101)
     pressures=np.empty_like(volumes)
     for temperature in temperatures:

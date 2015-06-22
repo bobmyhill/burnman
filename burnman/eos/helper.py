@@ -5,11 +5,11 @@
 from __future__ import absolute_import
 
 import inspect
-<<<<<<< HEAD
 
 from . import slb
 from . import dks_liquid 
 from . import dks_solid
+from . import mie_grueneisen as mg
 from . import mie_grueneisen_debye as mgd
 from . import birch_murnaghan as bm
 from . import birch_murnaghan_4th as bm4
@@ -30,6 +30,8 @@ def create(method):
             return slb.SLB2()
         elif method == "vinet":
             return vinet.Vinet()
+        elif method == "mg":
+            return mg.MG()
         elif method == "mgd2":
             return mgd.MGD2()
         elif method == "mgd3":
