@@ -1,0 +1,17 @@
+P (GPa) T (C) liquidus phase
+0.54    1612.5 pen      (Boyd, 1964)
+0.83    1652.5 oen      (Boyd, 1964)
+1.11    1687.5 oen      (Boyd, 1964)
+1.26    1697.5 oen      (Boyd, 1964)
+1.79    1737.5 oen      (Boyd, 1964)
+2.51    1800   oen      (Boyd, 1964)
+3.23    1837.5 oen      (Boyd, 1964)
+3.95    1887.5 oen      (Boyd, 1964)
+4.67    1945   oen      (Boyd, 1964)
+10      2170   oen
+11.6    2210   oen
+12.1    2260   cen
+13.3    2290   cen
+16.0    2370   cen
+16.5    2370   cen
+20.0    2375   cen      crossover   

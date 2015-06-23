@@ -21,26 +21,39 @@ class DKS_L(eos.EquationOfState):
     """
 
     # Atomic momenta
-    def _partition_function(self, mass, temperature): # eq. S7; qi/V. Note the typo - there should be temperature in this expression
-        # Should V=Vi, rather than Vensemble?
-        return np.power(mass*constants.Boltzmann*temperature/(2*np.pi*constants.Dirac*constants.Dirac), 3./2.)
-    
+    # eq. S7; qi/V. 
+    # Note the typo in that expression - 
+    # there is a factor of temperature missing
+    # (see de Koker thesis, eq. 3.14)
+    # TODO?: Should V=Vi, rather than Vensemble? If so, how?
+
+    def _ln_partition_function(self, mass, temperature):
+        return 3./2.*np.log(temperature) \
+            + 3./2.*np.log(mass*constants.Boltzmann \
+                               /(2*np.pi*constants.Dirac*constants.Dirac)) \
+
     def _atomic_momenta(self, temperature, volume, params): # F_ig, eq. S6
         # ideal gas
-        entropy_sum=0.
+        # see also eq. 16.72 of Callen., 1985; p. 373
+        V = volume/constants.Avogadro
+        figoverRT=0.
         for element, N in params['formula'].iteritems(): # N is a.p.f.u
             if N > 1.e-5:
-                q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
-                entropy_sum+=N*(1. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
-        return -constants.gas_constant*temperature*entropy_sum
+                mass = atomic_masses[element]/constants.Avogadro
+                figoverRT += -N*(np.log(V) + self._ln_partition_function(mass, temperature) \
+                                     + 1.) + N*np.log(N)
+        return constants.gas_constant*temperature*figoverRT
+            
 
     def _atomic_entropy(self, temperature, volume, params): # F_ig, eq. S6
         # ideal gas
+        V = volume/constants.Avogadro
         entropy_sum=0.
         for element, N in params['formula'].iteritems(): # N is a.p.f.u
             if N > 1.e-5:
-                q=(volume/constants.Avogadro)*self._partition_function((atomic_masses[element]/constants.Avogadro), temperature) # masses are in kg/mol
-                entropy_sum+=N*(5./2. + np.log(q/N)) # see also eq. 16.72 of Callen., 1985; p. 373
+                mass = atomic_masses[element]/constants.Avogadro
+                entropy_sum -= -N*(np.log(V) + self._ln_partition_function(mass, temperature) \
+                                     + 5./2.) + N*np.log(N)
         return constants.gas_constant*entropy_sum
 
     def _atomic_C_v(self, temperature, volume, params): # F_ig, eq. S6
@@ -410,9 +423,10 @@ class DKS_L(eos.EquationOfState):
         """
         Returns the Helmholtz free energy at the pressure and temperature of the mineral [J/mol]
         """
-        F = params['F_0'] + self._atomic_momenta(temperature, volume, params) + \
-            self._electronic_excitation_energy(temperature, volume, params) + \
-            self._bonding_energy(temperature, volume, params)
+        F = params['F_0'] - temperature * params['S_0'] \
+            + self._atomic_momenta(temperature, volume, params) \
+            + self._electronic_excitation_energy(temperature, volume, params) \
+            + self._bonding_energy(temperature, volume, params)
         return F
 
     def internal_energy(self, pressure, temperature, volume, params):
