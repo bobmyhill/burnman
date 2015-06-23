@@ -6,7 +6,8 @@ from burnman.minerals import \
     DKS_2013_liquids_tweaked, \
     DKS_2013_liquids, \
     DKS_2013_solids, \
-    SLB_2011
+    SLB_2011, \
+    HP_2011_ds62
 from burnman import constants
 import numpy as np
 from scipy.optimize import fsolve, curve_fit
@@ -20,8 +21,58 @@ def density_crossover(pressure, temperature, phases, factor):
     phases[1].set_state(pressure, temperature)
     return phases[0].V-phases[1].V*factor
 
+# STISHOVITE
+f = open('data/stv_melting.dat', 'r')
+datalines = [ line.strip().split() for idx, line in enumerate(f.read().split('\n')) if line.strip() and idx>0 ]
+
+stv_P=[]
+stv_T=[]
+for content in datalines:
+    if content[4] != '4':
+        stv_P.append(float(content[0])*1.e9)
+        stv_T.append(float(content[2])+273.15)
 
 
+# NOTE
+# The volumes of SiO2 melt appear to be too small. 
+# If the entropies are correct, then
+# dP/dT = DS/DV = (Smelt-Ssolid)/(Vmelt - Vsolid)
+# The denominator on the RHS will be too small, thus dP/dT will be too big
+# This is the right sign to explain the underestimates of melting temperature...
+
+plt.plot(stv_P, stv_T, marker='o', linestyle='None')
+
+coe_SLB = SLB_2011.coesite()
+stv_SLB = SLB_2011.stishovite()
+stv = DKS_2013_solids.stishovite()
+SiO2_liq = DKS_2013_liquids.SiO2_liquid()
+
+phases = [coe_SLB, stv_SLB, stv, SiO2_liq]
+for phase in phases:
+    phase.set_state(13.e9, 2890.+273.15)
+    print phase.V,    
+print ''
+
+def find_temperature(temperature, pressure, solid, liquid):
+    liquid.set_state(pressure, temperature[0])
+    solid.set_state(pressure, temperature[0])
+    return solid.gibbs - liquid.gibbs
+
+print fsolve(find_temperature, 5000., args=(14.e9, stv, SiO2_liq))[0]
+
+pressures = np.linspace(10.e9,500.e9, 30) 
+temperatures = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
+    T_melt = fsolve(find_temperature, 4000., args=(pressure, stv, SiO2_liq))[0]
+    temperatures[i] = T_melt
+plt.plot(pressures, temperatures)
+plt.xlim(10.e9, 500.e9)
+plt.ylim(2000., 9000.)
+
+
+
+plt.show()
+    
 # FORSTERITE
 fo=SLB_2011.forsterite()
 fo_liq=DKS_2013_liquids.Mg2SiO4_liquid()
