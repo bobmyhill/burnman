@@ -6,11 +6,12 @@ from burnman.minerals import \
     DKS_2013_liquids_tweaked, \
     DKS_2013_liquids, \
     DKS_2013_solids, \
-    SLB_2011
+    SLB_2011, \
+    HP_2011_ds62
 from burnman import constants
 import numpy as np
 from scipy.optimize import fsolve, curve_fit
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d, splrep, splev
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
@@ -21,6 +22,130 @@ def density_crossover(pressure, temperature, phases, factor):
     return phases[0].V-phases[1].V*factor
 
 
+
+per_liq = DKS_2013_liquids_tweaked.MgO_liquid()
+per = SLB_2011.periclase()
+
+per_liq.set_state(1.e5, 3070.)
+per.set_state(1.e5, 3070.)
+print per_liq.gibbs - per.gibbs
+
+# STISHOVITE
+f = open('data/stv_melting.dat', 'r')
+datalines = [ line.strip().split() for idx, line in enumerate(f.read().split('\n')) if line.strip() and idx>0 ]
+
+stv_P=[]
+stv_Perr=[]
+stv_T=[]
+stv_Terr=[]
+coe_P=[]
+coe_Perr=[]
+coe_T=[]
+coe_Terr=[]
+for content in datalines:
+    if content[5] == 'stv' and content[4] != '4' :
+        stv_P.append(float(content[0])*1.e9)
+        stv_Perr.append(float(content[1])*1.e9)
+        stv_T.append(float(content[2]))
+        stv_Terr.append(float(content[3]))
+    elif content[5] == 'coe' :
+        coe_P.append(float(content[0])*1.e9)
+        coe_Perr.append(float(content[1])*1.e9)
+        coe_T.append(float(content[2]))
+        coe_Terr.append(float(content[3]))
+# NOTE
+# The volumes of SiO2 melt appear to be too small. 
+# If the entropies are correct, then
+# dP/dT = DS/DV = (Smelt-Ssolid)/(Vmelt - Vsolid)
+# The denominator on the RHS will be too small, thus dP/dT will be too big
+# This is the right sign to explain the underestimates of melting temperature...
+plt.errorbar(stv_P, stv_T, xerr=stv_Perr, yerr=stv_Terr, marker='o', linestyle='None')
+plt.errorbar(coe_P, coe_T, xerr=coe_Perr, yerr=coe_Terr, marker='o', linestyle='None')
+
+# Remember Schreinemakers - there should be no break in slope...
+s0 = UnivariateSpline([13.7e9, 20.e9, 37.e9, 50.e9, 70.e9], [2800.+273.15, 3620., 4150., 4270., 4400.], s=1.)
+s1 = UnivariateSpline([13.7e9, 20.e9, 37.e9, 50.e9, 70.e9], [2800.+273.15, 3670., 4250., 4370., 4500.], s=1.)
+s2 = UnivariateSpline([13.7e9, 20.e9, 37.e9, 50.e9, 70.e9], [2800.+273.15, 3750., 4350., 4470., 4600.], s=1.)
+
+pressures = np.linspace(13.7e9,80.e9, 200) 
+plt.plot(pressures, s0(pressures), linewidth=1)
+plt.plot(pressures, s1(pressures), linewidth=1)
+plt.plot(pressures, s2(pressures), linewidth=1)
+
+# Models
+
+coe_SLB = SLB_2011.coesite()
+stv_SLB = SLB_2011.stishovite()
+stv = DKS_2013_solids.stishovite()
+SiO2_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
+
+P_triple =  13.7e9
+T_triple = 2800.+273.15
+dP = 1.e5
+dTdP0 = (s0(P_triple+dP) - s0(P_triple))/dP
+dTdP1 = (s1(P_triple+dP) - s1(P_triple))/dP
+dTdP2 = (s2(P_triple+dP) - s2(P_triple))/dP
+
+coe_SLB.set_state(P_triple, T_triple)
+stv_SLB.set_state(P_triple, T_triple)
+SiO2_liq.set_state(P_triple, T_triple)
+liq_V = coe_SLB.V
+stv_V = stv_SLB.V
+S_melting0 = (liq_V - stv_V)/dTdP0
+S_melting1 = (liq_V - stv_V)/dTdP1
+S_melting2 = (liq_V - stv_V)/dTdP2
+print 'S_melt', S_melting0, S_melting1, S_melting2
+
+
+SiO2_liq.set_state(0., 300.)
+print 'V_0 check:', SiO2_liq.V, SiO2_liq.params['V_0']
+
+SiO2_liq.set_state(1.e5, 1700.+273.15)
+print 'Check at 1973 K:', SiO2_liq.V, '2.73e-5 m^3/mol, see Tomlinson et al., 1958'
+
+phases = [coe_SLB, SiO2_liq, stv_SLB, stv]
+print 'Triple point volumes ('+str(P_triple/1.e9), "GPa,", T_triple, "K)"
+for phase in phases:
+    phase.set_state(P_triple, T_triple)
+    print phase.params['name'], phase.V   
+print ''
+
+def find_temperature(temperature, pressure, solid, liquid):
+    liquid.set_state(pressure, temperature[0])
+    solid.set_state(pressure, temperature[0])
+    return solid.gibbs - liquid.gibbs
+
+
+
+pressures = np.linspace(10.e9,80.e9, 20) 
+temperatures = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
+    T_melt = fsolve(find_temperature, 3000., args=(pressure, stv_SLB, SiO2_liq))[0]
+    temperatures[i] = T_melt
+plt.plot(pressures, temperatures)
+
+pressures = np.linspace(4.e9,16.e9, 10) 
+temperatures = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
+    T_melt = fsolve(find_temperature, 4000., args=(pressure, coe_SLB, SiO2_liq))[0]
+    temperatures[i] = T_melt
+plt.plot(pressures, temperatures)
+
+
+plt.xlim(4.e9, 80.e9)
+plt.ylim(2000., 5000.)
+
+plt.show()
+    
+'''
+pressure = 14.e9
+temperatures = np.linspace(2000.,7000., 11) 
+for temperature in temperatures:
+    dT = 1.
+    SiO2_liq.set_state(pressure, temperature)
+    stv_SLB.set_state(pressure, temperature)
+    print temperature, SiO2_liq.C_p
+'''
 
 # FORSTERITE
 fo=SLB_2011.forsterite()
