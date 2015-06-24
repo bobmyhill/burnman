@@ -61,7 +61,7 @@ class DKS_L(eos.EquationOfState):
         n_atoms=0
         for element, N in params['formula'].iteritems():
             n_atoms += N
-        return -1.5*n_atoms
+        return 1.5*constants.gas_constant*n_atoms
 
     def _atomic_pressure(self, temperature, volume, params): # PV = nRT
         n_atoms=0
@@ -216,7 +216,7 @@ class DKS_L(eos.EquationOfState):
             Cv_el = zeta*(temperature - temperature_el)
         else:
             Cv_el = 0.
-        return -temperature*Cv_el
+        return Cv_el
 
     # Bonding energy
     def _bonding_energy(self, temperature, volume, params): # F_xs, eq. S2
@@ -405,7 +405,7 @@ class DKS_L(eos.EquationOfState):
         """
         Returns the entropy at the pressure and temperature of the mineral [J/K/mol]
         """
-        S = params['S_0'] + self._atomic_entropy(temperature, volume, params) + \
+        S = self._atomic_entropy(temperature, volume, params) + \
             self._electronic_excitation_entropy(temperature, volume, params) + \
             self._bonding_entropy(temperature, volume, params)
         return S 
@@ -423,8 +423,7 @@ class DKS_L(eos.EquationOfState):
         """
         Returns the Helmholtz free energy at the pressure and temperature of the mineral [J/mol]
         """
-        F = params['F_0'] - temperature * params['S_0'] \
-            + self._atomic_momenta(temperature, volume, params) \
+        F = self._atomic_momenta(temperature, volume, params) \
             + self._electronic_excitation_energy(temperature, volume, params) \
             + self._bonding_energy(temperature, volume, params)
         return F
@@ -440,7 +439,7 @@ class DKS_L(eos.EquationOfState):
         """
   
         #check that all the required keys are in the dictionary
-        expected_keys = ['V_0', 'T_0', 'F_0', 'S_0', 'O_theta', 'O_f', 'm', 'a', 'zeta_0', 'xi', 'Tel_0', 'eta', 'el_V_0']
+        expected_keys = ['V_0', 'T_0', 'O_theta', 'O_f', 'm', 'a', 'zeta_0', 'xi', 'Tel_0', 'eta', 'el_V_0']
         for k in expected_keys:
             if k not in params:
                 raise KeyError('params object missing parameter : ' + k)

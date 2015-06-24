@@ -4,6 +4,7 @@ sys.path.insert(1,os.path.abspath('..'))
 import burnman
 from burnman.minerals import \
     DKS_2013_liquids, \
+    DKS_2013_liquids_tweaked, \
     DKS_2013_solids, \
     SLB_2011, \
     HP_2011_ds62
@@ -112,8 +113,11 @@ print 'Forsterite T_melt:', T_melt, 'K'
 '''
 
 
-stv=DKS_2013_solids.stishovite()
-SiO2_liq=DKS_2013_liquids.SiO2_liquid()
+#stv=DKS_2013_solids.stishovite()
+#SiO2_liq=DKS_2013_liquids.SiO2_liquid()
+
+stv=SLB_2011.stishovite()
+SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
 pressure = 14.e9 # Pa
 T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq))[0]
 print 'Stishovite T_melt:', T_melt, 'K'
@@ -126,11 +130,13 @@ for i, temperature in enumerate(temperatures_SiO2):
     stv.set_state(pressure, temperature)
     entropy_melting_SiO2[i] = SiO2_liq.S - stv.S
 
+#per=DKS_2013_solids.periclase()
+#MgO_liq=DKS_2013_liquids.MgO_liquid()
 
-per=DKS_2013_solids.periclase()
-MgO_liq=DKS_2013_liquids.MgO_liquid()
+per=SLB_2011.periclase()
+MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
 pressure = 14.e9 # Pa
-T_melt = fsolve(find_temperature, 5000., args=(pressure, per, MgO_liq))[0]
+T_melt = fsolve(find_temperature, 3000., args=(pressure, per, MgO_liq))[0]
 
 print 'Periclase T_melt:', T_melt, 'K'
 
