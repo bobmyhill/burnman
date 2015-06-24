@@ -118,9 +118,9 @@ print 'Forsterite T_melt:', T_melt, 'K'
 
 stv=SLB_2011.stishovite()
 SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
-pressure = 14.e9 # Pa
+pressure = 13.7e9 # Pa
 T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq))[0]
-print 'Stishovite T_melt:', T_melt, 'K'
+print 'Stishovite T_melt:', T_melt, 'K, should be 3073.15 K'
 
 
 temperatures_SiO2 = np.linspace(1400., T_melt, 101)
