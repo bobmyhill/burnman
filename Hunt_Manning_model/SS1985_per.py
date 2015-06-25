@@ -1,21 +1,20 @@
 #!/usr/python
 import os, sys
 import numpy as np
+sys.path.insert(1,os.path.abspath('..'))
 
 from scipy.optimize import fsolve, minimize, fmin
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-if not os.path.exists('burnman'):
-    sys.path.insert(1,os.path.abspath('/home/rm438/projects/burnman/'))
 
 
 # Benchmarks for the solid solution class
 import burnman
-from burnman import minerals
+from burnman.minerals import \
+    DKS_2013_liquids_tweaked, \
+    SLB_2011
 from burnman import tools
-from burnman.mineral import Mineral
-from burnman.minerals import Myhill_calibration_iron
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
 from burnman import constants
@@ -29,6 +28,13 @@ r=1.
 P=13.e9
 T=1300.
 
+def find_temperature(T, P, Xs, r, K, solid, liquid):
+    Xb=Xs/(Xs + r*(1.-Xs)) # eq. 5.3b
+    X0=1.-Xb-(0.5 - np.sqrt(0.25 - (K(T)-4.)/K(T)*(Xb-Xb*Xb)))/((K(T)-4)/K(T)) # eq. 5.3
+    
+    solid.set_state(P, T[0])
+    liquid.set_state(P, T[0])
+    return (liquid.gibbs - solid.gibbs) + R*T[0]*r*np.log(X0)
 
 def eqm_with_L(X, Tmelt, Smelt, r, K): # X is mole fraction H2O
     Xb=X/(X + r*(1.-X)) # eq. 5.3b
@@ -109,8 +115,16 @@ f=1.0
 Msil=40.3044
 MH2O=18.01528
 
-dGper=lambda T: Smelt*(T-Tmelt)
-dGbr=lambda T: 0.5*(Smelt*(T-Tmelt)) + 0.5*(- 8330. + 20.*(T-1473.15))
+per=SLB_2011.periclase()
+MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
+
+def dGper(temperature):
+    per.set_state(13.e9, temperature)
+    MgO_liq.set_state(13.e9, temperature)
+    return per.gibbs - MgO_liq.gibbs
+
+def dGbr(temperature):
+    return 0.5*dGper(temperature) + 0.5*(- 8330. + 20.*(T-1473.15))
 
 Xbr=0.67 # composition of fluid in eqm with Xbr
 #Xbr=0.76 
@@ -151,12 +165,12 @@ T_per_br=fsolve(per_br_eqm, 1210+273.15, args=(Tmelt, Smelt, r, K, Wsh, Whs))
 
 
 fn0=lambda T: 0.
-temperatures=np.linspace(600., 5373., 101)
+temperatures=np.linspace(600., 4573., 101)
 compositions=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 
-temperatures_per=np.linspace(T_per_br, 5373., 101)
+temperatures_per=np.linspace(T_per_br, 4573., 101)
 compositions_per=np.empty_like(temperatures_per)
 
 temperatures_br=np.linspace(600., T_per_br, 101)
@@ -182,7 +196,7 @@ plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 periclase=[]
 brucite=[]
 liquid=[]
-for line in open('../figures/13GPa_per-H2O.dat'):
+for line in open('data/13GPa_per-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[2] == 'p' or content[2] == 'sp':

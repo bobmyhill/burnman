@@ -1,9 +1,21 @@
 #!/usr/python
+import os, sys
+sys.path.insert(1,os.path.abspath('..'))
 
+import burnman
+from burnman.minerals import \
+    DKS_2013_liquids_tweaked, \
+    DKS_2013_liquids, \
+    DKS_2013_solids, \
+    SLB_2011, \
+    HP_2011_ds62
+from burnman import constants
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, curve_fit
+from scipy.interpolate import UnivariateSpline, interp1d, splrep, splev
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+
 
 R=8.31446 # from wiki
 
@@ -31,6 +43,30 @@ def XOH(Xs, P, T):
 def Gex(Xs, P, T):
     return Xs*(1.-Xs)*(Ws(P,T,Ws_params)*(1.-Xs) + Wh(P,T,Wh_params)*Xs) - XOH(Xs, P, T)*Gl(P,T,Gl_params)
 
+def eqm_stv_L3(T, P, Xs, solid, liquid):
+    
+    K=Kl(P,T)
+    factor2=np.sqrt(((K*K*(1.-3.*Xs)*(1.-3.*Xs) - 32.*(Xs-1.)*Xs))/(K*K))
+    dXOHdXs=(K*K*(factor2 - 9.*Xs + 3.) + 32.*Xs - 16.)/((K*K - 4.)*factor2)
+
+    pressure = P*1.e5
+    solid.set_state(pressure, T)
+    liquid.set_state(pressure, T)
+    LHS=solid.gibbs - liquid.gibbs
+    RHS=R*T*np.log(Xs) + (1.-Xs)*(1.-Xs)*(Ws(P,T,Ws_params) + 2.*Xs*(Wh(P, T,Wh_params) - Ws(P,T,Ws_params))) - Gl(P,T,Gl_params)*(XOH(Xs, P, T) + (1.-Xs)*dXOHdXs)
+    return LHS - RHS
+
+def eqm_stv_L2(Xs, P, T, solid, liquid):
+    
+    K=Kl(P,T)
+    factor2=np.sqrt(((K*K*(1.-3.*Xs)*(1.-3.*Xs) - 32.*(Xs-1.)*Xs))/(K*K))
+    dXOHdXs=(K*K*(factor2 - 9.*Xs + 3.) + 32.*Xs - 16.)/((K*K - 4.)*factor2)
+
+    solid.set_state(P*1.e5, T)
+    liquid.set_state(P*1.e5, T)
+    LHS=solid.gibbs - liquid.gibbs
+    RHS=R*T*np.log(Xs) + (1.-Xs)*(1.-Xs)*(Ws(P,T,Ws_params) + 2.*Xs*(Wh(P, T,Wh_params) - Ws(P,T,Ws_params))) - Gl(P,T,Gl_params)*(XOH(Xs, P, T) + (1.-Xs)*dXOHdXs)
+    return LHS - RHS
 
 def eqm_stv_L(Xs, P, T):
     K=Kl(P,T)
@@ -102,6 +138,7 @@ Ws_params=[92631., -24.585, -4.9086, 9.1719e-5]
 # Wh = a+ bT + cP
 Wh_params=[110740.,-65.569,-1.1141]
 
+
 pressures=[10000., 20000.]
 for P in pressures:
     Tmelt=(1695.6+273.15) + 35.46*(P/1000. - 6.) - 0.3766*(P/1000. - 6.)*(P/1000. - 6.) # K, Jackson (1976)
@@ -115,7 +152,16 @@ for P in pressures:
 
     plt.plot( XSiO2, temperatures-273.15, '-', linewidth=2., label=str(P/10000.)+' GPa')
 
+def print_params(pressure, temperature):
+    print Gl_params[0] + Gl_params[1]*temperature + Gl_params[2]*pressure + Gl_params[3]*pressure*pressure + Gl_params[4]*temperature*temperature + Gl_params[5]*pressure*temperature, \
+        Ws_params[0] + Ws_params[1]*temperature + Ws_params[2]*pressure + Ws_params[3]*pressure*pressure,\
+        Wh_params[0] + Wh_params[1]*temperature + Wh_params[2]*pressure 
 
+temperatures = np.linspace(1000., 2000., 3)
+for temperature in temperatures: # p is in bar, T is in K
+    for pressure in pressures:
+        print pressure, temperature,
+        print_params(pressure, temperature)
 
 # We need Tmelt and Smelt of stishovite at 13 GPa
 # Tmelt can be obtained from Zhang et al., 1993
@@ -139,6 +185,8 @@ print 'dtdP', dTdP, 'K/Pa'
 Vliq=1.91043016645e-05 # (volume of coesite, m^3/mol)
 Vstv=1.43616420241e-05
 deltaSQL= -(Vstv - Vliq)/dTdP # J/K
+Tmelt = 2700. # ##############################
+deltaSQL = 10. # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx
 print deltaSQL
 
 print 'test', (Vstv - Vliq)*0.0028*1.e9
@@ -201,27 +249,36 @@ Ws_params=[-10000., 0., 0., 0.]
 Wh_params=[-10000.,0., 0.]
 '''
 
+
 Gl_params=[100000., 0., 0., 0., 0, 0.]
-Ws_params=[0., 0., 0., 0.]
-Wh_params=[0.,0., 0.]
+Ws_params=[-50000., 0., 0., 0.]
+Wh_params=[-200000.,0., 0.]
 
+stv=SLB_2011.stishovite()
+SiO2_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
 
-
+'''
 # And solve for the equilibrium temperature between ice, stv and melt
 def eqm_ice_stv(T, P):
-    return fsolve(eqm_ice_L, 0.99, args=(P, T))[0] - fsolve(eqm_stv_L, 0.01, args=(P, T))[0]
+    return fsolve(eqm_ice_L, 0.99, args=(P, T))[0] - fsolve(eqm_stv_L2, 0.01, args=(P, T, stv, SiO2_liq))[0]
 
 T_stv_ice=fsolve(eqm_ice_stv, 660., args=(P))[0]
 print T_stv_ice
 
 plt.plot( np.array([0., 1.]), np.array([T_stv_ice, T_stv_ice])-273.15, 'r-', linewidth=2.)
-          
-          
+'''          
+T_stv_ice=1000.
 temperatures=np.linspace(T_stv_ice, Tmelt, 101)
 XSiO2=np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    XSiO2[i]=fsolve(eqm_stv_L, 0.01, args=(P, T))[0]
 
+#XSiO2=np.linspace(0.1, 0.90, 41)
+#temperatures=np.empty_like(XSiO2)
+#for i, X in enumerate(XSiO2):
+for i, T in enumerate(temperatures):
+    XSiO2[i]=fsolve(eqm_stv_L2, 0.01, args=(P, T, stv, SiO2_liq))[0]
+    #temperatures[i]=fsolve(eqm_stv_L3, 1000., args=(P, X, stv, SiO2_liq))[0]
+    #print X, temperatures[i]
+    
 plt.plot( XSiO2, temperatures-273.15, 'r-', linewidth=2., label=str(P/10000.)+' GPa')
 
 
@@ -242,7 +299,7 @@ plt.imshow(fig1, extent=[0,1,600,1800], aspect='auto')
 
 stishovite=[]
 liquid=[]
-for line in open('../figures/13GPa_SiO2-H2O.dat'):
+for line in open('data/13GPa_SiO2-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[2] == 's':
