@@ -15,13 +15,22 @@ from scipy.interpolate import UnivariateSpline, interp1d, splrep, splev
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-
+'''
 def density_crossover(pressure, temperature, phases, factor):
     phases[0].set_state(pressure, temperature)
     phases[1].set_state(pressure, temperature)
     return phases[0].V-phases[1].V*factor
 
 
+def find_temperature(temperature, pressure, solid, liquid):
+    liquid.set_state(pressure, temperature[0])
+    solid.set_state(pressure, temperature[0])
+    return solid.gibbs - liquid.gibbs
+
+def find_temperature_mul(temperature, pressure, solid, liquid, factor):
+    liquid.set_state(pressure, temperature[0])
+    solid.set_state(pressure, temperature[0])
+    return solid.gibbs - (liquid.gibbs)*factor
 
 per_liq = DKS_2013_liquids_tweaked.MgO_liquid()
 per = SLB_2011.periclase()
@@ -100,6 +109,9 @@ print 'S_melt', S_melting0, S_melting1, S_melting2
 SiO2_liq.set_state(0., 300.)
 print 'V_0 check:', SiO2_liq.V, SiO2_liq.params['V_0']
 
+SiO2_liq.set_state(-2718028.7506/1e3, 3000.)
+print SiO2_liq.V, SiO2_liq.pressure
+
 SiO2_liq.set_state(1.e5, 1700.+273.15)
 print 'Check at 1973 K:', SiO2_liq.V, '2.73e-5 m^3/mol, see Tomlinson et al., 1958'
 
@@ -110,21 +122,17 @@ for phase in phases:
     print phase.params['name'], phase.V   
 print ''
 
-def find_temperature(temperature, pressure, solid, liquid):
-    liquid.set_state(pressure, temperature[0])
-    solid.set_state(pressure, temperature[0])
-    return solid.gibbs - liquid.gibbs
 
 
 
-pressures = np.linspace(10.e9,80.e9, 20) 
+pressures = np.linspace(10.e9,200.e9, 20) 
 temperatures = np.empty_like(pressures)
 for i, pressure in enumerate(pressures):
     T_melt = fsolve(find_temperature, 3000., args=(pressure, stv_SLB, SiO2_liq))[0]
     temperatures[i] = T_melt
 plt.plot(pressures, temperatures)
 
-pressures = np.linspace(4.e9,16.e9, 10) 
+pressures = np.linspace(2.e9,16.e9, 10) 
 temperatures = np.empty_like(pressures)
 for i, pressure in enumerate(pressures):
     T_melt = fsolve(find_temperature, 4000., args=(pressure, coe_SLB, SiO2_liq))[0]
@@ -132,24 +140,27 @@ for i, pressure in enumerate(pressures):
 plt.plot(pressures, temperatures)
 
 
-plt.xlim(4.e9, 80.e9)
-plt.ylim(2000., 5000.)
+plt.xlim(1.e9, 510.e9)
+plt.ylim(2000., 8000.)
 
 plt.show()
-    
-'''
-pressure = 14.e9
-temperatures = np.linspace(2000.,7000., 11) 
-for temperature in temperatures:
-    dT = 1.
+
+
+# PLOT DENSITY
+pressures = np.linspace(2.e9,50.e9, 101) 
+temperature = 4000.
+volumes = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
     SiO2_liq.set_state(pressure, temperature)
-    stv_SLB.set_state(pressure, temperature)
-    print temperature, SiO2_liq.C_p
-'''
+    volumes[i] = SiO2_liq.K_T
+
+plt.plot(pressures, volumes)
+plt.show()
+
 
 # FORSTERITE
 fo=SLB_2011.forsterite()
-fo_liq=DKS_2013_liquids.Mg2SiO4_liquid()
+fo_liq=DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
 
 temperature=1.
 fo_liq.set_state(1.e5, temperature)
@@ -180,11 +191,20 @@ for content in datalines:
         fo_solidus_temperatures.append(float(content[1])+273.15)
 
 # Remember Schreinemakers - there should be no break in slope...
-s = UnivariateSpline(np.array(fo_liquidus_pressures), np.array(fo_liquidus_temperatures), s=1000.)
+fo_s = UnivariateSpline(np.array(fo_liquidus_pressures), np.array(fo_liquidus_temperatures), s=1000.)
 
-pressures = np.linspace(0., 20.e9, 101)
+pressures = np.linspace(1.e5, 20.e9, 101)
+
+
+temperatures = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
+    T_melt = fsolve(find_temperature, 2000., args=(pressure, fo, fo_liq))[0]
+    temperatures[i] = T_melt
+plt.plot(pressures, temperatures)
+
+
 plt.plot(crossover_Ps, crossover_Ts, linewidth=1)
-plt.plot(pressures, s(pressures), linewidth=1)
+plt.plot(pressures, fo_s(pressures), linewidth=1)
 plt.plot(fo_liquidus_pressures, fo_liquidus_temperatures, marker='o', linestyle='None')
 plt.plot(fo_solidus_pressures, fo_solidus_temperatures, marker='o', linestyle='None')
 plt.show()
@@ -193,13 +213,15 @@ plt.show()
 #dp/dT = ds/dV
 
 p = 14.e9
+print 'Forsterite melting at 14 GPa:', fo_s(p)
+
 dp = 1.e7
-fo.set_state(p, s(p))
-fo_liq.set_state(p, s(p))
-dTdP = (s(p+dp) - s(p-dp)) / (2.*dp)
+fo.set_state(p, fo_s(p))
+fo_liq.set_state(p, fo_s(p))
+dTdP = (fo_s(p+dp) - fo_s(p-dp)) / (2.*dp)
 S_fo_melting = (fo_liq.V - fo.V)/dTdP
 S_fo_liquid = S_fo_melting + fo.S
-print 'Conditions:', p, s(p)
+print 'Conditions:', p, fo_s(p)
 print 'Entropy of melting (fo):', S_fo_melting
 print 'Melt entropy (Mg2SiO4):', S_fo_liquid
 print 'Melt entropy (DKS2013):', fo_liq.S
@@ -207,7 +229,7 @@ print 'Melt entropy (DKS2013):', fo_liq.S
 # CLINOENSTATITE (Mg2Si2O6)
 oen=SLB_2011.enstatite()
 cen=SLB_2011.hp_clinoenstatite()
-cen_liq=DKS_2013_liquids.MgSiO3_liquid()
+cen_liq=DKS_2013_liquids_tweaked.MgSiO3_liquid()
 
 crossover_Ts = np.linspace(1800.+273.15, 2400.+273.15, 21)
 oen_crossover_Ps = np.empty_like(crossover_Ts) 
@@ -233,20 +255,36 @@ for content in datalines:
 oen_s = UnivariateSpline(np.array(oen_liquidus_pressures+cen_liquidus_pressures), np.array(oen_liquidus_temperatures+cen_liquidus_temperatures), s=2000.)
 
 
-
 plt.plot(oen_crossover_Ps, crossover_Ts, linewidth=2)
 plt.plot(cen_crossover_Ps, crossover_Ts, linewidth=1)
 
-pressures = np.linspace(0., 20.e9, 101)
+pressures = np.linspace(1.e5, 20.e9, 101)
+
+
+temperatures = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):
+    T_melt = fsolve(find_temperature_mul, 2000., args=(pressure, oen, cen_liq, 2.))[0]
+    temperatures[i] = T_melt
+plt.plot(pressures, temperatures)
+
+
+
 plt.plot(pressures, oen_s(pressures), linewidth=2)
 plt.plot(oen_liquidus_pressures, oen_liquidus_temperatures, marker='o', linestyle='None')
 plt.plot(cen_liquidus_pressures, cen_liquidus_temperatures, marker='o', linestyle='None')
 plt.show()
 
+
+
 # Mg2Si2O6 liquid entropy from cen at 14 GPa
 #dp/dT = ds/dV
 
+p= 2.e9
+print 'Orthoenstatite melting at 2 GPa:', oen_s(p)
 p = 14.e9
+print 'Clinoenstatite melting at 14 GPa:', oen_s(p)
+
+
 dp = 1.e7
 oen.set_state(p, oen_s(p))
 cen_liq.set_state(p, oen_s(p))
@@ -263,28 +301,48 @@ print 'Melt entropy (MgSiO3):', S_en_liquid
 print 'Melt entropy (DKS2013):', cen_liq.S
 
 
+T = (oen_s(p) + fo_s(p))/2.
+
+
+p = 14.e9
+T = 2580. # K
 per_liq = DKS_2013_liquids_tweaked.MgO_liquid()
-per_liq.set_state(14.9, 2580.)
-fo.set_state(14.9, 2580.)
-cen.set_state(14.9, 2580.)
-print 'Melt entropy (MgO):', per_liq.S
-print 'Melt entropy (Mg2SiO4/3):', S_fo_liquid / 3.
-print 'Melt entropy (MgSiO3/2):', S_en_liquid / 2.
+per_liq.set_state(p, T)
 
-print 'Melt gibbs (MgO, DKS):', per_liq.gibbs
-print 'Melt gibbs (Mg2SiO4/3):', fo.gibbs / 3.
-print 'Melt gibbs (MgSiO3/2):', cen.gibbs / 4.
+stv_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
+stv_liq.set_state(p, T)
 
-plt.plot([0., 0.33, 0.5], [per_liq.gibbs, fo.gibbs / 3., cen.gibbs / 4.])
-plt.show()
+fo_liq = DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
+fo_liq.set_state(p, T)
+
+en_liq = DKS_2013_liquids_tweaked.MgSiO3_liquid()
+en_liq.set_state(p, T)
 
 
+fo.set_state(p, T)
+cen.set_state(p, T)
 
+
+
+obs_compositions = [0.0, 0.33, 0.5, 1.0]
+obs_gibbs = [per_liq.gibbs, fo.gibbs / 3., cen.gibbs / 4., stv_liq.gibbs]
+obs_entropy = [per_liq.S, S_fo_liquid / 3., S_en_liquid / 2., stv_liq.S]
+calc_entropy = [per_liq.S, fo_liq.S / 3., en_liq.S / 2., stv_liq.S]
+obs_excess_gibbs = []
+obs_excess_entropy = []
+calc_excess_entropy = []
+for i, c in enumerate(obs_compositions):
+    obs_excess_entropy.append( obs_entropy[i] - ((1.-c)*obs_entropy[0] + c*obs_entropy[3]) )
+    calc_excess_entropy.append( calc_entropy[i] - ((1.-c)*calc_entropy[0] + c*calc_entropy[3]) )
+    obs_excess_gibbs.append( obs_gibbs[i] - ((1.-c)*obs_gibbs[0] + c*obs_gibbs[3]) )
+
+plt.plot(obs_compositions, obs_excess_gibbs, marker='o', label=str(T)+' K')
 
 # Constraint from eutectic temperature
-pressure = 13.9e9
+pressure = 14.e9 # 13.9 in paper
 temperature = 2185+273.15
 c = 30.7 # +/-1.7 wt % Mg2SiO4 (with MgSiO3)
+c = 32.4
 M_fo = 140.6931 # Mg2SiO4
 M_en = 100.3887 # MgSiO3
 
@@ -296,29 +354,66 @@ print 'Composition (fraction SiO2):', c
 
 fo.set_state(pressure, temperature)
 cen.set_state(pressure, temperature)
+
+compositions = [0., c, 1.]
+formulae=[{'Mg':1., 'O':1.},
+          {'Mg':1.-c, 'Si':c, 'O':1.*(1.-c)+2.*c},
+          {'Si':1., 'O':2.}]
+
+mus = burnman.chemicalpotentials.chemical_potentials([fo, cen], formulae)
 per_liq.set_state(pressure, temperature)
+stv_liq.set_state(pressure, temperature)
 
-mu_MgO = burnman.chemicalpotentials.chemical_potentials([fo, cen], [{'Mg':1., 'O':1.}])[0]
+excess_gibbs = [0., mus[1] - ((1.-c)*per_liq.gibbs + c*stv_liq.gibbs), 0.]
+plt.plot(compositions, excess_gibbs, marker='o', label=str(temperature)+' K')
+
+excess_gibbs = [mus[0] - per_liq.gibbs,
+                mus[1] - ((1.-c)*per_liq.gibbs + c*stv_liq.gibbs),
+                mus[2] - stv_liq.gibbs]
+
+plt.plot(compositions, excess_gibbs, marker='o', label=str(temperature)+' K')
 
 
-print mu_MgO, per_liq.gibbs
 
 
+pressure = 14.e9 # GPa
+compositions = np.linspace(0., 1., 101)
+excess_gibbs=np.empty_like(compositions)
 
-class MgO_SiO2_liquid(burnman.SolidSolution):
-    def __init__(self, molar_fractions=None):
-        self.name='Subregular MgO-SiO2 liquid'
-        self.type='subregular'
+for temperature in np.array([2458., 2579.]):
+    for i, c in enumerate(compositions):
+        liquid.set_composition([1.-c, c])
+        liquid.set_state(pressure, temperature)
+        excess_gibbs[i]=liquid.excess_gibbs
 
-        self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
-                           [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
-                           
+    plt.plot(compositions, excess_gibbs, label=str(temperature)+' K')
 
-        self.enthalpy_interaction = [[[00000., -200000.]]]
-        self.volume_interaction   = [[[0., 0.]]]
-        self.entropy_interaction  = [[[0., 0.]]]
-                        
-        burnman.SolidSolution.__init__(self, molar_fractions)
+plt.legend(loc='lower right')
+plt.title('At 14 GPa and 2580 K, crossover of fo and en melting')
+plt.show()
+
+
+######
+# Excess entropy
+######
+
+plt.plot(obs_compositions, obs_excess_entropy, marker='o', linestyle='None', label='obs')
+plt.plot(obs_compositions, calc_excess_entropy, marker='o', linestyle='None', label='calc')
+
+compositions = np.linspace(0., 1., 101)
+excess_entropy=np.empty_like(compositions)
+for temperature in np.array([2458., 2579.]):
+    for i, c in enumerate(compositions):
+        liquid.set_composition([1.-c, c])
+        liquid.set_state(pressure, temperature)
+        excess_entropy[i]=liquid.excess_entropy
+
+    plt.plot(compositions, excess_entropy, label=str(temperature)+' K')
+
+plt.legend(loc='lower right')
+plt.show()
+
+
 
 
 per=SLB_2011.periclase()
@@ -326,11 +421,11 @@ fo=SLB_2011.forsterite()
 en=SLB_2011.enstatite()
 stv=SLB_2011.stishovite()
 
-per.set_state(1.e5, 1000.)
-print per.gibbs
 
-
+################
 # Melting checks
+################
+
 checks=[[per, 1.e5, 3070.],
         [fo, 1.e5, 2163.],
         [en, 1.e5, 1560.+273.15], # just unstable
@@ -356,29 +451,57 @@ for check in checks:
     phase.set_state(pressure, temperature)
     print phase.params['name'], liq.gibbs - phase.gibbs/(nSi+nMg)
 
+'''
+
+##########################
+# PHASE DIAGRAM
+##########################
+
+class MgO_SiO2_liquid(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='Subregular MgO-SiO2 liquid'
+        self.type='subregular'
+
+        self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
+                           [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
+                           
+
+        self.enthalpy_interaction = [[[-55000., -220000.]]]
+        self.volume_interaction   = [[[0., 0.]]]
+        self.entropy_interaction  = [[[0., 0.]]]
+                        
+        burnman.SolidSolution.__init__(self, molar_fractions)
+
+liquid = MgO_SiO2_liquid()
+
+
+per=SLB_2011.periclase()
+fo=SLB_2011.forsterite()
+en=SLB_2011.enstatite()
+stv=SLB_2011.stishovite()
 
 # Liquidus
 def find_temperature(temperature, pressure, liquid, solid, solid_composition):
     liquid.set_state(pressure, temperature[0])
     solid.set_state(pressure, temperature[0])
-    solid_potential=burnman.chemicalpotentials.chemical_potentials([liq], solid_composition)[0]
+    solid_potential=burnman.chemicalpotentials.chemical_potentials([liquid], solid_composition)[0]
     return solid.gibbs - solid_potential
 
 
 def liquidus_temperatures(solid, liquid_compositions, pressure):
     temperatures=np.empty_like(liquid_compositions)
     for i, c in enumerate(liquid_compositions):
-        liq.set_composition([1.-c, c])
+        liquid.set_composition([1.-c, c])
         solid_composition=[solid.params['formula']]
-        temperatures[i] = fsolve(find_temperature, 2000., args=(pressure, liq, solid, solid_composition))[0]
+        temperatures[i] = fsolve(find_temperature, 2000., args=(pressure, liquid, solid, solid_composition))[0]
         print c, temperatures[i]
     return temperatures 
 
 
 c_ranges=[[per, (0.10, 0.45, 10)],
           [fo, (0.25, 0.60, 10)],
-          [en, (0.40, 0.70, 10)]]
-          #[stv, (0.7, 1.0, 10)]]
+          [en, (0.40, 0.70, 10)],
+          [stv, (0.55, 1.0, 10)]]
 
 pressure = 14.e9
 for c_range in c_ranges:

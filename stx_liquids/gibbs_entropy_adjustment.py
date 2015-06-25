@@ -20,6 +20,12 @@ def find_temperature(temperature, pressure, solid, liquid):
     return solid.gibbs - liquid.gibbs
 
 
+def find_temperature_mul(temperature, pressure, solid, liquid, factor):
+    liquid.set_state(pressure, temperature[0])
+    solid.set_state(pressure, temperature[0])
+    return solid.gibbs - (liquid.gibbs)*factor
+
+
 '''
 Find stishovite delta gibbs and delta entropy
 '''
@@ -94,24 +100,51 @@ SiO2_liq.set_state(pressure, temperature)
 
 print 'Volumes', coe.V, SiO2_liq.V
 
-
-print 'Liquid entropy of melting'
+print ''
+print 'Temperatures of melting'
 print '.........................'
+
+fo=SLB_2011.forsterite()
+fo_liq=DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
+pressure = 1.e5 # Pa
+temperature = 2163. # K
+fo_liq.set_state(pressure, temperature)
+fo.set_state(pressure, temperature)
+print fo_liq.gibbs - fo.gibbs
+
+pressure = 14.e9
+T_melt = fsolve(find_temperature, 3000., args=(pressure, fo, fo_liq))[0]
+print 'Forsterite T_melt (14 GPa):', T_melt, 'K, should be 2580 K'
+
+
+cen=SLB_2011.hp_clinoenstatite()
+oen=SLB_2011.enstatite()
+en_liq=DKS_2013_liquids_tweaked.MgSiO3_liquid()
+pressure = 0.e9 # Pa
+temperature = 1850. # K
+en_liq.set_state(pressure, temperature)
+oen.set_state(pressure, temperature)
+print en_liq.gibbs - oen.gibbs/2.
+
+
+pressure = 0.e9
+T_melt = fsolve(find_temperature_mul, 2000., args=(pressure, oen, en_liq, 2.))[0]
+print 'Orthoenstatite T_melt (0 GPa):', T_melt, 'K, should be 1850 K'
+pressure = 14.e9
+T_melt = fsolve(find_temperature_mul, 3000., args=(pressure, oen, en_liq, 2.))[0]
+print 'Orthoenstatite T_melt (10 GPa):', T_melt, 'K, should be 2450 K'
+
+# 3430 with 0
+# 3540 with 20
+
+# dS/dV = dP/dT
+
 
 pv=DKS_2013_solids.perovskite()
 pv_liq=DKS_2013_liquids.MgSiO3_liquid()
-pressure = 24.e9 # Pa
+pressure = 25.e9 # Pa
 T_melt = fsolve(find_temperature, 5000., args=(pressure, pv, pv_liq))[0]
-print 'Perovskite T_melt (24 GPa):', T_melt, 'K'
-
-'''
-fo=SLB_2011.forsterite()
-fo_liq=DKS_2013_liquids.Mg2SiO4_liquid()
-pressure = 14.e9 # Pa
-T_melt = fsolve(find_temperature, 5000., args=(pressure, fo, fo_liq))[0]
-print 'Forsterite T_melt:', T_melt, 'K'
-'''
-
+print 'Perovskite T_melt (25 GPa):', T_melt, 'K, should be 2900 K'
 
 #stv=DKS_2013_solids.stishovite()
 #SiO2_liq=DKS_2013_liquids.SiO2_liquid()
@@ -120,8 +153,24 @@ stv=SLB_2011.stishovite()
 SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
 pressure = 13.7e9 # Pa
 T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq))[0]
-print 'Stishovite T_melt:', T_melt, 'K, should be 3073.15 K'
+print 'Stishovite T_melt (13.7 GPa):', T_melt, 'K, should be 3073.15 K'
 
+    
+#per=DKS_2013_solids.periclase()
+#MgO_liq=DKS_2013_liquids.MgO_liquid()
+
+per=SLB_2011.periclase()
+MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
+pressure = 1.e5 # Pa
+T_melt = fsolve(find_temperature, 3000., args=(pressure, per, MgO_liq))[0]
+
+print 'Periclase T_melt (0 GPa):', T_melt, 'K, should be 3070 K'
+
+print ''
+print 'Liquid entropy of melting'
+print '.........................'
+
+pressure = 14.e9 # Pa
 
 temperatures_SiO2 = np.linspace(1400., T_melt, 101)
 entropy_melting_SiO2 = np.empty_like(temperatures_SiO2)
@@ -129,16 +178,6 @@ for i, temperature in enumerate(temperatures_SiO2):
     SiO2_liq.set_state(pressure, temperature)
     stv.set_state(pressure, temperature)
     entropy_melting_SiO2[i] = SiO2_liq.S - stv.S
-
-#per=DKS_2013_solids.periclase()
-#MgO_liq=DKS_2013_liquids.MgO_liquid()
-
-per=SLB_2011.periclase()
-MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
-pressure = 14.e9 # Pa
-T_melt = fsolve(find_temperature, 3000., args=(pressure, per, MgO_liq))[0]
-
-print 'Periclase T_melt:', T_melt, 'K'
 
 
 temperatures_MgO = np.linspace(1400., T_melt, 101)
