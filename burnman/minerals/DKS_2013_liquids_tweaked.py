@@ -11,7 +11,7 @@ from burnman.mineral import Mineral
 from burnman.solidsolution import SolidSolution
 from burnman.solutionmodel import *
 
-def adjust_vector_a(Fxs, Sxs, KTxs, params):
+def adjust_vector_a(Fxs, Sxs, Pxs, KTxs, params):
     n = 2.
     m = params['m']
     T_0 = params['T_0']
@@ -20,8 +20,6 @@ def adjust_vector_a(Fxs, Sxs, KTxs, params):
     KTxs0 = (params['a'][3] + (n + 3.)*params['a'][1])/9./V_0
     KprimeTxs0 = (params['a'][6] - 3.*(n+3)*(2.*n+3)*V_0*Pxs0)/27./V_0/KTxs0 + (n+2.)
     alpha = params['a'][4] * m / 3. / V_0 / T_0 / KTxs0
-
-    print params['name'], V_0, Pxs0, KTxs0, KprimeTxs0, alpha 
 
     # Fxs, Sxs
     a00 = Fxs
@@ -57,6 +55,17 @@ def adjust_vector_a(Fxs, Sxs, KTxs, params):
     params['a'][12] += a22
     params['a'][13] += a13
 
+    a10=3.*V_0*Pxs
+    a20=-(1.*n + 3.)*a10
+    a30=-(2.*n + 3.)*a20
+    a40=-(3.*n + 3.)*a30
+
+    params['a'][1] += a10
+    params['a'][3] += a20
+    params['a'][6] += a30
+    params['a'][10] += a40
+
+    
     
 # Vector parsing for DKS liquid equation of state
 def vector_to_array(a, Of, Otheta):
@@ -85,13 +94,15 @@ class SiO2_liquid(Mineral):
             'eta': -0.2783503528 ,
             'el_V_0': 1e-06
             }
-        #Fxs0=-10 + 1617.47564545 # 3.6 + 1617.47564545 # kJ/mol, -5 for FPMD stv
-        #Sxs0=16.5e-3 #20.e-3 # kJ/mol, 20e-3 for FPMD stv
-        #Kxs0=645000.
-        Fxs0=2.0 + 1617.47564545 # 3.6 + 1617.47564545 # kJ/mol, -5 for FPMD stv
-        Sxs0=16.5e-3 #20.e-3 # kJ/mol, 20e-3 for FPMD stv
-        Kxs0=0.
-        adjust_vector_a(Fxs0, Sxs0, Kxs0, self.params)
+        #Fxs=-9 + 1617.47564545 # kJ/mol
+        #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        #Kxs=800000.
+        #Pxs=-160000.
+        Fxs=2.0 + 1617.47564545 # 1617.47564545 # kJ/mol
+        Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        Pxs=0.
+        Kxs=0.
+        adjust_vector_a(Fxs, Sxs, Pxs, Kxs, self.params)
         self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
         Mineral.__init__(self)
 
@@ -114,11 +125,64 @@ class MgO_liquid(Mineral):
             'eta': -0.986457555 ,
             'el_V_0': 1.620953559e-05
             }
-        Fxs0= 689.722614099 # kJ/mol
-        Sxs0= 0.e-3 # kJ/mol
-        Pxs0=00000.
-        adjust_vector_a(Fxs0, Sxs0, Pxs0, self.params)
+        Fxs= 689.722614099 # kJ/mol
+        Sxs= 0.e-3 # kJ/mol
+        Pxs=00000.
+        KTxs =0.
+        adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)
         self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
         Mineral.__init__(self)
 
 
+class MgSiO3_liquid(Mineral):
+    def __init__(self):
+        self.params = {
+            'name': 'MgSiO3_liquid',
+            'formula': {'Mg': 1.0 , 'Si': 1.0 , 'O': 3.0 },
+            'equation_of_state': 'dks_l',
+            'V_0': 4.18e-05 ,
+            'T_0': 3000.0 ,
+            'O_theta': 2 ,
+            'O_f': 3 ,
+            'm': 0.83 ,
+            'a': [-2984.241297, -380.9839126, 601.8088234, 7307.69753, 7.626381912, -328.367174, 38737.46417, 6251.230413, 402.4716495, 0.0, 0.0, -23578.93569, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] ,
+            'zeta_0': 0.008009960983 ,
+            'xi': -0.08859010337 ,
+            'Tel_0': 2194.563521 ,
+            'eta': -0.775354875 ,
+            'el_V_0': 3.89008e-05
+            }
+        Fxs= 2347.859939 # 2362.287 # kJ/mol
+        Sxs= 0.e-3 # -12.5e-3 # kJ/mol
+        Pxs=00000.
+        KTxs =0.
+        adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)
+        self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
+        Mineral.__init__(self)
+
+
+class Mg2SiO4_liquid(Mineral):
+    def __init__(self):
+        self.params = {
+            'name': 'Mg2SiO4_liquid',
+            'formula': {'Mg': 2.0 , 'Si': 1.0 , 'O': 4.0 },
+            'equation_of_state': 'dks_l',
+            'V_0': 5.84e-05 ,
+            'T_0': 3000.0 ,
+            'O_theta': 2 ,
+            'O_f': 3 ,
+            'm': 0.75 ,
+            'a': [-3944.769208, -531.7975964, 880.0460994, 11401.47398, 118.7409191, -456.3140461, 55778.07008, 12132.5261, 519.3612273, 0.0, 0.0, -48733.22459, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] ,
+            'zeta_0': 0.01101820277 ,
+            'xi': 1.175924196 ,
+            'Tel_0': 2228.185561 ,
+            'eta': -0.464192202 ,
+            'el_V_0': 5.23613e-05
+            }
+        Fxs=3052.18571812 # kJ/mol  3048.83098854 # 0. # 3050.50835333 #3053.86308292 # 
+        Sxs= 0. #4.e-3 # kJ/mol
+        Pxs=00000.
+        KTxs =0.
+        adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)
+        self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
+        Mineral.__init__(self)
