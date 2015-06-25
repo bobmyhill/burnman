@@ -100,6 +100,9 @@ stv_SLB.set_state(P_triple, T_triple)
 SiO2_liq.set_state(P_triple, T_triple)
 liq_V = coe_SLB.V
 stv_V = stv_SLB.V
+
+print 'Clapeyron slope', dTdP1
+
 S_melting0 = (liq_V - stv_V)/dTdP0
 S_melting1 = (liq_V - stv_V)/dTdP1
 S_melting2 = (liq_V - stv_V)/dTdP2
@@ -374,7 +377,22 @@ excess_gibbs = [mus[0] - per_liq.gibbs,
 plt.plot(compositions, excess_gibbs, marker='o', label=str(temperature)+' K')
 
 
+class MgO_SiO2_liquid(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='Subregular MgO-SiO2 liquid'
+        self.type='subregular'
 
+        self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
+                           [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
+                           
+
+        self.enthalpy_interaction = [[[-55000., -220000.]]]
+        self.volume_interaction   = [[[0., 0.]]]
+        self.entropy_interaction  = [[[0., 0.]]]
+                        
+        burnman.SolidSolution.__init__(self, molar_fractions)
+
+liquid = MgO_SiO2_liquid()
 
 pressure = 14.e9 # GPa
 compositions = np.linspace(0., 1., 101)
@@ -453,6 +471,7 @@ for check in checks:
 
 '''
 
+
 ##########################
 # PHASE DIAGRAM
 ##########################
@@ -466,7 +485,7 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
                            [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
                            
 
-        self.enthalpy_interaction = [[[-55000., -220000.]]]
+        self.enthalpy_interaction = [[[-55000., -200000.]]]
         self.volume_interaction   = [[[0., 0.]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         
@@ -479,6 +498,7 @@ per=SLB_2011.periclase()
 fo=SLB_2011.forsterite()
 en=SLB_2011.enstatite()
 stv=SLB_2011.stishovite()
+coe=SLB_2011.coesite()
 
 # Liquidus
 def find_temperature(temperature, pressure, liquid, solid, solid_composition):
@@ -501,6 +521,7 @@ def liquidus_temperatures(solid, liquid_compositions, pressure):
 c_ranges=[[per, (0.10, 0.45, 10)],
           [fo, (0.25, 0.60, 10)],
           [en, (0.40, 0.70, 10)],
+          [coe, (0.55, 1.0, 10)],
           [stv, (0.55, 1.0, 10)]]
 
 pressure = 14.e9
