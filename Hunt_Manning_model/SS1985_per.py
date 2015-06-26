@@ -36,6 +36,7 @@ def find_temperature(T, P, Xs, r, K, solid, liquid):
     liquid.set_state(P, T[0])
     return (liquid.gibbs - solid.gibbs) + R*T[0]*r*np.log(X0)
 
+'''
 def eqm_with_L(X, Tmelt, Smelt, r, K): # X is mole fraction H2O
     Xb=X/(X + r*(1.-X)) # eq. 5.3b
     XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4)/K) # eq. 5.3
@@ -43,7 +44,7 @@ def eqm_with_L(X, Tmelt, Smelt, r, K): # X is mole fraction H2O
     factor=1.-(r*R*np.log(XO))/Smelt
     T=Tmelt/factor # eq. 13
     return T
-
+'''
 
 def excesses_nonideal(X, T, r, K, Wsh, Whs): # X is mole fraction H2O
     Xb=X/(X + r*(1.-X)) # eq. 5.3b
@@ -73,30 +74,12 @@ def activities(X, r, K): # X is mole fraction H2O
 def solveT(T, Xs, Tmelt, Smelt, r, K):
     return T-eqm_with_L(Xs, Tmelt, Smelt, r, K(T))
 
-def solve_composition(Xs, T, Tmelt, Smelt, r, K, Wsh, Whs):
+def solve_composition(Xs, T, r, K, Wsh, Whs):
     return dGper(T) - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
 
-def solve_composition_br(Xs, T, Tmelt, Smelt, r, K, Wsh, Whs):
+def solve_composition_br(Xs, T, r, K, Wsh, Whs):
     return dGbr(T) - 0.5*(excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0] + excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[1])
 
-'''
-    P=13.e9
-    minimize(eqm_order, 0.001, method='TNC', bounds=((0.0, 1.-np.abs(1.-2.*X)),), args=(X, r, P, T), options={'disp': False}).x[0] 
-    print liq.partial_gibbs
-    print liq.partial_gibbs[0]
-    return Smelt*(T-Tmelt)-liq.partial_gibbs[0]
-'''
-
-'''
-# 6 GPa, en
-r=3.0 # Oxygens available for bonding
-K = lambda T: np.exp(-6000./T + 4.5) # equilibrium constant
-Smelt=40. # J/K/mol
-Tmelt=2010. # C
-f=0.5 # ternary is 0.5*MgO + 0.5*SiO2 = 0.5*MgSiO3
-Msil=100.3887
-MH2O=18.01528
-'''
 
 # 13 GPa, per
 r=1. # Oxygens available for bonding
@@ -105,15 +88,11 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
 Wsh1 = lambda T: 0
 
-K = lambda T: np.exp(-(-98000.-0.*(T-1483.))/(R*T))
-Wsh = lambda T: 48000.
+K = lambda T: np.exp(-(-75000.-0.*(T-1483.))/(R*T))
+Wsh = lambda T: 55000.
 
 Whs = lambda T: 00000.
-Smelt=22. # Cohen and Gong
-Tmelt=5373. # K, Cohen and Gong
-f=1.0
-Msil=40.3044
-MH2O=18.01528
+
 
 per=SLB_2011.periclase()
 MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
@@ -124,7 +103,7 @@ def dGper(temperature):
     return per.gibbs - MgO_liq.gibbs
 
 def dGbr(temperature):
-    return 0.5*dGper(temperature) + 0.5*(- 8330. + 20.*(T-1473.15))
+    return 0.5*dGper(temperature) + 0.5*(- 8330. + 20.*(temperature-1473.15))
 
 Xbr=0.67 # composition of fluid in eqm with Xbr
 #Xbr=0.76 
@@ -146,11 +125,12 @@ Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
 for i, X in enumerate(compositions):
     Gex[i]=(1-X)*excesses_nonideal(X, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[0] + X*excesses_nonideal(X, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[1]
+    Tmelt = 4000.
     Gex_2[i]=(1-X)*excesses_nonideal(X, Tmelt, r, K(Tmelt), Wsh(Tmelt), Whs(Tmelt))[0] + X*excesses_nonideal(X, Tmelt, r, K(Tmelt), Wsh(Tmelt), Whs(Tmelt))[1]
 
 plt.plot( compositions, Gex, '-', linewidth=2., label='model at Tbr')
-plt.plot( compositions, Gex_2, '-', linewidth=2., label='model at Tmelt')
-#plt.plot ( 0.0, Smelt*(Tbr-Tmelt), marker='o', label='model per')
+plt.plot( compositions, Gex_2, '-', linewidth=2., label='model at 4000 K')
+plt.plot ( 0.0, dGper(Tbr), marker='o', label='model per')
 plt.plot ( [1.0], [dGH2O_HP], marker='o', label='HP H2O activity')
 plt.plot ( [0.0, 1.0], [excesses_nonideal(Xbr, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[0], excesses_nonideal(Xbr, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[1]], marker='o', label='model H2O activity')
 plt.ylabel("Excess Gibbs (J/mol)")
@@ -158,11 +138,19 @@ plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
 
-def per_br_eqm(T, Tmelt, Smelt, r, K, Wsh, Whs):
-    return fsolve(solve_composition, 0.001, args=(T, Tmelt, Smelt, r, K, Wsh, Whs)) - fsolve(solve_composition_br, 0.99, args=(T, Tmelt, Smelt, r, K, Wsh, Whs)) 
+def per_br_eqm(data, r, K, Wsh, Whs):
+    Xs=data[0]
+    T =data[1]
+    Gex= excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))
+    values = []
+    values.append(dGper(T) - Gex[0])
+    values.append(dGbr(T) - 0.5*(Gex[0] + Gex[1]))
+    return values
 
-T_per_br=fsolve(per_br_eqm, 1210+273.15, args=(Tmelt, Smelt, r, K, Wsh, Whs))
 
+XsT = fsolve(per_br_eqm, [0.9, 1273.], args=(r, K, Wsh, Whs))
+print XsT
+T_per_br=XsT[1]
 
 fn0=lambda T: 0.
 temperatures=np.linspace(600., 4573., 101)
@@ -177,22 +165,23 @@ temperatures_br=np.linspace(600., T_per_br, 101)
 compositions_br=np.empty_like(temperatures_br)
 
 for i, T in enumerate(temperatures):
-    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, Tmelt, Smelt, r, K0, fn0, fn0))
-    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, Tmelt, Smelt, r, Kinf, fn0, fn0))
-    compositions[i]=fsolve(solve_composition, 0.001, args=(T, Tmelt, Smelt, r, K, fn0, fn0))
+    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, r, K0, fn0, fn0))
+    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, r, Kinf, fn0, fn0))
+    #compositions[i]=fsolve(solve_composition, 0.001, args=(T, r, K, fn0, fn0))
 
 for i, T in enumerate(temperatures_per):
-    compositions_per[i]=fsolve(solve_composition, 0.001, args=(T, Tmelt, Smelt, r, K, Wsh, Whs))
+    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
 
 for i, T in enumerate(temperatures_br):
-    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, Tmelt, Smelt, r, K, Wsh, Whs))
+    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh, Whs))
 
 plt.plot( compositions_per, temperatures_per, linewidth=1, label='per')
 plt.plot( compositions_br, temperatures_br, linewidth=1, label='br')
 
-plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
+#plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
+
 periclase=[]
 brucite=[]
 liquid=[]

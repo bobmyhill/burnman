@@ -10,7 +10,8 @@ Liquids from de Koker and Stixrude (2013) FPMD simulations
 from burnman.mineral import Mineral
 from burnman.solidsolution import SolidSolution
 from burnman.solutionmodel import *
-
+from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
+atomic_masses=read_masses()
 def adjust_vector_a(Fxs, Sxs, Pxs, KTxs, params):
     n = 2.
     m = params['m']
@@ -98,7 +99,7 @@ class SiO2_liquid(Mineral):
         #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
         #Kxs=800000.
         #Pxs=-160000.
-        Fxs=2.0 + 1617.47564545 # 1617.47564545 # kJ/mol
+        Fxs=1617.47564545 # 1617.47564545 # kJ/mol
         Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
         Pxs=0.
         Kxs=0.
@@ -152,8 +153,8 @@ class MgSiO3_liquid(Mineral):
             'eta': -0.775354875 ,
             'el_V_0': 3.89008e-05
             }
-        Fxs= 2347.859939 # 2362.287 # kJ/mol
-        Sxs= 0.e-3 # -12.5e-3 # kJ/mol
+        Fxs=  14.5 + 2347.859939 #2362.287 # kJ/mol
+        Sxs=  0.e-3 # -12.5e-3 # kJ/mol 
         Pxs=00000.
         KTxs =0.
         adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)
@@ -185,4 +186,69 @@ class Mg2SiO4_liquid(Mineral):
         KTxs =0.
         adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)
         self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
+        Mineral.__init__(self)
+
+
+class SiO2_liquid_alt(Mineral):
+    def __init__(self):
+        self.params = {
+            'name': 'SiO2_liquid',
+            'formula': {'Mg': 0 , 'Si': 1.0 , 'O': 2.0 },
+            'equation_of_state': 'dks_l',
+            'V_0': 2.78e-05 , # was 2.78e-05 
+            'T_0': 3000.0 ,
+            'O_theta': 2 ,
+            'O_f': 5 ,
+            'm': 0.91 ,
+            'a': [-1945.93156, -226.6835978, 455.0286309, 2015.65287, -200.585046, -216.6028187, 48369.72992, 441.5340414, 73.07765325, 0.0, -651587.652, 20701.69954, 892.12209, 0.0, 0.0, 4100181.286, -128258.7237, -1228.478753, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] ,
+            'zeta_0': 0.0004266056389 ,
+            'xi': 0.8639433047 ,
+            'Tel_0': 5651.204964 ,
+            'eta': -0.2783503528 ,
+            'el_V_0': 1e-06
+            }
+        Fxs=-9 + 1617.47564545 # kJ/mol
+        Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        Kxs=800000.
+        Pxs=-160000.
+        #Fxs=2.0 + 1617.47564545 # 1617.47564545 # kJ/mol
+        #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        #Pxs=0.
+        #Kxs=0.
+        adjust_vector_a(Fxs, Sxs, Pxs, Kxs, self.params)
+        self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
+        Mineral.__init__(self)
+
+class stishovite (Mineral):
+    def __init__(self):
+        formula='SiO2'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'Stishovite',
+            'formula': formula,
+            'equation_of_state': 'slb3',
+            'F_0': -824000.0 , # note was -819000, this fits Zhang et al., 1996
+            'V_0': 1.402e-05 ,
+            'K_0': 3.14e+11 ,
+            'Kprime_0': 3.8 ,
+            'Debye_0': 1108.0 ,
+            'grueneisen_0': 1.37 ,
+            'q_0': 2.8 ,
+            'G_0': 2.2e+11 ,
+            'Gprime_0': 1.9 ,
+            'eta_s_0': 4.6 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+
+        self.uncertainties = {
+            'err_F_0': 1000.0 ,
+            'err_V_0': 0.0 ,
+            'err_K_0': 8000000000.0 ,
+            'err_K_prime_0': 0.1 ,
+            'err_Debye_0': 13.0 ,
+            'err_grueneisen_0': 0.17 ,
+            'err_q_0': 2.2 ,
+            'err_G_0': 12000000000.0 ,
+            'err_Gprime_0': 0.1 ,
+            'err_eta_s_0': 1.0 }
         Mineral.__init__(self)

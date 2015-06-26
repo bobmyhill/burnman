@@ -249,14 +249,14 @@ Ws_params=[-10000., 0., 0., 0.]
 Wh_params=[-10000.,0., 0.]
 '''
 
-
-Gl_params=[100000., 0., 0., 0., 0, 0.]
-Ws_params=[-50000., 0., 0., 0.]
-Wh_params=[-200000.,0., 0.]
+P=130000. # bar
+Gl_params=[000., 0., 0., 0., 0, 0.]
+Ws_params=[0000., 0., 0., 0.]
+Wh_params=[0000.,0., 0.]
 
 stv=SLB_2011.stishovite()
 SiO2_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
-
+SiO2_liq_alt = DKS_2013_liquids_tweaked.SiO2_liquid_alt()
 '''
 # And solve for the equilibrium temperature between ice, stv and melt
 def eqm_ice_stv(T, P):
@@ -275,7 +275,7 @@ XSiO2=np.empty_like(temperatures)
 #temperatures=np.empty_like(XSiO2)
 #for i, X in enumerate(XSiO2):
 for i, T in enumerate(temperatures):
-    XSiO2[i]=fsolve(eqm_stv_L2, 0.01, args=(P, T, stv, SiO2_liq))[0]
+    XSiO2[i]=fsolve(eqm_stv_L2, 0.01, args=(P, T, stv, SiO2_liq_alt))[0]
     #temperatures[i]=fsolve(eqm_stv_L3, 1000., args=(P, X, stv, SiO2_liq))[0]
     #print X, temperatures[i]
     

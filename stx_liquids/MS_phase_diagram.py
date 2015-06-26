@@ -15,7 +15,7 @@ from scipy.interpolate import UnivariateSpline, interp1d, splrep, splev
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-'''
+
 def density_crossover(pressure, temperature, phases, factor):
     phases[0].set_state(pressure, temperature)
     phases[1].set_state(pressure, temperature)
@@ -279,6 +279,7 @@ plt.show()
 
 
 
+
 # Mg2Si2O6 liquid entropy from cen at 14 GPa
 #dp/dT = ds/dV
 
@@ -330,6 +331,7 @@ cen.set_state(p, T)
 obs_compositions = [0.0, 0.33, 0.5, 1.0]
 obs_gibbs = [per_liq.gibbs, fo.gibbs / 3., cen.gibbs / 4., stv_liq.gibbs]
 obs_entropy = [per_liq.S, S_fo_liquid / 3., S_en_liquid / 2., stv_liq.S]
+print obs_gibbs, obs_entropy
 calc_entropy = [per_liq.S, fo_liq.S / 3., en_liq.S / 2., stv_liq.S]
 obs_excess_gibbs = []
 obs_excess_entropy = []
@@ -386,7 +388,8 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
                            [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
                            
 
-        self.enthalpy_interaction = [[[-55000., -220000.]]]
+        #self.enthalpy_interaction = [[[-55000., -220000.]]]
+        self.enthalpy_interaction = [[[-91838.69740738, -197996.71219146]]]
         self.volume_interaction   = [[[0., 0.]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         
@@ -469,7 +472,7 @@ for check in checks:
     phase.set_state(pressure, temperature)
     print phase.params['name'], liq.gibbs - phase.gibbs/(nSi+nMg)
 
-'''
+
 
 
 ##########################
@@ -482,10 +485,11 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
         self.type='subregular'
 
         self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
-                           [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
+                           [DKS_2013_liquids_tweaked.SiO2_liquid_alt(), '[Si]O2']]
                            
 
-        self.enthalpy_interaction = [[[-55000., -200000.]]]
+        #self.enthalpy_interaction = [[[-55000., -200000.]]]
+        self.enthalpy_interaction = [[[-91838.69740738, -197996.71219146]]]
         self.volume_interaction   = [[[0., 0.]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         
@@ -497,7 +501,7 @@ liquid = MgO_SiO2_liquid()
 per=SLB_2011.periclase()
 fo=SLB_2011.forsterite()
 en=SLB_2011.enstatite()
-stv=SLB_2011.stishovite()
+stv=DKS_2013_liquids_tweaked.stishovite()
 coe=SLB_2011.coesite()
 
 # Liquidus
@@ -534,6 +538,5 @@ for c_range in c_ranges:
 
 plt.xlim(0.0, 1.0)
 plt.show()
-
 
 
