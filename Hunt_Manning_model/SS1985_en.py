@@ -22,7 +22,13 @@ atomic_masses=read_masses()
 
 R=8.31446 # from wiki
 
-def find_temperature(T, P, X_one_cation, r, K, solid, liquid):
+
+X=0.67
+r=1.
+P=13.e9
+T=1300.
+
+def find_temperature(T, P, X_one_cation, r, K, solid, liquid, factor):
     n_silicate_per_water = (1.-X_one_cation)/(X_one_cation*n_cations)
     Xs = 1./(n_silicate_per_water + 1)
     Xb=Xs/(Xs + r*(1.-Xs)) # eq. 5.3b
@@ -30,7 +36,7 @@ def find_temperature(T, P, X_one_cation, r, K, solid, liquid):
     
     solid.set_state(P, T[0])
     liquid.set_state(P, T[0])
-    return (liquid.gibbs - solid.gibbs) + R*T[0]*r*np.log(X0)
+    return (liquid.gibbs*factor - solid.gibbs)/factor + R*T[0]*r*np.log(X0)
 
 def find_eqm_temperature(T, P, solid, liquid, factor):
     solid.set_state(P, T[0])
@@ -56,9 +62,9 @@ def excesses_nonideal(X, T, r, K, Wsh, Whs): # X is mole fraction H2O
     partial_excess_H2O+= 2.*Xs*Xs*(1.-Xs)*Wsh - Xs*Xs*(1.-2.*Xs)*Whs 
     return partial_excess_anhydrous_phase, partial_excess_H2O
 
-def activities(X_one_cation, r, K): # X is mole fraction H2O
+def activities(X, r, K): # X is mole fraction H2O
     Xb=X/(X + r*(1.-X)) # eq. 5.3b
-    XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4.)/K) # eq. 5.3
+    XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4)/K) # eq. 5.3
     XH2O=XO + 2*Xb - 1.0
     XOH=2.*(Xb-XH2O)
     return np.power(XO,r), XH2O, XOH
@@ -67,13 +73,13 @@ def activities(X_one_cation, r, K): # X is mole fraction H2O
 def solve_composition(X_one_cation, T, r, K, Wsh, Whs):
     n_silicate_per_water = (1.-X_one_cation)/(X_one_cation*n_cations)
     Xs = 1./(n_silicate_per_water + 1)
-    return dGstv(T) - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
+    return dGen(T) - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
 
 
 
-# 13 GPa, fo
-n_cations=1. # number of cations
-r=2. # Oxygens available for bonding
+# 13 GPa, per
+n_cations = 2.
+r=3. # Oxygens available for bonding
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
@@ -84,15 +90,15 @@ Wsh = lambda T: 0000.
 
 Whs = lambda T: 00000.
 
-stv=SLB_2011.stishovite()
-SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
+en=SLB_2011.hp_clinoenstatite()
+MgSiO3_liq=DKS_2013_liquids_tweaked.MgSiO3_liquid()
 
-Tmelt = fsolve(find_eqm_temperature, 2000., args=(13.e9, stv, SiO2_liq, 1.))
+print fsolve(find_eqm_temperature, 2000., args=(13.e9, en, MgSiO3_liq, 2.))
 
-def dGstv(temperature):
-    stv.set_state(13.e9, temperature)
-    SiO2_liq.set_state(13.e9, temperature)
-    return (stv.gibbs - SiO2_liq.gibbs)
+def dGen(temperature):
+    en.set_state(13.e9, temperature)
+    MgSiO3_liq.set_state(13.e9, temperature)
+    return (en.gibbs/2. - MgSiO3_liq.gibbs)
 
 
 compositions=np.linspace(0.0001, 0.99, 101)
@@ -114,13 +120,13 @@ plt.show()
 
 
 fn0=lambda T: 0.
-temperatures=np.linspace(600., Tmelt, 101)
+temperatures=np.linspace(600., 3000., 101)
 compositions=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 
-temperatures_stv=np.linspace(1600., Tmelt, 101)
-compositions_stv=np.empty_like(temperatures_stv)
+temperatures_en=np.linspace(1600., 3000., 101)
+compositions_en=np.empty_like(temperatures_en)
 
 
 for i, T in enumerate(temperatures):
@@ -128,29 +134,29 @@ for i, T in enumerate(temperatures):
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, r, Kinf, fn0, fn0))
     #compositions[i]=fsolve(solve_composition, 0.001, args=(T, r, K, fn0, fn0))
 
-for i, T in enumerate(temperatures_stv):
-    compositions_stv[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
+for i, T in enumerate(temperatures_en):
+    compositions_en[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
 
 
-plt.plot( compositions_stv, temperatures_stv, linewidth=1, label='fo')
+plt.plot( compositions_en, temperatures_en, linewidth=1, label='per')
 
 #plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 
-stishovite = []
+enstatite=[]
 liquid=[]
-for line in open('data/13GPa_SiO2-H2O.dat'):
+for line in open('data/13GPa_en-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        if content[2] == 's':
-            stishovite.append([float(content[0])+273.15, 1.-float(content[1])])
-        if content[2] == 'l':
-            liquid.append([float(content[0])+273.15, 1.-float(content[1])])
+        if content[2] == 'e' or content[2] == 'se' or content[2] == 'e_davide':
+            enstatite.append([float(content[0])+273.15, (100. - float(content[1])*2.)/100.])
+        if content[2] == 'l' or content[2] == 'l_davide':
+            liquid.append([float(content[0])+273.15,(100. - float(content[1])*2.)/100.])
 
-stishovite=zip(*stishovite)
+enstatite=zip(*enstatite)
 liquid=zip(*liquid)
-plt.plot( stishovite[1], stishovite[0], marker='.', linestyle='none', label='stv+liquid')
+plt.plot( enstatite[1], enstatite[0], marker='.', linestyle='none', label='en+liquid')
 plt.plot( liquid[1], liquid[0], marker='.', linestyle='none', label='superliquidus')
 
 plt.ylim(1000.,3000.)
@@ -161,7 +167,7 @@ plt.legend(loc='upper right')
 plt.show()
 
 
-data=[[compositions_stv, temperatures_stv],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
+data=[[compositions_en, temperatures_en],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
 
 for datapair in data:
     print '>> -W1,black'

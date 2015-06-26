@@ -19,6 +19,36 @@ def find_temperature(temperature, pressure, solid, liquid):
     solid.set_state(pressure, temperature[0])
     return solid.gibbs - liquid.gibbs
 
+'''
+stv=SLB_2011.stishovite()
+coe=SLB_2011.coesite()
+SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
+SiO2_liq_alt=DKS_2013_liquids_tweaked.SiO2_liquid_alt()
+
+pressure = 13.7e9 # Pa
+T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq))[0]
+print 'Stishovite T_melt (13.7 GPa):', T_melt, 'K, should be 3073.15 K'
+T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq_alt))[0]
+print 'Stishovite T_melt (13.7 GPa):', T_melt, 'K, should be 3073.15 K'
+
+pressures = np.linspace(10.e9, 14.e9, 5)
+temperatures = np.empty_like(pressures)
+temperatures_alt = np.empty_like(pressures)
+for i, pressure in enumerate(pressures):    
+    temperatures[i] = fsolve(find_temperature, 2000., args=(pressure, stv, SiO2_liq))
+    temperatures_alt[i] = fsolve(find_temperature, 2000., args=(pressure, stv, SiO2_liq_alt))
+
+plt.plot(pressures, temperatures, label='stv')
+plt.plot(pressures, temperatures_alt, label='stv (alt)')
+
+for i, pressure in enumerate(pressures):    
+    temperatures[i] = fsolve(find_temperature, 2000., args=(pressure, coe, SiO2_liq))
+    temperatures_alt[i] = fsolve(find_temperature, 2000., args=(pressure, coe, SiO2_liq_alt))
+
+plt.plot(pressures, temperatures, label='coe')
+plt.plot(pressures, temperatures_alt, label='coe (alt)')
+plt.show()
+'''
 
 def find_temperature_mul(temperature, pressure, solid, liquid, factor):
     liquid.set_state(pressure, temperature[0])
@@ -130,9 +160,9 @@ print en_liq.gibbs - oen.gibbs/2.
 pressure = 0.e9
 T_melt = fsolve(find_temperature_mul, 2000., args=(pressure, oen, en_liq, 2.))[0]
 print 'Orthoenstatite T_melt (0 GPa):', T_melt, 'K, should be 1850 K'
-pressure = 14.e9
-T_melt = fsolve(find_temperature_mul, 3000., args=(pressure, oen, en_liq, 2.))[0]
-print 'Orthoenstatite T_melt (10 GPa):', T_melt, 'K, should be 2450 K'
+pressure = 13.3e9
+T_melt = fsolve(find_temperature_mul, 3000., args=(pressure, cen, en_liq, 2.))[0]
+print 'Clinoenstatite T_melt (13.3 GPa):', T_melt, 'K, should be 2563 K'
 
 # 3430 with 0
 # 3540 with 20
@@ -151,9 +181,13 @@ print 'Perovskite T_melt (25 GPa):', T_melt, 'K, should be 2900 K'
 
 stv=SLB_2011.stishovite()
 SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
+SiO2_liq_alt=DKS_2013_liquids_tweaked.SiO2_liquid_alt()
 pressure = 13.7e9 # Pa
 T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq))[0]
 print 'Stishovite T_melt (13.7 GPa):', T_melt, 'K, should be 3073.15 K'
+T_melt = fsolve(find_temperature, 5000., args=(pressure, stv, SiO2_liq_alt))[0]
+print 'Stishovite T_melt (13.7 GPa):', T_melt, 'K, should be 3073.15 K'
+
 
     
 #per=DKS_2013_solids.periclase()
@@ -200,4 +234,21 @@ plt.ylabel('Entropy of melting (J/K/mol)')
 plt.legend(loc='upper right')
 plt.xlim(1400, 4300)
 plt.show()
+
+
+
+temperatures_SiO2 = np.linspace(1400., 3100., 101)
+dTdP_SiO2_alt = np.empty_like(temperatures_SiO2)
+dTdP_SiO2 = np.empty_like(temperatures_SiO2)
+for i, temperature in enumerate(temperatures_SiO2):
+    SiO2_liq.set_state(pressure, temperature)
+    SiO2_liq_alt.set_state(pressure, temperature)
+    stv.set_state(pressure, temperature)
+    dTdP_SiO2[i] = (SiO2_liq.V - stv.V) / (SiO2_liq.S - stv.S)
+    dTdP_SiO2_alt[i] = (SiO2_liq_alt.V - stv.V) / (SiO2_liq_alt.S - stv.S)
+
+plt.plot(temperatures_SiO2, dTdP_SiO2, label='SiO2')
+plt.plot(temperatures_SiO2, dTdP_SiO2_alt, label='SiO2')
+plt.show()
+
 

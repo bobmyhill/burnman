@@ -261,7 +261,7 @@ plt.plot( compositions_2, temperatures_2, linewidth=1, label='test')
 periclase=[]
 brucite=[]
 liquid=[]
-for line in open('../figures/13GPa_per-H2O.dat'):
+for line in open('data/13GPa_per-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[2] == 'p' or content[2] == 'sp':

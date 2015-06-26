@@ -67,13 +67,13 @@ def activities(X_one_cation, r, K): # X is mole fraction H2O
 def solve_composition(X_one_cation, T, r, K, Wsh, Whs):
     n_silicate_per_water = (1.-X_one_cation)/(X_one_cation*n_cations)
     Xs = 1./(n_silicate_per_water + 1)
-    return dGstv(T) - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
+    return dGfo(T) - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
 
 
 
 # 13 GPa, fo
-n_cations=1. # number of cations
-r=2. # Oxygens available for bonding
+n_cations=3. # number of cations
+r=4. # Oxygens available for bonding
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
@@ -84,15 +84,15 @@ Wsh = lambda T: 0000.
 
 Whs = lambda T: 00000.
 
-stv=SLB_2011.stishovite()
-SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
+fo=SLB_2011.forsterite()
+Mg2SiO4_liq=DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
 
-Tmelt = fsolve(find_eqm_temperature, 2000., args=(13.e9, stv, SiO2_liq, 1.))
+print fsolve(find_eqm_temperature, 2000., args=(13.e9, fo, Mg2SiO4_liq, 1.))
 
-def dGstv(temperature):
-    stv.set_state(13.e9, temperature)
-    SiO2_liq.set_state(13.e9, temperature)
-    return (stv.gibbs - SiO2_liq.gibbs)
+def dGfo(temperature):
+    fo.set_state(13.e9, temperature)
+    Mg2SiO4_liq.set_state(13.e9, temperature)
+    return (fo.gibbs - Mg2SiO4_liq.gibbs)
 
 
 compositions=np.linspace(0.0001, 0.99, 101)
@@ -114,13 +114,13 @@ plt.show()
 
 
 fn0=lambda T: 0.
-temperatures=np.linspace(600., Tmelt, 101)
+temperatures=np.linspace(600., 3000., 101)
 compositions=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 
-temperatures_stv=np.linspace(1600., Tmelt, 101)
-compositions_stv=np.empty_like(temperatures_stv)
+temperatures_fo=np.linspace(1600., 3000., 101)
+compositions_fo=np.empty_like(temperatures_fo)
 
 
 for i, T in enumerate(temperatures):
@@ -128,29 +128,39 @@ for i, T in enumerate(temperatures):
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, r, Kinf, fn0, fn0))
     #compositions[i]=fsolve(solve_composition, 0.001, args=(T, r, K, fn0, fn0))
 
-for i, T in enumerate(temperatures_stv):
-    compositions_stv[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
+for i, T in enumerate(temperatures_fo):
+    compositions_fo[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
 
 
-plt.plot( compositions_stv, temperatures_stv, linewidth=1, label='fo')
+plt.plot( compositions_fo, temperatures_fo, linewidth=1, label='fo')
 
 #plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 
-stishovite = []
+forsterite = []
+enstatite=[]
+chondrodite=[]
 liquid=[]
-for line in open('data/13GPa_SiO2-H2O.dat'):
+for line in open('data/13GPa_fo-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        if content[2] == 's':
-            stishovite.append([float(content[0])+273.15, 1.-float(content[1])])
-        if content[2] == 'l':
-            liquid.append([float(content[0])+273.15, 1.-float(content[1])])
+        if content[3] == 'f' or content[3] == 'sf' or content[3] == 'f_davide':
+            forsterite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+        if content[3] == 'e' or content[3] == 'se' or content[3] == 'e_davide':
+            enstatite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+        if content[3] == 'c':
+            chondrodite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+        if content[3] == 'l' or content[3] == 'l_davide':
+            liquid.append([float(content[0])+273.15,(100. - float(content[1])*7./2.)/100.])
 
-stishovite=zip(*stishovite)
+forsterite=zip(*forsterite)
+enstatite=zip(*enstatite)
+chondrodite=zip(*chondrodite)
 liquid=zip(*liquid)
-plt.plot( stishovite[1], stishovite[0], marker='.', linestyle='none', label='stv+liquid')
+plt.plot( forsterite[1], forsterite[0], marker='.', linestyle='none', label='fo+liquid')
+plt.plot( enstatite[1], enstatite[0], marker='.', linestyle='none', label='en+liquid')
+plt.plot( chondrodite[1], chondrodite[0], marker='.', linestyle='none', label='chond+liquid')
 plt.plot( liquid[1], liquid[0], marker='.', linestyle='none', label='superliquidus')
 
 plt.ylim(1000.,3000.)
@@ -161,7 +171,7 @@ plt.legend(loc='upper right')
 plt.show()
 
 
-data=[[compositions_stv, temperatures_stv],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
+data=[[compositions_fo, temperatures_fo],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
 
 for datapair in data:
     print '>> -W1,black'
