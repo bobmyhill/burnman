@@ -79,10 +79,10 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
 Wsh1 = lambda T: 0
 
-K = lambda T: np.exp(-(-50000-15.*(T - 2000.))/(R*T))
-Wsh = lambda T: 0000.
+K = lambda T: 100000000000. # np.exp(-(-50000-15.*(T - 2000.))/(R*T))
+Wsh = lambda T: 00000.
 
-Whs = lambda T: 00000.
+Whs = lambda T: -500000.
 
 fo=SLB_2011.forsterite()
 Mg2SiO4_liq=DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
@@ -129,7 +129,7 @@ for i, T in enumerate(temperatures):
     #compositions[i]=fsolve(solve_composition, 0.001, args=(T, r, K, fn0, fn0))
 
 for i, T in enumerate(temperatures_fo):
-    compositions_fo[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
+    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, r, K, Wsh, Whs))
 
 
 plt.plot( compositions_fo, temperatures_fo, linewidth=1, label='fo')

@@ -71,7 +71,7 @@ def solve_composition(X_one_cation, T, r, K, Wsh, Whs):
 
 
 
-# 13 GPa, fo
+# 13 GPa, stv
 n_cations=1. # number of cations
 r=2. # Oxygens available for bonding
 Kinf = lambda T: 100000000000.
@@ -79,10 +79,10 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
 Wsh1 = lambda T: 0
 
-K = lambda T: np.exp(-(-50000-15.*(T - 2000.))/(R*T))
+K = lambda T: 100000000000. # np.exp(-(-50000-15.*(T - 2000.))/(R*T))
 Wsh = lambda T: 0000.
 
-Whs = lambda T: 00000.
+Whs = lambda T: -500000.
 
 stv=SLB_2011.stishovite()
 SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
