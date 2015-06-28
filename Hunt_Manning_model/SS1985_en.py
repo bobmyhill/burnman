@@ -77,7 +77,7 @@ def solve_composition(X_one_cation, T, r, K, Wsh, Whs):
 
 
 
-# 13 GPa, per
+# 13 GPa, en
 n_cations = 2.
 r=3. # Oxygens available for bonding
 Kinf = lambda T: 100000000000.
@@ -85,10 +85,10 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
 Wsh1 = lambda T: 0
 
-K = lambda T: np.exp(-(-50000-15.*(T - 2000.))/(R*T))
+K = lambda T: 1000000000000. # np.exp(-(-50000-15.*(T - 2000.))/(R*T))
 Wsh = lambda T: 0000.
 
-Whs = lambda T: 00000.
+Whs = lambda T: -500000.
 
 en=SLB_2011.hp_clinoenstatite()
 MgSiO3_liq=DKS_2013_liquids_tweaked.MgSiO3_liquid()
@@ -135,7 +135,7 @@ for i, T in enumerate(temperatures):
     #compositions[i]=fsolve(solve_composition, 0.001, args=(T, r, K, fn0, fn0))
 
 for i, T in enumerate(temperatures_en):
-    compositions_en[i]=fsolve(solve_composition, 0.99, args=(T, r, K, Wsh, Whs))
+    compositions_en[i]=fsolve(solve_composition, 0.001, args=(T, r, K, Wsh, Whs))
 
 
 plt.plot( compositions_en, temperatures_en, linewidth=1, label='per')
