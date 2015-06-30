@@ -138,6 +138,7 @@ endmember = dummy()
 hydrous_component = dummy_int() 
 
 compositions=np.linspace(0.0001, 0.9999, 101)
+X_ints = np.empty_like(compositions)
 Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
 for i, X in enumerate(compositions):
@@ -158,14 +159,13 @@ for i, X in enumerate(compositions):
     Gex[i]=res.fun[0]
 
     # alternative
-    X_int = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, P, T, n, deltaH))[0]
-    Gex_2[i] = excess_gibbs(X_int, X, P, T, n, deltaH)
+    X_ints[i] = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, P, T, n, deltaH))[0]
+    Gex_2[i] = excess_gibbs(X_ints[i], X, P, T, n, deltaH)
     print X_int, X
 
-    
-X_int, X = 0.368, 0.27
-e = excess_gibbs(X_int, X, P, T, n, deltaH)
-a= RTlogactivities(X_int, X, P, T, n, deltaH)
+i = 40
+e = excess_gibbs(X_ints[i], compositions[i], P, T, n, deltaH)
+a= RTlogactivities(X_ints[i], compositions[i], P, T, n, deltaH)
 plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
 
 plt.plot( compositions, Gex, '-', linewidth=2., label='model')
