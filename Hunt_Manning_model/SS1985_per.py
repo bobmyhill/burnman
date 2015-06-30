@@ -28,6 +28,11 @@ r=1.
 P=13.e9
 T=1300.
 
+def find_eqm_temperature(T, P, solid, liquid, factor):
+    solid.set_state(P, T[0])
+    liquid.set_state(P, T[0])
+    return liquid.gibbs*factor - solid.gibbs
+
 def find_temperature(T, P, Xs, r, K, solid, liquid):
     Xb=Xs/(Xs + r*(1.-Xs)) # eq. 5.3b
     X0=1.-Xb-(0.5 - np.sqrt(0.25 - (K(T)-4.)/K(T)*(Xb-Xb*Xb)))/((K(T)-4)/K(T)) # eq. 5.3
@@ -97,6 +102,10 @@ Whs = lambda T: 00000.
 per=SLB_2011.periclase()
 MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
 
+T_melt = fsolve(find_eqm_temperature, 3000., args=(13.e9, per, MgO_liq, 1.))[0]
+print T_melt
+
+
 def dGper(temperature):
     per.set_state(13.e9, temperature)
     MgO_liq.set_state(13.e9, temperature)
@@ -153,12 +162,12 @@ print XsT
 T_per_br=XsT[1]
 
 fn0=lambda T: 0.
-temperatures=np.linspace(600., 4573., 101)
+temperatures=np.linspace(600., T_melt, 101)
 compositions=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 
-temperatures_per=np.linspace(T_per_br, 4573., 101)
+temperatures_per=np.linspace(T_per_br, T_melt, 101)
 compositions_per=np.empty_like(temperatures_per)
 
 temperatures_br=np.linspace(600., T_per_br, 101)
@@ -209,6 +218,20 @@ plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
 
+####################
+# a-X relationships
+activities_per = np.empty_like(compositions_per)
+for i, composition in enumerate(compositions_per):
+    temperature = temperatures_per[i]
+    activities_per[i] =  np.exp( dGper(temperature) / (constants.gas_constant*temperature))
+
+   
+plt.plot(compositions_per, activities_per)
+plt.title('Periclase')
+plt.xlim(0., 1.)
+plt.ylim(0., 1.)
+plt.show()
+####################
 
 data=[[compositions_per, temperatures_per],[compositions_br, temperatures_br],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
 

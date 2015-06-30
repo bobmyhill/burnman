@@ -87,7 +87,8 @@ Whs = lambda T: -500000.
 stv=SLB_2011.stishovite()
 SiO2_liq=DKS_2013_liquids_tweaked.SiO2_liquid()
 
-Tmelt = fsolve(find_eqm_temperature, 2000., args=(13.e9, stv, SiO2_liq, 1.))
+T_melt = fsolve(find_eqm_temperature, 2000., args=(13.e9, stv, SiO2_liq, 1.))
+print T_melt
 
 def dGstv(temperature):
     stv.set_state(13.e9, temperature)
@@ -101,8 +102,7 @@ Gex_2=np.empty_like(compositions)
 for i, X in enumerate(compositions):
     Tbr = 1500.
     Gex[i]=(1-X)*excesses_nonideal(X, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[0] + X*excesses_nonideal(X, Tbr, r, K(Tbr), Wsh(Tbr), Whs(Tbr))[1]
-    Tmelt = 3000.
-    Gex_2[i]=(1-X)*excesses_nonideal(X, Tmelt, r, K(Tmelt), Wsh(Tmelt), Whs(Tmelt))[0] + X*excesses_nonideal(X, Tmelt, r, K(Tmelt), Wsh(Tmelt), Whs(Tmelt))[1]
+    Gex_2[i]=(1-X)*excesses_nonideal(X, T_melt, r, K(T_melt), Wsh(T_melt), Whs(T_melt))[0] + X*excesses_nonideal(X, T_melt, r, K(T_melt), Wsh(T_melt), Whs(T_melt))[1]
 
 plt.plot( compositions, Gex, '-', linewidth=2., label='model at 1500 K')
 plt.plot( compositions, Gex_2, '-', linewidth=2., label='model at 3000 K')
@@ -114,12 +114,12 @@ plt.show()
 
 
 fn0=lambda T: 0.
-temperatures=np.linspace(600., Tmelt, 101)
+temperatures=np.linspace(600., T_melt, 101)
 compositions=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 
-temperatures_stv=np.linspace(1600., Tmelt, 101)
+temperatures_stv=np.linspace(1600., T_melt, 101)
 compositions_stv=np.empty_like(temperatures_stv)
 
 
@@ -138,19 +138,38 @@ plt.plot( compositions_stv, temperatures_stv, linewidth=1, label='fo')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 
+
+###################
+# CALCULATE LIQUIDUS SPLINE
+from scipy.interpolate import UnivariateSpline
+err = 50.
+Xs=[0.0, 0.21, 0.35, 0.48]
+Ts=[T_melt-273.15, 2200.+err, 1890.+err, 1660.+err] # in C (Zhang et al., 1996 for dry melting)
+spline_Zhang = UnivariateSpline(Xs, Ts, s=1)
+
+Xs_liquidus = np.linspace(0.0, 0.52, 101)
+plt.plot(Xs_liquidus, spline_Zhang(Xs_liquidus)+273.15)
+###################
+
+
 stishovite = []
+s_stishovite = []
 liquid=[]
 for line in open('data/13GPa_SiO2-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[2] == 's':
-            stishovite.append([float(content[0])+273.15, 1.-float(content[1])])
+            stishovite.append([float(content[0])+273.15+err, 1.-float(content[1])])
+        if content[2] == 'ss':
+            s_stishovite.append([float(content[0])+273.15+err, 1.-float(content[1])])
         if content[2] == 'l':
-            liquid.append([float(content[0])+273.15, 1.-float(content[1])])
+            liquid.append([float(content[0])+273.15+err, 1.-float(content[1])])
 
 stishovite=zip(*stishovite)
+s_stishovite=zip(*s_stishovite)
 liquid=zip(*liquid)
 plt.plot( stishovite[1], stishovite[0], marker='.', linestyle='none', label='stv+liquid')
+plt.plot( s_stishovite[1], s_stishovite[0], marker='.', linestyle='none', label='(stv)+liquid')
 plt.plot( liquid[1], liquid[0], marker='.', linestyle='none', label='superliquidus')
 
 plt.ylim(1000.,3000.)
@@ -159,6 +178,22 @@ plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
 plt.show()
+
+####################
+# a-X relationships
+compositions = np.linspace(0., 0.6, 101)
+activities = np.empty_like(temperatures)
+for i, composition in enumerate(compositions):
+    temperature = spline_Zhang(composition)+273.15
+    activities[i] =  np.exp( dGstv(temperature) / (constants.gas_constant*temperature))
+
+   
+plt.plot(compositions, activities)
+plt.title('Stishovite')
+plt.xlim(0., 1.)
+plt.ylim(0., 1.)
+plt.show()
+####################
 
 
 data=[[compositions_stv, temperatures_stv],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]

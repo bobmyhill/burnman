@@ -153,8 +153,15 @@ class MgSiO3_liquid(Mineral):
             'eta': -0.775354875 ,
             'el_V_0': 3.89008e-05
             }
-        Fxs=  14.5 + 2347.859939 #2362.287 # kJ/mol
-        Sxs=  0.e-3 # -12.5e-3 # kJ/mol 
+        # F adjustment for oen at 0 GPa = 2347.859939 kJ/mol
+        # +8 to fit Kato and Kumazawa (1985, 1986) 
+        # +14.5 to fit Presnall and Gasparik (1990)
+        # Entropies wrong in both cases (too shallow)
+        # +12, -10.e-3 kJ/K/mol better, still not perfect even for
+        # K+K papers
+        # Volume also too small?
+        Fxs=  14.5 + 2347.859939 # kJ/mol
+        Sxs=  0.e-3 # 
         Pxs=00000.
         KTxs =0.
         adjust_vector_a(Fxs, Sxs, Pxs, KTxs, self.params)

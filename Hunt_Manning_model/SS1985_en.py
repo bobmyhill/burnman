@@ -93,14 +93,15 @@ Whs = lambda T: -500000.
 en=SLB_2011.hp_clinoenstatite()
 MgSiO3_liq=DKS_2013_liquids_tweaked.MgSiO3_liquid()
 
-print fsolve(find_eqm_temperature, 2000., args=(13.e9, en, MgSiO3_liq, 2.))
+Tmelt = fsolve(find_eqm_temperature, 2000., args=(13.e9, en, MgSiO3_liq, 2.))[0]
+print Tmelt
 
 def dGen(temperature):
     en.set_state(13.e9, temperature)
     MgSiO3_liq.set_state(13.e9, temperature)
     return (en.gibbs/2. - MgSiO3_liq.gibbs)
 
-
+'''
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
@@ -112,11 +113,13 @@ for i, X in enumerate(compositions):
 
 plt.plot( compositions, Gex, '-', linewidth=2., label='model at 1500 K')
 plt.plot( compositions, Gex_2, '-', linewidth=2., label='model at 3000 K')
+
+
 plt.ylabel("Excess Gibbs (J/mol)")
 plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
-
+'''
 
 
 fn0=lambda T: 0.
@@ -128,7 +131,7 @@ compositionsinf=np.empty_like(temperatures)
 temperatures_en=np.linspace(1600., 3000., 101)
 compositions_en=np.empty_like(temperatures_en)
 
-
+'''
 for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, r, K0, fn0, fn0))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, r, Kinf, fn0, fn0))
@@ -143,9 +146,29 @@ plt.plot( compositions_en, temperatures_en, linewidth=1, label='per')
 #plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
+'''
+
+
+###################
+# CALCULATE LIQUIDUS SPLINE
+from scipy.interpolate import UnivariateSpline
+
+Xs=[0.0, 0.2, 0.5, 0.6]
+Ts=[2186., 1770., 1495., 1440.] # in C (Kato and Kumazawa, 1986a for dry melting)
+spline_KK1986 = UnivariateSpline(Xs, Ts, s=1)
+
+Xs=[0.0, 0.2, 0.5, 0.6]
+Ts=[2280., 1800., 1495., 1440.] # in C (Presnall and Gasparik, 1990 for dry melting)
+spline_PG1990 = UnivariateSpline(Xs, Ts, s=1)
+
+Xs_liquidus = np.linspace(0.0, 0.6, 101)
+plt.plot(Xs_liquidus, spline_KK1986(Xs_liquidus)+273.15)
+plt.plot(Xs_liquidus, spline_PG1990(Xs_liquidus)+273.15)
+###################
 
 enstatite=[]
 liquid=[]
+y_liquid=[]
 for line in open('data/13GPa_en-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
@@ -153,9 +176,13 @@ for line in open('data/13GPa_en-H2O.dat'):
             enstatite.append([float(content[0])+273.15, (100. - float(content[1])*2.)/100.])
         if content[2] == 'l' or content[2] == 'l_davide':
             liquid.append([float(content[0])+273.15,(100. - float(content[1])*2.)/100.])
+        if content[2] == 'l_Yamada':
+            y_liquid.append([float(content[0])+273.15,(100. - float(content[1])*2.)/100.])
 
 enstatite=zip(*enstatite)
 liquid=zip(*liquid)
+y_liquid=zip(*y_liquid)
+plt.plot( y_liquid[1], y_liquid[0], linewidth=1, label='liquidus (Yamada et al., 2004)')
 plt.plot( enstatite[1], enstatite[0], marker='.', linestyle='none', label='en+liquid')
 plt.plot( liquid[1], liquid[0], marker='.', linestyle='none', label='superliquidus')
 
@@ -165,6 +192,22 @@ plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
 plt.show()
+
+####################
+# a-X relationships (1 cation basis)
+compositions = np.linspace(0., 0.6, 101)
+activities = np.empty_like(temperatures)
+for i, composition in enumerate(compositions):
+    temperature = spline_PG1990(composition)+273.15
+    activities[i] =  np.exp( dGen(temperature)/2. / (constants.gas_constant*temperature))
+
+   
+plt.plot(compositions, activities)
+plt.title('Enstatite')
+plt.xlim(0., 1.)
+plt.ylim(0., 1.)
+plt.show()
+####################
 
 
 data=[[compositions_en, temperatures_en],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
