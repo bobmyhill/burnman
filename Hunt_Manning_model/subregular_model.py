@@ -154,14 +154,14 @@ for i, X in enumerate(compositions):
         max_value = (1.-X)/(1.-n*(1.-X))
 
 
-    res = optimize.minimize(excess_gibbs, max_value-0.000001, method='TNC', bounds=((0.00001, max_value-0.0001),), args=(X, P, T, n, deltaH), options={'disp': False})
-    X_int = res.x[0]
-    Gex[i]=res.fun[0]
-
     # alternative
+    #res = optimize.minimize(excess_gibbs, max_value-0.000001, method='TNC', bounds=((0.00001, max_value-0.0001),), args=(X, P, T, n, deltaH), options={'disp': False})
+    #X_int = res.x[0]
+    #Gex_2[i]=res.fun[0]
+
     X_ints[i] = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, P, T, n, deltaH))[0]
-    Gex_2[i] = excess_gibbs(X_ints[i], X, P, T, n, deltaH)
-    print X_int, X
+    Gex[i] = excess_gibbs(X_ints[i], X, P, T, n, deltaH)
+    print X_ints[i], X
 
 i = 40
 e = excess_gibbs(X_ints[i], compositions[i], P, T, n, deltaH)
