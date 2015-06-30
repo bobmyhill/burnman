@@ -23,6 +23,13 @@ from burnman.chemicalpotentials import *
 from burnman import constants
 atomic_masses=read_masses()
 
+#### TODO XXXX
+#### Change from H excess to S excess
+#### Plot at different temperatures
+#### Compare to Silver and Stolper model
+#### Fit experimental data
+#### Better liquidus optimization
+
 R=8.31446 # from wiki
 
 class dummy (Mineral):
@@ -34,7 +41,7 @@ class dummy (Mineral):
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': 0.0 ,
-            'S_0': 95.1 ,
+            'S_0': 100. ,
             'V_0': 4.366e-05 ,
             'Cp': [233.3, 0.001494, -603800.0, -1869.7] ,
             'a_0': 2.85e-05 ,
@@ -53,8 +60,8 @@ class dummy_int (Mineral):
             'name': 'fo',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -100000. ,
-            'S_0': 95.1 ,
+            'H_0': 0000. ,
+            'S_0': 200. ,
             'V_0': 4.366e-05 ,
             'Cp': [233.3, 0.001494, -603800.0, -1869.7] ,
             'a_0': 2.85e-05 ,
@@ -88,52 +95,51 @@ def eqm_order(X_int, c, P, T, n_H2Oint, deltaH):
     X_H2O = c*( 1. + X_int*n_H2Oint ) - X_int*n_H2Oint
     X_anh = 1. - X_int - X_H2O
 
-    Wai = 0.
+    Wai = -20.*T
     Wah = 0.
-    Wih = 0.
+    Wih = -5.*T
     RTlny_anh = (1.-X_anh)*X_H2O*Wah + (1.-X_anh)*X_int*Wai - X_int*X_H2O*Wih
-    RTlny_int =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + (1.-X_int)*X_H2O*Wih
-    RTlny_H2O =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_H2O =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_int =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + (1.-X_int)*X_H2O*Wih
 
-    return deltaH  + R*T*(np.log(X_int) - np.log(X_anh) - n_H2Oint*np.log(X_H2O)) + RTlny_int - RTlny_anh - n_H2Oint*RTlny_H2O
+    return deltaH  + R*T*(np.log(X_int) - np.log(X_anh) - n_H2Oint*np.log(X_H2O)) +(RTlny_int - RTlny_anh - n_H2Oint*RTlny_H2O)
 
 def RTlogactivities(X_int, c, P, T, n_H2Oint, deltaH):
 
     X_H2O = c*( 1. + X_int*n_H2Oint ) - X_int*n_H2Oint
     X_anh = 1. - X_int - X_H2O
 
-    Wai = 0.
+    Wai = -20.*T
     Wah = 0.
-    Wih = 0.
+    Wih = -5.*T
     RTlny_anh = (1.-X_anh)*X_H2O*Wah + (1.-X_anh)*X_int*Wai - X_int*X_H2O*Wih
-    RTlny_int =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + (1.-X_int)*X_H2O*Wih
-    RTlny_H2O =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_H2O =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_int =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + (1.-X_int)*X_H2O*Wih
 
     return [R*T*np.log(X_anh) + RTlny_anh,  R*T*np.log(X_int) + RTlny_int, R*T*np.log(X_H2O) + RTlny_H2O]
 
+
 def excess_gibbs(X_int, c, P, T, n_H2Oint, deltaH):
-    # p_intermediate is the fraction of the maximum possible intermediate phase
+    
     X_H2O = c*( 1. + X_int*n_H2Oint ) - X_int*n_H2Oint
     X_anh = 1. - X_int - X_H2O
 
-    Wai = 0.
+    Wai = -20.*T
     Wah = 0.
-    Wih = 0.
+    Wih = -5.*T
     RTlny_anh = (1.-X_anh)*X_H2O*Wah + (1.-X_anh)*X_int*Wai - X_int*X_H2O*Wih
-    RTlny_int =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + (1.-X_int)*X_H2O*Wih
-    RTlny_H2O =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_H2O =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + X_int*(1.-X_H2O)*Wih
+    RTlny_int =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + (1.-X_int)*X_H2O*Wih
 
-
-    Kd = X_int/(X_anh*np.power(X_H2O, n_H2Oint))
-    G_excess = X_int*deltaH  + R*T*(X_int*np.log(X_int) + X_anh*np.log(X_anh) + X_H2O*np.log(X_H2O)) - (X_int*RTlny_int + X_anh*RTlny_anh + X_H2O*RTlny_H2O)
+    G_excess = X_int*deltaH  + R*T*(X_int*np.log(X_int) + X_anh*np.log(X_anh) + X_H2O*np.log(X_H2O)) + (X_int*RTlny_int + X_anh*RTlny_anh + X_H2O*RTlny_H2O)
 
     # Here, proportions add to one, but the solution needs to be scaled 
     # so that there is one mole equivalent in the solution
     sum_moles = (1. + n_H2Oint)*X_int + X_H2O + X_anh 
     return  G_excess/sum_moles
 
-P=13.e9
-T =2000.
+
+
 endmember = dummy() 
 hydrous_component = dummy_int() 
 
@@ -141,41 +147,46 @@ compositions=np.linspace(0.0001, 0.9999, 101)
 X_ints = np.empty_like(compositions)
 Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
-for i, X in enumerate(compositions):
-    n = 1.
 
-    endmember.set_state(P, T)
-    hydrous_component.set_state(P, T)
-    deltaH = hydrous_component.gibbs - endmember.gibbs
+pressure=13.e9
+temperatures = [1., 1000., 2000., 3000.]
+for temperature in temperatures:
+    for i, X in enumerate(compositions):
+        n = 4./3.
+        
+        endmember.set_state(pressure, temperature)
+        hydrous_component.set_state(pressure, temperature)
+        deltaH = hydrous_component.gibbs - endmember.gibbs
+        
+        if X < n/(n+1.):
+            max_value = X/(n*(1.-X))
+        else:
+            max_value = (1.-X)/(1.-n*(1.-X))
 
-    if X < n/(n+1.):
-        max_value = X/(n*(1.-X))
-    else:
-        max_value = (1.-X)/(1.-n*(1.-X))
 
+        # alternative
+        #res = optimize.minimize(excess_gibbs, max_value-0.000001, method='TNC', bounds=((0.00001, max_value-0.0001),), args=(X, P, T, n, deltaH), options={'disp': False})
+        #X_int = res.x[0]
+        #Gex_2[i]=res.fun[0]
 
-    # alternative
-    #res = optimize.minimize(excess_gibbs, max_value-0.000001, method='TNC', bounds=((0.00001, max_value-0.0001),), args=(X, P, T, n, deltaH), options={'disp': False})
-    #X_int = res.x[0]
-    #Gex_2[i]=res.fun[0]
+        X_ints[i] = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, pressure, temperature, n, deltaH))[0]
+        Gex[i] = excess_gibbs(X_ints[i], X, pressure, temperature, n, deltaH)
+        print X_ints[i], X
 
-    X_ints[i] = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, P, T, n, deltaH))[0]
-    Gex[i] = excess_gibbs(X_ints[i], X, P, T, n, deltaH)
-    print X_ints[i], X
+    i = 40
+    e = excess_gibbs(X_ints[i], compositions[i], pressure, temperature, n, deltaH)
+    a= RTlogactivities(X_ints[i], compositions[i], pressure, temperature, n, deltaH)
+    plt.plot( [0., n/(n+1.), 1.], [a[0], 1./(1.+n)*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
 
-i = 40
-e = excess_gibbs(X_ints[i], compositions[i], P, T, n, deltaH)
-a= RTlogactivities(X_ints[i], compositions[i], P, T, n, deltaH)
-plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
-
-plt.plot( compositions, Gex, '-', linewidth=2., label='model')
+    plt.plot( compositions, Gex, '-', linewidth=2., label='model at '+str(temperature)+' K')
+    
 #plt.plot( compositions, Gex_2, '-', linewidth=2., label='model_from_eqm_order')
 plt.ylabel("Excess Gibbs (J/mol)")
 plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
 
-exit()
+
 
 
 ####
@@ -185,12 +196,30 @@ exit()
 fo=SLB_2011.forsterite()
 Mg2SiO4_liq=DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
 
-def dGfo(temperature):
-    fo.set_state(13.e9, temperature)
-    Mg2SiO4_liq.set_state(13.e9, temperature)
-    return (fo.gibbs - Mg2SiO4_liq.gibbs)
+def delta_gibbs(temperature, pressure, phase1, phase2, factor):
+    phase1.set_state(pressure, temperature[0])
+    phase2.set_state(pressure, temperature[0])
+    return (phase1.gibbs*factor - phase2.gibbs)
 
+def eqm_composition(X, P, T, n, deltaH, dG):
+    X_int = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, P, T, n, deltaH))[0]
+    return dG - RTlogactivities(X_int, X, P, T, n, deltaH)[0]
 
+pressure = 13.e9
+T_melt = optimize.fsolve(delta_gibbs, 3000., args=(pressure, fo, Mg2SiO4_liq, 1.))[0]
+print T_melt
+
+temperatures = np.linspace(1200., T_melt, 101)
+compositions = np.empty_like(temperatures)
+for i, temperature in enumerate(temperatures):
+    dG = delta_gibbs([temperature], 13.e9, fo, Mg2SiO4_liq, 1.)
+    endmember.set_state(pressure, temperature)
+    hydrous_component.set_state(pressure, temperature)
+    deltaH = hydrous_component.gibbs - endmember.gibbs
+    compositions[i]=optimize.fsolve(eqm_composition, 1e-5, args=(pressure, temperature, 4./3., deltaH, dG))[0]
+
+plt.plot(compositions, temperatures)
+    
 forsterite = []
 enstatite=[]
 chondrodite=[]
