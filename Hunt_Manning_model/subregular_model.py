@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 if not os.path.exists('burnman'):
-    sys.path.insert(1,os.path.abspath('/home/rm438/projects/burnman/'))
+    sys.path.insert(1,os.path.abspath('../'))
 
 
 # Benchmarks for the solid solution class
@@ -53,7 +53,7 @@ class dummy_int (Mineral):
             'name': 'fo',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -20000. ,
+            'H_0': -100000. ,
             'S_0': 95.1 ,
             'V_0': 4.366e-05 ,
             'Cp': [233.3, 0.001494, -603800.0, -1869.7] ,
@@ -162,17 +162,10 @@ for i, X in enumerate(compositions):
     Gex_2[i] = excess_gibbs(X_int, X, P, T, n, deltaH)
     print X_int, X
 
-e = excess_gibbs(0.25009, 0.20006, P, T, n, deltaH)
-a= RTlogactivities(0.25009, 0.20006, P, T, n, deltaH)
-plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
-e = excess_gibbs(0.204913, 0.829934, P, T, n, deltaH)
-a= RTlogactivities(0.204913, 0.829934, P, T, n, deltaH)
-plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
-e = excess_gibbs(0.995121496226, 0.5, P, T, n, deltaH)
-a= RTlogactivities(0.995121496226, 0.5, P, T, n, deltaH)
-plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
-e = excess_gibbs(0.818114876634, 0.45001, P, T, n, deltaH)
-a = RTlogactivities(0.818114876634, 0.45001, P, T, n, deltaH)
+    
+X_int, X = 0.368, 0.27
+e = excess_gibbs(X_int, X, P, T, n, deltaH)
+a= RTlogactivities(X_int, X, P, T, n, deltaH)
 plt.plot( [0., 0.5, 1.], [a[0], 0.5*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
 
 plt.plot( compositions, Gex, '-', linewidth=2., label='model')
