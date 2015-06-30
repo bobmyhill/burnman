@@ -94,7 +94,7 @@ def dGfo(temperature):
     Mg2SiO4_liq.set_state(13.e9, temperature)
     return (fo.gibbs - Mg2SiO4_liq.gibbs)
 
-
+'''
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
@@ -110,7 +110,7 @@ plt.ylabel("Excess Gibbs (J/mol)")
 plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
-
+'''
 
 
 fn0=lambda T: 0.
@@ -122,7 +122,7 @@ compositionsinf=np.empty_like(temperatures)
 temperatures_fo=np.linspace(1600., 3000., 101)
 compositions_fo=np.empty_like(temperatures_fo)
 
-
+'''
 for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, r, K0, fn0, fn0))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, r, Kinf, fn0, fn0))
@@ -137,6 +137,19 @@ plt.plot( compositions_fo, temperatures_fo, linewidth=1, label='fo')
 #plt.plot( compositions, temperatures, linewidth=1, label='K=K(T)')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
+'''
+
+###################
+# CALCULATE LIQUIDUS SPLINE
+from scipy.interpolate import UnivariateSpline
+
+Xs=[0.0, 0.2, 0.4, 0.55]
+Ts=[2300., 1830., 1500., 1280.] # in C (Presnall and Walter, 1993 for dry melting)
+spline_PW1993 = UnivariateSpline(Xs, Ts, s=1)
+
+Xs_liquidus = np.linspace(0.0, 0.6, 101)
+plt.plot(Xs_liquidus, spline_PW1993(Xs_liquidus)+273.15)
+###################
 
 forsterite = []
 enstatite=[]
@@ -170,6 +183,21 @@ plt.xlabel("X")
 plt.legend(loc='upper right')
 plt.show()
 
+####################
+# a-X relationships (1 cation basis)
+compositions = np.linspace(0., 0.6, 101)
+activities = np.empty_like(temperatures)
+for i, composition in enumerate(compositions):
+    temperature = spline_PW1993(composition)+273.15
+    activities[i] =  np.exp( dGfo(temperature)/3. / (constants.gas_constant*temperature))
+
+   
+plt.plot(compositions, activities)
+plt.title('Forsterite')
+plt.xlim(0., 1.)
+plt.ylim(0., 1.)
+plt.show()
+####################
 
 data=[[compositions_fo, temperatures_fo],[compositions, temperatures],[compositionsinf, temperatures],[compositions0, temperatures]]
 
