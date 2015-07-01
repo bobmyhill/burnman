@@ -35,7 +35,8 @@ def W(T):
     # Wai, Wah, Wih
     #return -65.*T, 0.*T, -70.*T
     #return 0., 0.*T, -5*T
-    return 0.*T, -00.*T, 0*T
+    #return -130.*T, -00.*T, -140*T
+    return -160.*T, -00.*T, -210*T
 
 n = 2.
 class dummy_int (Mineral):
@@ -66,7 +67,7 @@ class dummy (Mineral):
             'name': 'fo',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': 0.0 ,
+            'H_0': 000.0 ,
             'S_0': 100. ,
             'V_0': 4.366e-05 ,
             'Cp': [233.3, 0.001494, -603800.0, -1869.7] ,
