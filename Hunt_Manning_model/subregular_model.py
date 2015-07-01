@@ -47,7 +47,7 @@ class dummy_int (Mineral):
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': 0000. ,
-            'S_0': 100. + (100.), # 131*7./4.
+            'S_0': 100., # 131*7./4.
             'V_0': 4.366e-05 ,
             'Cp': [233.3, 0.001494, -603800.0, -1869.7] ,
             'a_0': 2.85e-05 ,
@@ -108,7 +108,7 @@ def RTlogactivities(X_int, c, P, T, n_H2Oint, deltaH):
     RTlny_anh = (1.-X_anh)*X_H2O*Wah + (1.-X_anh)*X_int*Wai - X_int*X_H2O*Wih
     RTlny_H2O =  X_anh*(1.-X_H2O)*Wah - X_anh*X_int*Wai + X_int*(1.-X_H2O)*Wih
     RTlny_int =  -X_anh*X_H2O*Wah + X_anh*(1.-X_int)*Wai + (1.-X_int)*X_H2O*Wih
-
+    
     return [R*T*np.log(X_anh) + RTlny_anh,  R*T*np.log(X_int) + RTlny_int, R*T*np.log(X_H2O) + RTlny_H2O]
 
 
@@ -152,7 +152,6 @@ for temperature in temperatures:
     endmember.set_state(pressure, temperature)
     hydrous_component.set_state(pressure, temperature)
     deltaH = hydrous_component.gibbs - endmember.gibbs
-
     for i, X in enumerate(compositions):
         
         if X < n/(n+1.):
@@ -160,10 +159,9 @@ for temperature in temperatures:
         else:
             max_value = (1.-X)/(1.-n*(1.-X))
 
-
         # alternative
         res = optimize.minimize(excess_gibbs, max_value-0.000001, method='TNC', bounds=((0.00001, max_value-0.0001),), args=(X, pressure, temperature, n, deltaH), options={'disp': False})
-        X_int = res.x[0]
+        X_ints[i] = res.x[0]
         Gex[i]=res.fun[0]
 
         #X_ints[i] = optimize.fsolve(eqm_order, max_value-0.000001, args=(X, pressure, temperature, n, deltaH))[0]
@@ -173,7 +171,8 @@ for temperature in temperatures:
     i = 70
     e = excess_gibbs(X_ints[i], compositions[i], pressure, temperature, n, deltaH)
     a= RTlogactivities(X_ints[i], compositions[i], pressure, temperature, n, deltaH)
-    plt.plot( [0., n/(n+1.), 1.], [a[0], 1./(1.+n)*(deltaH + a[1]), a[2]], linewidth=1., label='activities')
+    plt.plot( [compositions[i]], [e], marker='o', linestyle='None', label='activities')
+    plt.plot( [0., 1.], [a[0], a[2]], linewidth=1., label='activities')
 
     plt.plot( compositions, Gex, '-', linewidth=2., label='model at '+str(temperature)+' K')
     
@@ -183,7 +182,7 @@ plt.xlabel("X")
 plt.legend(loc='lower left')
 plt.show()
 
-
+    
 def delta_gibbs(temperature, pressure, phase1, phase2, factor1, factor2):
     phase1.set_state(pressure, temperature[0])
     phase2.set_state(pressure, temperature[0])
