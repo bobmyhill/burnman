@@ -95,14 +95,14 @@ class SiO2_liquid(Mineral):
             'eta': -0.2783503528 ,
             'el_V_0': 1e-06
             }
-        #Fxs=-9 + 1617.47564545 # kJ/mol
-        #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
-        #Kxs=800000.
-        #Pxs=-160000.
-        Fxs=1617.47564545 # 1617.47564545 # kJ/mol
+        Fxs=-9 + 1617.47564545 # kJ/mol
         Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
-        Pxs=0.
-        Kxs=0.
+        Kxs=800000.
+        Pxs=-160000.
+        #Fxs=1617.47564545 # 1617.47564545 # kJ/mol
+        #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        #Pxs=0.
+        #Kxs=0.
         adjust_vector_a(Fxs, Sxs, Pxs, Kxs, self.params)
         self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
         Mineral.__init__(self)
@@ -156,8 +156,8 @@ class MgSiO3_liquid(Mineral):
         # F adjustment for oen at 0 GPa = 2347.859939 kJ/mol
         # +8 to fit Kato and Kumazawa (1985, 1986) 
         # +14.5 to fit Presnall and Gasparik (1990)
-        # Entropies wrong in both cases (too shallow)
-        # +12, -10.e-3 kJ/K/mol better, still not perfect even for
+        # Entropies wrong in both cases (slopes much too shallow)
+        # F += 12, S -= 10.e-3 kJ/K/mol better, still not perfect even for
         # K+K papers
         # Volume also too small?
         Fxs=  14.5 + 2347.859939 # kJ/mol
@@ -196,7 +196,7 @@ class Mg2SiO4_liquid(Mineral):
         Mineral.__init__(self)
 
 
-class SiO2_liquid_alt(Mineral):
+class SiO2_liquid_orig(Mineral):
     def __init__(self):
         self.params = {
             'name': 'SiO2_liquid',
@@ -214,14 +214,14 @@ class SiO2_liquid_alt(Mineral):
             'eta': -0.2783503528 ,
             'el_V_0': 1e-06
             }
-        Fxs=-9 + 1617.47564545 # kJ/mol
-        Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
-        Kxs=800000.
-        Pxs=-160000.
-        #Fxs=2.0 + 1617.47564545 # 1617.47564545 # kJ/mol
+        #Fxs=-9 + 1617.47564545 # kJ/mol
         #Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
-        #Pxs=0.
-        #Kxs=0.
+        #Kxs=800000.
+        #Pxs=-160000.
+        Fxs=2.0 + 1617.47564545 # 1617.47564545 # kJ/mol
+        Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        Pxs=0.
+        Kxs=0.
         adjust_vector_a(Fxs, Sxs, Pxs, Kxs, self.params)
         self.params['a'] = vector_to_array(self.params['a'], self.params['O_f'], self.params['O_theta'])*1e3 # [J/mol]
         Mineral.__init__(self)
