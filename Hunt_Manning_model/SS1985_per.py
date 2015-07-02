@@ -225,6 +225,8 @@ for i, composition in enumerate(compositions_per):
     temperature = temperatures_per[i]
     activities_per[i] =  np.exp( dGper(temperature) / (constants.gas_constant*temperature))
 
+
+
    
 plt.plot(compositions_per, activities_per)
 plt.title('Periclase')

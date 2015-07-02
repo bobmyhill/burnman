@@ -18,20 +18,20 @@ import matplotlib.image as mpimg
 per_liq = DKS_2013_liquids_tweaked.MgO_liquid()
 fo_liq = DKS_2013_liquids_tweaked.Mg2SiO4_liquid()
 en_liq = DKS_2013_liquids_tweaked.MgSiO3_liquid()
-stv_liq = DKS_2013_liquids_tweaked.SiO2_liquid_alt()
+stv_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
 
 per = SLB_2011.periclase()
 fo = SLB_2011.forsterite()
 cen = SLB_2011.hp_clinoenstatite()
-stv = SLB_2011.stishovite()
+stv = DKS_2013_liquids_tweaked.stishovite()
 
 class MgO_SiO2_liquid(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='Subregular MgO-SiO2 liquid'
         self.type='subregular'
 
-        self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
-                           [DKS_2013_liquids_tweaked.SiO2_liquid_alt(), '[Si]O2']]
+        self.endmembers = [[per_liq, '[Mg]O'],
+                           [stv_liq, '[Si]O2']]
                            
 
         self.enthalpy_interaction = [[[-55000., -220000.]]]
@@ -67,7 +67,7 @@ plt.plot(obs_compositions, obs_excess_gibbs, marker='o', label=str(temperature)+
 
 # Constraint from eutectic temperature
 pressure = 14.e9 # 13.9 in paper
-temperature = 2185+273.15
+temperature = 2185+273.15 +50 # note 50 K tweak to better agree with fo and en melting
 c = 30.7 # +/-1.7 wt % Mg2SiO4 (with MgSiO3)
 M_fo = 140.6931 # Mg2SiO4
 M_en = 100.3887 # MgSiO3
@@ -116,7 +116,7 @@ pressure = 14.e9 # GPa
 compositions = np.linspace(0., 1., 101)
 excess_gibbs=np.empty_like(compositions)
 
-for temperature in np.array([2458., 2579.]):
+for temperature in np.array([2458., 2580.]):
     for i, c in enumerate(compositions):
         liquid.set_composition([1.-c, c])
         liquid.set_state(pressure, temperature)
@@ -138,7 +138,7 @@ plt.plot(obs_compositions, calc_excess_entropy, marker='o', linestyle='None', la
 
 compositions = np.linspace(0., 1., 101)
 excess_entropy=np.empty_like(compositions)
-for temperature in np.array([2458., 2579.]):
+for temperature in np.array([2458., 2580.]):
     for i, c in enumerate(compositions):
         liquid.set_composition([1.-c, c])
         liquid.set_state(pressure, temperature)

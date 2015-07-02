@@ -84,7 +84,7 @@ plt.plot(pressures, s2(pressures), linewidth=1)
 # Models
 
 coe_SLB = SLB_2011.coesite()
-stv_SLB = SLB_2011.stishovite()
+stv_SLB = DKS_2013_liquids_tweaked.stishovite()
 stv = DKS_2013_solids.stishovite()
 SiO2_liq = DKS_2013_liquids_tweaked.SiO2_liquid()
 
@@ -143,8 +143,8 @@ for i, pressure in enumerate(pressures):
 plt.plot(pressures, temperatures)
 
 
-plt.xlim(1.e9, 510.e9)
-plt.ylim(2000., 8000.)
+plt.xlim(1.e9, 20.e9)
+plt.ylim(2000., 5000.)
 
 plt.show()
 
@@ -440,7 +440,7 @@ plt.show()
 per=SLB_2011.periclase()
 fo=SLB_2011.forsterite()
 en=SLB_2011.enstatite()
-stv=SLB_2011.stishovite()
+stv=DKS_2013_liquids_tweaked.stishovite()
 
 
 ################
@@ -485,11 +485,11 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
         self.type='subregular'
 
         self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
-                           [DKS_2013_liquids_tweaked.SiO2_liquid_alt(), '[Si]O2']]
+                           [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
                            
 
         #self.enthalpy_interaction = [[[-55000., -200000.]]]
-        self.enthalpy_interaction = [[[-91838.69740738, -197996.71219146]]]
+        self.enthalpy_interaction = [[[-92201.77, -198031.]]]
         self.volume_interaction   = [[[0., 0.]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         

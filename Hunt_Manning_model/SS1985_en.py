@@ -78,8 +78,8 @@ def solve_composition(X_one_cation, T, r, K, Wsh, Whs):
 
 
 # 13 GPa, en
-n_cations = 2.
-r=3. # Oxygens available for bonding
+r=3./2. # Oxygens available for bonding
+n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
@@ -99,7 +99,7 @@ print Tmelt
 def dGen(temperature):
     en.set_state(13.e9, temperature)
     MgSiO3_liq.set_state(13.e9, temperature)
-    return (en.gibbs/2. - MgSiO3_liq.gibbs)
+    return (en.gibbs/2. - MgSiO3_liq.gibbs)/2.
 
 '''
 compositions=np.linspace(0.0001, 0.99, 101)
@@ -199,7 +199,7 @@ compositions = np.linspace(0., 0.6, 101)
 activities = np.empty_like(temperatures)
 for i, composition in enumerate(compositions):
     temperature = spline_PG1990(composition)+273.15
-    activities[i] =  np.exp( dGen(temperature)/2. / (constants.gas_constant*temperature))
+    activities[i] =  np.exp( dGen(temperature) / (constants.gas_constant*temperature))
 
    
 plt.plot(compositions, activities)
