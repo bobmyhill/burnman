@@ -90,7 +90,7 @@ def solve_composition_br(Xs, T, r, K, Wsh, Whs):
 r=1. # Oxygens available for bonding
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
-K1 = lambda T: np.exp(-(-70000.-15.*T)/(R*T))
+K1 = lambda T: 1
 Wsh1 = lambda T: 0
 
 K = lambda T: np.exp(-(-75000.-0.*(T-1483.))/(R*T))
@@ -102,9 +102,12 @@ Whs = lambda T: 00000.
 per=SLB_2011.periclase()
 MgO_liq=DKS_2013_liquids_tweaked.MgO_liquid()
 
-T_melt = fsolve(find_eqm_temperature, 3000., args=(13.e9, per, MgO_liq, 1.))[0]
-print T_melt
+T_melt = fsolve(find_eqm_temperature, 3000., args=(1.e5, per, MgO_liq, 1.))[0]
+print '0 GPa:', T_melt
 
+T_melt = fsolve(find_eqm_temperature, 3000., args=(13.e9, per, MgO_liq, 1.))[0]
+print '13 GPa:', T_melt
+print MgO_liq.S - per.S
 
 def dGper(temperature):
     per.set_state(13.e9, temperature)
