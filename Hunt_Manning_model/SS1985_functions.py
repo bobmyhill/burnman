@@ -22,14 +22,14 @@ def excesses_nonideal(X, T, r, K, Wsh, Whs): # X is mole fraction H2O
     partial_excess_H2O+= 2.*Xs*Xs*(1.-Xs)*Wsh - Xs*Xs*(1.-2.*Xs)*Whs 
     return partial_excess_anhydrous_phase, partial_excess_H2O
 
-def activities(X, r, K): # X is mole fraction H2O
-    Xb=X/(X + r*(1.-X)) # eq. 5.3b
+def activities(X, r, K): # X is mole fraction H2O where silicate has only 1 cation
+    Xb=X/(X + r*(1.-X)) # eq. 5.3b; silicate has only one oxygen
     XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4.)/K) # eq. 5.3
     XH2O=XO + 2*Xb - 1.0
     XOH=2.*(Xb-XH2O)
     return np.power(XO,r), XH2O, XOH
 
 
-def solve_composition(Xs, T, P, r, K, Wsh, Whs, solid, liquid, factor_solid, factor_liquid):
+def solve_composition(X, T, P, r, K, Wsh, Whs, solid, liquid, factor_solid, factor_liquid):
     return delta_gibbs([T], P, solid, liquid, factor_solid, factor_liquid) \
-        - excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0]
+        - excesses_nonideal(X, T, r, K(T), Wsh, Whs)[0]
