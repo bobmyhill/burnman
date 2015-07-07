@@ -42,10 +42,12 @@ liquid.set_composition([2./3., 1./3.])
 Tmelt_wad = fsolve(delta_gibbs, 2000., args=(pressure_wad, wad, liquid, 1./3., 1.))[0]
 print Tmelt_wad
 
+print liquid.S, liquid.S*3. - wad.S
+
 Tmelt_rw = fsolve(delta_gibbs, 2000., args=(pressure_rw, rw, liquid, 1./3., 1.))[0]
 print Tmelt_rw
 
-
+print liquid.S, liquid.S*3. - rw.S
 
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
