@@ -10,6 +10,7 @@ import matplotlib.image as mpimg
 # Liquid model
 from models import *
 from SS1985_functions import *
+from H2O_eos import lnfH2O
 
 # Benchmarks for the solid solution class
 import burnman
@@ -152,9 +153,9 @@ plt.plot( superliquidus[1], superliquidus[0]+add_T, marker='.', linestyle='none'
 ohtani = np.array([[1300+273.15, 1370+273.15, 1370+273.15, 1450+273.15, ],
                    [2.6, 1.9, 1.9, 1.6],
                    [100., 68.5, 83.4, 38.6]])
-demouchy = np.array([[1100+273.15, 1200+273.15, 1300+273.15, 1400+273.15],
-                     [2.41, 2.24, 1.66, 0.93],
-                     [31.52, 28.62, 20.1, 12.]])
+demouchy = np.array([[900+273.15, 1000+273.15, 1100+273.15, 1200+273.15, 1300+273.15, 1400+273.15],
+                     [2.23, 2.13, 2.41, 2.24, 1.66, 0.93],
+                     [100., 100., 31.52, 28.62, 20.1, 12.]])
 
 litasov = np.array([[1200+273.15, 1300+273.15, 1300+273.15, 1400+273.15, 1400+273.15],
                      [2.07, 1.02, 1.13, 0.58, 0.72],
@@ -210,7 +211,7 @@ ohtani_D = np.mean(ohtani[1]/ohtani_adjusted)
 print 'Dwad/melt, Drw/melt, Dwad/rw'
 print demouchy_D, ohtani_D, demouchy_D/ohtani_D
 
-# let's see how much water there should b in ringwoodite and wadsleyite
+# let's see how much water there should be in ringwoodite and wadsleyite
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
     wt_percent_melt = (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
@@ -228,23 +229,63 @@ for i, c in enumerate(compositions_rw):
 plt.plot( compositions_wad_solid, temperatures_wad, linewidth=1, label='Wadsleyite')
 plt.plot( compositions_rw_solid, temperatures_rw, linewidth=1, label='Ringwoodite')
 
-'''
+plt.ylim(1000.,3000.)
+plt.xlim(0.,1.)
+plt.ylabel("Temperature (K)")
+plt.xlabel("X")
+plt.legend(loc='upper right')
+
+
 ##### 
 # Now use activity of water in the melt to do the same thing
 #####
+deltaH_wadP = 166.e3 
+deltaV_wad = 10.0e-6
+n_wad = 1.
+c1000 = 0.040 # mole fraction at 1000 K
+c1000_wad = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
+deltaH_wad = deltaH_wadP - deltaV_wad*pressure_wad
+A_wad = c1000_wad \
+    / (np.exp(lnfH2O(pressure_wad, 1000.)) \
+           * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
+                         / (constants.gas_constant*1000.)))
+
+deltaH_rwP = 204.e3 
+deltaV_rw = 10.0e-6
+n_rw = 1.
+c1000 = 0.063 # mole fraction at 1000 K
+c1000_rw = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
+deltaH_rw = deltaH_rwP - deltaV_rw*pressure_rw
+A_rw = c1000_rw \
+    / (np.exp(lnfH2O(pressure_rw, 1000.)) \
+           * np.exp(-(deltaH_rw + pressure_rw*deltaV_rw) \
+                         / (constants.gas_constant*1000.)))
+
+
+temperature=1000.
+pressure = 17.e9
+print "Dwad/rw at 1000 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+temperature=1500.
+print "Dwad/rw at 1500 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
     a_H2O = activities(c, r, K(temperatures_wad[i]))[1] # H2O activity in the melt
-    compositions_wad_solid[i] = a_H2O*0.14
+    f_H2O = np.exp(lnfH2O(pressure_wad, temperatures_wad[i]))
+    w = A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure_wad*deltaV_wad)/(constants.gas_constant*temperatures_wad[i]))
+    compositions_wad_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
 compositions_rw_solid = np.empty_like(compositions_rw)
 for i, c in enumerate(compositions_rw):
     a_H2O = activities(c, r, K(temperatures_rw[i]))[1] # H2O activity in the melt
-    compositions_rw_solid[i] = a_H2O*0.18
-    print activities(c, r, K(temperatures_rw[i]))[0], activities(c, r, K(temperatures_rw[i]))[1], activities(c, r, K(temperatures_rw[i]))[2]
+    f_H2O = np.exp(lnfH2O(pressure_rw, temperatures_rw[i]))
+    w = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_rw*deltaV_rw)/(constants.gas_constant*temperatures_rw[i]))
+    compositions_rw_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
+
+
 plt.plot( compositions_wad_solid, temperatures_wad, linewidth=1, label='Wadsleyite (from activity)')
 plt.plot( compositions_rw_solid, temperatures_rw, linewidth=1, label='Ringwoodite (from activity)')
-'''
+
 
 
 plt.ylim(1000.,3000.)
@@ -253,6 +294,28 @@ plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
 plt.show()
+
+##########
+# This little aside looks at the amount of water in wadsleyite at 1200 C
+# It is useful to estimate the deltaV of hydration
+###########
+temperature = 1200. + 273.15
+demouchy_pressure = np.array([[14.e9, 14.e9, 15.e9, 16.e9, 17.e9, 18.e9],
+                  [2.4, 2.68, 2.24, 2.60, 2.43, 1.24]])
+weight_percents = np.empty_like(demouchy_pressure[0])
+for i, pressure in enumerate(demouchy_pressure[0]):
+    c = fsolve(solve_composition, 0.001, args=(temperature, pressure, r, K, Wsh(pressure), Whs(pressure), wad, liquid, 1./3., 1.))[0]
+    a_H2O = activities(c, r, K(temperature))[1]
+    f_H2O = np.exp(lnfH2O(pressure, temperature))
+    weight_percents[i] = 100.*A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))
+    print c, a_H2O, f_H2O, weight_percents[i]
+
+plt.plot(demouchy_pressure[0], weight_percents, linewidth=1)
+plt.plot(demouchy_pressure[0], demouchy_pressure[1], linestyle='None', marker='o')
+plt.show()
+
+
+#####
 
 #############################################
 # Print data
