@@ -239,7 +239,7 @@ plt.legend(loc='upper right')
 ##### 
 # Now use activity of water in the melt to do the same thing
 #####
-deltaH_wadP = 166.e3 
+deltaH_wadP = 165.e3 
 deltaV_wad = 10.0e-6
 n_wad = 1.
 c1000 = 0.040 # mole fraction at 1000 K
@@ -262,11 +262,10 @@ A_rw = c1000_rw \
                          / (constants.gas_constant*1000.)))
 
 
-temperature=1000.
-pressure = 17.e9
-print "Dwad/rw at 1000 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
-temperature=1500.
-print "Dwad/rw at 1500 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+pressure = 18.e9 # roughly 520 km depth
+temperatures = np.linspace(1200., 2200., 11)
+for temperature in temperatures:
+    print pressure/1.e9, temperature,  (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
 
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
