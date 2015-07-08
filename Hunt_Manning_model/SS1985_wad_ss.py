@@ -239,10 +239,10 @@ plt.legend(loc='upper right')
 ##### 
 # Now use activity of water in the melt to do the same thing
 #####
-deltaH_wadP = 165.e3 
+deltaH_wadP = 170.e3 
 deltaV_wad = 10.0e-6
 n_wad = 1.
-c1000 = 0.040 # mole fraction at 1000 K
+c1000 = 0.036 # mole fraction at 1000 K
 c1000_wad = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_wad = deltaH_wadP - deltaV_wad*pressure_wad
 A_wad = c1000_wad \
@@ -250,10 +250,10 @@ A_wad = c1000_wad \
            * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
                          / (constants.gas_constant*1000.)))
 
-deltaH_rwP = 204.e3 
+deltaH_rwP = 210.e3 
 deltaV_rw = 10.0e-6
 n_rw = 1.
-c1000 = 0.063 # mole fraction at 1000 K
+c1000 = 0.050 # mole fraction at 1000 K
 c1000_rw = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_rw = deltaH_rwP - deltaV_rw*pressure_rw
 A_rw = c1000_rw \
