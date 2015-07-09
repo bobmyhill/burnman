@@ -261,13 +261,6 @@ A_rw = c1000_rw \
            * np.exp(-(deltaH_rw + pressure_rw*deltaV_rw) \
                          / (constants.gas_constant*1000.)))
 
-
-temperature=1000.
-pressure = 17.e9
-print "Dwad/rw at 1000 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
-temperature=1500.
-print "Dwad/rw at 1500 K, 17 GPa:", (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
-
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
     a_H2O = activities(c, r, K(temperatures_wad[i]))[1] # H2O activity in the melt
@@ -293,6 +286,24 @@ plt.xlim(0.,1.)
 plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
+plt.show()
+
+##########
+
+##########
+
+print 'Prefactors:', A_wad, A_rw
+
+pressure = 18.e9 # 18 GPa is ~520 km
+temperatures = np.linspace(1273.15, 2273.15, 21)
+Dwadrw = np.empty_like(temperatures)
+for i, temperature in enumerate(temperatures):
+    Dwadrw[i] = (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+    print pressure/1.e9, "GPa,", temperature-273.15, "C", Dwadrw[i]
+
+plt.plot(temperatures-273.15, Dwadrw)
+plt.xlabel('Temperatures (C)')
+plt.ylabel('Dwad/rw')
 plt.show()
 
 ##########
