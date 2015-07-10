@@ -522,13 +522,13 @@ def liquidus_temperatures(solid, liquid_compositions, pressure):
     return temperatures 
 
 
-c_ranges=[[per, (0.10, 0.45, 10)],
-          [fo, (0.25, 0.60, 10)],
-          [en, (0.40, 0.70, 10)],
+c_ranges=[[per, (0.05, 0.45, 9)],
+          [fo, (0.25, 0.60, 8)],
+          [en, (0.40, 0.70, 7)],
           [coe, (0.55, 1.0, 10)],
           [stv, (0.55, 1.0, 10)]]
 
-pressure = 14.e9
+pressure = 13.e9
 for c_range in c_ranges:
     phase = c_range[0]
     print phase.params['name']

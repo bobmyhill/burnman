@@ -56,7 +56,7 @@ plt.show()
 
 
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions0=np.empty_like(temperatures)
 compositions1=np.empty_like(temperatures)
@@ -67,7 +67,7 @@ for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
-    compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1./3., 1.))
+    compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1.))
 
 
 plt.plot( compositions, temperatures, linewidth=1, label='fo')
@@ -84,6 +84,14 @@ add_T = 30.
 Xs=[0.0, 0.2, 0.4, 0.55]
 Ts=[2300., 1830.+add_T, 1500.+add_T, 1280.+add_T] # in C (Presnall and Walter, 1993 for dry melting)
 spline_PW1993 = UnivariateSpline(Xs, Ts, s=1)
+
+def findC(c, T):
+    return T - spline_PW1993(c)
+
+Ts = np.linspace(1300., 2500., 25)
+for temperature in Ts:
+    print temperature, fsolve(findC, 0.01, args=(temperature))[0]
+
 
 Xs_liquidus = np.linspace(0.0, 0.6, 101)
 plt.plot(Xs_liquidus, spline_PW1993(Xs_liquidus)+273.15)
