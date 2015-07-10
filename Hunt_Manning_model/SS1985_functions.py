@@ -9,7 +9,7 @@ def delta_gibbs(T, P, solid, liquid, factor_solid, factor_liquid):
 
 def excesses_nonideal(X, T, r, K, Wsh, Whs): # X is mole fraction H2O
     Xb=X/(X + r*(1.-X)) # eq. 5.3b
-    XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4)/K) # eq. 5.3
+    XO=1.-Xb-(0.5 - np.sqrt(0.25 - (K-4.)/K*(Xb-Xb*Xb)))/((K-4.)/K) # eq. 5.3
 
     activity_anhydrous_phase=np.power(XO,r)
     activity_H2O=XO + 2*Xb - 1.0

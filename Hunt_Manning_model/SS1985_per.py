@@ -25,7 +25,7 @@ def dGbr(temperature):
     return 0.5*delta_gibbs([temperature], 13.e9, anhydrous_phase, liquid, 1., 1.) + 0.5*(- 8330. + 20.*(temperature-1473.15))
 
 def solve_composition_br(Xs, T, r, K, Wsh, Whs):
-    return dGbr(T) - 0.5*(excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0] + excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[1])
+    return dGbr(T) - 0.5*(excesses_nonideal(Xs, T, r, K(T), Wsh, Whs)[0] + excesses_nonideal(Xs, T, r, K(T), Wsh, Whs)[1])
 
 
 
@@ -100,7 +100,7 @@ XsT = fsolve(per_br_eqm, [0.9, 1273.], args=(r, K, Wsh, Whs))
 print XsT
 T_per_br=XsT[1]
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions1=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
@@ -118,10 +118,24 @@ for i, T in enumerate(temperatures):
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
     
 for i, T in enumerate(temperatures_per):
-    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1., 1.))
+    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
 
 for i, T in enumerate(temperatures_br):
-    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh, Whs)) # only good at 13 GPa
+    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
+
+print 'PERICLASE EQM'
+temperatures_eqm=np.linspace(1273.15,4173.15, 30) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
+
+print 'BRUCITE EQM'
+temperatures_eqm=np.linspace(873.15,1773.15, 19) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
+
+
+for i, T in enumerate(temperatures_br):
+    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
 
 plt.plot( compositions_per, temperatures_per, linewidth=1, label='per')
 plt.plot( compositions_br, temperatures_br, linewidth=1, label='br')
