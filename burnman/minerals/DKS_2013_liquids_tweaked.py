@@ -234,7 +234,7 @@ class stishovite (Mineral):
             'name': 'Stishovite',
             'formula': formula,
             'equation_of_state': 'slb3',
-            'F_0': -824000.0 , # note was -819000, this fits Zhang et al., 1996
+            'F_0': -821800.0 , # note was -819000, this fits Zhang et al., 1996
             'V_0': 1.402e-05 ,
             'K_0': 3.14e+11 ,
             'Kprime_0': 3.8 ,

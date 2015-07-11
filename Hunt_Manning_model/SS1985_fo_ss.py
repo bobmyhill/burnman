@@ -25,7 +25,7 @@ n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T:1 
-G = lambda T: 0. - 80.*(T-1300.)
+G = lambda T: 0. - 80.*(T-1400.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
@@ -56,37 +56,30 @@ plt.show()
 
 
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions0=np.empty_like(temperatures)
 compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
-compositions=np.empty_like(temperatures)
+compositions_fo=np.empty_like(temperatures)
 
 for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
-    compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1./3., 1.))
+    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1.))
 
+temperatures_eqm=np.linspace(1273.15,2573.15, 27) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1.))
 
-plt.plot( compositions, temperatures, linewidth=1, label='fo')
+    
+plt.plot( compositions_fo, temperatures, linewidth=1, label='fo')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 plt.plot( compositions1, temperatures, linewidth=1, label='K=1')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 
 
-###################
-# CALCULATE LIQUIDUS SPLINE
-from scipy.interpolate import UnivariateSpline
-
-add_T = 30.
-Xs=[0.0, 0.2, 0.4, 0.55]
-Ts=[2300., 1830.+add_T, 1500.+add_T, 1280.+add_T] # in C (Presnall and Walter, 1993 for dry melting)
-spline_PW1993 = UnivariateSpline(Xs, Ts, s=1)
-
-Xs_liquidus = np.linspace(0.0, 0.6, 101)
-plt.plot(Xs_liquidus, spline_PW1993(Xs_liquidus)+273.15)
 ###################
 
 forsterite = []
@@ -97,14 +90,15 @@ for line in open('data/13GPa_fo-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[3] == 'f' or content[3] == 'sf' or content[3] == 'f_davide':
-            forsterite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+            forsterite.append([float(content[0])+273.15, (100. - float(content[1])*3.)/100.])
         if content[3] == 'e' or content[3] == 'se' or content[3] == 'e_davide':
-            enstatite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+            enstatite.append([float(content[0])+273.15, (100. - float(content[1])*3.)/100.])
         if content[3] == 'c':
-            chondrodite.append([float(content[0])+273.15, (100. - float(content[1])*7./2.)/100.])
+            chondrodite.append([float(content[0])+273.15, (100. - float(content[1])*3.)/100.])
         if content[3] == 'l' or content[3] == 'l_davide':
-            superliquidus.append([float(content[0])+273.15,(100. - float(content[1])*7./2.)/100.])
+            superliquidus.append([float(content[0])+273.15,(100. - float(content[1])*3.)/100.])
 
+add_T=0.
 forsterite=np.array(zip(*forsterite))
 enstatite=np.array(zip(*enstatite))
 chondrodite=np.array(zip(*chondrodite))
@@ -123,24 +117,30 @@ plt.show()
 
 ####################
 # a-X relationships (1 cation basis)
-compositions = np.linspace(0., 0.6, 101)
-activities = np.empty_like(temperatures)
-for i, composition in enumerate(compositions):
-    temperature = spline_PW1993(composition)+273.15
+activities = np.empty_like(compositions_fo)
+for i, composition in enumerate(compositions_fo):
+    temperature = temperatures[i]
     activities[i] =  np.exp( delta_gibbs([temperature], pressure, anhydrous_phase, liquid, 1./3., 1.) / (constants.gas_constant*temperature))
 
    
-plt.plot(compositions, activities)
+plt.plot(compositions_fo, activities)
 plt.title('Forsterite')
 plt.xlim(0., 1.)
 plt.ylim(0., 1.)
 plt.show()
 ####################
 
-data=[[compositions, temperatures],[compositions0, temperatures],[compositions1, temperatures],[compositionsinf, temperatures]]
 
+model_filename='forsterite_models.xT'
+data=[['-W1,grey,-', compositions0, temperatures],
+      ['-W1,grey', compositionsinf, temperatures],
+      ['-W1,black', compositions_fo, temperatures]] 
+
+f = open(model_filename,'w')
 for datapair in data:
-    print '>> -W1,black'
-    compositions, temperatures=datapair
+    linetype, compositions, temperatures=datapair
+    f.write('>> '+str(linetype)+' \n')
     for i, X in enumerate(compositions):
-        print compositions[i], temperatures[i]
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+

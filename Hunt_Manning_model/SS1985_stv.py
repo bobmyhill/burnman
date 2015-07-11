@@ -27,7 +27,7 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T: 1.
 Kinf = lambda T: 100000000000.
 
-G = lambda T: 0. - 120.*(T-1300.)
+G = lambda T: 0. - 100.*(T-1200.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
@@ -58,21 +58,21 @@ plt.show()
 
 
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions0=np.empty_like(temperatures)
 compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
-compositions=np.empty_like(temperatures)
+compositions_stv=np.empty_like(temperatures)
 
 for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
     compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1., 1.))
+    compositions_stv[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
 
 
-plt.plot( compositions, temperatures, linewidth=1, label='stv')
+plt.plot( compositions_stv, temperatures, linewidth=1, label='stv')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 plt.plot( compositions1, temperatures, linewidth=1, label='K=1')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
@@ -82,9 +82,16 @@ plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 ###################
 # CALCULATE LIQUIDUS SPLINE
 from scipy.interpolate import UnivariateSpline
-Xs=[0.0, 0.21, 0.35, 0.48]
-Ts=[Tmelt-273.15, 2200., 1890., 1660.] # in C (Zhang et al., 1996 for dry melting)
+Xs=[0.0, 0.3, 0.35, 0.52]
+Ts=[Tmelt-273.15, 1900., 1800.+30., 1600.] # in C (Zhang et al., 1996 for dry melting)
 spline_Zhang = UnivariateSpline(Xs, Ts, s=1)
+
+def findC(c, T):
+    return T - spline_Zhang(c)
+
+Ts = np.linspace(1400., 2600., 25)
+for temperature in Ts:
+    print temperature, fsolve(findC, 0.01, args=(temperature))[0]
 
 Xs_liquidus = np.linspace(0.0, 0.52, 101)
 plt.plot(Xs_liquidus, spline_Zhang(Xs_liquidus)+273.15)
@@ -107,7 +114,7 @@ for line in open('data/13GPa_SiO2-H2O.dat'):
 stishovite=np.array(zip(*stishovite))
 s_stishovite=np.array(zip(*s_stishovite))
 superliquidus=np.array(zip(*superliquidus))
-add_T = 30. # 
+add_T = 0. # 
 plt.plot( stishovite[1], stishovite[0] + add_T, marker='.', linestyle='none', label='stv+liquid')
 plt.plot( s_stishovite[1], s_stishovite[0] + add_T, marker='.', linestyle='none', label='(stv)+liquid')
 plt.plot( superliquidus[1], superliquidus[0] + add_T, marker='.', linestyle='none', label='superliquidus')
@@ -136,10 +143,17 @@ plt.show()
 ####################
 
 
-data=[[compositions, temperatures],[compositions0, temperatures],[compositions1, temperatures],[compositionsinf, temperatures]]
+model_filename='stishovite_models.xT'
+data=[['-W1,grey,-', compositions0, temperatures],
+      ['-W1,grey', compositionsinf, temperatures],
+      ['-W1,black,.', compositions_stv, temperatures],
+      ['-W1,black', Xs_liquidus, spline_Zhang(Xs_liquidus)+273.15]] # Spline in C
 
+
+f = open(model_filename,'w')
 for datapair in data:
-    print '>> -W1,black'
-    compositions, temperatures=datapair
+    linetype, compositions, temperatures=datapair
+    f.write('>> '+str(linetype)+' \n')
     for i, X in enumerate(compositions):
-        print compositions[i], temperatures[i]
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()

@@ -25,7 +25,7 @@ def dGbr(temperature):
     return 0.5*delta_gibbs([temperature], 13.e9, anhydrous_phase, liquid, 1., 1.) + 0.5*(- 8330. + 20.*(temperature-1473.15))
 
 def solve_composition_br(Xs, T, r, K, Wsh, Whs):
-    return dGbr(T) - 0.5*(excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[0] + excesses_nonideal(Xs, T, r, K(T), Wsh(T), Whs(T))[1])
+    return dGbr(T) - 0.5*(excesses_nonideal(Xs, T, r, K(T), Wsh, Whs)[0] + excesses_nonideal(Xs, T, r, K(T), Wsh, Whs)[1])
 
 
 
@@ -100,7 +100,7 @@ XsT = fsolve(per_br_eqm, [0.9, 1273.], args=(r, K, Wsh, Whs))
 print XsT
 T_per_br=XsT[1]
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions1=np.empty_like(temperatures)
 compositions0=np.empty_like(temperatures)
@@ -118,10 +118,24 @@ for i, T in enumerate(temperatures):
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
     
 for i, T in enumerate(temperatures_per):
-    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1., 1.))
+    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
 
 for i, T in enumerate(temperatures_br):
-    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh, Whs)) # only good at 13 GPa
+    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
+
+print 'PERICLASE EQM'
+temperatures_eqm=np.linspace(1273.15,4173.15, 30) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
+
+print 'BRUCITE EQM'
+temperatures_eqm=np.linspace(873.15,1773.15, 19) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
+
+
+for i, T in enumerate(temperatures_br):
+    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
 
 plt.plot( compositions_per, temperatures_per, linewidth=1, label='per')
 plt.plot( compositions_br, temperatures_br, linewidth=1, label='br')
@@ -137,18 +151,18 @@ for line in open('data/13GPa_per-H2O.dat'):
     content=line.strip().split()
     if content[0] != '%':
         if content[2] == 'p' or content[2] == 'sp':
-            periclase.append([float(content[0])+273.15, float(content[1])/100.])
+            periclase.append([float(content[0]), float(content[1])/100.])
         if content[2] == 'l':
-            superliquidus.append([float(content[0])+273.15, float(content[1])/100.])
+            superliquidus.append([float(content[0]), float(content[1])/100.])
         if content[2] == 'b':
-            brucite.append([float(content[0])+273.15, float(content[1])/100.])
+            brucite.append([float(content[0]), float(content[1])/100.])
 
-periclase=zip(*periclase)
-brucite=zip(*brucite)
-superliquidus=zip(*superliquidus)
-plt.plot( periclase[1], periclase[0], marker='.', linestyle='none', label='per+liquid')
-plt.plot( brucite[1], brucite[0], marker='.', linestyle='none', label='br+liquid')
-plt.plot( superliquidus[1], superliquidus[0], marker='.', linestyle='none', label='superliquidus')
+periclase=np.array(zip(*periclase))
+brucite=np.array(zip(*brucite))
+superliquidus=np.array(zip(*superliquidus))
+plt.plot( periclase[1], periclase[0]+273.15, marker='.', linestyle='none', label='per+liquid')
+plt.plot( brucite[1], brucite[0]+273.15, marker='.', linestyle='none', label='br+liquid')
+plt.plot( superliquidus[1], superliquidus[0]+273.15, marker='.', linestyle='none', label='superliquidus')
 
 plt.ylim(1000.,5500.)
 plt.xlim(0.,1.)
@@ -174,10 +188,18 @@ plt.ylim(0., 1.)
 plt.show()
 ####################
 
-data=[[compositions_per, temperatures_per],[compositions_br, temperatures_br],[compositions0, temperatures],[compositions1, temperatures],[compositionsinf, temperatures]]
+model_filename='periclase_models.xT'
+data=[['-W1,grey,-', compositions0, temperatures],
+      ['-W1,grey', compositionsinf, temperatures],
+      ['-W1,black', compositions_per, temperatures_per],
+      ['-W1,black', compositions_br, temperatures_br],
+      ['-W1,black', [0., XsT[0]], [XsT[1], XsT[1]]]]
 
+
+f = open(model_filename,'w')
 for datapair in data:
-    print '>> -W1,black'
-    compositions, temperatures=datapair
+    linetype, compositions, temperatures=datapair
+    f.write('>> '+str(linetype)+' \n')
     for i, X in enumerate(compositions):
-        print compositions[i], temperatures[i]
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()

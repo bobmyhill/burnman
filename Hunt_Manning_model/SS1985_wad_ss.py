@@ -26,7 +26,7 @@ n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T:1 
-G = lambda T: 0. - 80.*(T-1300.)
+G = lambda T: 0. - 80.*(T-1400.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda P: 0. # -4.e-5 * (P-13.e9)
 Whs = lambda P: 0. # -4.e-5 * (P-13.e9)
@@ -239,10 +239,10 @@ plt.legend(loc='upper right')
 ##### 
 # Now use activity of water in the melt to do the same thing
 #####
-deltaH_wadP = 170.e3 
+deltaH_wadP = 160.e3 
 deltaV_wad = 10.0e-6
 n_wad = 1.
-c1000 = 0.036 # mole fraction at 1000 K
+c1000 = 0.04 # mole fraction at 1000 K
 c1000_wad = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_wad = deltaH_wadP - deltaV_wad*pressure_wad
 A_wad = c1000_wad \
@@ -250,7 +250,7 @@ A_wad = c1000_wad \
            * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
                          / (constants.gas_constant*1000.)))
 
-deltaH_rwP = 210.e3 
+deltaH_rwP = 204.e3 
 deltaV_rw = 10.0e-6
 n_rw = 1.
 c1000 = 0.050 # mole fraction at 1000 K
@@ -262,11 +262,13 @@ A_rw = c1000_rw \
                          / (constants.gas_constant*1000.)))
 
 
+# Print Dwad/rw at different temperatures
 pressure = 18.e9 # roughly 520 km depth
 temperatures = np.linspace(1200., 2200., 11)
 for temperature in temperatures:
     print pressure/1.e9, temperature,  (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
 
+    
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
     a_H2O = activities(c, r, K(temperatures_wad[i]))[1] # H2O activity in the melt
@@ -292,6 +294,24 @@ plt.xlim(0.,1.)
 plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
+plt.show()
+
+##########
+
+##########
+
+print 'Prefactors:', A_wad, A_rw
+
+pressure = 18.e9 # 18 GPa is ~520 km
+temperatures = np.linspace(1273.15, 2273.15, 21)
+Dwadrw = np.empty_like(temperatures)
+for i, temperature in enumerate(temperatures):
+    Dwadrw[i] = (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+    print pressure/1.e9, "GPa,", temperature-273.15, "C", Dwadrw[i]
+
+plt.plot(temperatures-273.15, Dwadrw)
+plt.xlabel('Temperatures (C)')
+plt.ylabel('Dwad/rw')
 plt.show()
 
 ##########

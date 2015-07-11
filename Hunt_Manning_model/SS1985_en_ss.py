@@ -25,7 +25,7 @@ n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: 1
-G = lambda T: 0. - 120.*(T-1800.)
+G = lambda T: 0. - 120.*(T-1710.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
@@ -58,21 +58,21 @@ plt.legend(loc='lower left')
 plt.show()
 
 
-fn0=lambda T: 0.
+fn0=0.
 temperatures=np.linspace(600., Tmelt, 101)
 compositions0=np.empty_like(temperatures)
 compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
-compositions=np.empty_like(temperatures)
+compositions_en=np.empty_like(temperatures)
 
 for i, T in enumerate(temperatures):
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./4., 1.))
     compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./4., 1.))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./4., 1.))
-    compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh, Whs, anhydrous_phase, liquid, 1./4., 1.))
+    compositions_en[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./4., 1.))
 
 
-plt.plot( compositions, temperatures, linewidth=1, label='hen')
+plt.plot( compositions_en, temperatures, linewidth=1, label='hen')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 plt.plot( compositions1, temperatures, linewidth=1, label='K=1')
 plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
@@ -82,15 +82,22 @@ plt.plot( compositionsinf, temperatures, linewidth=1, label='K=inf')
 ###################
 # CALCULATE LIQUIDUS SPLINE
 from scipy.interpolate import UnivariateSpline
-add_T = 30. # K
+add_T = 0. # K
 
 Xs=[0.0, 0.2, 0.5, 0.6]
 Ts=[2186., 1770.+add_T, 1495.+add_T, 1440.+add_T] # in C (Kato and Kumazawa, 1986a for dry melting)
 spline_KK1986 = UnivariateSpline(Xs, Ts, s=1)
 
 Xs=[0.0, 0.2, 0.5, 0.6]
-Ts=[2513.28 - 273.15, 1800.+add_T, 1495.+add_T, 1440.+add_T] # in C (Presnall and Gasparik, 1990 for dry melting)
+Ts=[Tmelt - 273.15, 1780.+add_T, 1495.+add_T, 1420.+add_T] # in C (Presnall and Gasparik, 1990 for dry melting)
 spline_PG1990 = UnivariateSpline(Xs, Ts, s=1)
+
+def findC(c, T):
+    return T - spline_PG1990(c)
+
+Ts = np.linspace(1400., 2600., 25)
+for temperature in Ts:
+    print temperature, fsolve(findC, 0.01, args=(temperature))[0]
 
 Xs_liquidus = np.linspace(0.0, 0.6, 101)
 plt.plot(Xs_liquidus, spline_KK1986(Xs_liquidus)+273.15)
@@ -140,11 +147,18 @@ plt.ylim(0., 1.)
 plt.show()
 ####################
 
+model_filename='enstatite_models.xT'
+data=[['-W1,grey,-', compositions0, temperatures],
+      ['-W1,grey', compositionsinf, temperatures],
+      ['-W1,black,.', compositions_en, temperatures],
+      ['-W1,black', compositions, spline_PG1990(compositions)+273.15]] # remember spline temperatures are in C
 
-data=[[compositions, temperatures],[compositions0, temperatures],[compositions1, temperatures],[compositionsinf, temperatures]]
 
+f = open(model_filename,'w')
 for datapair in data:
-    print '>> -W1,black'
-    compositions, temperatures=datapair
+    linetype, compositions, temperatures=datapair
+    f.write('>> '+str(linetype)+' \n')
     for i, X in enumerate(compositions):
-        print compositions[i], temperatures[i]
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+
