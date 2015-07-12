@@ -6,9 +6,7 @@ Pressure (GPa)  Temperature (C)   errT          Solid phases
 3.05            2030              20            fo            (Davis and England, 1964)    
 3.95            2092.5            20            fo            (Davis and England, 1964)
 4.65            2117.5            20            fo            (Davis and England, 1964)    
-9.7             2250              10            fo            (Davis and England, 1964)              
-10.6            2260              10            fo            to ensure no change in gradient
-19.7            2325              10            fo            spline_fitting_for_density_crossover            
+9.7             2250              20            fo            
 10.6            2260              20            fo_periclase
 11.8            2255              20            fo_periclase              
 12.8            2270              20            fo_periclase

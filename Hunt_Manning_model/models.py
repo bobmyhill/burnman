@@ -9,7 +9,10 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
         self.endmembers = [[DKS_2013_liquids_tweaked.MgO_liquid(), '[Mg]O'],
                            [DKS_2013_liquids_tweaked.SiO2_liquid(), '[Si]O2']]
 
-        self.enthalpy_interaction = [[[-87653.77 + 14.e9*3.2e-6, -191052. + 14.e9*+3.2e-6]]] # 14 GPa
+        # self.enthalpy_interaction = [[[-92201 + 14.e9*3.2e-6, -198032. + 14.e9*+3.2e-6]]] # 14 GPa, no T tweak
+        # self.enthalpy_interaction = [[[-91297 + 14.e9*3.2e-6, -196645. + 14.e9*+3.2e-6]]] # 14 GPa, 10 K tweak
+        self.enthalpy_interaction = [[[-90386. + 14.e9*3.2e-6, -195253. + 14.e9*+3.2e-6]]] # 14 GPa, 20 K tweak
+
         self.volume_interaction   = [[[-3.2e-6, -3.2e-6]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         

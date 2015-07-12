@@ -25,7 +25,11 @@ n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: 1
+<<<<<<< HEAD
 G = lambda T: 0. - 120.*(T-1800.)
+=======
+G = lambda T: 0. - 120.*(T-1750.)
+>>>>>>> 976caf1... Second beta
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
