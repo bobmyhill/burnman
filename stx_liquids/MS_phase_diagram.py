@@ -143,7 +143,7 @@ for i, pressure in enumerate(pressures):
 plt.plot(pressures, temperatures)
 
 
-plt.xlim(1.e9, 20.e9)
+plt.xlim(13.e9, 14.e9)
 plt.ylim(2000., 5000.)
 
 plt.show()
