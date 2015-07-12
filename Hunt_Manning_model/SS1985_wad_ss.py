@@ -26,7 +26,7 @@ n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T:1 
-G = lambda T: 0. - 80.*(T-1400.)
+G = lambda T: 0. - 75.*(T-1420.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda P: 0. # -4.e-5 * (P-13.e9)
 Whs = lambda P: 0. # -4.e-5 * (P-13.e9)
@@ -34,6 +34,7 @@ Whs = lambda P: 0. # -4.e-5 * (P-13.e9)
 
 pressure_wad = 15.e9 # Pa
 pressure_rw = 20.e9 # Pa
+pressure_rw_2 = 23.e9 # Pa
 wad=SLB_2011.mg_wadsleyite()
 rw=SLB_2011.mg_ringwoodite()
 liquid=MgO_SiO2_liquid()
@@ -155,58 +156,56 @@ ohtani = np.array([[1300+273.15, 1370+273.15, 1370+273.15, 1450+273.15, ],
                    [100., 68.5, 83.4, 38.6]])
 demouchy = np.array([[900+273.15, 1000+273.15, 1100+273.15, 1200+273.15, 1300+273.15, 1400+273.15],
                      [2.23, 2.13, 2.41, 2.24, 1.66, 0.93],
-                     [100., 100., 31.52, 28.62, 20.1, 12.]])
+                     [101., 101., 31.52, 28.62, 20.1, 12.]])
 
 litasov = np.array([[1200+273.15, 1300+273.15, 1300+273.15, 1400+273.15, 1400+273.15],
                      [2.07, 1.02, 1.13, 0.58, 0.72],
-                     [100., 24.2, 26.5, 13.3, 10.6]])
+                     [101., 24.2, 26.5, 13.3, 10.6]])
 
 studynames=['Ohtani', 'Demouchy', 'Litasov']
 
 wtH2O=18.02
 wtfo=140.6931/3.
+studies_mol = []
 for j, study in enumerate([ohtani, demouchy, litasov]):
+    study_mol = np.copy(study)
     for i, phase in enumerate(study[1]):
-        study[1][i]=(phase/wtH2O)/((phase/wtH2O) + ((100-phase)/wtfo))
+        study_mol[1][i]=(phase/wtH2O)/((phase/wtH2O) + ((100-phase)/wtfo))
     for i, phase in enumerate(study[2]):
-        study[2][i]=(phase/wtH2O)/((phase/wtH2O) + ((100-phase)/wtfo))
+        study_mol[2][i]=(phase/wtH2O)/((phase/wtH2O) + ((100-phase)/wtfo))
+    studies_mol.append(study_mol)
+        
+    plt.plot( study_mol[1], study_mol[0], marker='o', linestyle='none', label=studynames[j])
+    plt.plot( study_mol[2], study_mol[0], marker='o', linestyle='none', label=studynames[j])
 
-    plt.plot( study[1], study[0], marker='o', linestyle='none', label=studynames[j])
-    plt.plot( study[2], study[0], marker='o', linestyle='none', label=studynames[j])
-
-demouchy_adjusted = np.empty_like(demouchy[0])
-ohtani_adjusted = np.empty_like(ohtani[0])
+demouchy_adjusted_mol = np.empty_like(demouchy[0])
+ohtani_adjusted_mol = np.empty_like(ohtani[0])
 for i, temperature in enumerate(demouchy[0]):
-    demouchy_adjusted[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1.))[0]
+    demouchy_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1.))[0]
 for i, temperature in enumerate(ohtani[0]):
-    ohtani_adjusted[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1.))[0]
+    ohtani_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1.))[0]
 
 #plt.plot( ohtani_adjusted, ohtani[0], marker='o', linestyle='none', label='Ohtani fit')
 #plt.plot( demouchy_adjusted, demouchy[0], marker='o', linestyle='none', label='Demouchy fit')
 
-# Convert mole percent back to weight percent
-for study in [ohtani, demouchy]:
-    for i, phase in enumerate(study[1]): # solid
-        study[1][i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
-    for i, phase in enumerate(study[2]): # liquid
-        study[2][i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
-
-for i, phase in enumerate(ohtani_adjusted): # new liquid
-    ohtani_adjusted[i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
-for i, phase in enumerate(demouchy_adjusted): # new liquid
-    demouchy_adjusted[i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
+demouchy_adjusted_wt = np.empty_like(demouchy[0])
+ohtani_adjusted_wt = np.empty_like(ohtani[0])
+for i, phase in enumerate(ohtani_adjusted_mol): # new liquid
+    ohtani_adjusted_wt[i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
+for i, phase in enumerate(demouchy_adjusted_mol): # new liquid
+    demouchy_adjusted_wt[i]=(phase*wtH2O)/((phase*wtH2O) + ((1.-phase)*wtfo))
 
 print 'old partition coefficients'
 print 'T:', demouchy[0], 'Dwad/melt:', demouchy[1]/demouchy[2]
 print 'T:', ohtani[0], 'Drw/melt:', ohtani[1]/ohtani[2]
 
 print 'new partition coefficients'
-print 'T:', demouchy[0], 'Dwad/melt:', demouchy[1]/demouchy_adjusted
-print 'T:', ohtani[0], 'Drw/melt:', ohtani[1]/ohtani_adjusted
+print 'T:', demouchy[0], 'Dwad/melt:', demouchy[1]/demouchy_adjusted_wt
+print 'T:', ohtani[0], 'Drw/melt:', ohtani[1]/ohtani_adjusted_wt
 
 # Take the average of these values, plot the new water contents
-demouchy_D = np.mean(demouchy[1]/demouchy_adjusted)
-ohtani_D = np.mean(ohtani[1]/ohtani_adjusted)
+demouchy_D = np.mean(demouchy[1]/demouchy_adjusted_wt)
+ohtani_D = np.mean(ohtani[1]/ohtani_adjusted_wt)
 
 print 'Dwad/melt, Drw/melt, Dwad/rw'
 print demouchy_D, ohtani_D, demouchy_D/ohtani_D
@@ -250,10 +249,10 @@ A_wad = c1000_wad \
            * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
                          / (constants.gas_constant*1000.)))
 
-deltaH_rwP = 204.e3 
+deltaH_rwP = 203.e3 
 deltaV_rw = 10.0e-6
 n_rw = 1.
-c1000 = 0.050 # mole fraction at 1000 K
+c1000 = 0.048 # mole fraction at 1000 K
 c1000_rw = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_rw = deltaH_rwP - deltaV_rw*pressure_rw
 A_rw = c1000_rw \
@@ -283,9 +282,17 @@ for i, c in enumerate(compositions_rw):
     w = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_rw*deltaV_rw)/(constants.gas_constant*temperatures_rw[i]))
     compositions_rw_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
+compositions_rw_solid_2 = np.empty_like(compositions_rw)
+for i, c in enumerate(compositions_rw):
+    a_H2O = activities(c, r, K(temperatures_rw[i]))[1] # H2O activity in the melt
+    f_H2O = np.exp(lnfH2O(pressure_rw_2, temperatures_rw[i]))
+    w = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_rw_2*deltaV_rw)/(constants.gas_constant*temperatures_rw[i]))
+    compositions_rw_solid_2[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
+
 
 plt.plot( compositions_wad_solid, temperatures_wad, linewidth=1, label='Wadsleyite (from activity)')
-plt.plot( compositions_rw_solid, temperatures_rw, linewidth=1, label='Ringwoodite (from activity)')
+plt.plot( compositions_rw_solid, temperatures_rw, linewidth=1, label='Ringwoodite (from activity, 20 GPa)')
+plt.plot( compositions_rw_solid_2, temperatures_rw, linewidth=1, label='Ringwoodite (from activity, 23 GPa)')
 
 
 
@@ -303,13 +310,32 @@ plt.show()
 print 'Prefactors:', A_wad, A_rw
 
 pressure = 18.e9 # 18 GPa is ~520 km
-temperatures = np.linspace(1273.15, 2273.15, 21)
-Dwadrw = np.empty_like(temperatures)
-for i, temperature in enumerate(temperatures):
+temperatures_Dwadrw = np.linspace(1273.15, 2273.15, 21)
+Dwadmelt = np.empty_like(temperatures_Dwadrw)
+Drwmelt = np.empty_like(temperatures_Dwadrw)
+Dwadrw = np.empty_like(temperatures_Dwadrw)
+for i, temperature in enumerate(temperatures_Dwadrw):
+    c=fsolve(solve_composition, 0.001, args=(temperature, pressure, r, K, Wsh(pressure), Whs(pressure), wad, liquid, 1./3., 1.))[0] # melt composition
+
+    melt_weight_percent= (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
+
+    a_H2O = activities(c, r, K(temperature))[1] # H2O activity in the melt
+    f_H2O = np.exp(lnfH2O(pressure, temperature))
+    
+    wad_weight_percent = A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))
+    rw_weight_percent = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature))
+    
     Dwadrw[i] = (A_wad*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))) /  (A_rw*np.exp(-(deltaH_rw + pressure*deltaV_rw)/(constants.gas_constant*temperature)))
+    Dwadrw[i] =  wad_weight_percent / rw_weight_percent
+    Dwadmelt[i] = wad_weight_percent / melt_weight_percent
+    Drwmelt[i] = rw_weight_percent / melt_weight_percent
+    
+    
     print pressure/1.e9, "GPa,", temperature-273.15, "C", Dwadrw[i]
 
-plt.plot(temperatures-273.15, Dwadrw)
+plt.plot(temperatures_Dwadrw-273.15, Dwadrw)
+plt.plot(temperatures_Dwadrw-273.15, Dwadmelt*10.)
+plt.plot(temperatures_Dwadrw-273.15, Drwmelt*10.)
 plt.xlabel('Temperatures (C)')
 plt.ylabel('Dwad/rw')
 plt.show()
@@ -340,11 +366,87 @@ plt.show()
 # Print data
 #############################################
 
-data=[[compositions_wad, temperatures_wad],[compositions0_wad, temperatures_wad],[compositionsinf_wad, temperatures_wad],
-      [compositions_rw, temperatures_rw],[compositions0_rw, temperatures_rw],[compositionsinf_rw, temperatures_rw]]
+model_filename='wad_rw_models.xT'
+data=[['-W1,grey,-', compositions0_wad, temperatures_wad],  # wad melt at 15 GPa
+      ['-W1,grey,-', compositions0_rw, temperatures_rw], # rw melt at 20 GPa
+      ['-W1,grey', compositionsinf_wad, temperatures_wad],  # wad melt at 15 GPa
+      ['-W1,grey', compositionsinf_rw, temperatures_rw], # rw melt at 20 GPa
+      ['-W1,red,-', compositions_wad, temperatures_wad],  # wad melt at 15 GPa
+      ['-W1,black,-', compositions_rw, temperatures_rw], # rw melt at 20 GPa
+      ['-W1,red', compositions_wad_solid, temperatures_wad],
+      ['-W1,black', compositions_rw_solid, temperatures_rw]]
 
+
+f = open(model_filename,'w')
 for datapair in data:
-    print '>> -W1,black'
+    linetype, compositions, temperatures=datapair
+    f.write('>> '+str(linetype)+' \n')
+    for i, X in enumerate(compositions):
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+
+model_filename='Ohtani_rw_data.xT'
+data=[[studies_mol[0][1], studies_mol[0][0]],
+      [studies_mol[0][2], studies_mol[0][0]]]
+
+
+f = open(model_filename,'w')
+for datapair in data:
     compositions, temperatures=datapair
     for i, X in enumerate(compositions):
-        print compositions[i], temperatures[i]
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+
+model_filename='Demouchy_wad_data.xT'
+data=[[studies_mol[1][1], studies_mol[1][0]],
+      [studies_mol[1][2], studies_mol[1][0]]]
+
+
+f = open(model_filename,'w')
+for datapair in data:
+    compositions, temperatures=datapair
+    for i, X in enumerate(compositions):
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+
+model_filename='Litasov_wad_data.xT'
+data=[[studies_mol[2][1], studies_mol[2][0]],
+      [studies_mol[2][2], studies_mol[2][0]]]
+
+f = open(model_filename,'w')
+for datapair in data:
+    compositions, temperatures=datapair
+    for i, X in enumerate(compositions):
+        f.write( str(compositions[i])+' '+str(temperatures[i]-273.15)+'\n' ) # output in C
+f.close()
+
+
+
+
+# And for the inset:
+# Partition coefficients for wadsleyite, ringwoodite and melt.
+
+model_filename='wad_rw_partitioning.TD'
+data=[['-W1,black', temperatures_Dwadrw, Dwadrw]]
+
+
+f = open(model_filename,'w')
+for datapair in data:
+    linetype, temperatures, Ds=datapair
+    f.write( '>> '+linetype+'\n' ) # output in C
+    for i, T in enumerate(temperatures):
+        f.write( str(T-273.15)+' '+str(Ds[i])+'\n' ) # output in C
+f.close()
+
+model_filename='solid_melt_partitioning.TD'
+data=[['-W1,red,-', temperatures_Dwadrw, Dwadmelt],
+      ['-W1,black,-', temperatures_Dwadrw, Drwmelt]]
+
+
+f = open(model_filename,'w')
+for datapair in data:
+    linetype, temperatures, Ds=datapair
+    f.write( '>> '+linetype+'\n' ) # output in C
+    for i, T in enumerate(temperatures):
+        f.write( str(T-273.15)+' '+str(Ds[i])+'\n' ) # output in C
+f.close()
