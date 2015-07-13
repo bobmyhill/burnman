@@ -67,7 +67,7 @@ plt.plot(obs_compositions, obs_excess_gibbs, marker='o', label=str(temperature)+
 
 # Constraint from eutectic temperature
 pressure = 14.e9 # 13.9 in paper
-temperature = 2185+273.15 +50 # note 50 K tweak to better agree with fo and en melting
+temperature = 2185+273.15 + 20. # 10 K tweak to fit fo melting better
 c = 30.7 # +/-1.7 wt % Mg2SiO4 (with MgSiO3)
 M_fo = 140.6931 # Mg2SiO4
 M_en = 100.3887 # MgSiO3
