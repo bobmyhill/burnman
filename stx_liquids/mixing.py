@@ -36,7 +36,7 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
 
         self.enthalpy_interaction = [[[-55000., -220000.]]]
         self.volume_interaction   = [[[0., 0.]]]
-        self.entropy_interaction  = [[[0., 0.]]]
+        self.entropy_interaction  = [[[40., 40.]]]
                         
         burnman.SolidSolution.__init__(self, molar_fractions)
 
