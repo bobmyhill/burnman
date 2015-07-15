@@ -4,8 +4,10 @@ import numpy as np
 sys.path.insert(1,os.path.abspath('..'))
 
 import burnman
-from H2O_eos import *
+from SP1994_eos import *
 from burnman import constants
+
+from scipy.optimize import fsolve
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -14,8 +16,7 @@ import matplotlib.image as mpimg
 Pc_H2O = 22.065417e6 # Pa
 Tc_H2O = 647.14
 rhoc_H2O = find_rho(Pc_H2O, Tc_H2O, ci_H2O)
-print rhoc_H2O
-print pressure(rhoc_H2O, Tc_H2O, ci_H2O)
+rhoc_H2O = 322./0.018 # two different densities at this pressure, fsolve finds the wrong one...
 
 # 31.04C (304.19 K)	72.8 atm (7,380 kPa)
 Pc_CO2 = 7380e3 # Pa
@@ -44,3 +45,14 @@ for array in temperature_arrays:
     plt.ylim(0., ylim)
     plt.legend(loc='upper left')
     plt.show()
+
+
+####
+# FUGACITY
+####
+
+
+print lnf(1.*1.e8, 250, ci_CO2) - np.log(1.e5), '(should be 4.51 [ln bar])'
+print lnf(50.*1.e8, 250, ci_CO2) - np.log(1.e5), '(should be 62.85 [ln bar])'
+print lnf(1.*1.e8, 2000, ci_CO2) - np.log(1.e5), '(should be 7.11 [ln bar])'
+print lnf(50.*1.e8, 2000, ci_CO2) - np.log(1.e5), '(should be 18.88 [ln bar])'
