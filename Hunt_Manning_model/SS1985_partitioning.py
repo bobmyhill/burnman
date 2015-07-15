@@ -10,7 +10,7 @@ import matplotlib.image as mpimg
 # Liquid model
 from models import *
 from SS1985_functions import *
-from H2O_eos import lnfH2O
+from SP1994_eos import *
 
 # Benchmarks for the solid solution class
 import burnman
@@ -236,7 +236,7 @@ c1673_fo = 0.018 # wt fraction at 1400 C if pure water
 print (c1673_fo/wtH2O)/((c1673_fo/wtH2O) + ((1.-c1673_fo)/wtfo))
 deltaH_fo = deltaH_foP - deltaV_fo*pressure_fo
 A_fo = c1673_fo \
-    / (np.exp(lnfH2O(pressure_fo, 1673.)) \
+    / (np.exp(lnf(pressure_fo, 1673., ci_H2O)) \
            * np.exp(-(deltaH_fo + pressure_fo*deltaV_fo) \
                          / (constants.gas_constant*1673.)))
 
@@ -253,7 +253,7 @@ c1000 = 0.04 # mole fraction at 1000 K
 c1000_wad = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_wad = deltaH_wadP - deltaV_wad*pressure_wad
 A_wad = c1000_wad \
-    / (np.exp(lnfH2O(pressure_wad, 1000.)) \
+    / (np.exp(lnf(pressure_wad, 1000., ci_H2O)) \
            * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
                          / (constants.gas_constant*1000.)))
 
@@ -264,7 +264,7 @@ c1000 = 0.048 # mole fraction at 1000 K
 c1000_rw = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_rw = deltaH_rwP - deltaV_rw*pressure_rw
 A_rw = c1000_rw \
-    / (np.exp(lnfH2O(pressure_rw, 1000.)) \
+    / (np.exp(lnf(pressure_rw, 1000., ci_H2O)) \
            * np.exp(-(deltaH_rw + pressure_rw*deltaV_rw) \
                          / (constants.gas_constant*1000.)))
 
@@ -287,35 +287,35 @@ for temperature in temperatures:
 compositions_fo_solid = np.empty_like(compositions_fo)
 for i, c in enumerate(compositions_fo):
     a_H2O = activities(c, r, K(temperatures_fo[i]))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_fo, temperatures_fo[i]))
+    f_H2O = np.exp(lnf(pressure_fo, temperatures_fo[i], ci_H2O))
     w = A_fo*np.power(a_H2O*f_H2O, n_fo)*np.exp(-(deltaH_fo + pressure_fo*deltaV_fo)/(constants.gas_constant*temperatures_fo[i]))
     compositions_fo_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
 compositions_fo_solid_2 = np.empty_like(compositions_fo)
 for i, c in enumerate(compositions_fo_2):
     a_H2O = activities(c, r, K(temperatures_fo[i]))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_fo_2, temperatures_fo[i]))
+    f_H2O = np.exp(lnf(pressure_fo_2, temperatures_fo[i], ci_H2O))
     w = A_fo*np.power(a_H2O*f_H2O, n_fo)*np.exp(-(deltaH_fo + pressure_fo_2*deltaV_fo)/(constants.gas_constant*temperatures_fo[i]))
     compositions_fo_solid_2[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
 compositions_wad_solid = np.empty_like(compositions_wad)
 for i, c in enumerate(compositions_wad):
     a_H2O = activities(c, r, K(temperatures_wad[i]))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_wad, temperatures_wad[i]))
+    f_H2O = np.exp(lnf(pressure_wad, temperatures_wad[i], ci_H2O))
     w = A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure_wad*deltaV_wad)/(constants.gas_constant*temperatures_wad[i]))
     compositions_wad_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
 compositions_rw_solid = np.empty_like(compositions_rw)
 for i, c in enumerate(compositions_rw):
     a_H2O = activities(c, r, K(temperatures_rw[i]))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_rw, temperatures_rw[i]))
+    f_H2O = np.exp(lnf(pressure_rw, temperatures_rw[i], ci_H2O))
     w = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_rw*deltaV_rw)/(constants.gas_constant*temperatures_rw[i]))
     compositions_rw_solid[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
 compositions_rw_solid_2 = np.empty_like(compositions_rw)
 for i, c in enumerate(compositions_rw_2):
     a_H2O = activities(c, r, K(temperatures_rw[i]))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_rw_2, temperatures_rw[i]))
+    f_H2O = np.exp(lnf(pressure_rw_2, temperatures_rw[i], ci_H2O))
     w = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_rw_2*deltaV_rw)/(constants.gas_constant*temperatures_rw[i]))
     compositions_rw_solid_2[i] = (w/wtH2O)/((w/wtH2O) + ((1.-w)/wtfo))
 
@@ -349,7 +349,7 @@ for i, temperature in enumerate(temperatures_Dwadfo_410):
     melt_weight_percent= (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
 
     a_H2O = activities(c, r, K(temperature))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_410, temperature))
+    f_H2O = np.exp(lnf(pressure_410, temperature, ci_H2O))
     
     wad_weight_percent = A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure_410*deltaV_wad)/(constants.gas_constant*temperature))
     fo_weight_percent = A_fo*np.power(a_H2O*f_H2O, n_fo)*np.exp(-(deltaH_fo + pressure_410*deltaV_fo)/(constants.gas_constant*temperature))
@@ -384,7 +384,7 @@ for i, temperature in enumerate(temperatures_Drwwad_520):
     melt_weight_percent= (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
 
     a_H2O = activities(c, r, K(temperature))[1] # H2O activity in the melt
-    f_H2O = np.exp(lnfH2O(pressure_520, temperature))
+    f_H2O = np.exp(lnf(pressure_520, temperature, ci_H2O))
     
     wad_weight_percent = A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure_520*deltaV_wad)/(constants.gas_constant*temperature))
     rw_weight_percent = A_rw*np.power(a_H2O*f_H2O, n_rw)*np.exp(-(deltaH_rw + pressure_520*deltaV_rw)/(constants.gas_constant*temperature))
@@ -416,7 +416,7 @@ weight_percents = np.empty_like(demouchy_pressure[0])
 for i, pressure in enumerate(demouchy_pressure[0]):
     c = fsolve(solve_composition, 0.001, args=(temperature, pressure, r, K, Wsh(pressure), Whs(pressure), wad, liquid, 1./3., 1.))[0]
     a_H2O = activities(c, r, K(temperature))[1]
-    f_H2O = np.exp(lnfH2O(pressure, temperature))
+    f_H2O = np.exp(lnf(pressure, temperature, ci_H2O))
     weight_percents[i] = 100.*A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))
     print c, a_H2O, f_H2O, weight_percents[i]
 
