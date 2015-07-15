@@ -73,10 +73,10 @@ def _rho(rho_SI, P, T, ci): # solve for density in mol/m^3, P in Pa
     return P - pressure(rho_SI[0], T, ci)
 
 def find_rho(P, T, ci): # finds rho (mol/m^3) in SI units for a given P, T, ci
-    return fsolve(_rho, 1.e4, args=(P, T, ci))[0]
+    return fsolve(_rho, 1.e10, args=(P, T, ci))[0]
 
-def lnfH2O(P, T, ci): # P is in Pa, returned in ln(Pa)
-    rho = fsolve(_rho, 1.e2, args=(P, T, ci))[0]
+def lnf(P, T, ci): # P is in Pa, returned in ln(Pa)
+    rho = fsolve(_rho, 1.e10, args=(P, T, ci))[0]
     A = helmholtz_free_energy(rho, T, ci)
     return (np.log(rho) + A/(R*T) + P/(rho*R*T)) + np.log(R*T) - 1.
 
