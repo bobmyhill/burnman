@@ -27,7 +27,7 @@ liquid = MgO_SiO2_liquid()
 oen=SLB_2011.enstatite()
 cen=SLB_2011.hp_clinoenstatite()
 
-oen_pressures = np.linspace(2.e9, 18.e9, 20)
+oen_pressures = np.linspace(2.e9, 18.e9, 33)
 oen_temperatures = np.empty_like(oen_pressures)
 for i, pressure in enumerate(oen_pressures):
     print pressure
@@ -35,7 +35,7 @@ for i, pressure in enumerate(oen_pressures):
     oen_temperatures[i] = fsolve(find_temperature, 2000., args=(pressure, oen, liquid, 0.25))[0]
 
 
-cen_pressures = np.linspace(11.e9, 18.e9, 20)
+cen_pressures = np.linspace(11.e9, 18.e9, 15)
 cen_temperatures = np.empty_like(cen_pressures)
 for i, pressure in enumerate(cen_pressures):
     print pressure
@@ -78,7 +78,7 @@ plt.show()
 
 fo=SLB_2011.forsterite()
 
-fo_pressures = np.linspace(3.e9, 15.e9, 40)
+fo_pressures = np.linspace(3.e9, 15.e9, 25)
 fo_temperatures = np.empty_like(fo_pressures)
 for i, pressure in enumerate(fo_pressures):
     print pressure
@@ -170,7 +170,7 @@ def spline_cross(c, s0, s1):
 cotectics=[]
 cotectics.append([0.0, per_melt])
 for i in range(4): # 5 splines, four crossing points
-    c = fsolve(spline_cross, 0.1, args=(splines[i], splines[i+1]))[0]
+    c = fsolve(spline_cross, c_ranges[i][1][1], args=(splines[i], splines[i+1]))[0]
     T = splines[i](c)
     cotectics.append([c, T])
 cotectics.append([1.0, coe_melt])
