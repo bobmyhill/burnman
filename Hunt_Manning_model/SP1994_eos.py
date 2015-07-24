@@ -80,3 +80,7 @@ def lnf(P, T, ci): # P is in Pa, returned in ln(Pa)
     A = helmholtz_free_energy(rho, T, ci)
     return (np.log(rho) + A/(R*T) + P/(rho*R*T)) + np.log(R*T) - 1.
 
+def gibbs(P, T, ci): # not done yet
+    rho = fsolve(_rho, 1.e10, args=(P, T, ci))[0]
+    A = helmholtz_free_energy(rho, T, ci)
+    return A + P/rho

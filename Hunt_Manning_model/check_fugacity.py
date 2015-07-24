@@ -56,3 +56,33 @@ print lnf(1.*1.e8, 250, ci_CO2) - np.log(1.e5), '(should be 4.51 [ln bar])'
 print lnf(50.*1.e8, 250, ci_CO2) - np.log(1.e5), '(should be 62.85 [ln bar])'
 print lnf(1.*1.e8, 2000, ci_CO2) - np.log(1.e5), '(should be 7.11 [ln bar])'
 print lnf(50.*1.e8, 2000, ci_CO2) - np.log(1.e5), '(should be 18.88 [ln bar])'
+
+
+#G(H2O)
+#
+#   kbar C        500      1000
+#   10.0      -338.12   -409.09
+#   20.0      -321.55   -389.26
+
+#G(CO2)
+#
+#   kbar C        500      1000
+#   10.0      -484.09   -577.27
+#   20.0      -453.32   -542.93
+
+'''
+per_HP = HP_2011_ds62.per()
+br_HP = HP_2011_ds62.br()
+
+T = 1000. + 273.15
+P = 1.e9
+print gibbs(P, T, ci_H2O)
+print "-409.09"
+
+T = 1000 + 273.15
+P = 2.e9
+print gibbs(P, T, ci_H2O)
+print "-389.26"
+
+exit()
+'''

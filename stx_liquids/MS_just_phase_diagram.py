@@ -24,6 +24,51 @@ def find_temperature(temperature, pressure, phase1, phase2, factor):
 
 liquid = MgO_SiO2_liquid()
 
+'''
+#####
+# Periclase
+per=SLB_2011.periclase()
+liquid.set_composition([1.0, 0.0])
+P0 = 1.e5 
+T0 = fsolve(find_temperature, 3069., args=(P0, per, liquid, 1.0))[0]
+print T0
+
+liquid.set_state(13.e9, 2000.)
+print liquid.gibbs
+
+P1 = 2.e8 
+T1 = fsolve(find_temperature, 2500., args=(P1, per, liquid, 1.0))[0]
+print T1
+DeltaV = liquid.endmembers[0][0].V - per.V
+DeltaS = liquid.endmembers[0][0].S - per.S
+print DeltaS / DeltaV
+print (P1-P0)/(T1-T0) 
+
+
+T0 = 3070. # K
+P0 = 1.e5 # Pa
+P1 = 13.e9 
+T1_used = fsolve(find_temperature, 3000., args=(P1, per, liquid, 1.0))[0]
+DeltaV = liquid.endmembers[0][0].V - per.V
+DeltaS = liquid.endmembers[0][0].S - per.S
+dTdP_used = DeltaV / DeltaS 
+
+print T1_used, DeltaS, liquid.endmembers[0][0].S
+
+T1_ZF2008 = [T1_used, 5373.]
+for T1 in T1_ZF2008:
+    dTdP_scaled = dTdP_used * (T1 - T0) / (T1_used - T0)
+    DeltaV = liquid.endmembers[0][0].V - per.V # assume constant with T above model melting point
+    DeltaS = DeltaV / dTdP_scaled 
+    print T1, DeltaS, DeltaV
+
+
+exit()
+
+######
+'''
+
+
 oen=SLB_2011.enstatite()
 cen=SLB_2011.hp_clinoenstatite()
 
