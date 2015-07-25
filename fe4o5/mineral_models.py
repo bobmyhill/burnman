@@ -3,6 +3,27 @@ from burnman.mineral import Mineral
 from burnman.processchemistry import *
 atomic_masses=read_masses()
 
+DeltaH_fm=-6950.
+class ordered_fm_opx (Mineral):
+    def __init__(self):
+       formula='Fe2.0Si2.0O6.0'
+       formula = dictionarize_formula(formula)
+       self.params = {
+            'name': 'fm',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': (-2388710.0-3090220.0)/2.+DeltaH_fm ,
+            'S_0': (132.5+189.9)/2. ,
+            'V_0': (6.592e-05+6.262e-05)/2. ,
+            'Cp': [(398.7+356.2)/2., (-0.006579-0.00299)/2., (1290100.0-596900.0)/2., (-4058.0-3185.3)/2.] ,
+            'a_0': (3.26e-05+2.27e-05)/2. ,
+            'K_0': (1.01e+11+1.059e+11)/2. ,
+            'Kprime_0': (4.08+8.65)/2. ,
+            'Kdprime_0': -1.*(4.08+8.65)/(1.01e+11+1.059e+11) ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+       Mineral.__init__(self)
+
 # High magnetite
 class high_mt (Mineral):
     def __init__(self):
