@@ -45,6 +45,7 @@ class Fe4O5 (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
        Mineral.__init__(self)
 
+
 # Fe4O5
 class Fe5O6 (Mineral):
     def __init__(self):
@@ -137,6 +138,126 @@ class ferropericlase(burnman.SolidSolution):
 
         # Interaction parameters
         enthalpy_interaction=[[11.0e3, 11.0e3], [2.0e3]]
+
+        burnman.SolidSolution.__init__(self, base_material, \
+                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
+
+
+        
+# (Mg,Fe)2Fe2O5 - ol/wad/rw equilibrium
+
+'''
+class MgFe3O5 (Mineral): # for SLB
+    def __init__(self):
+       formula='Mg1.0Fe3.0O5.0'
+       formula = dictionarize_formula(formula)
+       self.params = {
+            'name': 'MgFe3O5',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -1705000.0 ,
+            'S_0': 185.9 ,
+            'V_0': 5.333e-05 ,
+            'Cp': [323.0, -0.006843, -2462000.0, -1954.9] ,
+            'a_0': 2.36e-05 ,
+            'K_0': 1.500e+11 ,
+            'Kprime_0': 4.00 ,
+            'Kdprime_0': -3.080e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+'''
+
+# Best fit for change in Kd with pressure for each mineral
+class MgFe3O5 (Mineral):
+    def __init__(self):
+       formula='Mg1.0Fe3.0O5.0'
+       formula = dictionarize_formula(formula)
+       self.params = {
+            'name': 'MgFe3O5',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -1688000.0 ,
+            'S_0': 185.9 ,
+            'V_0': 5.333e-05 ,
+            'Cp': [323.0, -0.006843, -2462000.0, -1954.9] ,
+            'a_0': 2.36e-05 ,
+            'K_0': 1.400e+11 ,
+            'Kprime_0': 4.00 ,
+            'Kdprime_0': -3.080e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+       Mineral.__init__(self)
+
+# Best fit for ol and wad (but pressure dependence within minerals ill-fitting
+'''
+class MgFe3O5 (Mineral):
+    def __init__(self):
+       formula='Mg1.0Fe3.0O5.0'
+       formula = dictionarize_formula(formula)
+       self.params = {
+            'name': 'MgFe3O5',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -1685500.0 ,
+            'S_0': 185.9 ,
+            'V_0': 5.333e-05 ,
+            'Cp': [323.0, -0.006843, -2462000.0, -1954.9] ,
+            'a_0': 2.36e-05 ,
+            'K_0': 1.200e+11 ,
+            'Kprime_0': 4.00 ,
+            'Kdprime_0': -3.080e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+'''
+
+class MgFeFe2O5(burnman.SolidSolution):
+    def __init__(self):
+        # Name
+        self.name='(Mg,Fe)2Fe2O5'
+
+        base_material = [[MgFe3O5(), '[Mg]Fe3O5'],[Fe4O5(), '[Fe]Fe3O5']]
+
+        # Interaction parameters
+        enthalpy_interaction=[[0.0e3]]
+
+        burnman.SolidSolution.__init__(self, base_material, \
+                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
+
+class olivine(burnman.SolidSolution):
+    def __init__(self):
+        # Name
+        self.name='olivine'
+
+        base_material = [[burnman.minerals.HP_2011_ds62.fo(), '[Mg]2SiO4'],[burnman.minerals.HP_2011_ds62.fa(), '[Fe]2SiO4']]
+
+        # Interaction parameters
+        enthalpy_interaction=[[9.0e3]]
+
+        burnman.SolidSolution.__init__(self, base_material, \
+                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
+
+class wadsleyite(burnman.SolidSolution):
+    def __init__(self):
+        # Name
+        self.name='wadsleyite'
+
+        base_material = [[burnman.minerals.HP_2011_ds62.mwd(), '[Mg]2SiO4'],[burnman.minerals.HP_2011_ds62.fwd(), '[Fe]2SiO4']]
+
+        # Interaction parameters
+        enthalpy_interaction=[[13.0e3]]
+
+        burnman.SolidSolution.__init__(self, base_material, \
+                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
+
+class ringwoodite(burnman.SolidSolution):
+    def __init__(self):
+        # Name
+        self.name='ringwoodite'
+
+        base_material = [[burnman.minerals.HP_2011_ds62.mrw(), '[Mg]2SiO4'],[burnman.minerals.HP_2011_ds62.frw(), '[Fe]2SiO4']]
+
+        # Interaction parameters
+        enthalpy_interaction=[[4.0e3]]
 
         burnman.SolidSolution.__init__(self, base_material, \
                           burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
