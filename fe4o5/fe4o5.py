@@ -6,8 +6,6 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 # Benchmarks for the solid solution class
 import burnman
 from burnman import minerals
-from burnman.mineral import Mineral
-from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
 
 import numpy as np
@@ -16,128 +14,7 @@ import matplotlib.image as mpimg
 
 import scipy.optimize as optimize
 
-atomic_masses=read_masses()
-
-'''
-Excess properties
-'''
-
-# High magnetite
-class high_mt (Mineral):
-    def __init__(self):
-       formula='Fe3.0O4.0'
-       formula = dictionarize_formula(formula)
-       self.params = {
-            'name': 'High pressure magnetite',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -1057460.0 ,
-            'S_0': 172.4 ,
-            'V_0': 4.189e-05 ,
-            'Cp': [262.5, -0.007205, -1926200.0, -1655.7] ,
-            'a_0': 3.59e-05 ,
-            'K_0': 2.020e+11 ,
-            'Kprime_0': 4.00 ,
-            'Kdprime_0': 0.0e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-       Mineral.__init__(self)
-
-# Fe4O5
-class Fe4O5 (Mineral):
-    def __init__(self):
-       formula='Fe4.0O5.0'
-       formula = dictionarize_formula(formula)
-       self.params = {
-            'name': 'Fe4O5',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -1357000.0 ,
-            'S_0': 218. ,
-            'V_0': 5.376e-05 ,
-            'Cp': [306.9, 0.001075, -3140400.0, -1470.5] ,
-            'a_0': 2.36e-05 ,
-            'K_0': 1.857e+11 ,
-            'Kprime_0': 4.00 ,
-            'Kdprime_0': -2.154e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-       Mineral.__init__(self)
-
-class periclase (Mineral):
-    def __init__(self):
-       formula='Mg1.0O1.0'
-       formula = dictionarize_formula(formula)
-       self.params = {
-            'name': 'periclase',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -601530.0 ,
-            'S_0': 26.5 ,
-            'V_0': 1.125e-05 ,
-            'Cp': [60.5, 0.000362, -535800.0, -299.2] ,
-            'a_0': 3.11e-05 ,
-            'K_0': 1.616e+11 ,
-            'Kprime_0': 3.95 ,
-            'Kdprime_0': -2.4e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-       Mineral.__init__(self)
-       
-class wustite (Mineral):
-    def __init__(self):
-       formula='Fe1.0O1.0'
-       formula = dictionarize_formula(formula)
-       self.params = {
-            'name': 'fper',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -264800. , # -264353.6
-            'S_0': 59.,
-            'V_0': 1.2239e-05 , # From Simons (1980)
-            'Cp': [5.33343160e+01,   7.79203541e-03,  -3.25553876e+05,  -7.50233740e+01] ,
-            'a_0': 3.22e-05 ,
-            'K_0': 1.52e+11 ,
-            'Kprime_0': 4.9 ,
-            'Kdprime_0': -3.2e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-       Mineral.__init__(self)
-
-class defect_wustite (Mineral):
-    def __init__(self):
-       formula='Fe2/3O1.0'
-       formula = dictionarize_formula(formula)
-       self.params = {
-            'name': 'fper',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -271800. ,
-            'S_0': 28.,
-            'V_0': 1.10701e-05 , # From Simons (1980)
-            'Cp': [-3.64959181e+00,   1.29193873e-02,  -1.07988127e+06,   1.11241795e+03] ,
-            'a_0': 3.22e-05 ,
-            'K_0': 1.52e+11 ,
-            'Kprime_0': 4.9 ,
-            'Kdprime_0': -3.2e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-       Mineral.__init__(self)
-
-# Configurational entropy
-class ferropericlase(burnman.SolidSolution):
-    def __init__(self):
-        # Name
-        self.name='non-stoichiometric wuestite, ferric and ferrous iron treated as separate atoms in Sconf'
-
-        base_material = [[periclase(), '[Mg]O'],[wustite(), '[Fe]O'],[defect_wustite(), '[Fef1/2Vc1/2]Fef1/6O']]
-
-        # Interaction parameters
-        enthalpy_interaction=[[11.0e3, 11.0e3], [2.0e3]]
-
-        burnman.SolidSolution.__init__(self, base_material, \
-                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
-
+from mineral_models import *
 
 acoeffs=np.array([[511623.74,-421.21897,0.22664278,-1.4495132e-5],[-2217082.6,1640.3836,-0.84216746,4.3221147e-5],[1857120.4,-1440.5715,0.74067011,-1.3350707e-5]])
 
@@ -535,11 +412,10 @@ plt.show()
 
 
 fe4o5=Fe4O5()
-fe4o5.set_method('hp_tmt')
 
 P=11.5e9
 T=1366.
-V=345.753 # Angstroms
+V=345.753 # Angstroms^3
 
 Nb=6.022e23
 Z=4
@@ -550,18 +426,89 @@ V=V*A3_to_m3*Nb/Z
 fe4o5.set_state(P,T)
 print fe4o5.V, V
 
+fe5o6=Fe5O6()
+P=15.e9
+T=2000.
+V=2.8729*9.713*14.974 # Angstroms^3
+V=V*A3_to_m3*Nb/Z
+
+fe5o6.set_state(P,T)
+print fe5o6.V, V
+
+P=11.4e9
+T=300.
+V=414. # Angstroms^3
+V=V*A3_to_m3*Nb/Z
+fe5o6.set_state(P,T)
+print fe5o6.V, V
+
+P=1.e5
+T=300.
+V=440.6 # Angstroms^3
+V=V*A3_to_m3*Nb/Z
+fe5o6.set_state(P,T)
+print fe5o6.V, V
+
+P=20.e9
+T=300.
+V=400.4 # Angstroms^3
+V=V*A3_to_m3*Nb/Z
+fe5o6.set_state(P,T)
+print fe5o6.V, V
+
+'''
+P=9.5e9
+T=1473.15
+wus.set_composition([0.0, 1.0, 0.0])
+wus.set_state(P, T)
+fe5o6.set_state(P,T)
+fe4o5.set_state(P,T)
+'''
+
+def fe5o6_wus_fe4o5_eqm(comp_P, T):
+    XMgO = 0.0
+    c, P=comp_P
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
+    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
+    return  [mu_fe4o5-fe4o5.calcgibbs(P,T),
+             mu_fe5o6-fe5o6.calcgibbs(P,T)]
 
 # 2Fe3O4 -> Fe4O5 + Fe2O3
 def eqm_mt_breakdown(P, T):
     return 2.*mt.calcgibbs(P,T) - fe4o5.calcgibbs(P,T) - hem.calcgibbs(P,T)
 
-# Fe4O5 -> wustite + mt
+
+def eqm_with_wus(comp, P, T, mineral):
+    XMgO = 0.
+    c=comp[0]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    mu_mineral=chemical_potentials([wus],[mineral.params['formula']])[0]
+    return  mu_mineral-mineral.calcgibbs(P,T)
+
+def eqm_pressure(P, T, minerals, multiplicities):
+    gibbs = 0.
+    for i, mineral in enumerate(minerals):
+        gibbs += mineral.calcgibbs(P, T) * multiplicities[i]
+    return gibbs
+
+# Fe4O5 - wustite
 def fe4o5_eqm(comp, P, T, XMgO):
     c=comp[0]
     wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
     wus.set_state(P,T)
     mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
     return  mu_fe4o5-fe4o5.calcgibbs(P,T)
+
+# Fe5O6 - wustite
+def fe5o6_eqm(comp, P, T, XMgO):
+    c = comp[0]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
+    return  mu_fe5o6-fe5o6.calcgibbs(P,T)
 
 def wus_fe4o5_mt_eqm(arg, T):
     XMgO=0.0
@@ -571,7 +518,43 @@ def wus_fe4o5_mt_eqm(arg, T):
     wus.set_state(P,T)
     mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
     mu_mt=chemical_potentials([wus],[dictionarize_formula('Fe3O4')])[0]
-    return [mu_fe4o5-fe4o5.calcgibbs(P,T),mu_mt-mt.calcgibbs(P,T)]
+    return [mu_fe4o5-fe4o5.calcgibbs(P,T), mu_mt-mt.calcgibbs(P,T)]
+
+def wus_fe5o6_fe4o5_eqm(arg, T):
+    XMgO=0.0
+    c=arg[0]
+    P=arg[1]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
+    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
+    return [mu_fe5o6-fe5o6.calcgibbs(P,T), mu_fe4o5-fe4o5.calcgibbs(P,T)]
+
+def wus_fe5o6_frw_stv_eqm(arg, T):
+    XMgO=0.0
+    c=arg[0]
+    P=arg[1]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    frw.set_state(P,T)
+    stv.set_state(P,T)
+    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
+    mu_FeO=chemical_potentials([wus],[dictionarize_formula('FeO')])[0]
+    mu_FeO_2=chemical_potentials([frw, stv],[dictionarize_formula('FeO')])[0]
+    return [mu_fe5o6-fe5o6.calcgibbs(P,T), mu_FeO - mu_FeO_2]
+
+def wus_iron_frw_stv_eqm(arg, T):
+    XMgO=0.0
+    c=arg[0]
+    P=arg[1]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    frw.set_state(P,T)
+    stv.set_state(P,T)
+    mu_iron=chemical_potentials([wus],[dictionarize_formula('Fe')])[0]
+    mu_FeO=chemical_potentials([wus],[dictionarize_formula('FeO')])[0]
+    mu_FeO_2=chemical_potentials([frw, stv],[dictionarize_formula('FeO')])[0]
+    return [mu_iron-iron.calcgibbs(P,T), mu_FeO - mu_FeO_2]
 
 def hem_fe4o5_rhenium_eqm(P,T):
     return 4.*hem.calcgibbs(P,T) + Re.calcgibbs(P,T) - 2*fe4o5.calcgibbs(P,T) - ReO2.calcgibbs(P,T)
@@ -644,105 +627,185 @@ plt.xlabel("Temperature (C)")
 plt.legend(loc='lower right')
 plt.show()
 
-# Fe-O oxygen fugacity diagram
+################################
+# Fe-O oxygen fugacity diagram #
+################################
+
+def eqm_curve(assemblage, pressures):
+    fO2s = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        for mineral in assemblage:
+            mineral.set_state(P,T)
+        fO2s[i] = np.log10(fugacity(O2, assemblage))
+    return fO2s
+
+def eqm_curve_wus(mineral, pressures):
+    fO2s = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        mineral.set_state(P,T)
+        optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, mineral))
+        assemblage=[wus, mineral]
+        fO2s[i] = np.log10(fugacity(O2, assemblage))
+    return fO2s
+
+def eqm_with_wus_2(comp, P, T, Fe2_assemblage):
+    XMgO = 0.
+    c=comp[0]
+    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
+    wus.set_state(P,T)
+    mu_FeO=chemical_potentials([wus],[dictionarize_formula('FeO')])[0]
+    mu_FeO_2=chemical_potentials(Fe2_assemblage,[dictionarize_formula('FeO')])[0]
+    return mu_FeO - mu_FeO_2 
+
+def eqm_curve_wus_2(Fe2_assemblage, pressures):
+    fO2s = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        for mineral in Fe2_assemblage:
+            mineral.set_state(P, T)
+        optimize.fsolve(eqm_with_wus_2, 0.16, args=(P, T, Fe2_assemblage))
+        assemblage=Fe2_assemblage
+        assemblage.append(wus)
+        fO2s[i] = np.log10(fugacity(O2, assemblage))
+    return fO2s
+
+lines=[]
 T=1473.15
-O2.set_state(1e5,T)
+O2.set_state(1.e5, T)
 XMgO=0.0
 
-pressures=np.linspace(1.e5, 24.e9, 101)
-fe4o5_hem_fO2=np.empty_like(pressures)
-fe4o5_mt_fO2=np.empty_like(pressures)
-mt_hem_fO2=np.empty_like(pressures)
-iron_wus_fO2=np.empty_like(pressures)
-wus_mt_fO2=np.empty_like(pressures)
-wus_fe4o5_fO2=np.empty_like(pressures)
+min_pressure = 1.e5
+max_pressure = 24.e9
+full_pressures = np.linspace(min_pressure, max_pressure, 101)
 
-fmq_fO2=np.empty_like(pressures)
-fmc_fO2=np.empty_like(pressures)
-rmc_fO2=np.empty_like(pressures)
-rms_fO2=np.empty_like(pressures)
-rfs_fO2=np.empty_like(pressures)
+iron_wus_fO2=eqm_curve_wus(iron, full_pressures)
+lines.append([full_pressures, iron_wus_fO2, 'iron - wus', '-W1,black'])
 
-Re_fO2=np.empty_like(pressures)
-Mo_fO2=np.empty_like(pressures)
+Re_fO2 = eqm_curve([Re, ReO2], full_pressures)
+lines.append([full_pressures, Re_fO2, 'Re - ReO2', '-W1,black,.'])
 
-for i, P in enumerate(pressures):
-    iron.set_state(P,T)
-    fe4o5.set_state(P,T)
-    hem.set_state(P,T)
-    mt.set_state(P,T)
+Mo_fO2 = eqm_curve([Mo, MoO2], full_pressures)
+lines.append([full_pressures, Mo_fO2, 'Mo - MoO2', '-W1,black,.'])
 
-    fa.set_state(P,T)
-    frw.set_state(P,T)
+fmq_metastable_fO2 = eqm_curve([fa, mt, q], full_pressures)
+lines.append([full_pressures, fmq_metastable_fO2, 'FMQ (metastable)', '-W1,grey,-'])
 
-    q.set_state(P,T)
-    coe.set_state(P,T)
-    stv.set_state(P,T)
- 
-    Re.set_state(P,T)
-    ReO2.set_state(P,T)
-    Mo.set_state(P,T)
-    MoO2.set_state(P,T)
+fiq_metastable_fO2 = eqm_curve([fa, iron, q], full_pressures)
+lines.append([full_pressures, fiq_metastable_fO2, 'FIQ (metastable)', '-W1,grey,-'])
 
-    c=optimize.fsolve(mt_eqm, 0.16, args=(P, T, XMgO))[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    assemblage=[wus, mt]
-    wus_mt_fO2[i]=np.log10(fugacity(O2, assemblage))
+####################################
+# REACTIONS NOT INVOLVING WUESTITE #
+####################################
+pressure_Fe4O5_mt_hem = optimize.fsolve(eqm_mt_breakdown, 1.e9, args=(T))[0]
+pressure_wus_Fe4O5_mt = optimize.fsolve(wus_fe4o5_mt_eqm, [0.16, 1.e9], args=(T))[1]
+pressure_wus_Fe5O6_Fe4O5 = optimize.fsolve(wus_fe5o6_fe4o5_eqm, [0.16, 1.e9], args=(T))[1]
 
-    c=optimize.fsolve(fe4o5_eqm, 0.16, args=(P, T, XMgO))[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    assemblage=[wus, fe4o5]
-    wus_fe4o5_fO2[i]=np.log10(fugacity(O2, assemblage))
+# Fe4O5 - mt bounded by wus and hem
+fe4o5_mt_pressures=np.linspace(pressure_wus_Fe4O5_mt, pressure_Fe4O5_mt_hem, 21)
+fe4o5_mt_fO2=eqm_curve([fe4o5, mt], fe4o5_mt_pressures)
+lines.append([fe4o5_mt_pressures, fe4o5_mt_fO2, 'Fe4O5 - mt', '-W1,black'])
 
-    c=optimize.fsolve(iron_eqm, 0.16, args=(P, T, XMgO))[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    assemblage=[iron, wus]
-    iron_wus_fO2[i]=np.log10(fugacity(O2, assemblage))
+# mt - hem bounded by lower limit and Fe4O5
+mt_hem_pressures=np.linspace(min_pressure, pressure_Fe4O5_mt_hem, 21)
+mt_hem_fO2=eqm_curve([mt, hem], mt_hem_pressures)
+lines.append([mt_hem_pressures, mt_hem_fO2, 'mt - hem', '-W1,black'])
 
-    assemblage=[fe4o5, mt]
-    fe4o5_mt_fO2[i]=np.log10(fugacity(O2, assemblage))
+# Fe5O6 - Fe4O5 bounded by wus and upper limit
+fe5o6_fe4o5_pressures=np.linspace(pressure_wus_Fe5O6_Fe4O5, max_pressure, 21)
+fe5o6_fe4o5_fO2=eqm_curve([fe5o6, fe4o5], fe5o6_fe4o5_pressures)
+lines.append([fe5o6_fe4o5_pressures, fe5o6_fe4o5_fO2, 'Fe5O6 - Fe4O5', '-W1,black'])
 
-    assemblage=[fe4o5, hem]
-    fe4o5_hem_fO2[i]=np.log10(fugacity(O2, assemblage))
+# Fe4O5 - hem bounded by mt and upper limit
+fe4o5_hem_pressures=np.linspace(pressure_Fe4O5_mt_hem, max_pressure, 21)
+fe4o5_hem_fO2=eqm_curve([fe4o5, hem], fe4o5_hem_pressures)
+lines.append([fe4o5_hem_pressures, fe4o5_hem_fO2, 'Fe4O5 - hem', '-W1,black'])
 
-    assemblage=[mt, hem]
-    mt_hem_fO2[i]=np.log10(fugacity(O2, assemblage))
+################################
+# REACTIONS INVOLVING WUESTITE #
+################################
 
+# wus - mt bounded by lower limit and Fe4O5
+wus_mt_pressures=np.linspace(min_pressure, pressure_wus_Fe4O5_mt, 21)
+wus_mt_fO2=eqm_curve_wus(mt, wus_mt_pressures)
+lines.append([wus_mt_pressures, wus_mt_fO2, 'wus - mt', '-W1,black'])
 
-    # FMQ and analogues
-    assemblage=[fa, mt, q]
-    fmq_fO2[i]=np.log10(fugacity(O2, assemblage))
+# wus - Fe4O5 bounded by mt and Fe5O6
+wus_fe4o5_pressures=np.linspace(pressure_wus_Fe4O5_mt, pressure_wus_Fe5O6_Fe4O5, 21)
+wus_fe4o5_fO2=eqm_curve_wus(fe4o5, wus_fe4o5_pressures)
+lines.append([wus_fe4o5_pressures, wus_fe4o5_fO2, 'wus - Fe4O5', '-W1,black'])
 
-    assemblage=[fa, mt, coe]
-    fmc_fO2[i]=np.log10(fugacity(O2, assemblage))
+# wus - Fe5O6 bounded by Fe4O5 and upper limit
+wus_fe5o6_pressures=np.linspace(pressure_wus_Fe5O6_Fe4O5, max_pressure, 21)
+wus_fe5o6_fO2=eqm_curve_wus(fe5o6, wus_fe5o6_pressures)
+lines.append([wus_fe5o6_pressures, wus_fe5o6_fO2, 'wus - Fe5O6', '-W1,black'])
 
-    assemblage=[frw, mt, coe]
-    rmc_fO2[i]=np.log10(fugacity(O2, assemblage))
-
-    assemblage=[frw, mt, stv]
-    rms_fO2[i]=np.log10(fugacity(O2, assemblage))
-
-    assemblage=[frw, fe4o5, stv]
-    rfs_fO2[i]=np.log10(fugacity(O2, assemblage))
-
-    assemblage=[Re, ReO2]
-    Re_fO2[i]=np.log10(fugacity(O2, assemblage))
-
-    assemblage=[Mo, MoO2]
-    Mo_fO2[i]=np.log10(fugacity(O2, assemblage))
+######################
+# FMQ-LIKE REACTIONS #
+######################
+QC_pressure = optimize.fsolve(eqm_pressure, 1.e9, args=(T, [q, coe], [1., -1.]))[0]
+FR_pressure = optimize.fsolve(eqm_pressure, 1.e9, args=(T, [fa, frw], [1., -1.]))[0]
+CS_pressure = optimize.fsolve(eqm_pressure, 1.e9, args=(T, [coe, stv], [1., -1.]))[0]
+MF_pressure = optimize.fsolve(eqm_pressure, 1.e9, 
+                              args=(T, [frw, mt, fe4o5, stv], [1., 2., -2., -1.]))[0]
+FF_pressure = optimize.fsolve(eqm_pressure, 1.e9, 
+                              args=(T, [frw, fe4o5, fe5o6, stv], [1., 2., -2., -1.]))[0]
+FFW_pressure = optimize.fsolve(wus_fe5o6_frw_stv_eqm, [0.01, 1.e9], args=(T))[1]
+IFW_pressure = optimize.fsolve(wus_iron_frw_stv_eqm, [0.01, 1.e9], args=(T))[1]
 
 
-plt.plot( pressures/1.e9, iron_wus_fO2, '-', linewidth=3., label='iron-wus')
-plt.plot( pressures/1.e9, wus_fe4o5_fO2, '-', linewidth=3., label='wus-Fe4O5')
-plt.plot( pressures/1.e9, wus_mt_fO2, '-', linewidth=3., label='wus-mt')
+fmq_pressures = np.linspace(min_pressure, QC_pressure, 21)
+fmq_fO2=eqm_curve([fa, mt, q], fmq_pressures)
+lines.append([fmq_pressures, fmq_fO2, 'FMQ', '-W1,grey'])
 
+fmc_pressures = np.linspace(QC_pressure, FR_pressure, 21)
+fmc_fO2=eqm_curve([fa, mt, coe], fmc_pressures)
+lines.append([fmc_pressures, fmc_fO2, 'FMC', '-W1,grey'])
 
-plt.plot( pressures/1.e9, fe4o5_mt_fO2, '-', linewidth=3., label='Fe4O5-mt')
-plt.plot( pressures/1.e9, fe4o5_hem_fO2, '-', linewidth=3., label='Fe4O5-hem')
-plt.plot( pressures/1.e9, mt_hem_fO2, '-', linewidth=3., label='mt-hem')
+rmc_pressures = np.linspace(FR_pressure, CS_pressure, 21)
+rmc_fO2=eqm_curve([frw, mt, coe], rmc_pressures)
+lines.append([rmc_pressures, rmc_fO2, 'RMC', '-W1,grey'])
+
+rms_pressures = np.linspace(CS_pressure, MF_pressure, 21)
+rms_fO2=eqm_curve([frw, mt, stv], rms_pressures)
+lines.append([rms_pressures, rms_fO2, 'RMS', '-W1,grey'])
+
+rfs_pressures = np.linspace(MF_pressure, FF_pressure, 21)
+rfs_fO2=eqm_curve([frw, fe4o5, stv], rfs_pressures)
+lines.append([rfs_pressures, rfs_fO2, 'RFS', '-W1,grey'])
+
+rffs_pressures = np.linspace(FF_pressure, FFW_pressure, 21)
+rffs_fO2=eqm_curve([frw, fe5o6, stv], rffs_pressures)
+lines.append([rffs_pressures, rffs_fO2, 'RFFS', '-W1,grey'])
+
+rws_pressures = np.linspace(FFW_pressure, IFW_pressure, 21)
+rws_fO2=eqm_curve_wus_2([frw, stv], rws_pressures)
+lines.append([rws_pressures, rws_fO2, 'RWS', '-W1,grey'])
+
+ris_pressures = np.linspace(CS_pressure, IFW_pressure, 21)
+ris_fO2=eqm_curve([frw, iron, stv], ris_pressures)
+lines.append([ris_pressures, ris_fO2, 'RIS', '-W1,grey'])
+
+ric_pressures = np.linspace(FR_pressure, CS_pressure, 21)
+ric_fO2=eqm_curve([frw, iron, coe], ric_pressures)
+lines.append([ric_pressures, ric_fO2, 'RIC', '-W1,grey'])
+
+fic_pressures = np.linspace(QC_pressure, FR_pressure, 21)
+fic_fO2=eqm_curve([fa, iron, coe], fic_pressures)
+lines.append([fic_pressures, fic_fO2, 'FIC', '-W1,grey'])
+
+fiq_pressures = np.linspace(min_pressure, QC_pressure, 21)
+fiq_fO2=eqm_curve([fa, iron, q], fiq_pressures)
+lines.append([fiq_pressures, fiq_fO2, 'FIQ', '-W1,grey'])
+
+# Now add lines corresponding to fa-frw, q-coe, coe-stv
+lines.append([np.array([FR_pressure, FR_pressure]), np.array([ric_fO2[0], rmc_fO2[0]]), 'FR', '-W1,grey'])
+lines.append([np.array([QC_pressure, QC_pressure]), np.array([fmc_fO2[0], 20.]), 'QC', '-W1,grey'])
+lines.append([np.array([QC_pressure, QC_pressure]), np.array([fic_fO2[0], -20.]), 'QC', '-W1,grey'])
+lines.append([np.array([CS_pressure, CS_pressure]), np.array([rms_fO2[0], 20.]), 'CS', '-W1,grey'])
+lines.append([np.array([CS_pressure, CS_pressure]), np.array([ris_fO2[0], -20.]), 'CS', '-W1,grey'])
+
+for line in lines:
+    pressures, fO2s, name, marker = line
+    plt.plot( pressures/1.e9, fO2s, '-', linewidth=3., label=name)
 
 plt.title('')
 plt.xlabel("Pressure (GPa)")
@@ -750,34 +813,18 @@ plt.ylabel("log10(fO2)")
 plt.legend(loc='lower right')
 plt.show()
 
-
-
-plt.plot( pressures/1.e9, fmq_fO2, '-', linewidth=3., label='FMQ')
-plt.plot( pressures/1.e9, fmc_fO2, '-', linewidth=3., label='FMC')
-plt.plot( pressures/1.e9, rmc_fO2, '-', linewidth=3., label='RMC')
-plt.plot( pressures/1.e9, rms_fO2, '-', linewidth=3., label='RMS')
-plt.plot( pressures/1.e9, rfs_fO2, '-', linewidth=3., label='RFS')
-
-plt.plot( pressures/1.e9, Re_fO2, '-', linewidth=3., label='Re-ReO2')
-plt.plot( pressures/1.e9, Mo_fO2, '-', linewidth=3., label='Mo-MoO2')
-
-plt.title('')
-plt.xlabel("Pressure (GPa)")
-plt.ylabel("log10(fO2)")
-plt.legend(loc='lower right')
-plt.show()
-
-columns=[pressures, iron_wus_fO2, wus_fe4o5_fO2, wus_mt_fO2, fe4o5_mt_fO2, fe4o5_hem_fO2, mt_hem_fO2, fmq_fO2, fmc_fO2, rmc_fO2, rms_fO2, rfs_fO2, Re_fO2, Mo_fO2]
 f = open('P-fO2.dat', 'w')
-f.write('P, iron_wus_fO2, wus_fe4o5_fO2, wus_mt_fO2, fe4o5_mt_fO2, fe4o5_hem_fO2, mt_hem_fO2, fmq_fO2, fmc_fO2, rmc_fO2, rms_fO2, rfs_fO2, Re_fO2, Mo_fO2\n')
-for i, P in enumerate(pressures):
-    for column in columns:
-        f.write(str(column[i]))
-        f.write(' ') 
-    f.write('\n')
+for line in lines:
+    pressures, fO2s, name, marker = line
+    f.write('>> '+marker+'\n')
+    for i, P in enumerate(pressures):
+        f.write(str(P/1.e9)+' '+str(fO2s[i])+'\n')
+f.write('\n')
 f.close()
 
 print 'P-fO2.dat (over)written'
+
+exit()
 
 # (Mg,Fe)2Fe2O5 - ol/wad/rw equilibrium
 # Fe4O5
