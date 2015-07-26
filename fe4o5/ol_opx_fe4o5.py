@@ -186,9 +186,25 @@ O2.set_method('cork')
 T = 1673.15
 O2.set_state(1.e5,T)
 X_Mg_olopx = 0.9
-X_Mgs=np.linspace(0.8, 0.95, 4)
+
+# First, plot ol-wad phase boundary
+X_Mgs=np.linspace(0.40, 0.99, 60)
+pressures_ol_wad_opx_fm45=np.empty_like(X_Mgs)
+fO2_ol_wad_opx_fm45=np.empty_like(X_Mgs)
+sol = [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7]
+for i, X_Mg_olopx in enumerate(X_Mgs):
+    print X_Mg_olopx
+    sol = optimize.fsolve(ol_wad_opx_fm45_equilibrium, sol, args=(X_Mg_olopx, 0.0, T))
+    pressures_ol_wad_opx_fm45[i] = sol[1]
+    sol[1] += 1.e9
+    fO2_ol_wad_opx_fm45[i] =  np.log10(fugacity(O2, [wad, opx, fm45]))
+plt.plot(pressures_ol_wad_opx_fm45/1.e9, fO2_ol_wad_opx_fm45, label='ol-wad-opx-Fe4O5')
+
+# Now plot contours
+X_Mgs=np.linspace(0.6, 0.95, 8)
 for X_Mg_olopx in X_Mgs:
-    ol_proportions=np.linspace(0.0, p_ol_polymorphs, 11)
+    print X_Mg_olopx
+    ol_proportions=np.linspace(0.0, p_ol_polymorphs, 2)
     pressures_ol_wad_opx_fm45=np.empty_like(ol_proportions)
     fO2_ol_wad_opx_fm45=np.empty_like(ol_proportions)
     for i, p_ol in enumerate(ol_proportions):
@@ -214,7 +230,6 @@ for X_Mg_olopx in X_Mgs:
     
     plt.plot(ol_pressures/1.e9, fO2_ol_opx_fm45, label='ol-opx-Fe4O5')
     plt.plot(wad_pressures/1.e9, fO2_wad_opx_fm45, label='wad-opx-Fe4O5')
-    plt.plot(pressures_ol_wad_opx_fm45/1.e9, fO2_ol_wad_opx_fm45, label='ol-wad-opx-Fe4O5')
 
 
 
@@ -239,8 +254,60 @@ plt.plot(buffer_pressures/1.e9, fO2_QFM, label='QFM')
 plt.legend(loc='lower left')
 plt.show()
 
-# chemical potential of skiagite
-print chemical_potentials([wad,opx,fm45], [burnman.processchemistry.dictionarize_formula('Fe5Si3O12')])
 
-# chemical potential of khoharite
-print chemical_potentials([wad,opx,fm45], [burnman.processchemistry.dictionarize_formula('Mg3Fe2Si3O12')])
+###########################
+# EQUILIBRIUM WITH GARNET #
+###########################
+garnet = CFMASO_garnet()
+
+def eqm_gt_composition(args, P, T, p_gr_andr, mu_kho_sk_assemblage):
+    p_py, p_andr = args
+
+    p_gr = p_gr_andr - p_andr
+    p_alm = 1. - p_py - p_gr - p_andr
+
+    garnet.set_composition([p_py, p_alm, p_gr, p_andr])
+    garnet.set_state(P, T)
+    
+    mu_kho_sk_gt = chemical_potentials([garnet],
+                                [burnman.processchemistry.dictionarize_formula('Mg3Fe2Si3O12'),
+                                 burnman.processchemistry.dictionarize_formula('Fe3Fe2Si3O12')])
+
+    return [ mu_kho_sk_gt[0] - mu_kho_sk_assemblage[0],
+             mu_kho_sk_gt[1] - mu_kho_sk_assemblage[1]]
+
+
+# Set up problem
+P = 10.e9
+T = 1673.15
+p_gr_andr = 0.0 # Ca concentration in garnet
+X_Mg_olopx = 0.9
+pressures = np.linspace(8.e9, 13.e9, 6)
+print 'Pressures (GPa)   Fe3+/sum(Fe)   [molar fractions]'
+for P in pressures:
+    sol = optimize.fsolve(ol_opx_fm45_equilibrium, [0.0, 0.94, 0.7], args=(X_Mg_olopx, P, T))
+    mu_ol_opx_fm45 = chemical_potentials([ol,opx,fm45],
+                                         [burnman.processchemistry.dictionarize_formula('Mg3Fe2Si3O12'),
+                                          burnman.processchemistry.dictionarize_formula('Fe3Fe2Si3O12')])
+
+    optimize.fsolve(eqm_gt_composition, [0.75, 0.1], args=(P, T, p_gr_andr, mu_ol_opx_fm45))
+
+    '''
+    print 'gt', garnet.molar_fractions
+    print 'ol', ol.molar_fractions
+    print 'opx', opx.molar_fractions
+    print 'fe4o5', fm45.molar_fractions
+    '''
+
+    print P/1.e9, 2.*garnet.molar_fractions[3] \
+        / (3.*garnet.molar_fractions[1] + 2.*garnet.molar_fractions[3]), garnet.molar_fractions
+
+
+
+'''
+# Now check the oxygen fugacity in three separate ways
+O2.set_state(1.e5,T)
+print np.log10(fugacity(O2, [ol, opx, garnet]))
+print np.log10(fugacity(O2, [ol, opx, fm45]))
+print np.log10(fugacity(O2, [ol, garnet, fm45]))
+'''

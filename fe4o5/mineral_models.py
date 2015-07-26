@@ -6,7 +6,7 @@ atomic_masses=read_masses()
 DeltaH_fm=-6950.
 class ordered_fm_opx (Mineral):
     def __init__(self):
-       formula='Fe2.0Si2.0O6.0'
+       formula='Mg1.0Fe1.0Si2.0O6.0'
        formula = dictionarize_formula(formula)
        self.params = {
             'name': 'fm',
@@ -280,7 +280,7 @@ class orthopyroxene(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
-class garnet(burnman.SolidSolution):
+class CFMASO_garnet(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='garnet'
         self.type='asymmetric'
@@ -289,9 +289,11 @@ class garnet(burnman.SolidSolution):
                            [burnman.minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'],
                            [burnman.minerals.HP_2011_ds62.andr(), '[Ca]3[Fe]2Si3O12']]
         self.alphas = [1.0, 1.0, 2.7, 2.7]
-        self.enthalpy_interaction=[[0.0, 0.0, 0.0],
-                                   [0.0, 0.0],
-                                   [0.0]]
-
+        self.enthalpy_interaction=[[2.5e3, 30.1e3, 56.59e3],
+                                   [1.0e3, 49.79e3],
+                                   [2.96e3]]
+        self.volume_interaction=[[0., 0.169e-6, 0.129e-6],
+                                 [0.122e-6, 0.0288e-6],
+                                 [-0.0285e-6]]
         burnman.SolidSolution.__init__(self, molar_fractions)
         
