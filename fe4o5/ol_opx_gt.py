@@ -45,6 +45,19 @@ fm.set_state(P,T)
 
 print en.gibbs, fs.gibbs, fm.gibbs, 0.5*(en.gibbs + fs.gibbs) - fm.gibbs
 
+class orthopyroxene(burnman.SolidSolution):
+    def __init__(self):
+        # Name
+        self.name='Fe-Mg orthopyroxene'
+
+        base_material = [[burnman.minerals.HP_2011_ds62.en(), '[Mg][Mg]Si2O6'],[burnman.minerals.HP_2011_ds62.fs(), '[Fe][Fe]Si2O6'],[ordered_fm_opx(), '[Mg][Fe]Si2O6']]
+
+        # Interaction parameters
+        enthalpy_interaction=[[6.8e3, 4.5e3],[4.5e3]]
+
+        burnman.SolidSolution.__init__(self, base_material, \
+                          burnman.solutionmodel.SymmetricRegularSolution(base_material, enthalpy_interaction) )
+
 
 opx=orthopyroxene()
 
