@@ -3,23 +3,29 @@ from burnman.mineral import Mineral
 from burnman.processchemistry import *
 atomic_masses=read_masses()
 
+hen=burnman.minerals.HHPH_2013.hen()
+hfs=burnman.minerals.HHPH_2013.hfs()
 DeltaH_fm=-6950.
-class ordered_fm_opx (Mineral):
+class ordered_fm_hpx (Mineral):
     def __init__(self):
        formula='Mg1.0Fe1.0Si2.0O6.0'
        formula = dictionarize_formula(formula)
        self.params = {
-            'name': 'fm',
+            'name': 'hfm',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': (-2388710.0-3090220.0)/2.+DeltaH_fm ,
-            'S_0': (132.5+189.9)/2. ,
-            'V_0': (6.592e-05+6.262e-05)/2. ,
-            'Cp': [(398.7+356.2)/2., (-0.006579-0.00299)/2., (1290100.0-596900.0)/2., (-4058.0-3185.3)/2.] ,
-            'a_0': (3.26e-05+2.27e-05)/2. ,
-            'K_0': (1.01e+11+1.059e+11)/2. ,
-            'Kprime_0': (4.08+8.65)/2. ,
-            'Kdprime_0': -1.*(4.08+8.65)/(1.01e+11+1.059e+11) ,
+            'H_0': (hen.params['H_0'] + hfs.params['H_0'])/2.+DeltaH_fm ,
+            'S_0': (hen.params['S_0'] + hfs.params['S_0'])/2. ,
+            'V_0': (hen.params['V_0'] + hfs.params['V_0'])/2. ,
+            'Cp': [(hen.params['Cp'][0] + hfs.params['Cp'][0])/2., 
+                   (hen.params['Cp'][1] + hfs.params['Cp'][1])/2., 
+                   (hen.params['Cp'][2] + hfs.params['Cp'][2])/2., 
+                   (hen.params['Cp'][3] + hfs.params['Cp'][3])/2.] ,
+            'a_0': (hen.params['a_0'] + hfs.params['a_0'])/2. ,
+            'K_0': (hen.params['K_0'] + hfs.params['K_0'])/2. ,
+            'Kprime_0': (hen.params['Kprime_0'] + hfs.params['Kprime_0'])/2. ,
+            'Kdprime_0': -1.*(hen.params['Kprime_0'] + hfs.params['Kprime_0']) \
+                / (hen.params['K_0'] + hfs.params['K_0']) ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
        Mineral.__init__(self)
@@ -241,8 +247,8 @@ class olivine(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='olivine'
         self.type='symmetric'
-        self.endmembers = [[burnman.minerals.HP_2011_ds62.fo(), '[Mg]2SiO4'],
-                           [burnman.minerals.HP_2011_ds62.fa(), '[Fe]2SiO4']]
+        self.endmembers = [[burnman.minerals.HHPH_2013.fo(), '[Mg]2SiO4'],
+                           [burnman.minerals.HHPH_2013.fa(), '[Fe]2SiO4']]
         self.enthalpy_interaction=[[9.0e3]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
@@ -251,8 +257,8 @@ class wadsleyite(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='wadsleyite'
         self.type='symmetric'
-        self.endmembers = [[burnman.minerals.HP_2011_ds62.mwd(), '[Mg]2SiO4'],
-                           [burnman.minerals.HP_2011_ds62.fwd(), '[Fe]2SiO4']]
+        self.endmembers = [[burnman.minerals.HHPH_2013.mwd(), '[Mg]2SiO4'],
+                           [burnman.minerals.HHPH_2013.fwd(), '[Fe]2SiO4']]
         self.enthalpy_interaction=[[13.0e3]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
@@ -261,8 +267,8 @@ class ringwoodite(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='ringwoodite'
         self.type='symmetric'
-        self.endmembers = [[burnman.minerals.HP_2011_ds62.mrw(), '[Mg]2SiO4'],
-                           [burnman.minerals.HP_2011_ds62.frw(), '[Fe]2SiO4']]
+        self.endmembers = [[burnman.minerals.HHPH_2013.mrw(), '[Mg]2SiO4'],
+                           [burnman.minerals.HHPH_2013.frw(), '[Fe]2SiO4']]
         self.enthalpy_interaction=[[4.0e3]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
@@ -271,9 +277,9 @@ class orthopyroxene(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='Fe-Mg orthopyroxene'
         self.type='symmetric'
-        self.endmembers=[[burnman.minerals.HP_2011_ds62.en(), '[Mg][Mg]Si2O6'],
-                         [burnman.minerals.HP_2011_ds62.fs(), '[Fe][Fe]Si2O6'],
-                         [ordered_fm_opx(), '[Mg][Fe]Si2O6']]
+        self.endmembers=[[burnman.minerals.HHPH_2013.hen(), '[Mg][Mg]Si2O6'],
+                         [burnman.minerals.HHPH_2013.hfs(), '[Fe][Fe]Si2O6'],
+                         [ordered_fm_hpx(), '[Mg][Fe]Si2O6']]
         self.enthalpy_interaction=[[6.8e3, 4.5e3],
                                    [4.5e3]]
 
@@ -296,4 +302,24 @@ class CFMASO_garnet(burnman.SolidSolution):
                                  [0.122e-6, 0.0288e-6],
                                  [-0.0285e-6]]
         burnman.SolidSolution.__init__(self, molar_fractions)
-        
+
+
+'''
+# Powell model   
+class CFMASO_garnet(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='garnet'
+        self.type='asymmetric'
+        self.endmembers = [[burnman.minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],
+                           [burnman.minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],
+                           [burnman.minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'],
+                           [burnman.minerals.HP_2011_ds62.andr(), '[Ca]3[Fe]2Si3O12']]
+        self.alphas = [1.0, 1.0, 2.7, 2.7]
+        self.enthalpy_interaction=[[2.5e3, 31.e3, 53.2e3],
+                                   [5.e3, 53.2*0.7e3],
+                                   [2.e3]]
+        self.volume_interaction=[[0., 0., 0.],
+                                 [0., 0.],
+                                 [0.]]
+        burnman.SolidSolution.__init__(self, molar_fractions)
+'''    

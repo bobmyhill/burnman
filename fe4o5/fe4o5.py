@@ -15,6 +15,7 @@ import matplotlib.image as mpimg
 import scipy.optimize as optimize
 
 from mineral_models import *
+from equilibrium_functions import *
 
 acoeffs=np.array([[511623.74,-421.21897,0.22664278,-1.4495132e-5],[-2217082.6,1640.3836,-0.84216746,4.3221147e-5],[1857120.4,-1440.5715,0.74067011,-1.3350707e-5]])
 
@@ -64,6 +65,20 @@ ReO2=minerals.Metal_Metal_oxides.ReO2()
 
 Mo=minerals.Metal_Metal_oxides.Mo()
 MoO2=minerals.Metal_Metal_oxides.MoO2()
+
+
+# EMOD minerals
+hen = minerals.HP_2011_ds62.hen()
+mag = minerals.HP_2011_ds62.mag()
+fo = minerals.HP_2011_ds62.fo()
+mwd = minerals.HP_2011_ds62.mwd()
+mrw = minerals.HP_2011_ds62.mrw()
+diam = minerals.HP_2011_ds62.diam()
+gph = minerals.HP_2011_ds62.gph()
+EMOG=[hen, mag, fo, gph]
+EMOD=[hen, mag, fo, diam]
+EMWD=[hen, mag, mwd, diam]
+EMRD=[hen, mag, mrw, diam]
 
 O2=minerals.HP_2011_fluids.O2()
 
@@ -305,25 +320,8 @@ plt.legend(loc='lower right')
 plt.show()
 '''
 
-# Find the chemical potentials of Fe and Fe3O4 for different compositions of wuestite at each pressure. 
-def iron_eqm(comp, P, T, XMgO):
-    c=comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO),c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_iron=chemical_potentials([wus],[dictionarize_formula('Fe')])[0]
-    return mu_iron-iron.calcgibbs(P,T)
-
-def mt_eqm(comp, P, T, XMgO):
-    c=comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_mt=chemical_potentials([wus],[dictionarize_formula('Fe3O4')])[0]
-    return mu_mt-mt.calcgibbs(P,T)
-
-
 
 P=1.e5
-XMgO=0.0
 
 def iron_wus_mt_eqm(arg, P):
     XMgO=0.0
@@ -337,15 +335,15 @@ def iron_wus_mt_eqm(arg, P):
 
 
 T_eqm=optimize.fsolve(iron_wus_mt_eqm, [0.5,800.], args=(P))[1]
-comp_eqm=f_to_y(optimize.fsolve(iron_eqm, 0.16, args=(P, T_eqm, XMgO))[0])
+comp_eqm=f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T_eqm, wus, iron))[0])
 
 temperatures=np.linspace(T_eqm-50.,1700.,101)
 iron_wus_comp=np.empty_like(temperatures)
 mt_wus_comp=np.empty_like(temperatures)
 
 for idx, T in enumerate(temperatures):
-    iron_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(iron_eqm, 0.16, args=(P, T, XMgO))[0])
-    mt_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(mt_eqm, 0.16, args=(P, T, XMgO))[0])
+    iron_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, iron))[0])
+    mt_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, mt))[0])
 
 crosses=np.array([[1222.07160224,1172.8465432,1121.78241653,1072.56293888,1021.49881221,972.212357893,922.987298852,871.878521071,871.325963574,923.883111764,972.862589695,1023.7090422,1072.76107818,1121.84102112,1172.74328751,1223.66787946],[0.0428177641654,0.0435528330781,0.0448392036753,0.0453905053599,0.0466768759571,0.0494333843798,0.0501684532925,0.0529249617152,0.0711179173047,0.08067381317,0.0880245022971,0.0939050535988,0.0988667687596,0.102909647779,0.106952526799,0.110260336907]])
 
@@ -396,7 +394,7 @@ iron_wus_comp=np.empty_like([XMgOs]*len(pressures))
 for pidx, P in enumerate(pressures):
     for idx,XMgO in enumerate(XMgOs):
         # Find equilibrium with metallic iron
-        Xdefect=optimize.fsolve(iron_eqm, 0.01, args=(P, T, XMgO))[0]
+        Xdefect=optimize.fsolve(eqm_with_wus, 0.01, args=(P, T, wus, iron))[0]
         iron_wus_comp[pidx][idx]=(2./3.*Xdefect)/(1.-Xdefect/3.)
 
 for pidx, P in enumerate(pressures):
@@ -465,71 +463,6 @@ fe5o6.set_state(P,T)
 fe4o5.set_state(P,T)
 '''
 
-def fe5o6_wus_fe4o5_eqm(comp_P, T):
-    XMgO = 0.0
-    c, P=comp_P
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
-    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
-    return  [mu_fe4o5-fe4o5.calcgibbs(P,T),
-             mu_fe5o6-fe5o6.calcgibbs(P,T)]
-
-# 2Fe3O4 -> Fe4O5 + Fe2O3
-def eqm_mt_breakdown(P, T):
-    return 2.*mt.calcgibbs(P,T) - fe4o5.calcgibbs(P,T) - hem.calcgibbs(P,T)
-
-
-def eqm_with_wus(comp, P, T, mineral):
-    XMgO = 0.
-    c=comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_mineral=chemical_potentials([wus],[mineral.params['formula']])[0]
-    return  mu_mineral-mineral.calcgibbs(P,T)
-
-def eqm_pressure(P, T, minerals, multiplicities):
-    gibbs = 0.
-    for i, mineral in enumerate(minerals):
-        gibbs += mineral.calcgibbs(P, T) * multiplicities[i]
-    return gibbs
-
-# Fe4O5 - wustite
-def fe4o5_eqm(comp, P, T, XMgO):
-    c=comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
-    return  mu_fe4o5-fe4o5.calcgibbs(P,T)
-
-# Fe5O6 - wustite
-def fe5o6_eqm(comp, P, T, XMgO):
-    c = comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
-    return  mu_fe5o6-fe5o6.calcgibbs(P,T)
-
-def wus_fe4o5_mt_eqm(arg, T):
-    XMgO=0.0
-    c=arg[0]
-    P=arg[1]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
-    mu_mt=chemical_potentials([wus],[dictionarize_formula('Fe3O4')])[0]
-    return [mu_fe4o5-fe4o5.calcgibbs(P,T), mu_mt-mt.calcgibbs(P,T)]
-
-def wus_fe5o6_fe4o5_eqm(arg, T):
-    XMgO=0.0
-    c=arg[0]
-    P=arg[1]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_fe5o6=chemical_potentials([wus],[dictionarize_formula('Fe5O6')])[0]
-    mu_fe4o5=chemical_potentials([wus],[dictionarize_formula('Fe4O5')])[0]
-    return [mu_fe5o6-fe5o6.calcgibbs(P,T), mu_fe4o5-fe4o5.calcgibbs(P,T)]
-
 def wus_fe5o6_frw_stv_eqm(arg, T):
     XMgO=0.0
     c=arg[0]
@@ -556,17 +489,9 @@ def wus_iron_frw_stv_eqm(arg, T):
     mu_FeO_2=chemical_potentials([frw, stv],[dictionarize_formula('FeO')])[0]
     return [mu_iron-iron.calcgibbs(P,T), mu_FeO - mu_FeO_2]
 
-def hem_fe4o5_rhenium_eqm(P,T):
-    return 4.*hem.calcgibbs(P,T) + Re.calcgibbs(P,T) - 2*fe4o5.calcgibbs(P,T) - ReO2.calcgibbs(P,T)
-
-def mt_fe4o5_rhenium_eqm(P,T):
-    return 8.*mt.calcgibbs(P,T) + Re.calcgibbs(P,T) - 6*fe4o5.calcgibbs(P,T) - ReO2.calcgibbs(P,T)
-
-def mt_high_mt_eqm(P,T):
-    return mt.calcgibbs(P,T) - high_mt.calcgibbs(P,T)
-
 def hem_mt_fe4o5_rhenium_univariant(T):
-    return optimize.fsolve(mt_fe4o5_rhenium_eqm, 10.e9, args=(T))[0] - optimize.fsolve(hem_fe4o5_rhenium_eqm, 10.e9, args=(T))[0]
+    return optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, Re, fe4o5, ReO2], [8., 1., -6., -1.]))[0] \
+        - optimize.fsolve(eqm_pressure, 10.e9, args=(T, [hem, Re, fe4o5, ReO2], [4., 1., -2., -1.]))[0]
 
 univariant=optimize.fsolve(hem_mt_fe4o5_rhenium_univariant, 1100., args=())[0]
 
@@ -577,20 +502,22 @@ high_temperatures=np.linspace(univariant, 1773.15, 91)
 fe4o5_breakdown_pressures=np.empty_like(temperatures)
 mt_high_mt_pressures=np.empty_like(temperatures)
 for idx, T in enumerate(temperatures):
-    fe4o5_breakdown_pressures[idx]=optimize.fsolve(wus_fe4o5_mt_eqm, [0.5,10.e9], args=(T))[1]
-    mt_high_mt_pressures[idx]=optimize.fsolve(mt_high_mt_eqm, 10.e9, args=(T))[0]
+    fe4o5_breakdown_pressures[idx]=optimize.fsolve(wus_eqm_c_P, [0.5,10.e9], args=(T, wus, fe4o5, mt))[1]
+    mt_high_mt_pressures[idx]=optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, high_mt], [1., -1.]))[0]
 
 stable_mt_breakdown_pressures=np.empty_like(low_temperatures)
 hem_re_pressures=np.empty_like(low_temperatures)
 for idx, T in enumerate(low_temperatures):
-    stable_mt_breakdown_pressures[idx]=optimize.fsolve(eqm_mt_breakdown, 10.e9, args=(T))[0]
-    hem_re_pressures[idx]=optimize.fsolve(hem_fe4o5_rhenium_eqm, 10.e9, args=(T))[0]
+    # 2Fe3O4 -> Fe4O5 + Fe2O3
+    stable_mt_breakdown_pressures[idx]=optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, fe4o5, hem], [2., -1., -1.]))[0]
+    # 8Fe3O4 + Re -> 6Fe4O5 + ReO2
+    hem_re_pressures[idx]=optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, Re, fe4o5, ReO2], [8., 1., -6., -1.]))[0]
 
 metastable_mt_breakdown_pressures=np.empty_like(high_temperatures)
 mt_re_pressures=np.empty_like(high_temperatures)
 for idx, T in enumerate(high_temperatures):
-    metastable_mt_breakdown_pressures[idx]=optimize.fsolve(eqm_mt_breakdown, 10.e9, args=(T))[0]
-    mt_re_pressures[idx]=optimize.fsolve(mt_fe4o5_rhenium_eqm, 10.e9, args=(T))[0]
+    metastable_mt_breakdown_pressures[idx]=optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, fe4o5, hem], [2., -1., -1.]))[0]
+    mt_re_pressures[idx]=optimize.fsolve(eqm_pressure, 10.e9, args=(T, [mt, Re, fe4o5, ReO2], [8., 1., -6., -1.]))[0]
 
 
 # Experimental phase diagram
@@ -631,43 +558,6 @@ plt.show()
 # Fe-O oxygen fugacity diagram #
 ################################
 
-def eqm_curve(assemblage, pressures):
-    fO2s = np.empty_like(pressures)
-    for i, P in enumerate(pressures):
-        for mineral in assemblage:
-            mineral.set_state(P,T)
-        fO2s[i] = np.log10(fugacity(O2, assemblage))
-    return fO2s
-
-def eqm_curve_wus(mineral, pressures):
-    fO2s = np.empty_like(pressures)
-    for i, P in enumerate(pressures):
-        mineral.set_state(P,T)
-        optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, mineral))
-        assemblage=[wus, mineral]
-        fO2s[i] = np.log10(fugacity(O2, assemblage))
-    return fO2s
-
-def eqm_with_wus_2(comp, P, T, Fe2_assemblage):
-    XMgO = 0.
-    c=comp[0]
-    wus.set_composition([XMgO, (1.0-c)*(1.-XMgO), c*(1.-XMgO)])
-    wus.set_state(P,T)
-    mu_FeO=chemical_potentials([wus],[dictionarize_formula('FeO')])[0]
-    mu_FeO_2=chemical_potentials(Fe2_assemblage,[dictionarize_formula('FeO')])[0]
-    return mu_FeO - mu_FeO_2 
-
-def eqm_curve_wus_2(Fe2_assemblage, pressures):
-    fO2s = np.empty_like(pressures)
-    for i, P in enumerate(pressures):
-        for mineral in Fe2_assemblage:
-            mineral.set_state(P, T)
-        optimize.fsolve(eqm_with_wus_2, 0.16, args=(P, T, Fe2_assemblage))
-        assemblage=Fe2_assemblage
-        assemblage.append(wus)
-        fO2s[i] = np.log10(fugacity(O2, assemblage))
-    return fO2s
-
 lines=[]
 T=1473.15
 O2.set_state(1.e5, T)
@@ -677,46 +567,68 @@ min_pressure = 1.e5
 max_pressure = 24.e9
 full_pressures = np.linspace(min_pressure, max_pressure, 101)
 
-iron_wus_fO2=eqm_curve_wus(iron, full_pressures)
+iron_wus_fO2=eqm_curve_wus(iron, wus, full_pressures, T, O2)
 lines.append([full_pressures, iron_wus_fO2, 'iron - wus', '-W1,black'])
 
-Re_fO2 = eqm_curve([Re, ReO2], full_pressures)
+Re_fO2 = eqm_curve([Re, ReO2], full_pressures, T, O2)
 lines.append([full_pressures, Re_fO2, 'Re - ReO2', '-W1,black,.'])
 
-Mo_fO2 = eqm_curve([Mo, MoO2], full_pressures)
+Mo_fO2 = eqm_curve([Mo, MoO2], full_pressures, T, O2)
 lines.append([full_pressures, Mo_fO2, 'Mo - MoO2', '-W1,black,.'])
 
-fmq_metastable_fO2 = eqm_curve([fa, mt, q], full_pressures)
-lines.append([full_pressures, fmq_metastable_fO2, 'FMQ (metastable)', '-W1,grey,-'])
+fmq_metastable_fO2 = eqm_curve([fa, mt, q], full_pressures, T, O2)
+lines.append([full_pressures, fmq_metastable_fO2, 'FMQ (metastable)', '-W1,blue,-'])
 
-fiq_metastable_fO2 = eqm_curve([fa, iron, q], full_pressures)
-lines.append([full_pressures, fiq_metastable_fO2, 'FIQ (metastable)', '-W1,grey,-'])
+fiq_metastable_fO2 = eqm_curve([fa, iron, q], full_pressures, T, O2)
+lines.append([full_pressures, fiq_metastable_fO2, 'FIQ (metastable)', '-W1,blue,-'])
+
+# EMOG/EMOD
+DG_pressure = optimize.fsolve(eqm_pressure, 6.e9, args=(T, [gph, diam], [1., -1.]))[0]
+OW_pressure = optimize.fsolve(eqm_pressure, 6.e9, args=(T, [fo, mwd], [1., -1.]))[0]
+WR_pressure = optimize.fsolve(eqm_pressure, 6.e9, args=(T, [mwd, mrw], [1., -1.]))[0]
+
+
+EMOG_pressures = np.linspace(min_pressure, DG_pressure, 101)
+EMOG_fO2 = eqm_curve(EMOG, EMOG_pressures, T, O2)
+lines.append([EMOG_pressures, EMOG_fO2, 'EMOG', '-W1,red,-'])
+
+EMOD_pressures = np.linspace(DG_pressure, OW_pressure, 101)
+EMOD_fO2 = eqm_curve(EMOD, EMOD_pressures, T, O2)
+lines.append([EMOD_pressures, EMOD_fO2, 'EMOD', '-W1,red,-'])
+
+EMWD_pressures = np.linspace(OW_pressure, WR_pressure, 101)
+EMWD_fO2 = eqm_curve(EMWD, EMWD_pressures, T, O2)
+lines.append([EMWD_pressures, EMWD_fO2, 'EMWD', '-W1,red,-'])
+
+EMRD_pressures = np.linspace(WR_pressure, max_pressure, 101)
+EMRD_fO2 = eqm_curve(EMRD, EMRD_pressures, T, O2)
+lines.append([EMRD_pressures, EMRD_fO2, 'EMRD', '-W1,red,-'])
 
 ####################################
 # REACTIONS NOT INVOLVING WUESTITE #
 ####################################
-pressure_Fe4O5_mt_hem = optimize.fsolve(eqm_mt_breakdown, 1.e9, args=(T))[0]
-pressure_wus_Fe4O5_mt = optimize.fsolve(wus_fe4o5_mt_eqm, [0.16, 1.e9], args=(T))[1]
-pressure_wus_Fe5O6_Fe4O5 = optimize.fsolve(wus_fe5o6_fe4o5_eqm, [0.16, 1.e9], args=(T))[1]
+pressure_Fe4O5_mt_hem = optimize.fsolve(eqm_pressure, 1.e9, args=(T, [mt, fe4o5, hem], [2., -1., -1.]))[0]
+pressure_wus_Fe4O5_mt = optimize.fsolve(wus_eqm_c_P, [0.16, 1.e9], args=(T, wus, fe4o5, mt))[1]
+pressure_wus_Fe5O6_Fe4O5 = optimize.fsolve(wus_eqm_c_P, [0.16, 1.e9], args=(T, wus, fe5o6, fe4o5))[1]
 
 # Fe4O5 - mt bounded by wus and hem
 fe4o5_mt_pressures=np.linspace(pressure_wus_Fe4O5_mt, pressure_Fe4O5_mt_hem, 21)
-fe4o5_mt_fO2=eqm_curve([fe4o5, mt], fe4o5_mt_pressures)
+fe4o5_mt_fO2=eqm_curve([fe4o5, mt], fe4o5_mt_pressures, T, O2)
 lines.append([fe4o5_mt_pressures, fe4o5_mt_fO2, 'Fe4O5 - mt', '-W1,black'])
 
 # mt - hem bounded by lower limit and Fe4O5
 mt_hem_pressures=np.linspace(min_pressure, pressure_Fe4O5_mt_hem, 21)
-mt_hem_fO2=eqm_curve([mt, hem], mt_hem_pressures)
+mt_hem_fO2=eqm_curve([mt, hem], mt_hem_pressures, T, O2)
 lines.append([mt_hem_pressures, mt_hem_fO2, 'mt - hem', '-W1,black'])
 
 # Fe5O6 - Fe4O5 bounded by wus and upper limit
 fe5o6_fe4o5_pressures=np.linspace(pressure_wus_Fe5O6_Fe4O5, max_pressure, 21)
-fe5o6_fe4o5_fO2=eqm_curve([fe5o6, fe4o5], fe5o6_fe4o5_pressures)
+fe5o6_fe4o5_fO2=eqm_curve([fe5o6, fe4o5], fe5o6_fe4o5_pressures, T, O2)
 lines.append([fe5o6_fe4o5_pressures, fe5o6_fe4o5_fO2, 'Fe5O6 - Fe4O5', '-W1,black'])
 
 # Fe4O5 - hem bounded by mt and upper limit
 fe4o5_hem_pressures=np.linspace(pressure_Fe4O5_mt_hem, max_pressure, 21)
-fe4o5_hem_fO2=eqm_curve([fe4o5, hem], fe4o5_hem_pressures)
+fe4o5_hem_fO2=eqm_curve([fe4o5, hem], fe4o5_hem_pressures, T, O2)
 lines.append([fe4o5_hem_pressures, fe4o5_hem_fO2, 'Fe4O5 - hem', '-W1,black'])
 
 ################################
@@ -725,17 +637,17 @@ lines.append([fe4o5_hem_pressures, fe4o5_hem_fO2, 'Fe4O5 - hem', '-W1,black'])
 
 # wus - mt bounded by lower limit and Fe4O5
 wus_mt_pressures=np.linspace(min_pressure, pressure_wus_Fe4O5_mt, 21)
-wus_mt_fO2=eqm_curve_wus(mt, wus_mt_pressures)
+wus_mt_fO2=eqm_curve_wus(mt, wus, wus_mt_pressures, T, O2)
 lines.append([wus_mt_pressures, wus_mt_fO2, 'wus - mt', '-W1,black'])
 
 # wus - Fe4O5 bounded by mt and Fe5O6
 wus_fe4o5_pressures=np.linspace(pressure_wus_Fe4O5_mt, pressure_wus_Fe5O6_Fe4O5, 21)
-wus_fe4o5_fO2=eqm_curve_wus(fe4o5, wus_fe4o5_pressures)
+wus_fe4o5_fO2=eqm_curve_wus(fe4o5, wus, wus_fe4o5_pressures, T, O2)
 lines.append([wus_fe4o5_pressures, wus_fe4o5_fO2, 'wus - Fe4O5', '-W1,black'])
 
 # wus - Fe5O6 bounded by Fe4O5 and upper limit
 wus_fe5o6_pressures=np.linspace(pressure_wus_Fe5O6_Fe4O5, max_pressure, 21)
-wus_fe5o6_fO2=eqm_curve_wus(fe5o6, wus_fe5o6_pressures)
+wus_fe5o6_fO2=eqm_curve_wus(fe5o6, wus, wus_fe5o6_pressures, T, O2)
 lines.append([wus_fe5o6_pressures, wus_fe5o6_fO2, 'wus - Fe5O6', '-W1,black'])
 
 ######################
@@ -753,55 +665,55 @@ IFW_pressure = optimize.fsolve(wus_iron_frw_stv_eqm, [0.01, 1.e9], args=(T))[1]
 
 
 fmq_pressures = np.linspace(min_pressure, QC_pressure, 21)
-fmq_fO2=eqm_curve([fa, mt, q], fmq_pressures)
-lines.append([fmq_pressures, fmq_fO2, 'FMQ', '-W1,grey'])
+fmq_fO2=eqm_curve([fa, mt, q], fmq_pressures, T, O2)
+lines.append([fmq_pressures, fmq_fO2, 'FMQ', '-W1,blue'])
 
 fmc_pressures = np.linspace(QC_pressure, FR_pressure, 21)
-fmc_fO2=eqm_curve([fa, mt, coe], fmc_pressures)
-lines.append([fmc_pressures, fmc_fO2, 'FMC', '-W1,grey'])
+fmc_fO2=eqm_curve([fa, mt, coe], fmc_pressures, T, O2)
+lines.append([fmc_pressures, fmc_fO2, 'FMC', '-W1,blue'])
 
 rmc_pressures = np.linspace(FR_pressure, CS_pressure, 21)
-rmc_fO2=eqm_curve([frw, mt, coe], rmc_pressures)
-lines.append([rmc_pressures, rmc_fO2, 'RMC', '-W1,grey'])
+rmc_fO2=eqm_curve([frw, mt, coe], rmc_pressures, T, O2)
+lines.append([rmc_pressures, rmc_fO2, 'RMC', '-W1,blue'])
 
 rms_pressures = np.linspace(CS_pressure, MF_pressure, 21)
-rms_fO2=eqm_curve([frw, mt, stv], rms_pressures)
-lines.append([rms_pressures, rms_fO2, 'RMS', '-W1,grey'])
+rms_fO2=eqm_curve([frw, mt, stv], rms_pressures, T, O2)
+lines.append([rms_pressures, rms_fO2, 'RMS', '-W1,blue'])
 
 rfs_pressures = np.linspace(MF_pressure, FF_pressure, 21)
-rfs_fO2=eqm_curve([frw, fe4o5, stv], rfs_pressures)
-lines.append([rfs_pressures, rfs_fO2, 'RFS', '-W1,grey'])
+rfs_fO2=eqm_curve([frw, fe4o5, stv], rfs_pressures, T, O2)
+lines.append([rfs_pressures, rfs_fO2, 'RFS', '-W1,blue'])
 
 rffs_pressures = np.linspace(FF_pressure, FFW_pressure, 21)
-rffs_fO2=eqm_curve([frw, fe5o6, stv], rffs_pressures)
-lines.append([rffs_pressures, rffs_fO2, 'RFFS', '-W1,grey'])
+rffs_fO2=eqm_curve([frw, fe5o6, stv], rffs_pressures, T, O2)
+lines.append([rffs_pressures, rffs_fO2, 'RFFS', '-W1,blue'])
 
 rws_pressures = np.linspace(FFW_pressure, IFW_pressure, 21)
-rws_fO2=eqm_curve_wus_2([frw, stv], rws_pressures)
-lines.append([rws_pressures, rws_fO2, 'RWS', '-W1,grey'])
+rws_fO2=eqm_curve_wus_2([frw, stv], wus, rws_pressures, T, O2)
+lines.append([rws_pressures, rws_fO2, 'RWS', '-W1,blue'])
 
 ris_pressures = np.linspace(CS_pressure, IFW_pressure, 21)
-ris_fO2=eqm_curve([frw, iron, stv], ris_pressures)
-lines.append([ris_pressures, ris_fO2, 'RIS', '-W1,grey'])
+ris_fO2=eqm_curve([frw, iron, stv], ris_pressures, T, O2)
+lines.append([ris_pressures, ris_fO2, 'RIS', '-W1,blue'])
 
 ric_pressures = np.linspace(FR_pressure, CS_pressure, 21)
-ric_fO2=eqm_curve([frw, iron, coe], ric_pressures)
-lines.append([ric_pressures, ric_fO2, 'RIC', '-W1,grey'])
+ric_fO2=eqm_curve([frw, iron, coe], ric_pressures, T, O2)
+lines.append([ric_pressures, ric_fO2, 'RIC', '-W1,blue'])
 
 fic_pressures = np.linspace(QC_pressure, FR_pressure, 21)
-fic_fO2=eqm_curve([fa, iron, coe], fic_pressures)
-lines.append([fic_pressures, fic_fO2, 'FIC', '-W1,grey'])
+fic_fO2=eqm_curve([fa, iron, coe], fic_pressures, T, O2)
+lines.append([fic_pressures, fic_fO2, 'FIC', '-W1,blue'])
 
 fiq_pressures = np.linspace(min_pressure, QC_pressure, 21)
-fiq_fO2=eqm_curve([fa, iron, q], fiq_pressures)
-lines.append([fiq_pressures, fiq_fO2, 'FIQ', '-W1,grey'])
+fiq_fO2=eqm_curve([fa, iron, q], fiq_pressures, T, O2)
+lines.append([fiq_pressures, fiq_fO2, 'FIQ', '-W1,blue'])
 
 # Now add lines corresponding to fa-frw, q-coe, coe-stv
-lines.append([np.array([FR_pressure, FR_pressure]), np.array([ric_fO2[0], rmc_fO2[0]]), 'FR', '-W1,grey'])
-lines.append([np.array([QC_pressure, QC_pressure]), np.array([fmc_fO2[0], 20.]), 'QC', '-W1,grey'])
-lines.append([np.array([QC_pressure, QC_pressure]), np.array([fic_fO2[0], -20.]), 'QC', '-W1,grey'])
-lines.append([np.array([CS_pressure, CS_pressure]), np.array([rms_fO2[0], 20.]), 'CS', '-W1,grey'])
-lines.append([np.array([CS_pressure, CS_pressure]), np.array([ris_fO2[0], -20.]), 'CS', '-W1,grey'])
+lines.append([np.array([FR_pressure, FR_pressure]), np.array([ric_fO2[0], rmc_fO2[0]]), 'FR', '-W1,blue'])
+lines.append([np.array([QC_pressure, QC_pressure]), np.array([fmc_fO2[0], 20.]), 'QC', '-W1,blue'])
+lines.append([np.array([QC_pressure, QC_pressure]), np.array([fic_fO2[0], -20.]), 'QC', '-W1,blue'])
+lines.append([np.array([CS_pressure, CS_pressure]), np.array([rms_fO2[0], 20.]), 'CS', '-W1,blue'])
+lines.append([np.array([CS_pressure, CS_pressure]), np.array([ris_fO2[0], -20.]), 'CS', '-W1,blue'])
 
 for line in lines:
     pressures, fO2s, name, marker = line
@@ -824,8 +736,20 @@ f.close()
 
 print 'P-fO2.dat (over)written'
 
+new_phase_region = [[fe4o5_mt_pressures, fe4o5_mt_fO2],
+                    [fe4o5_hem_pressures, fe4o5_hem_fO2],
+                    [[24.e9], [4.]],
+                    [wus_fe5o6_pressures[::-1], wus_fe5o6_fO2[::-1]],
+                    [wus_fe4o5_pressures[::-1], wus_fe4o5_fO2[::-1]]]
 
-
+f = open('new_phase_region.dat', 'w')
+for boundary in new_phase_region:
+    pressures, fO2s = boundary
+    for i, P in enumerate(pressures):
+        f.write(str(P/1.e9)+' '+str(fO2s[i])+'\n')
+f.write('\n')
+f.close()
+print 'new_phase_region.dat (over)written'
 
 # Required constraints
 # 1. bulk composition (use composition of ol polymorph)
