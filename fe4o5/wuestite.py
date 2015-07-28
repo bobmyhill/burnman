@@ -14,7 +14,7 @@ import matplotlib.image as mpimg
 
 import scipy.optimize as optimize
 
-from mineral_models import *
+from mineral_models_new import *
 from equilibrium_functions import *
 
 acoeffs=np.array([[511623.74,-421.21897,0.22664278,-1.4495132e-5],[-2217082.6,1640.3836,-0.84216746,4.3221147e-5],[1857120.4,-1440.5715,0.74067011,-1.3350707e-5]])
@@ -47,7 +47,7 @@ def f_to_y(f):
 
 wus=ferropericlase()
 
-iron=minerals.HP_2011_ds62.iron()
+iron=fcc_iron()
 fper=minerals.HP_2011_ds62.fper()
 mt=minerals.HP_2011_ds62.mt()
 hem=minerals.HP_2011_ds62.hem()

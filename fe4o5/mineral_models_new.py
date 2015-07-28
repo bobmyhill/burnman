@@ -3,6 +3,54 @@ from burnman.mineral import Mineral
 from burnman.processchemistry import *
 atomic_masses=read_masses()
 
+
+class bcc_iron (Mineral):
+    def __init__(self):
+        formula='Fe1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'BCC iron',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': 9149.0 ,
+            'S_0': 36.868 ,
+            'V_0': 7.09e-06 ,
+            'Cp': [21.09, 0.0101455, -221508., 47.1947] ,
+            'a_0': 3.8e-05 ,
+            'K_0': 1.64e+11 ,
+            'Kprime_0': 5.16 ,
+            'Kdprime_0': -3.1e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'curie_temperature': [1043., 0.0] ,
+            'magnetic_moment': [2.22, 0.0] ,
+            'magnetic_structural_parameter': 0.4 }
+        Mineral.__init__(self)
+        
+class fcc_iron (Mineral):
+    def __init__(self):
+        formula='Fe1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FCC iron',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': 7973.0 ,
+            'S_0': 35.907 ,
+            'V_0': 6.909e-06 ,
+            'Cp': [22.24, 0.0088656, -221517., 47.1998] ,
+            'a_0': 4.66e-05 ,
+            'K_0': 1.51e+11 ,
+            'Kprime_0': 5.2 ,
+            'Kdprime_0': -3.37e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'curie_temperature': [201., 0.0] ,
+            'magnetic_moment': [2.1, 0.0] ,
+            'magnetic_structural_parameter': 0.28 }
+        Mineral.__init__(self)
+
+
 hen=burnman.minerals.HHPH_2013.hen()
 hfs=burnman.minerals.HHPH_2013.hfs()
 DeltaH_fm=-6950.
@@ -60,8 +108,8 @@ class Fe4O5 (Mineral):
             'name': 'Fe4O5',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -1357000.0 ,
-            'S_0': 218. ,
+            'H_0': -1342000.0 ,
+            'S_0': 230. , # 60.6 + 146.9 FeO (HP) + Fe3O4 (HP) (high mt is 172.4)
             'V_0': 5.376e-05 ,
             'Cp': [306.9, 0.001075, -3140400.0, -1470.5] ,
             'a_0': 2.36e-05 ,
@@ -73,7 +121,9 @@ class Fe4O5 (Mineral):
        Mineral.__init__(self)
 
 
-# Fe4O5
+# Fe4O5 -1625, 280, 7.8, 11.7
+# -1615, 285, 8.9, 11.7
+# -1592, 300, 9.3, 10.3
 class Fe5O6 (Mineral):
     def __init__(self):
        formula='Fe5.0O6.0'
@@ -82,8 +132,8 @@ class Fe5O6 (Mineral):
             'name': 'Fe5O6',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -1618400. , # stable at 9.5 GPa.
-            'S_0': 278.6 , # Fe4O5 + FeO
+            'H_0': -1592000. , # stable at 9.5 GPa.
+            'S_0': 300.0 , # Fe4O5 + FeO
             'V_0': 6.633e-05 , # Lavina and Meng, 2014, 440.6 A^3
             'Cp': [351.3, 0.009355, -4354600.0, -1285.3] , # Sum FeO, Fe3O4
             'a_0': 1.435e-05 , # Lavina and Meng, 2014
@@ -127,10 +177,7 @@ class wustite (Mineral): # similar to Holland and Powell, ds62
             'equation_of_state': 'hp_tmt',
             'H_0': -265450.0 ,
             'S_0': 58.0 ,
-            'V_0': 1.206e-05 ,
-            #'Cp': [44.4, 0.00828, -1214200.0, 185.2] , # HP value
-            # 'Cp': [53.334316, 0.00779203541, -325553.876, -75.023374], # old value
-            #'Cp': [50.92936041, 0.0056561, -225829.9289, 38.79636971], # 0.9379
+            'V_0': 1.2239e-05 , # From Simons (1980)
             'Cp': [42.63803582, 0.008971021, -260780.8155, 196.5978421], # By linear extrapolation from Fe0.9254O and hematite/3..
             'a_0': 3.22e-05 ,
             'K_0': 1.52e+11 ,
@@ -151,7 +198,7 @@ class defect_wustite (Mineral): # starting guess is hem/3.
             'equation_of_state': 'hp_tmt',
             'H_0': -258541.6 ,
             'S_0': 34.09 ,
-            'V_0': 3.027e-05/3. ,
+            'V_0': 1.10701e-05 , # From Simons (1980)
             'Cp': [163.9/3., 0.0, -2257200.0/3., -657.6/3.] ,
             'a_0': 2.79e-05 ,
             'K_0': 1.52e+11 ,
@@ -201,7 +248,10 @@ class MgFe3O5 (Mineral): # for SLB
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 '''
-
+#1680 is -3.7
+#1685 is -8.5
+#1688 is -11.6
+#1690 is -13,8
 # Best fit for change in Kd with pressure for each mineral
 class MgFe3O5 (Mineral):
     def __init__(self):
@@ -211,8 +261,8 @@ class MgFe3O5 (Mineral):
             'name': 'MgFe3O5',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -1688000.0 ,
-            'S_0': 185.9 ,
+            'H_0': -1675500.0 ,
+            'S_0': 195.9 ,
             'V_0': 5.333e-05 ,
             'Cp': [323.0, -0.006843, -2462000.0, -1954.9] ,
             'a_0': 2.36e-05 ,
