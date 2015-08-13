@@ -1,0 +1,9 @@
+import burnman
+
+stv = burnman.minerals.HP_2011_ds62.stv()
+
+stv.set_state(1.e5, 800.)
+print stv.V, stv.gibbs
+
+stv.set_state(10.e9, 1073.15)
+print stv.V, stv.gibbs
