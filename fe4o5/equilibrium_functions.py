@@ -5,7 +5,8 @@ from burnman.chemicalpotentials import *
 def eqm_pressure(P, T, minerals, multiplicities):
     gibbs = 0.
     for i, mineral in enumerate(minerals):
-        gibbs += mineral.calcgibbs(P, T) * multiplicities[i]
+        mineral.set_state(P[0], T)
+        gibbs += mineral.gibbs * multiplicities[i]
     return gibbs
 
 def eqm_with_wus(comp, P, T, wus, mineral):

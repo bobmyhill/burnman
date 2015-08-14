@@ -385,3 +385,56 @@ class CFMASO_garnet(burnman.SolidSolution):
                                  [0.]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 '''    
+
+
+#Per
+#26.5
+#[60.5, 0.000362, -535800.0, -299.2] ,
+
+
+#Hem 
+#'S_0': 87.4 ,
+#'V_0': 3.027e-05 ,
+#'Cp': [163.9, 0.0, -2257200.0, -657.6] ,
+
+# Fe4O5
+# 5.376e-05
+# MgFeFe2O5
+# 5.333
+# thus Mg2Fe2O5
+# 5.290
+
+class Mg2Fe2O5 (Mineral):
+    def __init__(self):
+       formula='Mg2.0Fe2.0O5.0'
+       formula = dictionarize_formula(formula)
+       self.params = {
+            'name': 'Mg2Fe2O5',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -2014000.0 ,
+            'S_0': (87.4 + 26.5*2.) +10., # from Laura
+            'V_0': 5.290e-05 , # from Laura
+            'Cp': [2.*60.5 + 163.9,
+                   2.*0.000362 + 0.0,
+                   2.*-535800.0 + -2257200.0,
+                   2.*-299.2 + -657.6], # sum
+            'a_0': 2.36e-05 , # 2.36e-5 is Fe4O5
+            'K_0': 1.700e+11 , # from Nicki
+            'Kprime_0': 4.00 ,
+            'Kdprime_0': -4./1.700e+11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+       Mineral.__init__(self)
+
+
+
+class MgFeFe2O5(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='(Mg,Fe)2Fe2O5'
+        self.type='symmetric'
+        self.endmembers = [[Mg2Fe2O5(), '[Mg]2Fe2O5'],
+                           [Fe4O5(), '[Fe]2Fe2O5']]
+        self.enthalpy_interaction=[[2.0e3]]
+
+        burnman.SolidSolution.__init__(self, molar_fractions)

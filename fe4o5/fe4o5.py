@@ -15,6 +15,7 @@ import matplotlib.image as mpimg
 import scipy.optimize as optimize
 
 from mineral_models_new import *
+from slb_models_new import *
 from equilibrium_functions import *
 
 
@@ -413,18 +414,21 @@ print 'new_phase_region.dat (over)written'
 
 # Required constraints
 # 1. bulk composition (use composition of ol polymorph)
-# 2. 2*MgFe3O5 + Fe2SiO4 <-> 2Fe4O5 + Mg2SiO4
+# 2. Mg2Fe2O5 + Fe2SiO4 <-> Fe4O5 + Mg2SiO4
 
 fm45=MgFeFe2O5()
+
+
+# HP solid solutions
 ol=olivine()
 wad=wadsleyite()
 rw=ringwoodite()
 
-
 '''
-ol=minerals.SLB_2011.mg_fe_olivine()
-wad=minerals.SLB_2011.mg_fe_wadsleyite()
-rw=minerals.SLB_2011.mg_fe_ringwoodite()
+# SLB solid solutions
+ol=mg_fe_olivine()
+wad=mg_fe_wadsleyite()
+rw=mg_fe_ringwoodite()
 '''
 
 data=[]
@@ -432,17 +436,20 @@ with open('phasePTX.dat','r') as f:
     for expt in f:
         data.append([var for var in expt.split()])
 
-def G_min(arg, ol_polymorph, bulk_XMg, P, T):
+def equilibrium_composition(arg, ol_polymorph, XMg_Fe4O5, P, T):
     XMg_ol_polymorph=arg[0]
-    XMg=(bulk_XMg*2.) - XMg_ol_polymorph
 
     ol_polymorph.set_composition([XMg_ol_polymorph, 1.0-XMg_ol_polymorph])
     ol_polymorph.set_state(P,T)
 
-    fm45.set_composition([XMg, 1.0-XMg])
+    fm45.set_composition([XMg_Fe4O5, 1.0-XMg_Fe4O5])
     fm45.set_state(P,T)
+    
+    return (ol_polymorph.partial_gibbs[0] + fm45.partial_gibbs[1]) \
+        - (ol_polymorph.partial_gibbs[1] + fm45.partial_gibbs[0]) 
 
-    return ol_polymorph.gibbs + 2*fm45.gibbs
+f = open('equilibria.dat', 'w')
+
 
 print ''
 for expt in data:
@@ -461,15 +468,16 @@ for expt in data:
         if ol_polymorph_name == 'ol' or ol_polymorph_name == 'wad' or ol_polymorph_name == 'rw':
             P=float(expt[3])*1.e8 # converting from kbar to Pa
             T=float(expt[4])+273.15 # converting from C to K
-            XMg_fm45_obs=float(expt[5])
-            XMg_ol_polymorph_obs=float(expt[9])
-            
-            bulk_XMg=(XMg_fm45_obs+XMg_ol_polymorph_obs)/2. # Two moles (Mg,Fe)Fe3O5 to every 1 mole ol_polymorph
+            XMg2Fe2O5_obs=float(expt[5])/2. # 2 atoms Mg in Mg2Fe2O5
+            XMg2SiO4_obs=float(expt[9])
 
 
-            XMg_ol_polymorph_calc=optimize.minimize(G_min, [0.9], method='nelder-mead', args=(ol_polymorph, bulk_XMg, P, T)).x
+            XMg2SiO4_calc=optimize.fsolve(equilibrium_composition, [0.9], args=(ol_polymorph, XMg2Fe2O5_obs, P, T))[0]
             if '_' not in expt[0]: 
-                print expt[0], ol_polymorph_name, P/1.e9, T-273.15, XMg_ol_polymorph_calc[0], XMg_ol_polymorph_obs, XMg_ol_polymorph_calc[0]-XMg_ol_polymorph_obs
-                
-                #print ol_polymorph.partial_gibbs[0]-ol_polymorph.partial_gibbs[1], (fm45.partial_gibbs[0]-fm45.partial_gibbs[1])*2.0
+                print expt[0], ol_polymorph_name, P/1.e9, T-273.15, XMg2SiO4_calc, XMg2SiO4_obs, XMg2SiO4_calc-XMg2SiO4_obs
+                f.write(expt[0]+' '+ol_polymorph_name+' '+str(P/1.e9)+' '+str(T-273.15)+' '+str(XMg2SiO4_calc)+' '+str(XMg2SiO4_obs)+' '+str(XMg2SiO4_calc-XMg2SiO4_obs)+'\n')
 
+
+f.write('\n')
+f.close()
+print 'equilibria.dat (over)written'
