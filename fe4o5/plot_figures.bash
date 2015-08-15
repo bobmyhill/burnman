@@ -114,13 +114,13 @@ echo "16.25 4.8 (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
 echo "16.25 0.6 rw + opx +" | pstext -J -R -O -K >> ${base}.ps
 echo "16.25 0. (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
 
-echo "8.25 -0.95 0.80" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
-echo "8.25 -0.20 0.85" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
-echo "8.25 0.90 0.90" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
-echo "8.25 2.80 0.95" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 -1.20 0.80" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 -0.50 0.85" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 0.55 0.90" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
+echo "8.25 2.40 0.95" | pstext -F+a-8+f10,grey -J -R -O -K >> ${base}.ps
 
-echo "14.9 1.6 0.90" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
-echo "15.75 3.6 0.95" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
+echo "14.9 1.5 0.90" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
+echo "15.75 3.5 0.95" | pstext -F+a15+f10,grey -J -R -O -K >> ${base}.ps
 
 echo "17.70 3.45 0.85" | pstext -F+a25+f10,grey -J -R -O -K >> ${base}.ps
 

@@ -14,7 +14,7 @@ import matplotlib.image as mpimg
 
 import scipy.optimize as optimize
 
-from mineral_models import *
+from mineral_models_new import *
 from equilibrium_functions import eqm_pressure
 
 ol = olivine()
@@ -127,7 +127,7 @@ def ol_polymorph_opx_fm45_equilibrium(args, X_Mg_olopx, ol_polymorph, P, T):
 
     equations = [ 0.5*(opx.partial_gibbs[0] + opx.partial_gibbs[1]) - opx.partial_gibbs[2],
                   ( ol_polymorph.partial_gibbs[0] + opx.partial_gibbs[1] ) - ( ol_polymorph.partial_gibbs[1] + opx.partial_gibbs[0] ), 
-                  ( ol_polymorph.partial_gibbs[0] + 2.*fm45.partial_gibbs[1] ) - ( ol_polymorph.partial_gibbs[1] + 2.*fm45.partial_gibbs[0] ) ]
+                  ( ol_polymorph.partial_gibbs[0] + fm45.partial_gibbs[1] ) - ( ol_polymorph.partial_gibbs[1] + fm45.partial_gibbs[0] ) ]
     
     return equations
 
@@ -155,7 +155,7 @@ def ol_polymorphs_opx_fm45_equilibrium(args, X_Mg_olwadopx, polymorph_1, polymor
                   polymorph_1.partial_gibbs[0] - polymorph_2.partial_gibbs[0],
                   polymorph_1.partial_gibbs[1] - polymorph_2.partial_gibbs[1],
                   ( polymorph_2.partial_gibbs[0] + opx.partial_gibbs[1] ) - ( polymorph_2.partial_gibbs[1] + opx.partial_gibbs[0] ), 
-                  ( polymorph_2.partial_gibbs[0] + 2.*fm45.partial_gibbs[1] ) - ( polymorph_2.partial_gibbs[1] + 2.*fm45.partial_gibbs[0] ) ]
+                  ( polymorph_2.partial_gibbs[0] + fm45.partial_gibbs[1] ) - ( polymorph_2.partial_gibbs[1] + fm45.partial_gibbs[0] ) ]
     
     return equations
 
@@ -201,7 +201,7 @@ X_rwopx_invariant =  p_ol_polymorphs * X_rw_inv + p_opx * X_opx_inv
 X_Mgs=np.linspace(X_olopx_invariant, 0.99, 21)
 pressures_ol_wad_opx_fm45=np.empty_like(X_Mgs)
 fO2_ol_wad_opx_fm45=np.empty_like(X_Mgs)
-sol = [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7]
+sol = [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85]
 for i, X_Mg_olopx in enumerate(X_Mgs):
     print X_Mg_olopx
     sol = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, sol, args=(X_Mg_olopx, ol, wad, p_ol_polymorphs, T))
@@ -214,7 +214,7 @@ plt.plot(pressures_ol_wad_opx_fm45/1.e9, fO2_ol_wad_opx_fm45, label='ol-wad-opx-
 X_Mgs=np.linspace(X_wadopx_invariant, 0.99, 21)
 pressures_wad_rw_opx_fm45=np.empty_like(X_Mgs)
 fO2_wad_rw_opx_fm45=np.empty_like(X_Mgs)
-sol = [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7]
+sol = [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85]
 for i, X_Mg_olopx in enumerate(X_Mgs):
     print X_Mg_olopx
     sol = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, sol, args=(X_Mg_olopx, wad, rw, p_ol_polymorphs, T))
@@ -224,10 +224,10 @@ for i, X_Mg_olopx in enumerate(X_Mgs):
 plt.plot(pressures_wad_rw_opx_fm45/1.e9, fO2_wad_rw_opx_fm45, label='wad-rw-opx-Fe4O5')
 
 # And for the ol-rw boundary
-X_Mgs=np.linspace(0.4, X_olopx_invariant, 60)
+X_Mgs=np.linspace(0.42, X_olopx_invariant, 60)
 pressures_ol_rw_opx_fm45=np.empty_like(X_Mgs)
 fO2_ol_rw_opx_fm45=np.empty_like(X_Mgs)
-sol = [0.14, 13.e9, 0.66, 0.33, 0.81, 0.20]
+sol = [0.14, 13.e9, 0.66, 0.33, 0.81, 0.60]
 for i, X_Mg_olopx in enumerate(X_Mgs):
     print X_Mg_olopx
     sol = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, sol, args=(X_Mg_olopx, ol, rw, p_ol_polymorphs, T))
@@ -253,9 +253,9 @@ for i, X_Mg_olopx in enumerate(X_Mgs):
         label_type='-'
 
     # OLIVINE
-    ol_wad_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    ol_wad_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85], \
                                           args=(X_Mg_olopx, ol, wad, p_ol_polymorphs, T))[1]
-    ol_rw_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    ol_rw_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85], \
                                          args=(X_Mg_olopx, ol, rw, p_ol_polymorphs, T))[1]
 
     max_pressure = min(ol_wad_pressure, ol_rw_pressure)
@@ -263,15 +263,15 @@ for i, X_Mg_olopx in enumerate(X_Mgs):
         ol_pressures = np.linspace(pressure_range[0], max_pressure, 11)
         fO2_ol_opx_fm45 = np.empty_like(ol_pressures)
         for i, P in enumerate(ol_pressures):    
-            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.7], args=(X_Mg_olopx, ol, P, T))
+            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.85], args=(X_Mg_olopx, ol, P, T))
             fO2_ol_opx_fm45[i] =  np.log10(fugacity(O2, [ol, opx, fm45]))
         ol_contours.append([ol_pressures, fO2_ol_opx_fm45, str(X_Mg_olopx), '-W0.5,grey,'+label_type])
         plt.plot(ol_pressures/1.e9, fO2_ol_opx_fm45, label='ol-opx-Fe4O5')
 
     # WADSLEYITE
-    wad_ol_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    wad_ol_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85], \
                                           args=(X_Mg_olopx, wad, ol, p_ol_polymorphs, T))[1]
-    wad_rw_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    wad_rw_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.85], \
                                          args=(X_Mg_olopx, wad, rw, p_ol_polymorphs, T))[1]
 
     if wad_ol_pressure < wad_rw_pressure:
@@ -282,16 +282,16 @@ for i, X_Mg_olopx in enumerate(X_Mgs):
         wad_pressures = np.linspace(wad_ol_pressure, wad_rw_pressure, 11)
         fO2_wad_opx_fm45 = np.empty_like(wad_pressures)    
         for i, P in enumerate(wad_pressures): 
-            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.7], args=(X_Mg_olopx, wad, P, T))
+            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.85], args=(X_Mg_olopx, wad, P, T))
             fO2_wad_opx_fm45[i] =  np.log10(fugacity(O2, [wad, opx, fm45]))
         wad_contours.append([wad_pressures, fO2_wad_opx_fm45, str(X_Mg_olopx), '-W0.5,grey,'+label_type])
         plt.plot(wad_pressures/1.e9, fO2_wad_opx_fm45, label='wad-opx-Fe4O5')
 
 
     # RINGWOODITE
-    rw_ol_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    rw_ol_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.70], \
                                           args=(X_Mg_olopx, rw, ol, p_ol_polymorphs, T))[1]
-    rw_wad_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.7], \
+    rw_wad_pressure = optimize.fsolve(ol_polymorphs_opx_fm45_equilibrium, [0.0, 13.e9, 0.87, 0.88, 0.94, 0.70], \
                                          args=(X_Mg_olopx, rw, wad, p_ol_polymorphs, T))[1]
 
     min_pressure = max(rw_ol_pressure, rw_wad_pressure)
@@ -299,7 +299,7 @@ for i, X_Mg_olopx in enumerate(X_Mgs):
         rw_pressures = np.linspace(min_pressure, pressure_range[1], 11)
         fO2_rw_opx_fm45 = np.empty_like(rw_pressures)
         for i, P in enumerate(rw_pressures): 
-            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.7], args=(X_Mg_olopx, rw, P, T))
+            sol = optimize.fsolve(ol_polymorph_opx_fm45_equilibrium, [0.0, 0.94, 0.85], args=(X_Mg_olopx, rw, P, T))
             fO2_rw_opx_fm45[i] =  np.log10(fugacity(O2, [rw, opx, fm45]))
         rw_contours.append([rw_pressures, fO2_rw_opx_fm45, str(X_Mg_olopx), '-W0.5,grey,'+label_type])
         plt.plot(rw_pressures/1.e9, fO2_rw_opx_fm45, label='rw-opx-Fe4O5')
