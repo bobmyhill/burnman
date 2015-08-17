@@ -28,89 +28,11 @@ Si_A4=minerals.Fe_Si_O.Si_diamond_A4()
 Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
 Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
 Si_bcc=minerals.Fe_Si_O.Si_bcc_A2()
-Si_liq=minerals.Fe_Si_O.Si_liquid()
 
 Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
 Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
-Fe_liq=minerals.Myhill_calibration_iron.liquid_iron()
-#Fe_liq = minerals.Komabayashi_2014.liquid_iron()
-# Properties of Fe liquid
-
-Fe_melting = []
-f=open('data/Fe_melting_Anzellini_2003.dat', 'r')
-datastream = f.read()  # We need to open the file
-f.close()
-datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
-for line in datalines:
-    if line[0] != "%":
-        Fe_melting.append([float(line[0])*1.e9, 
-                           float(line[1]), 
-                           float(line[2])])
-
-P, T, Terr = zip(*Fe_melting)
-P_obs = np.array(P)
-T_obs = np.array(T)
-PT_obs = zip(*[P, T])
-
-P=1.e5
-T = optimize.fsolve(eqm_temperature([Fe_bcc, Fe_liq], 
-                                      [1., -1.]),[1000.], args=(P))[0] 
-
-print P/1.e9, T
-print Fe_liq.set_state(P, T)
-print Fe_fcc.set_state(P, T)
-# See Nasch and Manghnani, 1998
-print 55.845/Fe_liq.V*1.e-6, Fe_liq.alpha, Fe_liq.K_T/1.e9
-
-print Fe_fcc.V, Fe_liq.V
-
-pressures = np.linspace(1.e5, 200.e9, 21)
-temperatures_fcc = np.empty_like(pressures)
-temperatures_hcp = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    T = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], 
-                                        [1., -1.]),[3000.], args=(P))[0] 
-    temperatures_fcc[i] = T
-    T = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], 
-                                        [1., -1.]),[3000.], args=(P))[0] 
-    temperatures_hcp[i] = T
-
-plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
-plt.plot(pressures/1.e9, temperatures_fcc)
-plt.plot(pressures/1.e9, temperatures_hcp)
-plt.show()
-
-
-# Properties of Si liquid 
-
-P = 1.e5
-T = 1800. # 1685.
-Si_A4.set_state(P, T)
-Si_liq.set_state(P, T)
-print Si_liq.alpha, 28.0855/Si_liq.V/1.e6
-
-'''
-temperatures = np.linspace(1650., 1950., 21)
-volumes = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    Si_liq.set_state(P, T)
-    volumes[i] = 28.0855/Si_liq.V/1.e6
-
-plt.plot(temperatures, volumes)
-plt.show()
-'''
-
-pressures = np.linspace(1.e5, 10.e9, 21)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    T = optimize.fsolve(eqm_temperature([Si_A4, Si_liq], 
-                                        [1., -1.]),[1000.], args=(P))[0] 
-    temperatures[i] = T
-
-print pressures[-1]/1.e9, temperatures[-1], 'should be ca. 1073 K'
-plt.plot(pressures/1.e9, temperatures)
-plt.show()
+Fe_liquid=minerals.Myhill_calibration_iron.liquid_iron()
 
 
 '''

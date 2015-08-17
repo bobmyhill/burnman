@@ -51,6 +51,16 @@ class hcp_Fe_Si(burnman.SolidSolution):
         self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
+class liquid_Fe_Si(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='liquid Fe-Si solid solution'
+        self.type='subregular'
+        self.endmembers = [[minerals.Myhill_calibration_iron.liquid_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_liquid(), '[Si]']]
+        self.enthalpy_interaction=[[[0.e3, 0.e3]]]
+        self.volume_interaction=[[[0., 0.]]]
+        burnman.SolidSolution.__init__(self, molar_fractions)
+
+
 class B2_Fe_FeSi(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='B2 Fe-FeSi solid solution'
