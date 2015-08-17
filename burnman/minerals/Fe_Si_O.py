@@ -57,30 +57,6 @@ class FeSi_B2 (Mineral): # enthalpy and entropy calculated from A2-structured Fe
             'magnetic_structural_parameter': 0.4 }
         Mineral.__init__(self)
 
-'''
-class FeSi_B2 (Mineral):
-    def __init__(self):
-        formula='Fe1.0Si1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'FeSi B2',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -78852. , # to fit
-            'S_0': 44.685 , # to fit
-            'V_0': 1.300e-05 ,
-            'Cp': [38.6770e+01, 0.0217569, -159.151, 0.0060376],
-            'a_0': 3.064e-05 ,
-            'K_0': 2.199e+11 ,
-            'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/2.199e+11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'curie_temperature': [521.5, 0.0] ,
-            'magnetic_moment': [1.11, 0.0] ,
-            'magnetic_structural_parameter': 0.4 }
-        Mineral.__init__(self)
-'''
 
 class Si_diamond_A4 (Mineral):
     def __init__(self):
