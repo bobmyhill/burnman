@@ -238,6 +238,7 @@ class HP_TMT(eos.EquationOfState):
 
         E_th = einstein.thermal_energy( T, params['einstein_T'], params['n'] )
         C_V0 = einstein.heat_capacity_v( params['T_0'], params['einstein_T'], params['n'] )
+
         P_th = params['a_0']*params['K_0'] / C_V0 * E_th
         return P_th
 
