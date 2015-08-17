@@ -91,9 +91,8 @@ class HP_TMT(eos.EquationOfState):
         a, b, c = mt.tait_constants(params)
         Pth=self.__relative_thermal_pressure(temperature,params)
         psubpth=pressure-Pth
-        einstein_T=self.__einstein_temperature(params['S_0'], params['n'])
-        C_V0 = einstein.heat_capacity_v( T_0, einstein_T, params['n'] )
-        C_V =  einstein.heat_capacity_v(temperature, einstein_T,params['n'])
+        C_V0 = einstein.heat_capacity_v( T_0, params['T_einstein'], params['n'] )
+        C_V =  einstein.heat_capacity_v(temperature, params['T_einstein'], params['n'])
         alpha = params['a_0'] * (C_V/C_V0) *1./((1.+b*psubpth)*(a + (1.-a)*np.power((1+b*psubpth), c)))
  
         return alpha
@@ -169,8 +168,7 @@ class HP_TMT(eos.EquationOfState):
         a, b, c = mt.tait_constants(params)
         Pth=self.__relative_thermal_pressure(temperature,params)
 
-        einstein_T=self.__einstein_temperature(params['S_0'], params['n'])
-        ksi_over_ksi_0=einstein.heat_capacity_v( temperature, einstein_T, params['n'] )/einstein.heat_capacity_v( T_0, einstein_T, params['n'] )
+        ksi_over_ksi_0=einstein.heat_capacity_v( temperature, params['T_einstein'], params['n'] )/einstein.heat_capacity_v( T_0, params['T_einstein'], params['n'] )
 
         dintVdpdx=(params['V_0']*params['a_0']*params['K_0']*a*ksi_over_ksi_0)*(np.power((1.+b*(pressure-Pth)), 0.-c) - np.power((1.-b*Pth), 0.-c))
 
@@ -212,8 +210,7 @@ class HP_TMT(eos.EquationOfState):
         a, b, c = mt.tait_constants(params)
         Pth=self.__relative_thermal_pressure(temperature,params)
 
-        einstein_T=self.__einstein_temperature(params['S_0'], params['n'])
-        ksi_over_ksi_0=einstein.heat_capacity_v( temperature, einstein_T, params['n'] )/einstein.heat_capacity_v( T_0, einstein_T, params['n'] )
+        ksi_over_ksi_0=einstein.heat_capacity_v( temperature, params['T_einstein'], params['n'] )/einstein.heat_capacity_v( T_0, params['T_einstein'], params['n'] )
 
         dSdT=params['V_0']*params['K_0']*np.power((ksi_over_ksi_0*params['a_0']),2.0)*(np.power((1.+b*(pressure-Pth)), -1.-c) - np.power((1.-b*Pth), -1.-c))
 
@@ -249,9 +246,8 @@ class HP_TMT(eos.EquationOfState):
         # Note that the xi function in HP2011 is just the Einstein heat capacity
         # divided by 3nR.  I don't know why they don't use that, but anyhow...
 
-        einstein_T=self.__einstein_temperature(params['S_0'],params['n'])
-        E_th = einstein.thermal_energy( T, einstein_T, params['n'] )
-        C_V0 = einstein.heat_capacity_v( T_0, einstein_T, params['n'] )
+        E_th = einstein.thermal_energy( T, params['T_einstein'], params['n'] )
+        C_V0 = einstein.heat_capacity_v( T_0, params['T_einstein'], params['n'] )
         P_th = params['a_0']*params['K_0'] / C_V0 * E_th
         return P_th
 
@@ -311,6 +307,11 @@ class HP_TMT(eos.EquationOfState):
             params['G_0'] = float('nan')
         if 'Gprime_0' not in params:
             params['Gprime_0'] = float('nan')
+
+
+        if 'T_einstein' not in params: # set standard einstein temperature
+            params['T_einstein'] = self.__einstein_temperature(params['S_0'], params['n'])
+
   
         #check that all the required keys are in the dictionary
         expected_keys = ['H_0', 'S_0', 'V_0', 'Cp', 'a_0', 'K_0', 'Kprime_0', 'Kdprime_0', 'n', 'molar_mass']
