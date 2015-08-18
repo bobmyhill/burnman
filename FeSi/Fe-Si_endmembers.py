@@ -81,7 +81,7 @@ Verr_B20=3.*a_B20*a_B20*a_err_B20*(nA/Z_B20/voltoa)
 guesses=[B20.params['V_0'], B20.params['K_0'], B20.params['a_0']]
 
 popt, pcov = optimize.curve_fit(fit_PVT_data(B20), PT_B20, V_B20, guesses, Verr_B20)
-print 'B20 params:', popt
+print 'B20 V_0, K_0, a_0:', popt
 
 
 '''
@@ -95,14 +95,14 @@ a_B2=np.array(a_B2)
 a_err_B2=np.array(a_err_B2)
 
 # Volumes and uncertainties
-V_B2=a_B2*a_B2*a_B2*(nA/Z_B2/voltoa)
-Verr_B2=3.*a_B2*a_B2*a_err_B2*(nA/Z_B2/voltoa)
+V_B2=a_B2*a_B2*a_B2*(nA/Z_B2/voltoa)/2. # remember B2 is FeSi/2.
+Verr_B2=3.*a_B2*a_B2*a_err_B2*(nA/Z_B2/voltoa)/2. # remember B2 is FeSi/2.
 
 # Guesses
 guesses=[B2.params['V_0'], B2.params['K_0'], B2.params['a_0']]
 
 popt, pcov = optimize.curve_fit(fit_PVT_data(B2), PT_B2, V_B2, guesses, Verr_B2)
-print 'B2 params:', popt
+print 'B2 V_0, K_0, a_0:', popt
 
 '''
 Plotting PVT data at room temperature 
@@ -131,7 +131,7 @@ T=300.
 for i, P in enumerate(pressures_B2):
     B2.set_state(P, T)
     pressures_B2[i] = P
-    volumes_calculated_B2[i] = B2.V
+    volumes_calculated_B2[i] = B2.V*2.
 
 
 plt.plot( pressures_B20/1.e9, volumes_calculated_B20/2., linewidth=1)
@@ -153,9 +153,9 @@ S_0_B20=44.685
 G_0_B20=-92175.
 H_0_B20=-78852.
 
-
+print 'B20 Gibbs, checked against Barin'
 B20.set_state(1.e5, 298.15)
-print G_0_B20, B20.gibbs
+print B20.gibbs, G_0_B20
 
 
 '''
@@ -173,6 +173,7 @@ for line in open('data/Barin_FeSi_B2_Cp.dat'):
 T_Cp_B20, Cp_B20  = zip(*FeSi_B20_Cp_data)
 guesses=np.array([1, 1, 1,1])
 popt, pcov = optimize.curve_fit(fitCp(B20), np.array(T_Cp_B20), Cp_B20, guesses)
+print 'B20 heat capacity'
 print popt
 
 temperatures=np.linspace(200., 1700., 100)
@@ -190,10 +191,36 @@ plt.ylabel("Heat capacity (J/K/mol)")
 plt.show()
 
 
+print 'B20 - B2 equilibrium boundary'
+
+def fit_H_S(temperatures, H_0, S_0):
+    B2.params['H_0'] = H_0
+    B2.params['S_0'] = S_0
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = optimize.fsolve(eqm_pressure([B20, B2], [1., -2.]),[20.e9], args=(T))[0]/1.e9
+
+    return pressures
+
+
+transition_pressure = lambda T: (121.6 - 0.0551*T)
+temperatures_obs=np.linspace(1600, 2100, 6)
+pressures_obs = transition_pressure(temperatures_obs) # GPa
+
+ 
+print optimize.curve_fit(fit_H_S, temperatures_obs, pressures_obs, [B2.params['H_0'], B2.params['S_0']])
+
+
+for T in temperatures_obs:
+    print T, optimize.fsolve(eqm_pressure([B20, B2], [1., -2.]),[20.e9], args=(T)) 
+
+
+print ''
 '''
 Fitting for the Si polymorphs (diamond, bcc, fcc, hcp structures)
 '''
-
+print 'SILICON'
+print ''
 '''
 # Check bcc unstable
 pressures=np.linspace(20.e9, 300.e9, 100)
@@ -360,4 +387,4 @@ Finally, we check the relative gibbs free energy between the hcp and fcc phases
 hcp -> fcc transition should be at 79+/-2 GPa / 80+/-3 GPa 
 '''
 
-print optimize.fsolve(eqm_pressure(Si_fcc, Si_hcp), [100.e9], args=(298.15))
+print optimize.fsolve(eqm_pressure([Si_fcc, Si_hcp], [1., -1.]), [100.e9], args=(298.15))
