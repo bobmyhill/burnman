@@ -307,7 +307,7 @@ for i, datum in enumerate(pt):
         fcc.set_state(datum[0], datum[1])
         Vdiff_Nishihara[i]=(fcc.V - volumes[i])/volumes[i]*100.
 plt.plot( np.array(P), Vdiff_Nishihara , marker=".", linestyle="None")
-plt.title('Volume fit')
+plt.title('Volume fit (FCC)')
 plt.xlabel("Pressure (GPa)")
 plt.ylabel("Percentage volume difference (m^3/mol)")
 plt.show()
@@ -386,7 +386,7 @@ for i, pressure in enumerate(p):
         Vdiff[i]=(hcp.V - volumes[i])/volumes[i]*100.
 
 plt.plot( np.array(P_D), Vdiff , marker=".", linestyle="None")
-plt.title('Volume fit')
+plt.title('Volume fit (HCP)')
 plt.xlabel("Pressure (GPa)")
 plt.ylabel("Percentage volume difference (m^3/mol)")
 plt.show()
@@ -438,10 +438,9 @@ def equilibrium_boundary_P(mineral1, mineral2):
 
 
 def fit_H_S(mineral1, mineral2):
-    def find_H_S(data, a, K):
+    def find_H_S(data, a):
 
         mineral1.params['a_0']= a
-        mineral2.params['K_0']= K
         calc_temperatures=[]
         for datum in data:
             volume=datum[0]
@@ -458,14 +457,14 @@ print "S0: ", fcc.params['S_0'], "J/K/mol"
 
 
 hcp.params['S_0']= 30.7 # To match phase boundary
-guesses=np.array([hcp.params['a_0'], fcc.params['K_0']])
+guesses=np.array([hcp.params['a_0']])
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
 
 print ''
 print 'Fitted HCP parameters'
 print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
-print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
+#print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
 print popt
 
 '''
