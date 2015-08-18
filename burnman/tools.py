@@ -93,3 +93,20 @@ def molar_volume_from_unit_cell_volume(unit_cell_v, z):
     """
     return  unit_cell_v*constants.Avogadro/1e30/z
 
+def print_mineral_class(mineral, classname):
+    """
+    Takes a mineral class and prints it to stdout in the format
+    that can be read by burnman
+    """
+    print 'class', classname, '(Mineral):'
+    print '    def __init__(self):'
+    print '        self.params = {'
+    for key, value in mineral.params.items():
+        if isinstance(value, str):
+            print '            \''+key+'\': \''+value+'\','          
+        else:
+            print '            \''+key+'\':', str(value)+',' 
+    print '        }'
+    print '        Mineral.__init__(self)'
+    print ''
+    print ''
