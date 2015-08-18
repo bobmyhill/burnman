@@ -117,9 +117,11 @@ def fitV0(mineral, standard_mineral):
         return np.array(fractional_volumes)
     return fit
 
-def eqm_pressure(mineral1, mineral2):
+def eqm_pressure(minerals, multiplicities):
     def eqm(P, T):
-        mineral1.set_state(P, T)
-        mineral2.set_state(P, T)
-        return mineral1.gibbs - mineral2.gibbs
+        gibbs = 0.
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P, T)
+            gibbs = gibbs + mineral.gibbs*multiplicities[i]
+        return gibbs
     return eqm
