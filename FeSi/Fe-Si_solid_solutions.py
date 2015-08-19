@@ -37,8 +37,9 @@ class hcp_Fe_Si(burnman.SolidSolution):
         self.name='HCP Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.hcp_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_hcp_A3(), '[Si]']]
-        self.enthalpy_interaction=[[[-80.e3, -80.e3]]]
+        self.enthalpy_interaction=[[[-110.e3, -110.e3]]]
         self.entropy_interaction=[[[0.e3, 0.e3]]]
+        #self.volume_interaction=[[[0.e-7, 0.e-7]]]
         self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -49,7 +50,7 @@ class fcc_Fe_Si(burnman.SolidSolution):
         self.endmembers = [[minerals.Myhill_calibration_iron.fcc_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_fcc_A1(), '[Si]']]
         self.enthalpy_interaction=[[[-100.e3, -100.e3]]]
         self.entropy_interaction=[[[0.e3, 0.e3]]]
-        self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
+        self.volume_interaction=[[[0.e-7, 0.e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
@@ -59,7 +60,7 @@ class B2_Fe_FeSi(burnman.SolidSolution):
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), 'Fe0.5[Fe]0.5'],
                            [minerals.Fe_Si_O.FeSi_B2(), 'Fe0.5[Si]0.5']]
-        self.enthalpy_interaction=[[[-100.e3, -100.e3]]]
+        self.enthalpy_interaction=[[[0.e3, 0.e3]]]
         self.entropy_interaction=[[[0.e3, 0.e3]]]
         self.volume_interaction=[[[0.e-7, 0.e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
@@ -67,6 +68,11 @@ class B2_Fe_FeSi(burnman.SolidSolution):
 
 hcp=hcp_Fe_Si()
 fcc=fcc_Fe_Si()
+Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
+Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
+Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
+Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
+
 B2=B2_Fe_FeSi()
 B20=minerals.Fe_Si_O.FeSi_B20()
 
@@ -112,13 +118,20 @@ for i, T in enumerate(temperatures):
 plt.plot(B2_compositions, B2_temperatures)
 plt.show()
 
-T=2400.
-pressures=np.linspace(40.e9, 60.e9, 50)
+T=1400.
+minP=optimize.fsolve(eqm_pressure([Si_hcp, Si_fcc], [1., -1.]), [40.e9], args=(T))[0]
+maxP=optimize.fsolve(eqm_pressure([Fe_hcp, Fe_fcc], [1., -1.]), [40.e9], args=(T))[0]
+print minP/1.e9, maxP/1.e9
+
+print 'REMEMBER THAT FCC Si is stable at higher pressure than HCP Si...'
+
+
+pressures=np.linspace(1.e9, maxP, 50)
 pressures_fcc_hcp=[]
 X_fcc=[]
 X_hcp=[]
 for P in pressures:
-    solution=optimize.fsolve(fcc_hcp_eqm, [0.99, 0.01], args=(P, T), full_output=True)
+    solution=optimize.fsolve(fcc_hcp_eqm, [0.01, 0.99], args=(P, T), full_output=True)
     if solution[2]==1 and solution[0][1] < 1.0 and solution[0][0] > 0.0 :
         pressures_fcc_hcp.append(P/1.e9)
         X_fcc.append(solution[0][0])

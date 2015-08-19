@@ -1,6 +1,6 @@
 % Supplemental Table S2. Pressure-volume-temperature data on Fe-16Si from synchrotron X-ray diffraction experiments.
 % From Fischer et al., 2012
-% Structure	P (GPa)	±	T up, meas (K)*	T down, meas (K)*	T average, meas (K)*	T sample (K)*	±	T KBr (K)*	±	a KBr (Å)	±	V D03 Fe-Si (cm3/mol)	±	V B2 Fe-Si (cm3/mol)	±	V hcp Fe-Si (cm3/mol)	±	a hcp Fe-Si	±	c hcp Fe-Si	±	c/a hcp Fe-Si	±
+% Structure	P (GPa)	+/-	T up, meas (K)*	T down, meas (K)*	T average, meas (K)*	T sample (K)*	+/-	T KBr (K)*	+/-	a KBr (Å)	+/-	V D03 Fe-Si (cm3/mol)	+/-	V B2 Fe-Si (cm3/mol)	+/-	V hcp Fe-Si (cm3/mol)	+/-	a hcp Fe-Si	+/-	c hcp Fe-Si	+/-	c/a hcp Fe-Si	+/-
 D0_3	0	    0	300	300	300	300	0	300	0	    -	    -	6.799	0.004	-	-	-	-	-	-	-	-	-	-
 D0_3	3.5	    0.1	300	300	300	300	0	300	0	3.816	0.003	6.668	0.012	-	-	-	-	-	-	-	-	-	-
 D0_3	5.7	    0.0	300	300	300	300	0	300	0	3.747	0.001	6.595	0.011	-	-	-	-	-	-	-	-	-	-
