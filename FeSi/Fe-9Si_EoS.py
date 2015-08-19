@@ -205,7 +205,7 @@ print a*a*b*np.sqrt(3)/2.*(nA/Z_hcp/voltoa),  Si_hcp.V
 FeSi_B2=minerals.Fe_Si_O.FeSi_B2()
 FeSi_B20=minerals.Fe_Si_O.FeSi_B20()
 
-T=2500. # K
+T=2400. # K
 pressures=np.linspace(1.e5, 200.e9, 101)
 B2_volume=[]
 B20_volume=[]

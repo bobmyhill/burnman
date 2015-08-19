@@ -132,8 +132,8 @@ class Si_hcp_A3 (Mineral):
             'Cp': [22.826, 0.003856857, -353888.416, -0.0596068], # Barin
             'a_0': 7.757256e-06 , # Fit to Roberts, 1981
             'T_einstein': 764., # Fit to Roberts, 1981
-            'K_0': 57.44e9 , # 72 = Duclos et al 
-            'Kprime_0': 5.87 , # Fit to Mujica et al. # 3.9 for Duclos et al 
+            'K_0': 57.44e9, # Mujica et al., # 72 = Duclos et al 
+            'Kprime_0': 5.87, # Mujica et al. # 3.9 for Duclos et al 
             'Kdprime_0': -5.87/57.44e9 , # Duclos et al 
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}

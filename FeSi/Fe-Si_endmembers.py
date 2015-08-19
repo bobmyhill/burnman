@@ -29,6 +29,10 @@ Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
 Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
 Si_bcc=minerals.Fe_Si_O.Si_bcc_A2()
 
+Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
+Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
+Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
+
 '''
 Here are some important constants
 '''
@@ -381,6 +385,50 @@ plt.xlabel("Pressure (GPa)")
 plt.ylabel("Volume/V_0")
 plt.legend(loc='upper right')
 plt.show()
+
+
+#### COMPARE FE AND SI
+
+pressures=np.linspace(1.e5, 250.e9, 100)
+FeSi_B2_volume=np.empty_like(pressures)
+FeSi_fcc_volume=np.empty_like(pressures)
+FeSi_hcp_volume=np.empty_like(pressures)
+Fe_bcc_volume=np.empty_like(pressures)
+Fe_fcc_volume=np.empty_like(pressures)
+Fe_hcp_volume=np.empty_like(pressures)
+T = 2000.
+for i, P in enumerate(pressures):
+    B2.set_state(P, T)
+    Si_fcc.set_state(P, T)
+    Si_hcp.set_state(P, T)
+
+    Fe_bcc.set_state(P, T)    
+    Fe_fcc.set_state(P, T)
+    Fe_hcp.set_state(P, T)
+
+    Fe_bcc_volume[i]=Fe_bcc.V
+    Fe_fcc_volume[i]=Fe_fcc.V
+    Fe_hcp_volume[i]=Fe_hcp.V
+
+    FeSi_B2_volume[i]=B2.V*2.
+    FeSi_fcc_volume[i]=(Si_fcc.V + Fe_fcc.V)
+    FeSi_hcp_volume[i]=(Si_hcp.V + Fe_hcp.V)
+
+plt.plot( pressures/1.e9, Fe_bcc_volume, 'r--', linewidth=1, label='Fe BCC')
+plt.plot( pressures/1.e9, Fe_fcc_volume, 'g--', linewidth=1, label='Fe FCC')
+plt.plot( pressures/1.e9, Fe_hcp_volume, 'b--', linewidth=1, label='Fe HCP')
+
+plt.plot( pressures/1.e9, FeSi_B2_volume, 'r-', linewidth=1, label='FeSi B2')
+plt.plot( pressures/1.e9, FeSi_fcc_volume, 'g-', linewidth=1, label='Fe+Si FCC')
+plt.plot( pressures/1.e9, FeSi_hcp_volume, 'b-', linewidth=1, label='Fe+Si HCP')
+
+plt.title('Si vs. Fe, '+str(T)+' K')
+plt.xlabel("Pressure (GPa)")
+plt.ylabel("Volume/V_0")
+plt.legend(loc='upper right')
+plt.show()
+
+
 
 '''
 Finally, we check the relative gibbs free energy between the hcp and fcc phases
