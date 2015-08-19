@@ -100,13 +100,45 @@ mg2fe2o5 = Mg2Fe2O5()
 assemblage = [per, hem, mg2fe2o5]
 multiplicities = [2., 1., -1.]
 
+assemblage_2 = [per, mft, mg2fe2o5]
+multiplicities_2 = [1., 1., -1.]
+
+def mg2fe2o5_boundary(temperatures, H_0, S_0):
+    mg2fe2o5.params['H_0'] = H_0
+    mg2fe2o5.params['S_0'] = S_0
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage, multiplicities))[0]
+    return pressures
+
+
+temperatures = np.array([1473.15, 1573.15])
+pressures = np.array([20.e9, 16.e9])
+guesses = [mg2fe2o5.params['H_0'], mg2fe2o5.params['S_0']]
+print optimize.curve_fit(mg2fe2o5_boundary, temperatures, pressures, guesses)
+
 temperatures = np.linspace(1473.15, 1873.15, 5)
 pressures = np.empty_like(temperatures)
+pressures_2 = np.empty_like(temperatures)
 for i, T in enumerate(temperatures):
     pressures[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage, multiplicities))[0]
+    pressures_2[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage_2, multiplicities_2))[0]
     mft.set_state(pressures[i], T)
-    print mft.gibbs + per.gibbs - mg2fe2o5.gibbs, 'should be positive for this line to be stable relative to mft + per' 
+    print pressures[i]/1.e9, T, mft.gibbs + per.gibbs - mg2fe2o5.gibbs, 'should be positive for this line to be stable relative to mft + per' 
 plt.plot(pressures/1.e9, temperatures - 273.15)
+plt.plot(pressures_2/1.e9, temperatures - 273.15)
 plt.xlabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
 plt.show()
+
+Nb=6.022e23
+Z=4
+A3_to_m3=1e-30
+
+V = 352.4 # A^3
+V=V*A3_to_m3*Nb/Z
+print V
+
+V = 352.77 # A^3
+V=V*A3_to_m3*Nb/Z
+print V

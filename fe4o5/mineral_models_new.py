@@ -112,7 +112,7 @@ class Fe4O5 (Mineral):
             'S_0': 230. , # 60.6 + 146.9 FeO (HP) + Fe3O4 (HP) (high mt is 172.4)
             'V_0': 5.376e-05 ,
             'Cp': [306.9, 0.001075, -3140400.0, -1470.5] ,
-            'a_0': 2.36e-05 ,
+            'a_0': 2.38e-05 ,
             'K_0': 1.857e+11 ,
             'Kprime_0': 4.00 ,
             'Kdprime_0': -2.154e-11 ,
@@ -136,7 +136,7 @@ class Fe5O6 (Mineral):
             'S_0': 300.0 , # Fe4O5 + FeO
             'V_0': 6.633e-05 , # Lavina and Meng, 2014, 440.6 A^3
             'Cp': [351.3, 0.009355, -4354600.0, -1285.3] , # Sum FeO, Fe3O4
-            'a_0': 1.435e-05 , # Lavina and Meng, 2014
+            'a_0': 1.50e-05 , # Lavina and Meng, 2014
             'K_0': 1.730e+11 , # Lavina and Meng, 2014
             'Kprime_0': 4.00 , # Lavina and Meng, 2014
             'Kdprime_0': -2.312e-11 , # Heuristic
@@ -386,24 +386,6 @@ class CFMASO_garnet(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions)
 '''    
 
-
-#Per
-#26.5
-#[60.5, 0.000362, -535800.0, -299.2] ,
-
-
-#Hem 
-#'S_0': 87.4 ,
-#'V_0': 3.027e-05 ,
-#'Cp': [163.9, 0.0, -2257200.0, -657.6] ,
-
-# Fe4O5
-# 5.376e-05
-# MgFeFe2O5
-# 5.333
-# thus Mg2Fe2O5
-# 5.290
-
 class Mg2Fe2O5 (Mineral):
     def __init__(self):
        formula='Mg2.0Fe2.0O5.0'
@@ -412,14 +394,14 @@ class Mg2Fe2O5 (Mineral):
             'name': 'Mg2Fe2O5',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -2014000.0 ,
-            'S_0': (87.4 + 26.5*2.) +10., # from Laura
-            'V_0': 5.290e-05 , # from Laura
+            'H_0': -1987000.0 ,
+            'S_0': 169., # from Laura
+            'V_0': 5.305e-05 , # from Nicki
             'Cp': [2.*60.5 + 163.9,
                    2.*0.000362 + 0.0,
                    2.*-535800.0 + -2257200.0,
                    2.*-299.2 + -657.6], # sum
-            'a_0': 2.36e-05 , # 2.36e-5 is Fe4O5
+            'a_0': 2.38e-05 , # 2.38e-5 is Fe4O5
             'K_0': 1.700e+11 , # from Nicki
             'Kprime_0': 4.00 ,
             'Kdprime_0': -4./1.700e+11 ,
@@ -435,6 +417,6 @@ class MgFeFe2O5(burnman.SolidSolution):
         self.type='symmetric'
         self.endmembers = [[Mg2Fe2O5(), '[Mg]2Fe2O5'],
                            [Fe4O5(), '[Fe]2Fe2O5']]
-        self.enthalpy_interaction=[[2.0e3]]
-
+        self.enthalpy_interaction=[[-2.0e3]]
+        self.volume_interaction=[[0.]]
         burnman.SolidSolution.__init__(self, molar_fractions)

@@ -74,7 +74,7 @@ A3_to_m3=1e-30
 V=V*A3_to_m3*Nb/Z
 
 fe4o5.set_state(P,T)
-print fe4o5.V, V
+print 'Woodland Fe4O5 (HT)', fe4o5.V, V
 
 P=15.e9
 T=2000.
@@ -82,7 +82,7 @@ V=2.8729*9.713*14.974 # Angstroms^3
 V=V*A3_to_m3*Nb/Z
 
 fe5o6.set_state(P,T)
-print fe5o6.V, V
+print  'Lavina Fe5O6 (HT)', fe5o6.V, V
 
 P=11.4e9
 T=300.
@@ -412,72 +412,4 @@ f.write('\n')
 f.close()
 print 'new_phase_region.dat (over)written'
 
-# Required constraints
-# 1. bulk composition (use composition of ol polymorph)
-# 2. Mg2Fe2O5 + Fe2SiO4 <-> Fe4O5 + Mg2SiO4
 
-fm45=MgFeFe2O5()
-
-
-# HP solid solutions
-ol=olivine()
-wad=wadsleyite()
-rw=ringwoodite()
-
-'''
-# SLB solid solutions
-ol=mg_fe_olivine()
-wad=mg_fe_wadsleyite()
-rw=mg_fe_ringwoodite()
-'''
-
-data=[]
-with open('phasePTX.dat','r') as f:
-    for expt in f:
-        data.append([var for var in expt.split()])
-
-def equilibrium_composition(arg, ol_polymorph, XMg_Fe4O5, P, T):
-    XMg_ol_polymorph=arg[0]
-
-    ol_polymorph.set_composition([XMg_ol_polymorph, 1.0-XMg_ol_polymorph])
-    ol_polymorph.set_state(P,T)
-
-    fm45.set_composition([XMg_Fe4O5, 1.0-XMg_Fe4O5])
-    fm45.set_state(P,T)
-    
-    return (ol_polymorph.partial_gibbs[0] + fm45.partial_gibbs[1]) \
-        - (ol_polymorph.partial_gibbs[1] + fm45.partial_gibbs[0]) 
-
-f = open('equilibria.dat', 'w')
-
-
-print ''
-for expt in data:
-    if len(expt) > 1:
-        ol_polymorph_name=expt[2]
-
-        if ol_polymorph_name == 'ol':
-            ol_polymorph=ol
-
-        if ol_polymorph_name == 'wad':
-            ol_polymorph=wad
-
-        if ol_polymorph_name == 'rw':
-            ol_polymorph=rw
-
-        if ol_polymorph_name == 'ol' or ol_polymorph_name == 'wad' or ol_polymorph_name == 'rw':
-            P=float(expt[3])*1.e8 # converting from kbar to Pa
-            T=float(expt[4])+273.15 # converting from C to K
-            XMg2Fe2O5_obs=float(expt[5])/2. # 2 atoms Mg in Mg2Fe2O5
-            XMg2SiO4_obs=float(expt[9])
-
-
-            XMg2SiO4_calc=optimize.fsolve(equilibrium_composition, [0.9], args=(ol_polymorph, XMg2Fe2O5_obs, P, T))[0]
-            if '_' not in expt[0]: 
-                print expt[0], ol_polymorph_name, P/1.e9, T-273.15, XMg2SiO4_calc, XMg2SiO4_obs, XMg2SiO4_calc-XMg2SiO4_obs
-                f.write(expt[0]+' '+ol_polymorph_name+' '+str(P/1.e9)+' '+str(T-273.15)+' '+str(XMg2SiO4_calc)+' '+str(XMg2SiO4_obs)+' '+str(XMg2SiO4_calc-XMg2SiO4_obs)+'\n')
-
-
-f.write('\n')
-f.close()
-print 'equilibria.dat (over)written'
