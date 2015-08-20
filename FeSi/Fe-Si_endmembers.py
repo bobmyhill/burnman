@@ -43,6 +43,11 @@ voltoa=1.e30
 Z_B2=1. # Fm-3m
 Z_B20=4. # P2_13
 
+
+print 21.76*(nA/Z_B2/voltoa)/2.
+
+
+
 '''
 Now we read in Fischer et al. PVT data for the B20 and B2 FeSi polymorphs
 '''
@@ -52,11 +57,11 @@ FeSi_B2_data=[]
 for line in open('data/Fischer_et_al_FeSi_PVT_S2.dat'):
     content=line.strip().split()
     if content[0] != '%' and content[8] != '*' and content[8] != '**':
-        if content[7] != '-': # T_B20, Terr_B20, P_B20, Perr_B20, aKbr_B20, aKbrerr_B20, a_B20, a_err_B20
+        if content[7] != '-': # T_B20, Terr_B20, P_B20, Perr_B20, aKbr_B20, aKbrerr_B20, a_B20, a_err_B20, should be good even in the presence of B2
             if float(content[8]) < 1.e-12:
                 content[8]=basicerror
             FeSi_B20_data.append([float(content[1]), float(content[2]), float(content[3])*1.e9, float(content[4])*1.e9, float(content[5]), float(content[6]), float(content[7]), float(content[8])])
-        if content[9] != '-': # T_B2, Terr_B2, P_B2, Perr_B2, aKbr_B2, aKbrerr_B2, a_B2, a_err_B2
+        if content[0] == 'B2' and content[9] != '-': # T_B2, Terr_B2, P_B2, Perr_B2, aKbr_B2, aKbrerr_B2, a_B2, a_err_B2, only good if B2 is the only phase
             if float(content[10]) < 1.e-12:
                 content[10]=basicerror
             FeSi_B2_data.append([float(content[1]), float(content[2]), float(content[3])*1.e9, float(content[4])*1.e9, float(content[5]), float(content[6]), float(content[9]), float(content[10])])
@@ -103,9 +108,9 @@ V_B2=a_B2*a_B2*a_B2*(nA/Z_B2/voltoa)/2. # remember B2 is FeSi/2.
 Verr_B2=3.*a_B2*a_B2*a_err_B2*(nA/Z_B2/voltoa)/2. # remember B2 is FeSi/2.
 
 # Guesses
-guesses=[B2.params['V_0'], B2.params['K_0'], B2.params['a_0']]
+guesses=[B2.params['a_0']]
 
-popt, pcov = optimize.curve_fit(fit_PVT_data(B2), PT_B2, V_B2, guesses, Verr_B2)
+popt, pcov = optimize.curve_fit(fita0(B2), PT_B2, V_B2, guesses, Verr_B2)
 print 'B2 V_0, K_0, a_0:', popt
 
 '''
@@ -207,7 +212,9 @@ def fit_H_S(temperatures, H_0, S_0):
     return pressures
 
 
-transition_pressure = lambda T: (121.6 - 0.0551*T)
+transition_pressure = lambda T: (121.6 - 0.0551*T) # Dobson et al, 2003
+#transition_pressure = lambda T: 42. + 0.*T # Fischer et al, 2013
+
 temperatures_obs=np.linspace(1600, 2100, 6)
 pressures_obs = transition_pressure(temperatures_obs) # GPa
 

@@ -42,19 +42,27 @@ class FeSi_B2 (Mineral): # No magnetism!!
             'name': 'Fe0.5Si0.5 B2',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -8897.45640059, # (9149.0 + 47000.)/2. -59650./2., # includes enthalpy of ordering
-            'S_0': 36.38188667, # (36.868 + 18.820 + 22.5)/2. -9.5050/2., # includes entropy of ordering
-            'V_0': 6.491e-06 ,
+            'H_0': -22841.12269505, # 1575., Dobson et al
+            'S_0': 24.32, # 40.85, Dobson et al
+            'V_0': 6.3482e-06,
+            'a_0': 3.548e-05 ,
+            'K_0': 2.520e+11 ,
+            'Kprime_0': 4.0,
             'Cp': [(21.09 + 22.826)/2., (0.0101455 + 0.003856857)/2., (-221508.+-353888.416)/2., (47.1947 + -0.0596068)/2.],
-            'a_0': 3.580e-05 ,
-            'K_0': 2.208e+11 ,
-            'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/2.199e+11 ,
+            'Kdprime_0': -4.0/2.520e+11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
+        
 
-
+#            'H_0': -3417., 
+#            'S_0': 38.838,
+#            'V_0': 6.414e-6,
+#            'a_0': 3.77e-05 ,
+#            'K_0': 230.6e9, 
+#            'Kprime_0': 4.17, 
+#            'Kdprime_0': -4.0/2.306e+11 ,
+            
 class Si_diamond_A4 (Mineral):
     def __init__(self):
         formula='Si1.0'
