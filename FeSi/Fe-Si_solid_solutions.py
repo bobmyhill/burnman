@@ -31,12 +31,15 @@ fcc and hcp are teated as fully disordered Fe-Si solid solutions
 B2 is treated as fully ordered Fe[Fe] - Fe[Si]
 
 '''
+
+# Dobson B2 H_0 and S_0 work well with -140e3, -160e3, -30e3
+# Fischer B2 values are sort of ok with -128e3, -150e3, -30e3
 class fcc_Fe_Si(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='FCC Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.fcc_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_fcc_A1(), '[Si]']]
-        self.enthalpy_interaction=[[[-140.e3, -140.e3]]]
+        self.enthalpy_interaction=[[[-128.e3, -128.e3]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 class hcp_Fe_Si(burnman.SolidSolution):
@@ -44,7 +47,7 @@ class hcp_Fe_Si(burnman.SolidSolution):
         self.name='HCP Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.hcp_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_hcp_A3(), '[Si]']]
-        self.enthalpy_interaction=[[[-160.e3, -160.e3]]]
+        self.enthalpy_interaction=[[[-150.e3, -150.e3]]]
         self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -112,8 +115,8 @@ def B20_B2_eqm(data, P, T):
     B20.set_state(P, T)
     return [B2.partial_gibbs[1]*2. - B20.gibbs] 
 
-'''
-P = 21.e9 # eqm at 33.8 GPa
+
+P = 23.e9 # eqm at 33.8 GPa
 temperatures = np.linspace(500., 2500, 11)
 B2_compositions = []
 B2_temperatures = []
@@ -126,7 +129,7 @@ for i, T in enumerate(temperatures):
 
 plt.plot(B2_compositions, B2_temperatures)
 plt.show()
-'''
+
 
 T=2400.
 minP=optimize.fsolve(eqm_pressure([Si_hcp, Si_fcc], [1., -1.]), [40.e9], args=(T))[0]
