@@ -25,11 +25,31 @@ class FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up
             'H_0': -78852. , # Barin
             'S_0': 44.685 , # Barin
             'V_0': 1.359e-05 ,
-            'Cp': [38.6770, 0.0217569, -159.151, 0.00586],
+            'Cp': [38.6770, 0.0217569, -156.765, 0.00461],
             'a_0': 3.057e-05 ,
-            'K_0': 2.057e+11 ,
+            'K_0': 2.0565e+11 ,
             'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/2.057e+11 ,
+            'Kdprime_0': -4.0/2.0565e+11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses) }
+        Mineral.__init__(self)
+
+class FeSi_liquid (Mineral): 
+    def __init__(self):
+        formula='Fe0.5Si0.5'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'Fe0.5Si0.5 liquid',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -40882./2. , # Barin
+            'S_0': 38.791/2. , # Barin
+            'V_0': 7.8e-06 ,
+            'Cp': [83.680/2., 0., 0., 0.], # Barin
+            'a_0': 3.057e-05 ,
+            'K_0': 1.15e+11 ,
+            'Kprime_0': 4.0 ,
+            'Kdprime_0': -4.0/2.0565e+11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
@@ -42,13 +62,13 @@ class FeSi_B2 (Mineral): # No magnetism!!
             'name': 'Fe0.5Si0.5 B2',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -22841.12269505, # 1575., Dobson et al
-            'S_0': 24.32, # 40.85, Dobson et al
+            'H_0': -28180.3, # GJ2014 
+            'S_0': 22.958,   # GJ2014
             'V_0': 6.3482e-06,
-            'a_0': 3.548e-05 ,
+            'a_0': 3.331e-05 ,
             'K_0': 2.520e+11 ,
             'Kprime_0': 4.0,
-            'Cp': [(21.09 + 22.826)/2., (0.0101455 + 0.003856857)/2., (-221508.+-353888.416)/2., (47.1947 + -0.0596068)/2.],
+            'Cp': [38.6770/2., 0.0217569/2., -156.765/2., 0.00461/2.],
             'Kdprime_0': -4.0/2.520e+11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
@@ -147,24 +167,3 @@ class Si_hcp_A3 (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
-
-# Half; Lacaze and Sundman (1991) suggest  0.5*Fe(nonmag) + 0.5*Si - 36380.6 + 2.22T
-class half_FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up Barin
-    def __init__(self):
-        formula='Fe0.5Si0.5'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'FeSi B20',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -78852./2. , # Barin
-            'S_0': 44.685/2. , # Barin
-            'V_0': 1.359e-05/2. ,
-            'Cp': [38.6770/2., 0.0217569/2., -159.151/2., 0.00586/2.],
-            'a_0': 3.057e-05 ,
-            'K_0': 2.057e+11 ,
-            'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/2.057e+11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses) }
-        Mineral.__init__(self)

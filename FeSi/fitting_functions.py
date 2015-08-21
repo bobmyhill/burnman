@@ -133,7 +133,16 @@ def eqm_pressure(minerals, multiplicities):
     def eqm(P, T):
         gibbs = 0.
         for i, mineral in enumerate(minerals):
-            mineral.set_state(P, T)
+            mineral.set_state(P[0], T)
+            gibbs = gibbs + mineral.gibbs*multiplicities[i]
+        return gibbs
+    return eqm
+
+def eqm_temperature(minerals, multiplicities):
+    def eqm(T, P):
+        gibbs = 0.
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P, T[0])
             gibbs = gibbs + mineral.gibbs*multiplicities[i]
         return gibbs
     return eqm

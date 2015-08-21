@@ -39,7 +39,7 @@ class fcc_Fe_Si(burnman.SolidSolution):
         self.name='FCC Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.fcc_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_fcc_A1(), '[Si]']]
-        self.enthalpy_interaction=[[[-128.e3, -128.e3]]]
+        self.enthalpy_interaction=[[[-106.e3, -106.e3]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 class hcp_Fe_Si(burnman.SolidSolution):
@@ -47,7 +47,7 @@ class hcp_Fe_Si(burnman.SolidSolution):
         self.name='HCP Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.hcp_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_hcp_A3(), '[Si]']]
-        self.enthalpy_interaction=[[[-150.e3, -150.e3]]]
+        self.enthalpy_interaction=[[[-128.e3, -128.e3]]]
         self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -57,7 +57,7 @@ class B2_Fe_FeSi(burnman.SolidSolution):
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.bcc_iron(), 'Fe0.5[Fe]0.5'],
                            [minerals.Fe_Si_O.FeSi_B2(), 'Fe0.5[Si]0.5']]
-        self.enthalpy_interaction=[[[-30.e3, -30.e3]]]
+        self.enthalpy_interaction=[[[-20.e3, -20.e3]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
@@ -130,17 +130,20 @@ for i, T in enumerate(temperatures):
 plt.plot(B2_compositions, B2_temperatures)
 plt.show()
 
-
-T=2400.
+#########################################################
+T=3200.
+invariant = optimize.fsolve(fcc_hcp_B2_eqm, [0.01, 0.1, 0.2, 40.e9], args=(T))
+#invariant = [0., 1., 1., 40.e9]
+#########################################################
 minP=optimize.fsolve(eqm_pressure([Si_hcp, Si_fcc], [1., -1.]), [40.e9], args=(T))[0]
 maxP=optimize.fsolve(eqm_pressure([Fe_hcp, Fe_fcc], [1., -1.]), [40.e9], args=(T))[0]
 print minP/1.e9, maxP/1.e9
 
-invariant = optimize.fsolve(fcc_hcp_B2_eqm, [0.01, 0.1, 0.2, 40.e9], args=(T))
 P_inv = invariant[3]
 print P_inv/1.e9
 
-plt.plot([invariant[0], invariant[2]], [P_inv/1.e9, P_inv/1.e9], 'b-', linewidth=1)
+plt.plot([invariant[0], invariant[1], invariant[2]], 
+         [P_inv/1.e9, P_inv/1.e9, P_inv/1.e9], 'b-', linewidth=1)
 
 
 print 'REMEMBER THAT FCC Si is stable at higher pressure than HCP Si...'
