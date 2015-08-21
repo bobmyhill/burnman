@@ -5,6 +5,7 @@
 import inspect
 import slb
 import mie_grueneisen_debye as mgd
+import vinet_anderson_grueneisen as v_ag
 import birch_murnaghan as bm
 import modified_tait as mt
 import hp 

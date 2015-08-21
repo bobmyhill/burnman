@@ -3,6 +3,7 @@
 # Released under GPL v2 or later.
 
 import numpy as np
+from scipy import optimize, integrate
 import warnings
 
 import modified_tait as mt
@@ -67,7 +68,7 @@ class V_AG(eos.EquationOfState):
         V = self.volume(pressure,temperature,params)
         V_plus = self.volume(pressure+dP,temperature,params)
 
-        KT = -(V_plus - V_minus)/(2.*dP*V)
+        KT = -(2.*dP*V)/(V_plus - V_minus)
         return KT
 
     #calculate the shear modulus as a function of P, V, and T
@@ -95,7 +96,7 @@ class V_AG(eos.EquationOfState):
         """
         Returns thermal expansivity at the pressure, temperature, and volume [1/K]
         """
-        V = self.volume(pressure, temperature, params)
+        V = self.volume(pressure, params['T_0'], params)
         eta=V/params['V_0']
         alpha=params['a_0'] \
             * np.exp(-params['delta_0']/params['kappa'] \
@@ -119,7 +120,7 @@ class V_AG(eos.EquationOfState):
         Returns the gibbs free energy [J/mol] as a function of pressure [Pa]
         and temperature [K].
         """
-        intVdP = integrate.quad(lambda x: self.volume(x, T, params), \
+        intVdP = integrate.quad(lambda x: self.volume(x, temperature, params), \
                                     1.e5, pressure)[0]
 
         # Add order-disorder terms if required
@@ -144,21 +145,11 @@ class V_AG(eos.EquationOfState):
         Returns the entropy [J/K/mol] as a function of pressure [Pa]
         and temperature [K].
         """
+        dT = 0.1
+        gibbs_minus=self.gibbs_free_energy(pressure,temperature-dT,volume, params)
+        gibbs_plus=self.gibbs_free_energy(pressure,temperature+dT,volume, params)
 
-        dintVdpdx=integrate.quad(lambda x: self.volume(x, T, params) \
-                                     * self.thermal_expansivity(x, T, params), \
-                                     1.e5, pressure)[0]
-
-        # Add order-disorder terms if required
-        if params.has_key('landau_Tc'): # For a phase transition described by Landau term
-            Sdisord=entropy_disorder_Landau(pressure, temperature, params)
-        else:
-            if params.has_key('BW_deltaH'): # Add Bragg-Williams disordering
-                Sdisord=entropy_disorder_BW(pressure, temperature, params) - entropy_disorder_BW(P_0, T_0, params)
-            else:
-                Sdisord=0.0
-
-        return params['S_0'] + self.__intCpoverTdT(temperature, params) + dintVdpdx + Sdisord
+        return -(gibbs_plus - gibbs_minus)/(2.*dT)
 
 
 
@@ -187,12 +178,12 @@ class V_AG(eos.EquationOfState):
         Returns the heat capacity [J/K/mol] as a function of pressure [Pa]
         and temperature [K].
         """
-        dT = 0.1
+        dT = 1.
         G_minus = self.gibbs_free_energy(pressure,temperature-dT, volume, params)
         G = self.gibbs_free_energy(pressure,temperature, volume, params)
         G_plus = self.gibbs_free_energy(pressure,temperature+dT, volume, params)
 
-        C_p = temperature * ( Gplus + Gminus - 2*G ) / (dT*dT)
+        C_p = -temperature * ( G_plus + G_minus - 2*G ) / (dT*dT)
         return C_p
 
 
@@ -235,13 +226,13 @@ class V_AG(eos.EquationOfState):
         return P
 
     def __find_room_temperature_volume(self, volume, pressure, params):
-        return pressure - __room_temperature_pressure(volume[0], params)
+        return pressure - self.__room_temperature_pressure(volume[0], params)
 
     def __find_pressure(self, pressure, volume, temperature, params):
         return volume - self.volume(pressure, temperature, params)
 
-    def __room_temperature_volume(self, pressure, temperature, params):
-        return optimize.fsolve(find_room_temperature_volume, 0.2*params['V_0'], args=(pressure, params))[0]
+    def __room_temperature_volume(self, pressure, params):
+        return optimize.fsolve(self.__find_room_temperature_volume, 0.2*params['V_0'], args=(pressure, params))[0]
 
     def validate_parameters(self, params):
         """
