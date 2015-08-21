@@ -15,6 +15,7 @@ from mie_grueneisen_debye import MGD2, MGD3
 from slb import SLB2, SLB3
 from modified_tait import MT
 from hp import HP_TMT
+from vinet_anderson_grueneisen import V_AG
 from cork import CORK
 
 from helper import create
