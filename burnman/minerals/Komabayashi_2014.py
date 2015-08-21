@@ -13,21 +13,21 @@ polynomial
 
 f + g*T + h*T*lnT + i*T^2 + j/T + k*T^0.5
 
-As G = H_ref + intCpdT - T*S_ref - T*intCpoverTdT)
+As G = H_ref + intCpdT - T*S_ref - T*intCpoverTdT
 Cp = a + bT + cT^-2 + dT^-0.5
 intCpdT = aT + 0.5bT^2 - c/T + 2dT^0.5 - the value at T_ref
 -T*intCpoverTdT = -aTlnT - bT^2 + 0.5c/T + 2dT^0.5 + the value at T_ref
 
 Thus
-f = H_ref - intCpdT(T_ref) + T_ref*intCpoverTdT(T_ref)
-g = a - S_ref
+f = H_ref - intCpdT(T_ref) 
+g = a - S_ref + T_ref*intCpoverTdT(T_ref)
 h = -a
 i = 0.5b - b
 j = -c + 0.5c
 k = 4d
 
-H_ref = f + intCpdT(T_ref) - T_ref*intCpoverTdT(T_ref)
-S_ref = - h - g
+H_ref = f + intCpdT(T_ref) 
+S_ref = - h - g - T_ref*intCpoverTdT(T_ref)
 a = -h
 b = -2i
 c = -2j
@@ -36,99 +36,111 @@ d = 0.25k
 """
 
 from burnman.mineral import Mineral
+from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 
-class fcc_iron():
+atomic_masses=read_masses()
+
+class fcc_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
+        formula = dictionarize_formula(formula)
         self.params = {
             'name': 'FCC iron',
-            'a': 16300.,
-            'b': 381.47162 ,
-            'c': -52.2754 ,
-            'd': 0.000177578 ,
-            'e': -395355.43,
-            'f': -2476.28 ,
-            'V_0': 6.82,
-            'K_0': 163.4 ,
+            'formula': formula,
+            'equation_of_state': 'v_ag',
+            'H_0': 7839.07 ,
+            'S_0': 35.8 ,
+            'Cp': [52.2754, -0.000355156, 790710.86, -619.07],
+            'V_0': 6.82e-6,
+            'K_0': 163.4e9 ,
             'Kprime_0': 5.38 ,
             'a_0': 7.e-5,
             'delta_0': 5.5,
             'kappa': 1.4,
-            'T_0': 298.}
-
-class hcp_iron ():
+            'T_0': 298.,
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+        
+class hcp_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
+        formula = dictionarize_formula(formula)
         self.params = {
             'name': 'HCP iron',
-            'a': 12460.921,
-            'b': 386.99162 ,
-            'c': -52.2754 ,
-            'd': 0.000177578 ,
-            'e': -395355.43,
-            'f': -2476.28 ,
-            'V_0': 6.753,
-            'K_0': 163.4 ,
+            'formula': formula,
+            'equation_of_state': 'v_ag',
+            'H_0': 4000. ,
+            'S_0': 30.28 ,
+            'Cp': [52.2754, -0.000355156, 790710.86, -619.07],
+            'V_0': 6.753e-6,
+            'K_0': 163.4e9 ,
             'Kprime_0': 5.38 ,
             'a_0': 5.8e-5,
             'delta_0': 5.1,
             'kappa': 1.4,
-            'T_0': 298.}
-
-class liquid_iron ():
+            'T_0': 298.,
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+        
+class liquid_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
+        formula = dictionarize_formula(formula)
         self.params = {
             'name': 'Liquid iron',
-            'a': -9007.3402,
-            'b': 290.29866 ,
-            'c': -46.,
-            'd': 0.0 ,
-            'e': 0.0,
-            'f': 0.0,
-            'V_0': 6.88,
-            'K_0': 148. ,
+            'formula': formula,
+            'equation_of_state': 'v_ag',
+            'H_0': 4707. ,
+            'S_0': 17.79 ,
+            'Cp': [46., 0., 0., 0.],
+            'V_0': 6.88e-6,
+            'K_0': 148.e9 ,
             'Kprime_0': 5.8,
             'a_0': 9.e-5,
             'delta_0': 5.1,
             'kappa': 0.56,
-            'T_0': 298.}
-
-class FeO_solid ():
+            'T_0': 298.,
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+        
+class FeO_solid (Mineral):
     def __init__(self):
         formula='Fe1.0O1.0'
+        formula = dictionarize_formula(formula)
         self.params = {
             'name': 'FeO solid',
-            'a': -279318.,
-            'b': 252.848,
-            'c': -46.12826,
-            'd': -0.0057402984,
-            'e': 0.0,
-            'f': 0.0,
-            'V_0': 12.256,
-            'K_0': 149.,
+            'formula': formula,
+            'equation_of_state': 'v_ag',
+            'H_0': -265054.5845 ,
+            'S_0': 59.5234,
+            'Cp': [46.12826, 0.011480597, 0., 0.],
+            'V_0': 12.256e-6,
+            'K_0': 149.e9,
             'Kprime_0': 3.83,
             'a_0': 4.5e-5,
             'delta_0': 4.25,
             'kappa': 1.4,
-            'T_0': 298.}
+            'T_0': 298.,
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
 
-
-class FeO_liquid ():
+class FeO_liquid (Mineral):
     def __init__(self):
         formula='Fe1.0O1.0'
+        formula = dictionarize_formula(formula)
         self.params = {
             'name': 'FeO liquid',
-            'a': -245310.,
-            'b': 231.879,
-            'c': -46.12826,
-            'd': -0.0057402984,
-            'e': 0.0,
-            'f': 0.0,
-            'V_0': 13.16,
-            'K_0': 128. ,
+            'formula': formula,
+            'equation_of_state': 'v_ag',
+            'H_0': -231046.5845 ,
+            'S_0': 80.49242261 ,
+            'Cp': [46.12826, 0.011480597, 0., 0.],
+            'V_0': 13.16e-6,
+            'K_0': 128.e9 ,
             'Kprime_0': 3.85,
             'a_0': 4.7e-5,
             'delta_0': 4.5,
             'kappa': 1.4,
-            'T_0': 298.}
+            'T_0': 298.,
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
