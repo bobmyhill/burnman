@@ -24,6 +24,7 @@ First, we import the minerals we will use
 '''
 B20=minerals.Fe_Si_O.FeSi_B20()
 B2=minerals.Fe_Si_O.FeSi_B2()
+FeSi_melt=minerals.Fe_Si_O.FeSi_liquid()
 Si_A4=minerals.Fe_Si_O.Si_diamond_A4()
 Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
 Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
@@ -34,17 +35,61 @@ Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
 
 
+# Let's get the melting curve of FeSi first of all...
+
+FeSi_melting_data = []
+for line in open('data/Lord_FeSi_melting.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        if float(content[0]) < 30.:
+            FeSi_melting_data.append([B2, float(content[0])*1.e9, float(content[1]), float(content[2])*1.e9, float(content[3])])
+        else:
+            FeSi_melting_data.append([B20, float(content[0])*1.e9, float(content[1]), float(content[2])*1.e9, float(content[3])])
+
+FeSi_phase, P_melting, T_melting, Perr_melting, Terr_melting = zip(*FeSi_melting_data)
+
+phaseP = zip(*[FeSi_phase, P_melting])
+
+def melting_curve(data, V_0, K_0, Kprime_0):
+    FeSi_melt.params['V_0'] = V_0
+    FeSi_melt.params['K_0'] = K_0
+    FeSi_melt.params['Kprime_0'] = Kprime_0
+    FeSi_melt.params['Kdprime_0'] = -4.0/K_0
+
+    print V_0, K_0, Kprime_0
+    temperatures = []
+    for FeSi_phase, P in data:
+        if FeSi_phase == B20:
+            temperatures.append(optimize.fsolve(eqm_temperature([FeSi_phase, FeSi_melt], [1., -2.]), [2000.], args=(P))[0])
+        else:
+            temperatures.append(optimize.fsolve(eqm_temperature([FeSi_phase, FeSi_melt], [1., -1.]), [2000.], args=(P))[0])
+    return temperatures
+
+guesses = [FeSi_melt.params['V_0'], 100.e9, 4.]
 
 
+#popt, pcov = optimize.curve_fit(melting_curve, phaseP, T_melting, guesses, Terr_melting)
+#print popt, pcov
 
-#B20+B2	2053	138	31.1	0.8	3.406	0.001	4.358	0.003	2.712	0.003
-#B20+B2	2275	158	31.7	0.9	3.403	0.002	4.366	0.008	2.714	0.003
-#B20+B2	2346	164	31.6	1.0	3.405	0.002	4.379	0.002	2.708	0.002
-#B20+B2	2134	147	31.7	0.9	3.401	0.002	4.379	0.006	2.706	0.001
-#B20+B2	1951	124	31.3	0.8	3.403	0.001	4.368	0.002	2.707	0.004
-#B20+B2	1800	129	31.3	0.7	3.401	0.001	4.363	0.003	2.709	0.004
-#B20+B2	1530	116	31.0	0.6	3.401	0.001	4.357	0.002	2.700	0.001
-#B20+B2	1432	116	31.0	0.5	3.399	0.001	4.354	0.004	2.697	0.001
+#FeSi_melt.params['V_0'] = 7.8e-6
+#FeSi_melt.params['K_0'] = 115.e9
+
+pressures = np.linspace(1.e9, 152.e9, 152)
+temperatures = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    if P < 30.e9:
+        temperatures[i] = optimize.fsolve(eqm_temperature([B20, FeSi_melt], [1., -2.]), [2000.], args=(P))[0]
+    else:
+        temperatures[i] = optimize.fsolve(eqm_temperature([B2, FeSi_melt], [1., -1.]), [2000.], args=(P))[0]
+
+
+plt.plot(pressures/1.e9, temperatures, label='Fitted curve')
+plt.plot(np.array(P_melting)/1.e9, np.array(T_melting), 'o', linestyle='None', label='Data')
+plt.show()
+
+exit()
+
+
 
 basicerror=0.01 # Angstroms
 FeSi_B20_data=[]
@@ -84,3 +129,4 @@ for i, T in enumerate(T_B2):
     Fe_bcc.set_state(P_B2[i], T_B2[i])
 
     print P_B2[i]/1.e9, T_B2[i], (V_B2_obs[i] - Fe_bcc.V) / (B2.V-Fe_bcc.V)
+
