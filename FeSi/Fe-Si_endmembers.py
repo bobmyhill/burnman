@@ -32,6 +32,31 @@ Si_bcc=minerals.Fe_Si_O.Si_bcc_A2()
 Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
 Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
+Fe_liquid=minerals.Myhill_calibration_iron.liquid_iron()
+
+
+Fe_fcc.set_state(1.e5, 1665.)
+Fe_bcc.set_state(1.e5, 1665.)
+print Fe_fcc.S, Fe_bcc.S, Fe_bcc.S - Fe_fcc.S
+
+Fe_bcc.set_state(1.e5, 1809.)
+Fe_liquid.set_state(1.e5, 1809.)
+print Fe_bcc.S, Fe_liquid.S, Fe_liquid.S - Fe_bcc.S
+print Fe_bcc.H, Fe_liquid.H, Fe_liquid.H - Fe_bcc.H
+print Fe_bcc.gibbs - Fe_liquid.gibbs
+
+# Now we want to fit the melting data to Anzellini et al., 2013
+P = 1.e9
+T = 3600.
+Fe_hcp.set_state(P, T)
+Fe_liquid.set_state(P, T)
+print Fe_hcp.gibbs
+print Fe_liquid.gibbs
+print ''
+print optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liquid], [1., -1.]), [1000.], args=(P))[0]
+
+exit()
+
 
 '''
 Here are some important constants
@@ -90,7 +115,7 @@ Verr_B20=3.*a_B20*a_B20*a_err_B20*(nA/Z_B20/voltoa)
 guesses=[B20.params['V_0'], B20.params['K_0'], B20.params['a_0']]
 
 popt, pcov = optimize.curve_fit(fit_PVT_data(B20), PT_B20, V_B20, guesses, Verr_B20)
-print 'B20 V_0, K_0, a_0:', popt
+print 'B20 V_0, K_0, a_0:', B20.params['V_0'], B20.params['K_0'], B20.params['a_0']
 
 
 '''
@@ -111,7 +136,7 @@ Verr_B2=3.*a_B2*a_B2*a_err_B2*(nA/Z_B2/voltoa)/2. # remember B2 is FeSi/2.
 guesses=[B2.params['a_0']]
 
 popt, pcov = optimize.curve_fit(fita0(B2), PT_B2, V_B2, guesses, Verr_B2)
-print 'B2 V_0, K_0, a_0:', popt
+print 'B2 V_0, K_0, a_0:', B2.params['V_0'], B2.params['K_0'], B2.params['a_0']
 
 '''
 Plotting PVT data at room temperature 
@@ -180,10 +205,10 @@ for line in open('data/Barin_FeSi_B2_Cp.dat'):
 
 # Initial guess.
 T_Cp_B20, Cp_B20  = zip(*FeSi_B20_Cp_data)
-guesses=np.array([1, 1, 1,1])
+guesses=np.array(B20.params['Cp'])
 popt, pcov = optimize.curve_fit(fitCp(B20), np.array(T_Cp_B20), Cp_B20, guesses)
 print 'B20 heat capacity'
-print popt
+print B20.params['Cp']
 
 temperatures=np.linspace(200., 1700., 100)
 Cps=np.empty_like(temperatures)
@@ -211,16 +236,26 @@ def fit_H_S(temperatures, H_0, S_0):
 
     return pressures
 
+def B20_B2_eqm(temperatures):
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = optimize.fsolve(eqm_pressure([B20, B2], [1., -2.]),[20.e9], args=(T))[0]/1.e9
 
-transition_pressure = lambda T: (121.6 - 0.0551*T) # Dobson et al, 2003
+    return pressures
+
+#transition_pressure = lambda T: (121.6 - 0.0551*T) # Dobson et al, 2003
 #transition_pressure = lambda T: 42. + 0.*T # Fischer et al, 2013
+transition_pressure = lambda T: 30. + 0.*T # Geballe and Jeanloz 2014
 
-temperatures_obs=np.linspace(1600, 2100, 6)
+temperatures_obs=np.linspace(1200, 2400, 6)
 pressures_obs = transition_pressure(temperatures_obs) # GPa
 
+
+print B20_B2_eqm(temperatures_obs)
  
 print optimize.curve_fit(fit_H_S, temperatures_obs, pressures_obs, [B2.params['H_0'], B2.params['S_0']])
 
+print B20_B2_eqm(temperatures_obs)
 
 for T in temperatures_obs:
     print T, optimize.fsolve(eqm_pressure([B20, B2], [1., -2.]),[20.e9], args=(T)) 
