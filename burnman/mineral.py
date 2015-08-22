@@ -153,7 +153,7 @@ class Mineral(Material):
 
     # The following gibbs function avoids having to calculate a bunch of unnecessary parameters over P-T space. This will be useful for gibbs minimisation.
     def calcgibbs(self, pressure, temperature):
-        return self.method.gibbs_free_energy(pressure, temperature, self.params)
+        return self.method.gibbs_free_energy(pressure, temperature, 0., self.params)
 
     def molar_mass(self):
         """
