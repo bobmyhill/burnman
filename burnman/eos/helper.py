@@ -5,6 +5,7 @@
 import inspect
 import slb
 import mie_grueneisen_debye as mgd
+import vinet_anderson_grueneisen as v_ag
 import birch_murnaghan as bm
 import modified_tait as mt
 import hp 
@@ -30,6 +31,8 @@ def create(method):
             return bm.BM2()
         elif method == "bm3":
             return bm.BM3()
+        elif method == "v_ag":
+            return v_ag.V_AG()
         elif method == "mt":
             return mt.MT()
         elif method == "hp_tmt":
