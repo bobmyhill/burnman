@@ -31,6 +31,31 @@ N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar ex
 
 bcc=Myhill_calibration_iron.bcc_iron()
 fcc=Myhill_calibration_iron.fcc_iron()
+hcp=Myhill_calibration_iron.hcp_iron()
+
+P_ref = 0.9999999e5
+T_ref = 2000.
+fcc.set_state(P_ref+1., T_ref)
+
+H_ref = fcc.H
+S_ref = fcc.S
+a_ref = fcc.alpha
+fcc.params['T_0'] = T_ref
+fcc.params['P_0'] = P_ref
+fcc.params['H_0'] = H_ref
+fcc.params['S_0'] = S_ref
+fcc.params['a_0'] = a_ref
+
+
+hcp.set_state(P_ref+1., T_ref)
+H_ref = hcp.H
+S_ref = hcp.S
+a_ref = hcp.alpha
+hcp.params['T_0'] = T_ref
+hcp.params['P_0'] = P_ref
+hcp.params['H_0'] = H_ref
+hcp.params['S_0'] = S_ref
+
 
 
 
@@ -321,7 +346,6 @@ They used Au as a pressure standard (equation of state from Tsuchiya, 2003)
 '''
 
 Z=2.
-hcp=Myhill_calibration_iron.hcp_iron()
 
 hcp_data=[]
 for line in open('data/Yamazaki_et_al_2012.dat'):
@@ -455,15 +479,16 @@ print 'FCC parameters'
 print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
-
-hcp.params['S_0']= 30.7 # To match phase boundary
+print 'HCP S_0', hcp.params['S_0']
+hcp.params['S_0'] = hcp.params['S_0'] - 3.2
+#hcp.params['S_0']= 30.7 # To match phase boundary
 guesses=np.array([hcp.params['a_0']])
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
 
 print ''
 print 'Fitted HCP parameters'
-print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
+print "a0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
 #print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
 print popt
 
