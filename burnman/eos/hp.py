@@ -141,7 +141,12 @@ class HP_TMT(eos.EquationOfState):
         psubpth=pressure-Pth
 
         # EQ 13
-        intVdP = pressure*params['V_0']*(1. - a + (a*(np.power((1.-b*Pth), 1.-c) - np.power((1. + b*(pressure-Pth)), 1.-c))/(b*(c-1.)*pressure)))
+
+        if b*Pth > 1.:
+            warnings.warn( 'b*Pth > 1, temperature too high for Modified Tait EoS', stacklevel=2 )
+            intVdP = pressure*params['V_0']*(1. - a + (a*( -np.power((1. + b*(pressure-Pth)), 1.-c))/(b*(c-1.)*pressure)))
+        else:
+            intVdP = pressure*params['V_0']*(1. - a + (a*(np.power((1.-b*Pth), 1.-c) - np.power((1. + b*(pressure-Pth)), 1.-c))/(b*(c-1.)*pressure)))
 
         # Add order-disorder terms if required
         if params.has_key('landau_Tc'): # For a phase transition described by Landau term

@@ -16,12 +16,12 @@ atomic_masses=read_masses()
 # Lacaze and Sundman (1991) suggest  0.5*Fe(nonmag) + 0.5*Si - 36380.6 + 2.22T
 class FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up Barin
     def __init__(self):
-        formula='Fe1.0'
+        formula='Fe1.0Si1.0'
         formula = dictionarize_formula(formula)
         self.params = {
             'name': 'FeSi B20',
             'formula': formula,
-            'equation_of_state': 'v_ag',
+            'equation_of_state': 'hp_tmt',
             'H_0': -78852. , # Barin
             'S_0': 44.685 , # Barin
             'V_0': 1.359e-05 ,
@@ -29,12 +29,10 @@ class FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up
             'a_0': 3.057e-05 ,
             'K_0': 2.0565e+11 ,
             'Kprime_0': 4.0 ,
-            'delta_0': 5.5,
-            'kappa': 1.4,
-            'T_0': 298.,
-            'molar_mass': formula_mass(formula, atomic_masses)}
+            'Kdprime_0': -4.0/2.0565e+11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
-
 
 class FeSi_liquid (Mineral): 
     def __init__(self):
@@ -43,7 +41,7 @@ class FeSi_liquid (Mineral):
         self.params = {
             'name': 'Fe0.5Si0.5 liquid',
             'formula': formula,
-            'equation_of_state': 'v_ag',
+            'equation_of_state': 'hp_tmt',
             'H_0': -40882./2. , # Barin
             'S_0': 38.791/2. , # Barin
             'V_0': 7.8e-06 ,
@@ -51,9 +49,7 @@ class FeSi_liquid (Mineral):
             'a_0': 3.057e-05 ,
             'K_0': 1.15e+11 ,
             'Kprime_0': 4.0 ,
-            'delta_0': 5.5,
-            'kappa': 1.4,
-            'T_0': 298.,
+            'Kdprime_0': -4.0/2.0565e+11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
@@ -65,22 +61,28 @@ class FeSi_B2 (Mineral): # No magnetism!!
         self.params = {
             'name': 'Fe0.5Si0.5 B2',
             'formula': formula,
-            'equation_of_state': 'v_ag',
+            'equation_of_state': 'hp_tmt',
             'H_0': -28180.3, # GJ2014 
             'S_0': 22.958,   # GJ2014
             'V_0': 6.3482e-06,
-            'Cp': [38.6770/2., 0.0217569/2., -156.765/2., 0.00461/2.],
             'a_0': 3.331e-05 ,
             'K_0': 2.520e+11 ,
             'Kprime_0': 4.0,
-            'delta_0': 5.5,
-            'kappa': 1.4,
-            'T_0': 298.,
+            'Cp': [38.6770/2., 0.0217569/2., -156.765/2., 0.00461/2.],
+            'Kdprime_0': -4.0/2.520e+11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
         
- 
+
+#            'H_0': -3417., 
+#            'S_0': 38.838,
+#            'V_0': 6.414e-6,
+#            'a_0': 3.77e-05 ,
+#            'K_0': 230.6e9, 
+#            'Kprime_0': 4.17, 
+#            'Kdprime_0': -4.0/2.306e+11 ,
+            
 class Si_diamond_A4 (Mineral):
     def __init__(self):
         formula='Si1.0'
@@ -165,23 +167,3 @@ class Si_hcp_A3 (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
-class Si_liquid (Mineral):
-    def __init__(self):
-        formula='Si1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-           'name': 'Si liquid',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': 48471., # Barin, JANAF
-            'S_0': 44.466, # Barin, JANAF
-            'V_0': 10.1e-6, # Fit to Kimura et al., 1997; 8.6145e-06 is Hallstedt, 2007, smaller than fcc
-            'Cp': [27.196, 0., 0., 0.], # Barin, JANAF
-            'a_0': 2.9e-05 , # Fit to Kimura et al., 1997
-            'T_einstein': 764., # As for others
-            'K_0': 70.00e9, # Fit to high pressure melting (see Cannon, 1974)
-            'Kprime_0': 6., # Similar to FCC, BCC, HCP
-            'Kdprime_0': -5.87/70.e9 , # HP heuristic
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-        Mineral.__init__(self)

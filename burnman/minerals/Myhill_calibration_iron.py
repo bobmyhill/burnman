@@ -102,12 +102,12 @@ class liquid_iron (Mineral):
             'equation_of_state': 'hp_tmt',
             'H_0': 3127. ,
             'S_0': 16.910 ,
-            'V_0': 7.3e-06 ,
+            'V_0': 7.21e-06 ,
             'Cp': [46.024, 0., 0., 0.] ,
-            'a_0': 3.8e-05 ,
-            'K_0': 1.6e+11 ,
-            'Kprime_0': 5.16 ,
-            'Kdprime_0': -3.1e-11 ,
+            'a_0': 4.14e-05 ,
+            'K_0': 1.35e+11 ,
+            'Kprime_0': 5.2 ,
+            'Kdprime_0': -5.2/1.35e+11,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)

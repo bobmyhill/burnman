@@ -67,6 +67,16 @@ Fe_liq=Komabayashi_2014.liquid_iron()
 FeO=Komabayashi_2014.FeO_solid()
 FeO_liq=Komabayashi_2014.FeO_liquid()
 
+'''
+# Nasch and Manghani raw data
+Fe_liq.params['V_0'] = 7.068e-6  # Komabayashi = 6.88
+Fe_liq.params['K_0'] = 156.e9  # Komabayashi = 148
+Fe_liq.params['Kprime_0'] = 5.8 # Komabayashi = 5.8
+Fe_liq.params['a_0'] = 8.2e-5 # Komabayashi = 9
+Fe_liq.params['delta_0'] = 6.3 # Komabayashi = 5.1
+Fe_liq.params['kappa'] = 0.56 # Komabayashi = 0.56
+'''
+
 model = subregular()
 
 def fit_enthalpy(args, c, P, T, model, partials):
