@@ -38,24 +38,24 @@ class fcc_Fe_Si(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='FCC Fe-Si solid solution'
         self.type='subregular'
-        self.endmembers = [[minerals.Myhill_calibration_iron.fcc_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_fcc_A1(), '[Si]']]
-        self.enthalpy_interaction=[[[-106.e3, -106.e3]]]
+        self.endmembers = [[minerals.Myhill_calibration_iron.fcc_iron_HP(), '[Fe]'],[minerals.Fe_Si_O.Si_fcc_A1(), '[Si]']]
+        self.enthalpy_interaction=[[[-120.e3, -120.e3]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 class hcp_Fe_Si(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='HCP Fe-Si solid solution'
         self.type='subregular'
-        self.endmembers = [[minerals.Myhill_calibration_iron.hcp_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_hcp_A3(), '[Si]']]
-        self.enthalpy_interaction=[[[-128.e3, -128.e3]]]
-        self.volume_interaction=[[[3.11e-7, 3.11e-7]]]
+        self.endmembers = [[minerals.Myhill_calibration_iron.hcp_iron_HP(), '[Fe]'],[minerals.Fe_Si_O.Si_hcp_A3(), '[Si]']]
+        self.enthalpy_interaction=[[[-140.e3, -140.e3]]]
+        self.volume_interaction=[[[2.79e-7, 2.79e-7]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 class liquid_Fe_Si(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='liquid Fe-Si solid solution'
         self.type='subregular'
-        self.endmembers = [[minerals.Myhill_calibration_iron.liquid_iron(), '[Fe]'],[minerals.Fe_Si_O.Si_liquid(), '[Si]']]
+        self.endmembers = [[minerals.Myhill_calibration_iron.liquid_iron_HP(), '[Fe]'],[minerals.Fe_Si_O.Si_liquid(), '[Si]']]
         self.enthalpy_interaction=[[[0.e3, 0.e3]]]
         self.volume_interaction=[[[0., 0.]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
@@ -73,8 +73,8 @@ class B2_Fe_FeSi(burnman.SolidSolution):
 
 hcp=hcp_Fe_Si()
 fcc=fcc_Fe_Si()
-Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
-Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
+Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron_HP()
+Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron_HP()
 Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
 Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
 
@@ -141,7 +141,7 @@ plt.plot(B2_compositions, B2_temperatures)
 plt.show()
 
 #########################################################
-T=3200.
+T=1800.
 invariant = optimize.fsolve(fcc_hcp_B2_eqm, [0.01, 0.1, 0.2, 40.e9], args=(T))
 #invariant = [0., 1., 1., 40.e9]
 #########################################################
