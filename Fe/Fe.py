@@ -9,6 +9,11 @@ import numpy as np
 from scipy import optimize, integrate
 import matplotlib.pyplot as plt
 
+def invariant(data):
+    P, T = data
+    return [Fe_hcp.calcgibbs(P, T) -  Fe_fcc.calcgibbs(P, T),
+            Fe_hcp.calcgibbs(P, T) -  Fe_liq.calcgibbs(P, T)]
+        
 def eqm_pressure(minerals, multiplicities):
     def eqm(P, T):
         gibbs = 0.
@@ -104,27 +109,30 @@ print 'BEFORE'
 print Fe_liq.S, 55.845*1.e-6/Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T/1.e9, Fe_liq.gr
 
 
+P_inv, T_inv = optimize.fsolve(invariant, [50.e9, 4000.])
 
-pressures = np.linspace(1.e9, 400.e9, 50)
-temperatures_fcc = np.empty_like(pressures)
-temperatures_hcp = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures_hcp[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
-    temperatures_fcc[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
 
-temperatures_fcc_hcp = np.linspace(1000., 4000.)
+pressures_fcc_liq = np.linspace(1.e9, P_inv, 50)
+temperatures_fcc_liq = np.empty_like(pressures_fcc_liq)
+for i, P in enumerate(pressures_fcc_liq):
+    temperatures_fcc_liq[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+
+
+pressures_hcp_liq = np.linspace(P_inv, 400.e9, 50)
+temperatures_hcp_liq = np.empty_like(pressures_hcp_liq)
+for i, P in enumerate(pressures_hcp_liq):
+    temperatures_hcp_liq[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+    
+
+temperatures_fcc_hcp = np.linspace(1000., T_inv)
 pressures_fcc_hcp = np.empty_like(temperatures_fcc_hcp)
 for i, T in enumerate(temperatures_fcc_hcp):
     pressures_fcc_hcp[i] = optimize.fsolve(eqm_pressure([Fe_fcc, Fe_hcp], [1., -1.]), [50.e9], args=(T))[0]
 
-for i, P in enumerate(pressures):
-    Fe_liq.set_state(P, temperatures_hcp[i])
-    Fe_hcp.set_state(P, temperatures_hcp[i])
-    #print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
 
 plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
-plt.plot(pressures/1.e9, temperatures_hcp, label='hcp')
-plt.plot(pressures/1.e9, temperatures_fcc, label='fcc')
+plt.plot(pressures_hcp_liq/1.e9, temperatures_hcp_liq, label='hcp')
+plt.plot(pressures_fcc_liq/1.e9, temperatures_fcc_liq, label='fcc')
 plt.plot(pressures_fcc_hcp/1.e9, temperatures_fcc_hcp, label='fcc-hcp')
 
 plt.legend(loc='lower left')

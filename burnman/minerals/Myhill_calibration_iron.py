@@ -102,12 +102,12 @@ class liquid_iron (Mineral):
             'P_0': 0.999999e5,
             'H_0': 74206. , # Barin
             'S_0': 100.725 , # Barin
-            'V_0': 55.845/6.98e6 ,
+            'V_0': 55.845/6.97e6 ,
             'Cp': [46.024, 0., 0., 0.] , # Barin
             'a_0': 6.0e-05 ,
             'K_0': 100.e+9 ,
-            'Kprime_0': 5.05 ,
-            'Kdprime_0': -5.05/100.e+9,
+            'Kprime_0': 5.04 ,
+            'Kdprime_0': -5.04/100.e+9,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
