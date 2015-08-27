@@ -177,7 +177,7 @@ print popt, pcov
 
 
 
-
+'''
 # PLOT AGAIN
 
 pressures = np.linspace(1.e9, 500.e9, 50)
@@ -192,11 +192,14 @@ pressures_fcc_hcp = np.empty_like(temperatures_fcc_hcp)
 for i, T in enumerate(temperatures_fcc_hcp):
     pressures_fcc_hcp[i] = optimize.fsolve(eqm_pressure([Fe_fcc, Fe_hcp], [1., -1.]), [50.e9], args=(T))[0]
 
+
+pressures = np.linspace(1.e9, 500.e9, 50)
 for i, P in enumerate(pressures):
     Fe_liq.set_state(P, temperatures_hcp[i])
     Fe_hcp.set_state(P, temperatures_hcp[i])
-    #print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
+    print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
 
+'''
 plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
 plt.plot(pressures/1.e9, temperatures_hcp, label='hcp')
 plt.plot(pressures/1.e9, temperatures_fcc, label='fcc')

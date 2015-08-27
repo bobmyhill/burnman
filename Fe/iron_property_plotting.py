@@ -30,7 +30,8 @@ N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar ex
 '''
 
 bcc=Myhill_calibration_iron.bcc_iron()
-fcc=Myhill_calibration_iron.fcc_iron()
+fcc=Myhill_calibration_iron.fcc_iron_HP()
+hcp=Myhill_calibration_iron.hcp_iron_HP()
 
 
 
@@ -323,7 +324,6 @@ They used Au as a pressure standard (equation of state from Tsuchiya, 2003)
 '''
 
 Z=2.
-hcp=Myhill_calibration_iron.hcp_iron()
 
 hcp_data=[]
 for line in open('data/Yamazaki_et_al_2012.dat'):

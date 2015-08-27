@@ -132,5 +132,5 @@ class liquid_iron_HP (Mineral):
     def __init__(self):
         formula='Fe1.0'
         formula = dictionarize_formula(formula)
-        self.params = {'S_0': 89.748, 'a_0': 1.8986e-05, 'K_0': 316030000000.0, 'einstein_T': 99.249, 'Kprime_0': 3.8498, 'T_0': 1809.0, 'Kdprime_0': -1.3251e-11, 'V_0': 6.1712e-06, 'name': 'Liquid iron', 'H_0': 398216.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'formula': {'Fe': 1.0}, 'Cp': [67.865, -0.0068169, 2498900.0, -603.64], 'P_0': 50000000000.0}
+        self.params = {'S_0': 89.724, 'a_0': 1.9013e-05, 'K_0': 315580000000.0, 'einstein_T': 99.249, 'Kprime_0': 3.8412, 'T_0': 1809.0, 'Kdprime_0': -1.3293e-11, 'V_0': 6.1786e-06, 'name': 'Liquid iron', 'H_0': 398632.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'formula': {'Fe': 1.0}, 'Cp': [67.852, -0.0068168, 2496900.0, -603.23], 'P_0': 50000000000.0}
         Mineral.__init__(self)
