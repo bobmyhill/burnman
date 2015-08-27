@@ -9,6 +9,13 @@ import numpy as np
 from scipy import optimize, integrate
 import matplotlib.pyplot as plt
 
+def eqm_pressure(minerals, multiplicities):
+    def eqm(P, T):
+        gibbs = 0.
+        for i, mineral in enumerate(minerals):
+            gibbs = gibbs + mineral.calcgibbs(P[0], T)*multiplicities[i]
+        return gibbs
+    return eqm
 
 def eqm_temperature(minerals, multiplicities):
     def eqm(T, P):
@@ -37,9 +44,18 @@ T_obs = np.array(T)
 PT_obs = zip(*[P, T])
 
 
-Fe_fcc=Myhill_calibration_iron.fcc_iron()
-Fe_hcp=Myhill_calibration_iron.hcp_iron()
+Fe_fcc=Myhill_calibration_iron.fcc_iron_HP()
+Fe_hcp=Myhill_calibration_iron.hcp_iron_HP()
 Fe_liq=Myhill_calibration_iron.liquid_iron()
+
+from HP_convert import *
+Cp_LT = 1809.
+Cp_HT = 2400.
+T_ref = 1809.
+P_ref = 50.e9
+HP_convert(Fe_liq, Cp_LT, Cp_HT, T_ref, P_ref)
+
+print 'converted'
 
 ass = [Fe_fcc, Fe_hcp, Fe_liq]
 for mineral in ass:
@@ -84,23 +100,33 @@ print Fe_liq.V, Fe_hcp.V
 '''
 
 Fe_liq.set_state(1.e5, 1809.)
-print 55.845*1.e-6/Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T/1.e9, Fe_liq.gr
+print 'BEFORE'
+print Fe_liq.S, 55.845*1.e-6/Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T/1.e9, Fe_liq.gr
 
-pressures = np.linspace(1.e9, 200.e9, 50)
+
+
+pressures = np.linspace(1.e9, 400.e9, 50)
 temperatures_fcc = np.empty_like(pressures)
 temperatures_hcp = np.empty_like(pressures)
 for i, P in enumerate(pressures):
     temperatures_hcp[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
     temperatures_fcc[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
 
+temperatures_fcc_hcp = np.linspace(1000., 4000.)
+pressures_fcc_hcp = np.empty_like(temperatures_fcc_hcp)
+for i, T in enumerate(temperatures_fcc_hcp):
+    pressures_fcc_hcp[i] = optimize.fsolve(eqm_pressure([Fe_fcc, Fe_hcp], [1., -1.]), [50.e9], args=(T))[0]
+
 for i, P in enumerate(pressures):
     Fe_liq.set_state(P, temperatures_hcp[i])
     Fe_hcp.set_state(P, temperatures_hcp[i])
-    print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
+    #print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
 
 plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
 plt.plot(pressures/1.e9, temperatures_hcp, label='hcp')
 plt.plot(pressures/1.e9, temperatures_fcc, label='fcc')
+plt.plot(pressures_fcc_hcp/1.e9, temperatures_fcc_hcp, label='fcc-hcp')
+
 plt.legend(loc='lower left')
 plt.show()
 
@@ -115,18 +141,20 @@ if Gdiff < 0.:
 else:
     print 'hcp'
 
+
+print Fe_liq.params
+
 '''
-def fit_melting_curve(data, H_0, S_0, V_0, K_0):
-    Fe_liq.params['H_0'] = H_0
-    Fe_liq.params['S_0'] = S_0
+def fit_melting_curve(data, V_0, K_0, a_0):
     Fe_liq.params['V_0'] = V_0
     Fe_liq.params['K_0'] = K_0
+    Fe_liq.params['a_0'] = a_0
     temperatures = []
     for datum in data:
         P, T = datum # temperature is just to work out whether the phase is hcp or fcc
 
         Gdiff = Fe_fcc.calcgibbs(P,T) - Fe_hcp.calcgibbs(P,T)
-        if Gdiff < 0.:
+        if P < 120.e9:
             Fe_phase = Fe_fcc
         else:
             Fe_phase = Fe_hcp
@@ -135,12 +163,44 @@ def fit_melting_curve(data, H_0, S_0, V_0, K_0):
 
     return temperatures
 
-guesses = [ Fe_liq.params['H_0'], Fe_liq.params['S_0'], Fe_liq.params['V_0'], Fe_liq.params['K_0']]
+guesses = [Fe_liq.params['V_0'], Fe_liq.params['K_0'], Fe_liq.params['a_0']]
 popt, pcov = optimize.curve_fit(fit_melting_curve, PT_obs, T_obs, guesses, Terr)
-
-Fe_liq.set_state(1.e5, 1823.)
-print Fe_liq.alpha
-
 print popt, pcov
 
+
+
+
+# PLOT AGAIN
+
+pressures = np.linspace(1.e9, 500.e9, 50)
+temperatures_fcc = np.empty_like(pressures)
+temperatures_hcp = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    temperatures_hcp[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+    temperatures_fcc[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+
+temperatures_fcc_hcp = np.linspace(1000., 4000.)
+pressures_fcc_hcp = np.empty_like(temperatures_fcc_hcp)
+for i, T in enumerate(temperatures_fcc_hcp):
+    pressures_fcc_hcp[i] = optimize.fsolve(eqm_pressure([Fe_fcc, Fe_hcp], [1., -1.]), [50.e9], args=(T))[0]
+
+for i, P in enumerate(pressures):
+    Fe_liq.set_state(P, temperatures_hcp[i])
+    Fe_hcp.set_state(P, temperatures_hcp[i])
+    #print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
+
+plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
+plt.plot(pressures/1.e9, temperatures_hcp, label='hcp')
+plt.plot(pressures/1.e9, temperatures_fcc, label='fcc')
+plt.plot(pressures_fcc_hcp/1.e9, temperatures_fcc_hcp, label='fcc-hcp')
+
+plt.legend(loc='lower left')
+plt.show()
+
+
+print 'AFTER'
+
+Fe_liq.set_state(1.e5, 1809.)
+print Fe_liq.S, 55.845*1.e-6/Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T/1.e9, Fe_liq.gr
 '''
+

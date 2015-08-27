@@ -33,32 +33,6 @@ bcc=Myhill_calibration_iron.bcc_iron()
 fcc=Myhill_calibration_iron.fcc_iron()
 hcp=Myhill_calibration_iron.hcp_iron()
 
-P_ref = 0.9999999e5
-T_ref = 2000.
-fcc.set_state(P_ref+1., T_ref)
-
-H_ref = fcc.H
-S_ref = fcc.S
-a_ref = fcc.alpha
-fcc.params['T_0'] = T_ref
-fcc.params['P_0'] = P_ref
-fcc.params['H_0'] = H_ref
-fcc.params['S_0'] = S_ref
-fcc.params['a_0'] = a_ref
-
-'''
-hcp.set_state(P_ref+1., T_ref)
-H_ref = hcp.H
-S_ref = hcp.S
-a_ref = hcp.alpha
-hcp.params['T_0'] = T_ref
-hcp.params['P_0'] = P_ref
-hcp.params['H_0'] = H_ref
-hcp.params['S_0'] = S_ref
-'''
-
-
-
 temperatures=np.linspace(300., 2000., 101)
 bcc_gibbs=np.empty_like(temperatures)
 fcc_gibbs=np.empty_like(temperatures)
@@ -456,11 +430,11 @@ def equilibrium_boundary_P(mineral1, mineral2):
 
 
 def fit_H_S(mineral1, mineral2):
-    def find_H_S(data, H, S, a):
+    def find_H_S(data, H, S):
 
         mineral1.params['H_0']= H
         mineral1.params['S_0']= S
-        mineral1.params['a_0']= a
+        #mineral1.params['a_0']= a
         calc_temperatures=[]
         for datum in data:
             volume=datum[0]
@@ -475,7 +449,11 @@ print 'FCC parameters'
 print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
-guesses = [hcp.params['H_0'], hcp.params['S_0'], hcp.params['a_0']]
+
+
+hcp.params['a_0'] = 4.25e-05
+
+guesses = [hcp.params['H_0'], hcp.params['S_0']] #, hcp.params['a_0']]
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
 
@@ -483,7 +461,7 @@ print ''
 print 'Fitted HCP parameters'
 print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
 print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
-print "a0: ", popt[2], "+/-", np.sqrt(pcov[2][2]), "/K"
+#print "a0: ", popt[2], "+/-", np.sqrt(pcov[2][2]), "/K"
 print popt
 
 '''
@@ -566,5 +544,8 @@ tools.print_mineral_class(fcc, 'fcc_iron')
 tools.print_mineral_class(hcp, 'hcp_iron')
 '''
 
+print 'FCC'
+print fcc.params
 
+print 'HCP'
 print hcp.params
