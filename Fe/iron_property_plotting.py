@@ -86,7 +86,7 @@ They used the MgO pressure standard of Matsui et al., 2000
 fcc_data=[]
 fcc_data_Nishihara=[]
 '''
-for line in open('../burnman/data/input_iron_allotropes/Tsujino_et_al_2013.dat'):
+for line in open('data/Tsujino_et_al_2013.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append(map(float, content))
@@ -100,14 +100,14 @@ pt=np.array(zip(np.array(P)*1.e9, T))
 '''
 
 scaling=1.0
-for line in open('Nishihara_et_al_2012_fcc_volumes.dat'):
+for line in open('data/Nishihara_et_al_2012_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append([float(content[0]), float(content[1]), float(content[2])*scaling, float(content[3])])
         fcc_data_Nishihara.append([float(content[0]), float(content[1]), float(content[2])*scaling, float(content[3])])
 
 
-for line in open('Basinski_et_al_1955_fcc_volumes_RP.dat'):
+for line in open('data/Basinski_et_al_1955_fcc_volumes_RP.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append([1.e-4, float(content[0]), float(content[1])*4., 0.001])
@@ -123,7 +123,7 @@ pt=np.array(zip(np.array(P)*1.e9, T))
 
 
 '''
-for line in open('Boehler_fcc_volumes.dat'):
+for line in open('data/Boehler_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append(map(float, content))
@@ -247,14 +247,14 @@ bcc_expt_volumes=[]
 bcc.params['a_0'] = 3.8e-5
 '''
 
-for line in open('Stuart_et_al_1966_bcc_iron.dat'):
+for line in open('data/Stuart_et_al_1966_bcc_iron.dat'):
     content=line.strip().split()
     if content[0] != '%':
         bcc_expt_temperatures.append(float(content[0]))
         bcc_expt_volumes.append(float (content[1])/2.)
 
 '''
-for line in open('bcc_iron_volumes.dat'):
+for line in open('data/bcc_iron_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
         bcc_expt_temperatures.append(float(content[0]))
@@ -263,7 +263,7 @@ for line in open('bcc_iron_volumes.dat'):
 
 fcc_expt_temperatures=[]
 fcc_expt_volumes=[]
-for line in open('Basinski_et_al_1955_fcc_volumes_RP.dat'):
+for line in open('data/Basinski_et_al_1955_fcc_volumes_RP.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_expt_temperatures.append(float(content[0]))
@@ -326,7 +326,7 @@ Z=2.
 hcp=Myhill_calibration_iron.hcp_iron()
 
 hcp_data=[]
-for line in open('../burnman/data/input_iron_allotropes/Yamazaki_et_al_2012.dat'):
+for line in open('data/Yamazaki_et_al_2012.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_data.append(map(float, content))
@@ -335,7 +335,7 @@ for line in open('../burnman/data/input_iron_allotropes/Yamazaki_et_al_2012.dat'
 T, VAu, VAuerr, P, Perr, a, aerr, c, cerr, V, Verr = zip(*hcp_data)
 
 hcp_data=[]
-for line in open('../burnman/data/input_iron_allotropes/Dewaele_et_al_2006.dat'):
+for line in open('data/Dewaele_et_al_2006.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_data.append([float(content[0]), float(content[1]), float(content[2])*Z, float(content[3])*Z])
@@ -415,7 +415,7 @@ def find_pressure(mineral):
 
 
 hcp_fcc_data=[]
-for line in open('../burnman/data/input_iron_allotropes/Komabayashi_et_al_2009_HCP_FCC.dat'):
+for line in open('data/Komabayashi_et_al_2009_HCP_FCC.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3]), float(content[4]), float(content[5]), content[6]])

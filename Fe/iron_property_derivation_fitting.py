@@ -46,7 +46,7 @@ fcc.params['H_0'] = H_ref
 fcc.params['S_0'] = S_ref
 fcc.params['a_0'] = a_ref
 
-
+'''
 hcp.set_state(P_ref+1., T_ref)
 H_ref = hcp.H
 S_ref = hcp.S
@@ -55,7 +55,7 @@ hcp.params['T_0'] = T_ref
 hcp.params['P_0'] = P_ref
 hcp.params['H_0'] = H_ref
 hcp.params['S_0'] = S_ref
-
+'''
 
 
 
@@ -110,37 +110,31 @@ They used the MgO pressure standard of Matsui et al., 2000
 
 fcc_data=[]
 fcc_data_Nishihara=[]
-'''
+
 for line in open('data/Tsujino_et_al_2013.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        fcc_data.append(map(float, content))
+        fcc_data.append([float(content[3]), float(content[0]), float(content[1]), float(content[2])])
 
-#Temperature K  Volume of y-Fe angstrom^3  Pressure GPa  V/V0 of MgO angstrom^3 
-T, V, Verr, P, Perr, relVMgO, RelVMgOerr = zip(*fcc_data)
 
-Z=4.
-volumes=np.array(V)*nA/voltoa/Z
-pt=np.array(zip(np.array(P)*1.e9, T))
-'''
 
-scaling=0.9895
 for line in open('data/Nishihara_et_al_2012_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        fcc_data.append([float(content[0]), float(content[1]), float(content[2])*scaling, float(content[3])])
-        fcc_data_Nishihara.append([float(content[0]), float(content[1]), float(content[2])*scaling, float(content[3])])
+        fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3])])
+        fcc_data_Nishihara.append([float(content[0]), float(content[1]), float(content[2]), float(content[3])])
 
-
+scaling=1.01
 for line in open('data/Basinski_et_al_1955_fcc_volumes_RP.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        fcc_data.append([1.e-4, float(content[0]), float(content[1])*4., 0.001])
+        fcc_data.append([1.e-4, float(content[0]), float(content[1])*4.*scaling, 0.001])
 
 
 #Temperature K  Volume of y-Fe angstrom^3  Pressure GPa  V/V0 of MgO angstrom^3 
 P, T, V, Verr = zip(*fcc_data)
 
+print V
 Z=4.
 volumes=np.array(V)*nA/voltoa/Z
 sigmas=np.array(Verr)*nA/voltoa/Z
@@ -462,8 +456,10 @@ def equilibrium_boundary_P(mineral1, mineral2):
 
 
 def fit_H_S(mineral1, mineral2):
-    def find_H_S(data, a):
+    def find_H_S(data, H, S, a):
 
+        mineral1.params['H_0']= H
+        mineral1.params['S_0']= S
         mineral1.params['a_0']= a
         calc_temperatures=[]
         for datum in data:
@@ -479,17 +475,15 @@ print 'FCC parameters'
 print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
-print 'HCP S_0', hcp.params['S_0']
-hcp.params['S_0'] = hcp.params['S_0'] - 3.2
-#hcp.params['S_0']= 30.7 # To match phase boundary
-guesses=np.array([hcp.params['a_0']])
+guesses = [hcp.params['H_0'], hcp.params['S_0'], hcp.params['a_0']]
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
 
 print ''
 print 'Fitted HCP parameters'
-print "a0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
-#print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
+print "H0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "J/mol"
+print "S0: ", popt[1], "+/-", np.sqrt(pcov[1][1]), "J/K/mol"
+print "a0: ", popt[2], "+/-", np.sqrt(pcov[2][2]), "/K"
 print popt
 
 '''
@@ -550,8 +544,8 @@ out_pressures=np.array(out_pressures)
 out_temperatures=np.array(out_temperatures)
 out_temperature_error=np.array(out_temperature_error)
 
-plt.plot( bcc_fcc_pressures/1.e9, bcc_fcc_temperatures, 'b-', linewidth=1, label='BCC-FCC transition')
-plt.plot( bcc_hcp_pressures/1.e9, bcc_hcp_temperatures, 'b-', linewidth=1, label='BCC-HCP transition')
+plt.plot( bcc_fcc_pressures/1.e9, bcc_fcc_temperatures, 'r-', linewidth=1, label='BCC-FCC transition')
+plt.plot( bcc_hcp_pressures/1.e9, bcc_hcp_temperatures, 'g-', linewidth=1, label='BCC-HCP transition')
 plt.plot( hcp_fcc_pressures/1.e9, hcp_fcc_temperatures, 'b-', linewidth=1, label='FCC-HCP transition')
 plt.plot( in_pressures/1.e9, in_temperatures, marker=".", linestyle="None", label='in')
 plt.errorbar( in_pressures/1.e9, in_temperatures, yerr=in_temperature_error, linestyle="None")
@@ -571,3 +565,6 @@ Finally, let's print our updated mineral classes
 tools.print_mineral_class(fcc, 'fcc_iron')
 tools.print_mineral_class(hcp, 'hcp_iron')
 '''
+
+
+print hcp.params

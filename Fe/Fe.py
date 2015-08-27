@@ -4,10 +4,11 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
     sys.path.insert(1,os.path.abspath('..'))
 
 import burnman
-from burnman.minerals import Komabayashi_2014, Myhill_calibration_iron
+from burnman.minerals import Komabayashi_2014, Myhill_calibration_iron, SLB_2011
 import numpy as np
 from scipy import optimize, integrate
 import matplotlib.pyplot as plt
+
 
 def eqm_temperature(minerals, multiplicities):
     def eqm(T, P):
@@ -36,25 +37,39 @@ T_obs = np.array(T)
 PT_obs = zip(*[P, T])
 
 
-Fe_fcc=Komabayashi_2014.fcc_iron()
-Fe_hcp=Komabayashi_2014.hcp_iron()
+Fe_fcc=Myhill_calibration_iron.fcc_iron()
+Fe_hcp=Myhill_calibration_iron.hcp_iron()
+Fe_liq=Myhill_calibration_iron.liquid_iron()
 
-Fe_liq=Komabayashi_2014.liquid_iron()
+ass = [Fe_fcc, Fe_hcp, Fe_liq]
+for mineral in ass:
+    print mineral.params['name']
+    mineral.set_state(1.e5, 3800.)
+    print mineral.gibbs
 
+Fe_liq.set_state(1.e5, 3000.)
+K0=Fe_liq.K_T
+print Fe_liq.H, Fe_liq.S, Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T
+Fe_liq.set_state(1.e5+1., 3000.)
+K1=Fe_liq.K_T
+print K1-K0
 
 #Fe_liq.params['V_0'] = 7.2e-6
 #Fe_liq.params['a_0'] = 65.e-6 # Nasch and Manghani at 1550 C (extrapolated to avoid magnetic effects)
 #Fe_liq.params['K_0'] = 147.e9
 # Uncorrected values from Nasch and Manghani (1998), to fit properties at 1809 K.
+'''
 Fe_liq.params['V_0'] = 7.068e-6  # Komabayashi = 6.88
 Fe_liq.params['K_0'] = 156.e9  # Komabayashi = 148
 Fe_liq.params['Kprime_0'] = 5.8 # Komabayashi = 5.8
 Fe_liq.params['a_0'] = 8.2e-5 # Komabayashi = 9
 Fe_liq.params['delta_0'] = 6.3 # Komabayashi = 5.1
 Fe_liq.params['kappa'] = 0.56 # Komabayashi = 0.56
-
+'''
 # Nonmagnetic values from Nasch and Manghani (1998), to fit properties at 1809 K.
 # Results in liquid volumes that are much too small to fit the melting curve
+Fe_liq.set_state(1.e5, 1809.)
+print 'H', Fe_liq.H, Fe_liq.S
 '''
 Fe_liq.params['V_0'] = 6.25e-6  # Komabayashi = 6.88
 Fe_liq.params['K_0'] = 156.e9  # Komabayashi = 148
@@ -71,18 +86,17 @@ print Fe_liq.V, Fe_hcp.V
 Fe_liq.set_state(1.e5, 1809.)
 print 55.845*1.e-6/Fe_liq.V, Fe_liq.alpha, Fe_liq.K_T/1.e9, Fe_liq.gr
 
-pressures = np.linspace(1.e9, 200.e9, 25)
+pressures = np.linspace(1.e9, 200.e9, 50)
 temperatures_fcc = np.empty_like(pressures)
 temperatures_hcp = np.empty_like(pressures)
 for i, P in enumerate(pressures):
-    print P/1.e9
     temperatures_hcp[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
-    temperatures_fcc[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [3000.], args=(P))[0]
+    temperatures_fcc[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
 
 for i, P in enumerate(pressures):
     Fe_liq.set_state(P, temperatures_hcp[i])
     Fe_hcp.set_state(P, temperatures_hcp[i])
-    print Fe_liq.K_T, Fe_hcp.K_T
+    print P/1.e9, temperatures_hcp[i], 'liq K:', Fe_liq.K_T, 'hcp K:', Fe_hcp.K_T
 
 plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
 plt.plot(pressures/1.e9, temperatures_hcp, label='hcp')
@@ -90,7 +104,6 @@ plt.plot(pressures/1.e9, temperatures_fcc, label='fcc')
 plt.legend(loc='lower left')
 plt.show()
 
-exit()
 P = 100.e9
 
 Fe_fcc.set_state(P, 3000.)
@@ -102,16 +115,14 @@ if Gdiff < 0.:
 else:
     print 'hcp'
 
-
+'''
 def fit_melting_curve(data, H_0, S_0, V_0, K_0):
     Fe_liq.params['H_0'] = H_0
     Fe_liq.params['S_0'] = S_0
     Fe_liq.params['V_0'] = V_0
     Fe_liq.params['K_0'] = K_0
-    print [Fe_liq.params['H_0'], Fe_liq.params['S_0'], Fe_liq.params['V_0'], Fe_liq.params['K_0']]
     temperatures = []
     for datum in data:
-        print datum
         P, T = datum # temperature is just to work out whether the phase is hcp or fcc
 
         Gdiff = Fe_fcc.calcgibbs(P,T) - Fe_hcp.calcgibbs(P,T)
@@ -125,10 +136,11 @@ def fit_melting_curve(data, H_0, S_0, V_0, K_0):
     return temperatures
 
 guesses = [ Fe_liq.params['H_0'], Fe_liq.params['S_0'], Fe_liq.params['V_0'], Fe_liq.params['K_0']]
-popt, pcov = optimize.curve_fit(fit_melting_curve, PT, T, guesses, Terr)
+popt, pcov = optimize.curve_fit(fit_melting_curve, PT_obs, T_obs, guesses, Terr)
 
 Fe_liq.set_state(1.e5, 1823.)
 print Fe_liq.alpha
 
 print popt, pcov
 
+'''
