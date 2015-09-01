@@ -86,8 +86,8 @@ class liquid_Fe_Si(burnman.SolidSolution):
         self.name='liquid Fe-Si solid solution'
         self.type='subregular'
         self.endmembers = [[minerals.Myhill_calibration_iron.liquid_iron_HP(), '[Fe]'],[minerals.Fe_Si_O.Si_liquid(), '[Si]']]
-        self.enthalpy_interaction=[[[0.e3, 0.e3]]]
-        self.volume_interaction=[[[0., 0.]]]
+        self.enthalpy_interaction=[[[-100.e3, -100.e3]]]
+        self.volume_interaction=[[[-3.2e-6, -3.2e-6]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
@@ -104,7 +104,7 @@ for i, P in enumerate(pressures):
         temperatures_ss[i] = optimize.fsolve(eqm_temperature([B20, Fe_Si_liq], [1., -2.]), [2000.], args=(P))[0]
     else:
         temperatures[i] = optimize.fsolve(eqm_temperature([B2, FeSi_melt], [1., -1.]), [2000.], args=(P))[0]
-        temperatures_ss[i] = 2000. # optimize.fsolve(eqm_temperature([B2, Fe_Si_liq], [1., -1.]), [2000.], args=(P))[0]
+        temperatures_ss[i] = optimize.fsolve(eqm_temperature([B2, Fe_Si_liq], [1., -1.]), [2000.], args=(P))[0]
 
 plt.plot(pressures/1.e9, temperatures, label='Fitted curve')
 plt.plot(pressures/1.e9, temperatures_ss, label='Fitted curve (solid solution)')

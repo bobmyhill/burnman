@@ -34,7 +34,9 @@ Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
 Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron_HP()
 Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron_HP()
 Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
-#Fe_liq = minerals.Komabayashi_2014.liquid_iron()
+
+
+
 # Properties of Fe liquid
 
 '''
@@ -315,7 +317,7 @@ print B20_B2_eqm(temperatures_obs)
 
 for T in temperatures_obs:
     print T, optimize.fsolve(eqm_pressure([B20, B2], [1., -2.]),[20.e9], args=(T)) 
-
+    
 
 print ''
 '''
