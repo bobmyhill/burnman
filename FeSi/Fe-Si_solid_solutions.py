@@ -141,7 +141,7 @@ plt.plot(B2_compositions, B2_temperatures)
 plt.show()
 
 #########################################################
-T=1800.
+T=1200.
 invariant = optimize.fsolve(fcc_hcp_B2_eqm, [0.01, 0.1, 0.2, 40.e9], args=(T))
 #invariant = [0., 1., 1., 40.e9]
 #########################################################

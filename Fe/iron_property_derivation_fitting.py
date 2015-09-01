@@ -13,6 +13,7 @@ from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
 from burnman import constants
 
+from fitting_functions import *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -85,11 +86,11 @@ They used the MgO pressure standard of Matsui et al., 2000
 fcc_data=[]
 fcc_data_Nishihara=[]
 
+
 for line in open('data/Tsujino_et_al_2013.dat'):
     content=line.strip().split()
     if content[0] != '%':
         fcc_data.append([float(content[3]), float(content[0]), float(content[1]), float(content[2])])
-
 
 
 for line in open('data/Nishihara_et_al_2012_fcc_volumes.dat'):
@@ -98,12 +99,13 @@ for line in open('data/Nishihara_et_al_2012_fcc_volumes.dat'):
         fcc_data.append([float(content[0]), float(content[1]), float(content[2]), float(content[3])])
         fcc_data_Nishihara.append([float(content[0]), float(content[1]), float(content[2]), float(content[3])])
 
-scaling=1.01
+
+'''
 for line in open('data/Basinski_et_al_1955_fcc_volumes_RP.dat'):
     content=line.strip().split()
     if content[0] != '%':
-        fcc_data.append([1.e-4, float(content[0]), float(content[1])*4.*scaling, 0.001])
-
+        fcc_data.append([1.e-4, float(content[0]), float(content[1])*4., 0.001])
+'''
 
 #Temperature K  Volume of y-Fe angstrom^3  Pressure GPa  V/V0 of MgO angstrom^3 
 P, T, V, Verr = zip(*fcc_data)
@@ -130,97 +132,10 @@ volumes=np.array(V)*1.e-6
 pt=np.array(zip(np.array(P)*1.e8, T))
 '''
 
-# Initial guess.
-def fitV(mineral):
-    def fit(data, V_0, K_0, a_0):
-        mineral.params['V_0'] = V_0
-        mineral.params['K_0'] = K_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        mineral.params['a_0'] = a_0
-        
-        vols=[]
-        for i, datum in enumerate(data):
-            mineral.set_state(datum[0], datum[1])
-            vols.append(mineral.V)
-        return vols
-    return fit
 
-def fitV_wout_a0(mineral):
-    def fit(data, V_0, K_0):
-        mineral.params['V_0'] = V_0
-        mineral.params['K_0'] = K_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        
-        vols=[]
-        for i, datum in enumerate(data):
-            mineral.set_state(datum[0], datum[1])
-            vols.append(mineral.V)
-        return vols
-    return fit
-
-def fitV_w_Kprime_wout_a0(mineral):
-    def fit(data, V_0, K_0, Kprime_0):
-        mineral.params['V_0'] = V_0
-        mineral.params['K_0'] = K_0
-        mineral.params['Kprime_0'] = Kprime_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        
-        vols=[]
-        for i, datum in enumerate(data):
-            mineral.set_state(datum[0], datum[1])
-            vols.append(mineral.V)
-        return vols
-    return fit
-
-def fitV_a0(mineral):
-    def fit(data, V_0, a_0):
-        mineral.params['V_0'] = V_0
-        mineral.params['a_0'] = a_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        
-        vols=[]
-        for i, datum in enumerate(data):
-            mineral.set_state(datum[0], datum[1])
-            vols.append(mineral.V)
-        return vols
-    return fit
-
-def fitV_w_Kprime(mineral):
-    def fit(data, V_0, K_0, Kprime_0, a_0):
-        mineral.params['V_0'] = V_0 
-        mineral.params['K_0'] = K_0
-        mineral.params['Kprime_0'] = Kprime_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        mineral.params['a_0'] = a_0
-        
-        vols=[]
-        for i, datum in enumerate(data):            
-            mineral.set_state(datum[0], datum[1])
-            vols.append(mineral.V)
-        return vols
-    return fit
-
-def fitV_T0(mineral):
-    def fit(pressures, V_0, K_0, Kprime_0):
-        mineral.params['V_0'] = V_0 
-        mineral.params['K_0'] = K_0
-        mineral.params['Kprime_0'] = Kprime_0
-        mineral.params['Kdprime_0'] = -mineral.params['Kprime_0']/mineral.params['K_0']
-        
-        vols=[]
-        for pressure in pressures:
-            mineral.set_state(pressure, 298.15)
-            vols.append(mineral.V)
-        return vols
-    return fit
-
-
+fcc.params['Kprime_0'] = 5.6
 guesses=np.array([fcc.params['V_0'], fcc.params['K_0'], fcc.params['a_0']])
-
 popt, pcov = optimize.curve_fit(fitV(fcc), pt, volumes, guesses, sigmas)
-
-bcc.set_state(1.e5, 1273)
-print 'BCC volume at 1273 K:', bcc.V/(nA/Z/voltoa)
 
 print ''
 print 'Fitted FCC parameters'
@@ -231,6 +146,10 @@ print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", fcc.params['Kprime_0'], '[fixed]'
 print "k0\":", -1.e9*fcc.params['Kprime_0']/popt[1], "GPa^-1"
 print "a0 :", popt[2], "+/-", np.sqrt(pcov[2][2]), "K^-1"
+
+
+bcc.set_state(1.e5, 1273)
+print 'BCC volume at 1273 K:', bcc.V/(nA/Z/voltoa)
 
 
 bcc_expt_temperatures=[]
@@ -289,7 +208,7 @@ for i, datum in enumerate(pt):
 plt.plot( np.array(P), Vdiff , marker=".", linestyle="None")
 
 
-P, T, V, Verr = zip(*fcc_data_Nishihara)
+P, T, V, Verr = zip(*fcc_data)
 Z=4.
 volumes=np.array(V)*nA/voltoa/Z
 sigmas=np.array(Verr)*nA/voltoa/Z
@@ -315,52 +234,45 @@ They used Au as a pressure standard (equation of state from Tsuchiya, 2003)
 
 Z=2.
 
+
 hcp_data=[]
-for line in open('data/Yamazaki_et_al_2012.dat'):
+for line in open('data/Yamazaki_just_data.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
         hcp_data.append(map(float, content))
 
 # T (K) V (Au) P a-axis (A) c-axis (A) V (e-Fe [HCP] angstroms^3)
-T, VAu, VAuerr, P, Perr, a, aerr, c, cerr, V, Verr = zip(*hcp_data)
+T_Y, VAu_Y, VAuerr_Y, P_Y, Perr_Y, a_Y, aerr_Y, c_Y, cerr_Y, V_Y, Verr_Y = zip(*hcp_data)
+
 
 hcp_data=[]
+
+for line in open('data/Komabayashi_et_al_2009_HCP_volumes.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        hcp_data.append([float(content[2]), float(content[0]), float(content[4]), float(content[5])])
+
+T, P, V, Verr = zip(*hcp_data)
+
+hcp_data=[]
+err_scaling=1.0
 for line in open('data/Dewaele_et_al_2006.dat'):
     content=line.translate(None, ')(').strip().split()
     if content[0] != '%':
-        hcp_data.append([float(content[0]), float(content[1]), float(content[2])*Z, float(content[3])*Z])
+        hcp_data.append([float(content[0]), float(content[1]), float(content[2])*Z, float(content[3])*Z*err_scaling])
 
 # T (K) V (Au) P a-axis (A) c-axis (A) V (e-Fe [HCP] angstroms^3)
 T_D, P_D, V_D, Verr_D = zip(*hcp_data)
 
 
-volumes=np.array(V + V_D)*(nA/Z/voltoa)
-sigma=np.array(Verr + Verr_D)*(nA/Z/voltoa)
-pt=np.array(zip(np.array(P + P_D)*1.e9, np.array(T+T_D)))
 
-'''
+volumes=np.array(V_D+V)*(nA/Z/voltoa)
+sigma=np.array(Verr_D+Verr)*(nA/Z/voltoa)
+pt=np.array(zip(np.array(P_D+P)*1.e9, np.array(T_D+T)))
+
 # Initial guess.
 guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0'], hcp.params['a_0']])
-popt, pcov = optimize.curve_fit(fitV_w_Kprime(hcp), pt, volumes, guesses, sigma)
-
-print ''
-print 'Fitted HCP parameters'
-print "V0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "m^3/mol"
-print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "A^3"
-print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
-print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
-print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
-print "a0 :", popt[3], "+/-", np.sqrt(pcov[3][3]), "K^-1"
-
-'''
-
-volumes=np.array(V_D)*(nA/Z/voltoa)
-sigma=np.array(Verr_D)*(nA/Z/voltoa)
-p=np.array(P_D)*1.e9
-
-# Initial guess.
-guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0']])
-popt, pcov = optimize.curve_fit(fitV_T0(hcp), p, volumes, guesses, sigma)
+popt, pcov = optimize.curve_fit(fitV_full(hcp), pt, volumes, guesses, sigma)
 
 print ''
 print 'Fitted HCP parameters (Dewaele et al., 2006)'
@@ -368,9 +280,12 @@ print "V0: ", popt[0], "+/-", np.sqrt(pcov[0][0]), "m^3/mol"
 print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "A^3"
 print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
-print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
+print "k0\":", -hcp.params['Kprime_0']/hcp.params['K_0']
+print "a0:", popt[3], "+/-", np.sqrt(pcov[3][3])
 
-
+volumes=np.array(V_D)*(nA/Z/voltoa)
+sigma=np.array(Verr_D)*(nA/Z/voltoa)
+p=np.array(P_D)*1.e9
 
 Vdiff=np.empty_like(volumes)
 for i, pressure in enumerate(p):
@@ -444,6 +359,20 @@ def fit_H_S(mineral1, mineral2):
         return calc_temperatures
     return find_H_S
 
+def fit_H(mineral1, mineral2):
+    def find_H(data, H):
+
+        mineral1.params['H_0']= H
+        #mineral1.params['a_0']= a
+        calc_temperatures=[]
+        for datum in data:
+            volume=datum[0]
+            temperature=datum[1]
+            pressure = optimize.fsolve(find_pressure(hcp), 1.e9, args=(volume, temperature))[0]
+            calc_temperatures.append(optimize.fsolve(equilibrium_boundary_T(mineral1, mineral2), 1000., args=(pressure))[0])
+        return calc_temperatures
+    return find_H
+
 print ''
 print 'FCC parameters'
 print "H0: ", fcc.params['H_0'], "J/mol"
@@ -451,7 +380,6 @@ print "S0: ", fcc.params['S_0'], "J/K/mol"
 
 
 
-hcp.params['a_0'] = 4.25e-05
 
 guesses = [hcp.params['H_0'], hcp.params['S_0']] #, hcp.params['a_0']]
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
@@ -476,7 +404,7 @@ for i, temperature in enumerate(transition_temperatures):
     transition_pressures[i] = optimize.fsolve(find_pressure(hcp), 1.e9, args=(transition_volumes[i], transition_temperatures[i]))[0]
 
 
-hcp_fcc_pressures=np.linspace(10.e9, 70.e9, 101)
+hcp_fcc_pressures=np.linspace(10.e9, 120.e9, 101)
 hcp_fcc_temperatures=np.empty_like(hcp_fcc_pressures)
 for i, pressure in enumerate(hcp_fcc_pressures):
     hcp_fcc_temperatures[i]=optimize.fsolve(equilibrium_boundary_T(hcp, fcc), 1000., args=(pressure))[0]

@@ -4,10 +4,79 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
     sys.path.insert(1,os.path.abspath('..'))
 
 import burnman
-from burnman.minerals import Komabayashi_2014, Myhill_calibration_iron
+from burnman.minerals import Komabayashi_2014, Myhill_calibration_iron, Fe_Si_O
 import numpy as np
+from fitting_functions import *
 from scipy import optimize, integrate
 import matplotlib.pyplot as plt
+from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
+
+atomic_masses=read_masses()
+
+Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
+Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
+Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
+
+#Fe_fcc_K = Komabayashi_2014.fcc_iron()
+#Fe_hcp_K = Komabayashi_2014.hcp_iron()
+#Fe_liq_K = Komabayashi_2014.liquid_iron()
+
+FeO = Fe_Si_O.FeO_solid_HP()
+FeO_liq = Fe_Si_O.FeO_liquid_HP()
+
+FeO_Kom = Komabayashi_2014.FeO_solid()
+FeO_liq_Kom = Komabayashi_2014.FeO_liquid()
+
+
+
+# First, the equation of state of FeO (B1)
+f=open('data/Fischer_2011_FeO_B1_EoS.dat', 'r')
+FeO_volumes = []
+datastream = f.read()  # We need to open the file
+f.close()
+datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
+for line in datalines:
+    if line[0] != "%" and line[10] != '-':
+        FeO_volumes.append(map(float, line))
+
+f=open('data/Campbell_2009_FeO_B1_EoS.dat', 'r')
+datastream = f.read()  # We need to open the file
+f.close()
+datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
+for line in datalines:
+    if line[0] != "%" and line[10] != '-':
+        FeO_volumes.append(map(float, line))
+
+P, Perr, T, Terr, V_NaCl, Verr_NaCl, V_Fe, Verr_Fe, covera_Fe, coveraerr_Fe, V_FeO, Verr_FeO = zip(*FeO_volumes)
+
+P = np.array(P)*1.e9
+Perr = np.array(Perr)*1.e9
+T = np.array(T)
+Terr = np.array(Terr)
+V_FeO = np.array(V_FeO)*1.e-6
+Verr_FeO = np.array(Verr_FeO)*1.e-6
+
+PT = [P, T]
+guesses = [FeO.params['K_0'], FeO.params['a_0']]
+popt, pcov = optimize.curve_fit(fit_PVT_data_Ka(FeO), PT, V_FeO, guesses, Verr_FeO)
+for i, p in enumerate(popt):
+    print popt[i], '+/-', np.sqrt(pcov[i][i])
+
+# Now for the liquid
+
+pressures = np.linspace(1.e9, 200.e9, 20)
+#pressures = [10.e9, 20.e9, 30.e9, 65.e9]
+temperatures = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    temperatures[i] = optimize.fsolve(eqm_temperature([FeO, FeO_liq], [1., -1.]), [2000.], args=(P))[0]
+    print P/1.e9, temperatures[i]
+
+plt.plot(pressures, temperatures)
+#plt.plot(pressures, temperatures_Komabayashi)
+plt.show()
+
+
+
 
 # READ IN DATA
 eutectic_PT = []
@@ -62,12 +131,6 @@ class subregular(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
-Fe_fcc=Myhill_calibration_iron.fcc_iron()
-Fe_liq=Myhill_calibration_iron.liquid_iron()
-FeO=Komabayashi_2014.FeO_solid()
-FeO_liq=Komabayashi_2014.FeO_liquid()
-
-
 model = subregular()
 
 def fit_enthalpy(args, c, P, T, model, partials):
@@ -108,7 +171,7 @@ Hex0 = []
 Hex1 = []
 weighting=[]
 eutectic_weighting = 5.
-
+# HCP IRON above ~50 GPa (Seagle et al., 2008)
 for datum in eutectic_PTc:
     P, Perr, T, Terr, c, cerr = datum
 
@@ -116,7 +179,7 @@ for datum in eutectic_PTc:
     model.set_state(P, T)
 
 
-    partials = [Fe_fcc.calcgibbs(P, T) - Fe_liq.calcgibbs(P,T),
+    partials = [Fe_hcp.calcgibbs(P, T) - Fe_liq.calcgibbs(P,T),
                 FeO.calcgibbs(P,T) - FeO_liq.calcgibbs(P,T)]
 
     Hex = optimize.fsolve(fit_enthalpy, [0., 0.], args=(c, P, T, model, partials))
@@ -128,7 +191,7 @@ for datum in eutectic_PTc:
 
 # and now fit the solvus:
 # at a given pressure and temperature, two compositions have the same partial gibbs excesses
-
+# FCC IRON
 for datum in solvus_PTcc:
     P, Perr, T, Terr, c0, c0err, c1, c1err = datum
 
@@ -162,7 +225,9 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
         self.params = {
             'name': 'Liquid iron excesses',
             'formula': formula,
-            'equation_of_state': 'v_ag',
+            'equation_of_state': 'hp_tmt',
+            'T_0': FeO_liq.params['T_0'],
+            'P_0': FeO_liq.params['P_0'],
             'H_0': (FeO_liq.params['H_0'] + Fe_liq.params['H_0'])/2. + Hex,
             'S_0': (FeO_liq.params['S_0'] + Fe_liq.params['S_0'])/2. - Sex,
             'Cp': [(FeO_liq.params['Cp'][0] + Fe_liq.params['Cp'][0])/2.,
@@ -172,10 +237,10 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
             'V_0': V_0,
             'K_0': K_0 ,
             'Kprime_0': Kprime_0, # 4.425
+            'Kdprime_0': -Kprime_0/K_0, 
             'a_0': a_0,
-            'delta_0': (FeO_liq.params['delta_0'] + Fe_liq.params['delta_0'])/2.,
-            'kappa': (FeO_liq.params['kappa'] + Fe_liq.params['kappa'])/2.,
-            'T_0': (FeO_liq.params['T_0'] + Fe_liq.params['T_0'])/2.}
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'n': sum(formula.values())}
         burnman.Mineral.__init__(self)
         
 # Ambient pressure values are from Kowalski and Spencer (1995)
@@ -266,12 +331,18 @@ for T in temperatures:
         W1_Frost[i] = 83307. - 8.978*T - 0.09*P/1.e5
         
         ideal[i] = 0.
-        
-    plt.plot(pressures, W0, '--', label='W0, '+str(T))
-    plt.plot(pressures, W1, '.', label='W1, '+str(T))
-    plt.plot(pressures, W0_Frost, label='W0 Frost, '+str(T))
-    plt.plot(pressures, W1_Frost, label='W1 Frost, '+str(T))
-    plt.plot(pressures, ideal, label='ideal (Komabayashi)')
+    if T <3000:
+        plt.plot(pressures, W0, 'r--', label='W0, '+str(T))
+        plt.plot(pressures, W1, 'r-.', label='W1, '+str(T))
+        plt.plot(pressures, W0_Frost, 'g-', label='W0 Frost, '+str(T))
+        plt.plot(pressures, W1_Frost, 'g--', label='W1 Frost, '+str(T))
+        plt.plot(pressures, ideal, 'b-', label='ideal (Komabayashi)')
+    else:
+        plt.plot(pressures, W0, 'r--', linewidth=2, label='W0, '+str(T))
+        plt.plot(pressures, W1, 'r-.', linewidth=2, label='W1, '+str(T))
+        plt.plot(pressures, W0_Frost, 'g-', linewidth=2, label='W0 Frost, '+str(T))
+        plt.plot(pressures, W1_Frost, 'g--', linewidth=2, label='W1 Frost, '+str(T))
+        plt.plot(pressures, ideal, 'b-', linewidth=2, label='ideal (Komabayashi)')
 
 plt.legend(loc='lower left')
 plt.show()
@@ -383,10 +454,11 @@ pressures = np.linspace(30.e9, 250.e9, 100)
 eutectic_compositions = np.empty_like(pressures)
 eutectic_temperatures = np.empty_like(pressures)
 
-c, T = [0.7, 5000.]
+c, T = [0.5, 4000.]
 for i, P in enumerate(pressures):
+    print c, T
     c, T = optimize.fsolve(eutectic_liquid, [c, T], 
-                           args=(P, model, intermediate_0, intermediate_1, Fe_fcc, FeO))
+                           args=(P, model, intermediate_0, intermediate_1, Fe_hcp, FeO))
     print P, T, model.enthalpy_interaction
     eutectic_compositions[i] = c
     eutectic_temperatures[i] = T

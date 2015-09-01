@@ -73,19 +73,50 @@ guesses = [FeSi_melt.params['V_0'], 100.e9, 4.]
 
 #FeSi_melt.params['V_0'] = 7.8e-6
 #FeSi_melt.params['K_0'] = 115.e9
+FeSi_melt.set_state(1.e5, 1683.)
+B20.set_state(1.e5, 1683.)
 
-pressures = np.linspace(1.e9, 152.e9, 152)
+print FeSi_melt.gibbs*2., B20.gibbs
+dTdP = 170.e-9
+FeSi_V_melting = (FeSi_melt.S*2. - B20.S)*dTdP
+print (B20.V + FeSi_V_melting)/2.
+
+class liquid_Fe_Si(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='liquid Fe-Si solid solution'
+        self.type='subregular'
+        self.endmembers = [[minerals.Myhill_calibration_iron.liquid_iron_HP(), '[Fe]'],[minerals.Fe_Si_O.Si_liquid(), '[Si]']]
+        self.enthalpy_interaction=[[[0.e3, 0.e3]]]
+        self.volume_interaction=[[[0., 0.]]]
+        burnman.SolidSolution.__init__(self, molar_fractions)
+
+
+Fe_Si_liq = liquid_Fe_Si()
+Fe_Si_liq.set_composition([0.5, 0.5])
+
+pressures = np.linspace(1.e9, 170.e9, 40)
 temperatures = np.empty_like(pressures)
+temperatures_ss = np.empty_like(pressures)
 for i, P in enumerate(pressures):
+    print P/1.e9
     if P < 30.e9:
         temperatures[i] = optimize.fsolve(eqm_temperature([B20, FeSi_melt], [1., -2.]), [2000.], args=(P))[0]
+        temperatures_ss[i] = optimize.fsolve(eqm_temperature([B20, Fe_Si_liq], [1., -2.]), [2000.], args=(P))[0]
     else:
         temperatures[i] = optimize.fsolve(eqm_temperature([B2, FeSi_melt], [1., -1.]), [2000.], args=(P))[0]
-
+        temperatures_ss[i] = 2000. # optimize.fsolve(eqm_temperature([B2, Fe_Si_liq], [1., -1.]), [2000.], args=(P))[0]
 
 plt.plot(pressures/1.e9, temperatures, label='Fitted curve')
+plt.plot(pressures/1.e9, temperatures_ss, label='Fitted curve (solid solution)')
 plt.plot(np.array(P_melting)/1.e9, np.array(T_melting), 'o', linestyle='None', label='Data')
 plt.show()
+
+
+
+
+
+
+
 
 exit()
 

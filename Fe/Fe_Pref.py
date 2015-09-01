@@ -42,7 +42,7 @@ T_obs = 2809.
 P_obs = 50.e9
 
 
-mineral=minerals.Myhill_calibration_iron.liquid_iron()
+mineral=minerals.Fe_Si_O.FeO_liquid()
 
 mineral.set_state(50.e9, 7000.)
 print mineral.gibbs

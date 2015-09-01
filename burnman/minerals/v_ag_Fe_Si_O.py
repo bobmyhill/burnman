@@ -21,16 +21,17 @@ class FeSi_B20 (Mineral): # WARNING, no magnetic properties to avoid screwing up
         self.params = {
             'name': 'FeSi B20',
             'formula': formula,
-            'equation_of_state': 'hp_tmt',
+            'equation_of_state': 'v_ag',
             'H_0': -78852. , # Barin
             'S_0': 44.685 , # Barin
             'V_0': 1.359e-05 ,
             'Cp': [38.6770, 0.0217569, -156.765, 0.00461],
-            'a_0': 3.285e-05 ,
+            'a_0': 3.057e-05 ,
             'K_0': 2.0565e+11 ,
             'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/2.0565e+11,
-            'n': sum(formula.values()),
+            'delta_0': 5.5,
+            'kappa': 1.4,
+            'T_0': 298.,
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
@@ -42,17 +43,17 @@ class FeSi_liquid (Mineral):
         self.params = {
             'name': 'Fe0.5Si0.5 liquid',
             'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'T_0': 1683.,
-            'P_0': 1.e5,
-            'H_0': 75015./2. , # Barin
-            'S_0': 183.619/2. , # Barin
-            'V_0': 8.2e-06 ,
+            'equation_of_state': 'v_ag',
+            'H_0': -40882./2. , # Barin
+            'S_0': 38.791/2. , # Barin
+            'V_0': 7.8e-06 ,
             'Cp': [83.680/2., 0., 0., 0.], # Barin
             'a_0': 3.057e-05 ,
-            'K_0': 1.09e+11 ,
+            'K_0': 1.15e+11 ,
             'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/1.09e+11,
+            'delta_0': 5.5,
+            'kappa': 1.4,
+            'T_0': 298.,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
@@ -64,7 +65,7 @@ class FeSi_B2 (Mineral): # No magnetism!!
         self.params = {
             'name': 'Fe0.5Si0.5 B2',
             'formula': formula,
-            'equation_of_state': 'hp_tmt',
+            'equation_of_state': 'v_ag',
             'H_0': -28180.3, # GJ2014 
             'S_0': 22.958,   # GJ2014
             'V_0': 6.3482e-06,
@@ -72,7 +73,9 @@ class FeSi_B2 (Mineral): # No magnetism!!
             'a_0': 3.331e-05 ,
             'K_0': 2.520e+11 ,
             'Kprime_0': 4.0,
-            'Kdprime_0': -4.0/2.520e+11,
+            'delta_0': 5.5,
+            'kappa': 1.4,
+            'T_0': 298.,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)

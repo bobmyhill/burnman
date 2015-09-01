@@ -31,12 +31,13 @@ Si_bcc=minerals.Fe_Si_O.Si_bcc_A2()
 Si_liq=minerals.Fe_Si_O.Si_liquid()
 
 Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
-Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
-Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
-Fe_liq=minerals.Myhill_calibration_iron.liquid_iron()
+Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron_HP()
+Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron_HP()
+Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
 #Fe_liq = minerals.Komabayashi_2014.liquid_iron()
 # Properties of Fe liquid
 
+'''
 Fe_melting = []
 f=open('data/Fe_melting_Anzellini_2003.dat', 'r')
 datastream = f.read()  # We need to open the file
@@ -80,7 +81,7 @@ plt.plot(P_obs/1.e9, T_obs, marker='.', linestyle='None')
 plt.plot(pressures/1.e9, temperatures_fcc)
 plt.plot(pressures/1.e9, temperatures_hcp)
 plt.show()
-
+'''
 
 # Properties of Si liquid 
 
@@ -378,7 +379,8 @@ for line in open('data/Si_thermal_expansion.dat'):
 T_a_Si, a_Si = zip(*Si_A4_a_data)
 a_Si=np.array(a_Si)*1.e-6
 
-guesses=np.array([1.e-6, 800.])
+
+guesses=np.array([8.e-6, 762.])
 popt, pcov = optimize.curve_fit(fitalpha(Si_A4), np.array(T_a_Si),  a_Si, guesses)
 print popt, pcov
 
