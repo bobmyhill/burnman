@@ -24,6 +24,8 @@ First, we import the minerals we will use
 '''
 B20=minerals.Fe_Si_O.FeSi_B20()
 B2=minerals.Fe_Si_O.FeSi_B2()
+FeSi_liq = minerals.Fe_Si_O.FeSi_liquid()
+
 Si_A4=minerals.Fe_Si_O.Si_diamond_A4()
 Si_fcc=minerals.Fe_Si_O.Si_fcc_A1()
 Si_hcp=minerals.Fe_Si_O.Si_hcp_A3()
@@ -36,8 +38,16 @@ Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron_HP()
 Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
 
 
-
-# Properties of Fe liquid
+# Properties of FeSi liquid (relative to Fe and Si) at 1 bar
+temperatures=np.linspace(1800., 3200., 8)
+old=0.
+for T in temperatures:
+    Fe_liq.set_state(1.e5, T)
+    Si_liq.set_state(1.e5, T)
+    FeSi_liq.set_state(1.e5, T)
+    new = FeSi_liq.gibbs - 0.5*(Fe_liq.gibbs + Si_liq.gibbs)
+    print T, new*2., new - old
+    old = new
 
 '''
 Fe_melting = []
