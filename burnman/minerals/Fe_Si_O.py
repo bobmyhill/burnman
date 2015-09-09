@@ -172,13 +172,13 @@ class Si_liquid (Mineral):
             'equation_of_state': 'hp_tmt',
             'H_0': 48471., # Barin, JANAF
             'S_0': 44.466, # Barin, JANAF
-            'V_0': 10.1e-6, # Fit to Kimura et al., 1997; 8.6145e-06 is Hallstedt, 2007, smaller than fcc
+            'V_0': 9.90e-6, # Fit to Chathoth et al., 2008; 8.6145e-06 is Hallstedt, 2007, smaller than fcc
             'Cp': [27.196, 0., 0., 0.], # Barin, JANAF
-            'a_0': 2.9e-05 , # Fit to Kimura et al., 1997
+            'a_0': 3.915e-05 , # Fit to Chathoth et al., 2008
             'T_einstein': 764., # As for others
-            'K_0': 70.00e9, # Fit to high pressure melting (see Cannon, 1974)
-            'Kprime_0': 6., # Similar to FCC, BCC, HCP
-            'Kdprime_0': -5.87/70.e9 , # HP heuristic
+            'K_0': 85.00e9, # Fit to high pressure melting (see Cannon, 1974)
+            'Kprime_0': 4., # Similar to A4
+            'Kdprime_0': -4./85.e9 , # HP heuristic
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)

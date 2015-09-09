@@ -103,6 +103,14 @@ Si_A4.set_state(P, T)
 Si_liq.set_state(P, T)
 print Si_liq.alpha, 28.0855/Si_liq.V/1.e6
 
+P = 1.e5
+T = 1687. # 1685.
+Si_A4.set_state(P, T)
+Si_liq.set_state(P, T)
+print Si_liq.alpha, 28.0855/Si_liq.V/1.e6
+print 'at 1687 K, density from Chathoth et al (2008) is 2.52 g/cm^3'
+print 'beta (volumetric coefficient of thermal expansion) is 1.37e-4 /K'
+
 '''
 temperatures = np.linspace(1650., 1950., 21)
 volumes = np.empty_like(temperatures)
