@@ -170,6 +170,7 @@ temperatures = []
 Hex0 = []
 Hex1 = []
 weighting=[]
+HP_weighting = 2.
 eutectic_weighting = 5.
 # HCP IRON above ~50 GPa (Seagle et al., 2008)
 for datum in eutectic_PTc:
@@ -194,13 +195,24 @@ for datum in eutectic_PTc:
 # FCC IRON
 for datum in solvus_PTcc:
     P, Perr, T, Terr, c0, c0err, c1, c1err = datum
-
+    print datum
     Hex = optimize.fsolve(fit_enthalpy_solvus, [0., 0.], args=([c0, c1], P, T, model))
     pressures.append(P)
     temperatures.append(T)
     Hex0.append(Hex[0])
     Hex1.append(Hex[1])
     weighting.append(1.)
+
+
+# Finally, apply the constraint that at very high pressures, excess volumes are zero
+ideal_pressures = np.linspace(200.e9, 300.e9, 5)
+T = 3000.
+for P in ideal_pressures:
+    pressures.append(P)
+    temperatures.append(T)
+    Hex0.append(0.)
+    Hex1.append(0.)
+    weighting.append(HP_weighting)
 
 plt.plot(pressures, Hex0, marker='o', linestyle='None', label='0')
 plt.plot(pressures, Hex1, marker='o', linestyle='None', label='1')
@@ -210,7 +222,7 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 
 # Fit excess properties
 class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember without the entropy of mixing
-    def __init__(self, Hex, Sex, Vex, Kex, aex):
+    def __init__(self, Hex, Sex, Vex, Kex, Kpex, aex):
         formula='Fe1.0O0.5'
         formula = dictionarize_formula(formula)
         V_0 = (FeO_liq.params['V_0'] + Fe_liq.params['V_0'])/2. + Vex
@@ -220,8 +232,9 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
                            + Fe_liq.params['a_0']*Fe_liq.params['V_0'])) + aex
         Kprime_0 = V_0*(1. / (0.5*(FeO_liq.params['V_0']/(FeO_liq.params['Kprime_0']+1.)
                                    + Fe_liq.params['V_0']/(Fe_liq.params['Kprime_0']+1.)))) \
-                                   - 1.
+                                   - 1. + Kpex
         #Kprime_0 = 2./(1./FeO_liq.params['Kprime_0'] + 1./Fe_liq.params['Kprime_0'])
+
         self.params = {
             'name': 'Liquid iron excesses',
             'formula': formula,
@@ -251,11 +264,11 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
 #H1 = 135943./4.
 #S1 = 31.122/4.
 
-def fit_data(xdata, H0, H1, S0, S1, V0, V1, K0, K1):
+def fit_data(xdata, H0, H1, V0, V1, K0, K1, Kp0, Kp1):
     print V0, V1, K0, K1
     # initialise properties
-    intermediate_0 = Fe_FeO_liq(H0, S0, V0, K0, 0.0)
-    intermediate_1 = Fe_FeO_liq(H1, S1, V1, K1, 0.0)
+    intermediate_0 = Fe_FeO_liq(H0, 0.0, V0, K0, Kp0, 0.0)
+    intermediate_1 = Fe_FeO_liq(H1, 0.0, V1, K1, Kp1, 0.0)
     
     excesses = []
     for x in xdata:
@@ -282,14 +295,14 @@ for i, P in enumerate(pressures):
     sigmas.append(1./weighting[i])
     sigmas.append(1./weighting[i])
 
-guesses = [0., 0., 0., 0., -0.84e-6, -0.56e-6, 75.e9, 66.e9]
+guesses = [0., 0., -0.84e-6, -0.56e-6, 75.e9, 66.e9, 0.0, 0.0]
 popt, pcov = optimize.curve_fit(fit_data, xdata, ydata, guesses, sigmas)
 
 print popt, pcov
 
-H0, H1, S0, S1, V0, V1, K0, K1 = popt
-intermediate_0 = Fe_FeO_liq(H0, S0, V0, K0, 0.0)
-intermediate_1 = Fe_FeO_liq(H1, S1, V1, K1, 0.0)
+H0, H1, V0, V1, K0, K1, Kp0, Kp1 = popt
+intermediate_0 = Fe_FeO_liq(H0, 0.0, V0, K0, Kp0, 0.0)
+intermediate_1 = Fe_FeO_liq(H1, 0.0, V1, K1, Kp1, 0.0)
 
 
 Gex0 = []
@@ -399,11 +412,6 @@ def eutectic_liquid(cT, P, model, intermediate_0, intermediate_1, Fe_phase, FeO_
                   FeO_phase.calcgibbs(P, T) - ( FeO_liq.calcgibbs(P, T) + partial_excesses[1] ) ]
     return equations
 
-
-
-intermediate_0 = Fe_FeO_liq(H0, S0, V0, K0, 0.0)
-intermediate_1 = Fe_FeO_liq(H1, S1, V1, K1, 0.0)
-
 print ''
 print Fe_liq.params['V_0'], Fe_liq.params['K_0'], Fe_liq.params['V_0']*Fe_liq.params['K_0']
 print FeO_liq.params['V_0'], FeO_liq.params['K_0'], FeO_liq.params['V_0']*FeO_liq.params['K_0']
@@ -438,8 +446,8 @@ for T in temperatures:
                                  args=(P, T, model), factor = 0.1, xtol=1.e-12)
         compositions_1[i] = c1
         compositions_2[i] = c2
-    plt.plot(compositions_1, pressures/1.e9, label='Metallic')
-    plt.plot(compositions_2, pressures/1.e9, label='Ionic')
+    plt.plot(compositions_1, pressures/1.e9, label='Metallic at '+str(T)+' K')
+    plt.plot(compositions_2, pressures/1.e9, label='Ionic at '+str(T)+' K')
 
 plt.plot(solvus_PTcc[4], solvus_PTcc[0]/1.e9, marker='o', linestyle='None')
 plt.plot(solvus_PTcc[6], solvus_PTcc[0]/1.e9, marker='o', linestyle='None')
@@ -474,3 +482,9 @@ plt.plot(eutectic_PT[0]/1.e9, eutectic_PT[2], marker='o', linestyle='None', labe
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[2], marker='o', linestyle='None', label='Model')
 plt.legend(loc='lower right')
 plt.show()
+
+
+
+
+print intermediate_0.params
+print intermediate_1.params

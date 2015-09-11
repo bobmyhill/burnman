@@ -29,9 +29,12 @@ class FeO_MgO_SiO2_liquid(burnman.SolidSolution):
         self.name='Subregular MgO-SiO2 liquid'
         self.type='subregular'
 
-        self.endmembers = [[DKS_2013_liquids.MgO_liquid(), '[Fe]O'],
-                           [DKS_2013_liquids.MgO_liquid(), '[Mg]O'], 
-                           [DKS_2013_liquids.SiO2_liquid(), '[Si]O2']]
+        self.endmembers = [[burnman.minerals.DKS_2013_liquids.MgO_liquid(), 
+                            '[Fe]O'],
+                           [burnman.minerals.DKS_2013_liquids.MgO_liquid(), 
+                            '[Mg]O'], 
+                           [burnman.minerals.DKS_2013_liquids.SiO2_liquid(), 
+                            '[Si]O2']]
 
         self.enthalpy_interaction = [[[0., 0.], 
                                       [-108600., -182300.]],
