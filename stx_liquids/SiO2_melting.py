@@ -40,17 +40,27 @@ def find_temperature(temperature, pressure, phase1, phase2, factor):
     phase2.set_state(pressure, temperature[0])
     return phase1.gibbs*factor - phase2.gibbs
 
+def find_univariant(pt, phase1, phase2, phase3):
+    pressure, temperature = pt
+    phase1.set_state(pressure, temperature)
+    phase2.set_state(pressure, temperature)
+    phase3.set_state(pressure, temperature)
+    return [phase1.gibbs - phase2.gibbs,
+            phase1.gibbs - phase3.gibbs]
 
 
-P = 13.7e9
+Pinv, Tinv = fsolve(find_univariant, [13.e9, 3000.], args=(stv, coe, SiO2_liq_HP))
+
+
+P = Pinv
 print 'coe<->stv @ 13.7 GPa:', fsolve(find_temperature, [2000.], args=(P, stv, coe, 1.))[0]
-T = 2800.+273.15
+T = Tinv
 stv.set_state(P, T)
 stv_DKS.set_state(P, T)
 coe.set_state(P, T)
 SiO2_liq.set_state(P, T)
 SiO2_liq_HP.set_state(P, T)
-print coe.V, SiO2_liq.V, 'volume difference should be very small'
+print coe.V, SiO2_liq_HP.V, 'volume difference should be very small'
 
 print 'Smelt:'
 print SiO2_liq_HP.S - stv.S, '(HP)'
@@ -59,15 +69,13 @@ print SiO2_liq.S - stv_DKS.S, '(DKS)'
 
 T=fsolve(find_temperature, [2000.], args=(P, stv_DKS, SiO2_liq, 1.))[0]
 
-P = 13.7e9
-print 'Tmelt @ 13.7 GPa:'
-print fsolve(find_temperature, [2000.], args=(P, stv_DKS, SiO2_liq, 1.))[0]
-print fsolve(find_temperature, [2000.], args=(P, stv, SiO2_liq_HP, 1.))[0]
+pressures = [1.e9, 5.e9, 10.e9, 12.e9, Pinv, 50.e9, 100.e9, 500.e9]
+for P in pressures:
+    if P < Pinv:
+        print 'Tmelt (coe, new model) @', P/1.e9, 'GPa:', fsolve(find_temperature, [2000.], args=(P, coe, SiO2_liq_HP, 1.))[0]
+    else:
+        print 'Tmelt (stv, new/old models) @', P/1.e9, 'GPa:', fsolve(find_temperature, [2000.], args=(P, stv_DKS, SiO2_liq, 1.))[0], fsolve(find_temperature, [2000.], args=(P, stv, SiO2_liq_HP, 1.))[0]
 
-P = 100.e9
-print 'Tmelt @ 100 GPa:'
-print fsolve(find_temperature, [2000.], args=(P, stv_DKS, SiO2_liq, 1.))[0]
-print fsolve(find_temperature, [2000.], args=(P, stv, SiO2_liq_HP, 1.))[0]
 
 '''
 SiO2_liq.set_state(P, T)
