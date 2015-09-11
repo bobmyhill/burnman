@@ -96,8 +96,8 @@ class SiO2_liquid(Mineral):
             'eta': -0.2783503528 ,
             'el_V_0': 1e-06
             }
-        Fxs=1559. # kJ/mol
-        Sxs=13.e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        Fxs=1552. # kJ/mol
+        Sxs=16.5e-3 # kJ/mol
         Kxs=0.
         Pxs=0.
         adjust_vector_a(Fxs, Sxs, Pxs, Kxs, self.params)
