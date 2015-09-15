@@ -38,27 +38,42 @@ SiO2_liq = Myhill_silicate_liquid.SiO2_liquid()
 SiO2_liq.set_state(1.e5, 1996.)
 coe.set_state(1.e5, 1996.)
 
+coe.set_state(13.7e9, 3073.15)
+print coe.V
+
+stv.set_state(13.7e9, 3073.15)
+print stv.S + 40.
+
+print stv.gibbs + 3073.15*(stv.S + 40.)
+
 print SiO2_liq.gibbs, coe.gibbs
 print optimize.fsolve(eqm_temperature([coe, SiO2_liq], [1., -1.]), [2000.], args=(1.e5))
 print optimize.fsolve(eqm_temperature([coe, SiO2_liq], [1., -1.]), [2000.], args=(2.e9))
-print optimize.fsolve(invariant, [13.e9, 2000.])
+Pinv, Tinv = optimize.fsolve(invariant, [13.e9, 2000.])
+coe.set_state(Pinv, Tinv)
+stv.set_state(Pinv, Tinv)
+SiO2_liq.set_state(Pinv, Tinv)
+print Pinv/1.e9, Tinv
+print 'volumes should be equal at invariant', coe.V, SiO2_liq.V
+print 'entropy of melting should be ca. 40 J/K/mol', SiO2_liq.S - stv.S
+
 
 pressures_q = np.linspace(1.e5, 5.e9, 20)
 temperatures_q = np.empty_like(pressures_q)
 for i, P in enumerate(pressures_q):
-    temperatures_q[i] = optimize.fsolve(eqm_temperature([q, SiO2_liq], [1., -1.]), [3000.], args=(P))
+    temperatures_q[i] = optimize.fsolve(eqm_temperature([q, SiO2_liq], [1., -1.]), [2000.], args=(P))
 
 pressures_coe = np.linspace(4.e9, 14.e9, 20)
 temperatures_coe = np.empty_like(pressures_coe)
 for i, P in enumerate(pressures_coe):
-    temperatures_coe[i] = optimize.fsolve(eqm_temperature([coe, SiO2_liq], [1., -1.]), [3000.], args=(P))
+    temperatures_coe[i] = optimize.fsolve(eqm_temperature([coe, SiO2_liq], [1., -1.]), [2000.], args=(P))
 
 pressures_coe_stv = np.linspace(6.e9, 14.e9, 20)
 temperatures_coe_stv = np.empty_like(pressures_coe_stv)
 for i, P in enumerate(pressures_coe_stv):
-    temperatures_coe_stv[i] = optimize.fsolve(eqm_temperature([coe, stv], [1., -1.]), [3000.], args=(P))
+    temperatures_coe_stv[i] = optimize.fsolve(eqm_temperature([coe, stv], [1., -1.]), [2000.], args=(P))
 
-pressures_stv = np.linspace(12.e9, 70.e9, 50)
+pressures_stv = np.linspace(12.e9, 250.e9, 200)
 temperatures_stv = np.empty_like(pressures_stv)
 for i, P in enumerate(pressures_stv):
     temperatures_stv[i] = optimize.fsolve(eqm_temperature([stv, SiO2_liq], [1., -1.]), [3000.], args=(P))
@@ -67,8 +82,8 @@ plt.plot(pressures_coe_stv/1.e9, temperatures_coe_stv-273.15)
 plt.plot(pressures_coe/1.e9, temperatures_coe-273.15)
 plt.plot(pressures_q/1.e9, temperatures_q-273.15)
 plt.plot(pressures_stv/1.e9, temperatures_stv-273.15)
-plt.xlim(0., 20.)
-plt.ylim(1400., 3500.)
+#plt.xlim(0., 20.)
+#plt.ylim(1400., 3500.)
 plt.ylabel('Temperature (C)')
 plt.show()
 

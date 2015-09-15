@@ -33,6 +33,29 @@ class FeO_liquid (Mineral):
             'n': sum(formula.values()),}
         Mineral.__init__(self)
 
+'''
+class SiO2_liquid (Mineral):
+    def __init__(self):
+        formula='Si1.0O2.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'SiO2 liquid',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'T_0': 3073., # inv
+            'P_0': 13.7e9, # inv
+            'H_0': -370029., # inv
+            'S_0': 216.414+5., # inv
+            'Cp': [85.772, 0., 0., 0.], # Barin
+            'V_0': 1.90274743333e-05, # inv, 27.3e-6 at 1673 K (Bockris et al., 1956)
+            'K_0': 70.e9 , # To fit
+            'Kprime_0': 5., # To fit
+            'Kdprime_0': -0.03e-10, # To fit
+            'a_0': 1.0e-05, # Lange and Carmichael, 1987
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'n': sum(formula.values()),}
+        Mineral.__init__(self)
+'''
 class SiO2_liquid (Mineral):
     def __init__(self):
         formula='Si1.0O2.0'
@@ -46,9 +69,9 @@ class SiO2_liquid (Mineral):
             'S_0': 172.626, # Barin
             'Cp': [85.772, 0., 0., 0.], # Barin
             'V_0': 27.39e-6, # 27.3e-6 at 1673 K (Bockris et al., 1956)
-            'K_0': 13.7e9 , # To fit
-            'Kprime_0': 5.3, # To fit
-            'Kdprime_0': -5.3/13.7e9, # To fit
+            'K_0': 13.4e9 , # To fit
+            'Kprime_0': 5.0, # To fit
+            'Kdprime_0': -0.9e-10, # To fit
             'a_0': 1.0e-05, # Lange and Carmichael, 1987
             'molar_mass': formula_mass(formula, atomic_masses),
             'n': sum(formula.values()),}
@@ -62,11 +85,11 @@ class stv (Mineral):
             'name': 'stv',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -885000.0 , # was -876390.0
+            'H_0': -880000.0 , # was -876390.0
             'S_0': 24.0 ,
             'V_0': 1.401e-05 ,
             'Cp': [68.1, 0.00601, -1978200.0, -82.1] ,
-            'a_0': 1.58e-05 ,
+            'a_0': 1.4e-05 , # was 1.58
             'K_0': 3.09e+11 ,
             'Kprime_0': 4.6 ,
             'Kdprime_0': -1.5e-11 ,
