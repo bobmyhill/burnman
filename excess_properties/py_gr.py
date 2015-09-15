@@ -43,9 +43,8 @@ intermediate0 = minerals.HP_2011_ds62.py()
 intermediate1 = minerals.HP_2011_ds62.py()
 
 
-H_ex0, H_ex1, S_ex0, S_ex1 = [0., 0., 0., 0.] # Ganguly params
+H_ex0, H_ex1, S_ex0, S_ex1 = [9834.*3., 21627.*3., 5.78*3., 5.78*3.] # Ganguly params
 Sconf = -2.*burnman.constants.gas_constant*0.5*3.*np.log(0.5) # 2 atoms mixing, equal proportions (0.5) on 3 sites
-print Sconf
 
 # Cp_scaling = ((py.params['S_0'] + gr.params['S_0'])*0.5 + S_ex/4)/((py.params['S_0'] + gr.params['S_0'])*0.5)
 # Haselton and Westrum (1980) show that the excess entropy is primarily a result of a low temperature spike in Cp
@@ -68,9 +67,9 @@ class mg_fe_ca_garnet_Ganguly(burnman.SolidSolution):
         self.name='Subregular pyrope-almandine-grossular garnet'
         self.type='subregular'
         self.endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],[minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'], [minerals.HP_2011_ds62.spss(), '[Mn]3[Al]2Si3O12']]
-        self.enthalpy_interaction=[[[2117., 695.], [0., 0.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
+        self.enthalpy_interaction=[[[2117., 695.], [9834., 21627.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
         self.volume_interaction=[[[0.07e-5, 0.], [0.058e-5, 0.012e-5], [0.04e-5, 0.03e-5]],[[0.03e-5, 0.],[0.04e-5, 0.01e-5]],[[0., 0.]]]
-        self.entropy_interaction=[[[0., 0.], [0., 0.], [7.67, 7.67]],[[1.69, 1.69],[0., 0.]],[[0., 0.]]]
+        self.entropy_interaction=[[[0., 0.], [5.78, 5.78], [7.67, 7.67]],[[1.69, 1.69],[0., 0.]],[[0., 0.]]]
         
         # Published values are on a 4-oxygen (1-cation) basis
         for interaction in [self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction]:
@@ -97,13 +96,19 @@ class pyrope_grossular_binary(burnman.SolidSolution):
 garnet = pyrope_grossular_binary()
 
 
-def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vi1, Ki1, ai1, Vgr, Kgr, agr):
+def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
+    
+    Vi1 = Vi0
+    Ki1 = Ki0
+    ai1 = ai0
+    
     Kppy=4.4 # pyrope.params['Kprime_0']
     Kpgr=5.5 # grossular.params['Kprime_0']
 
     V_int = 0.5*(Vi0+Vi1)
     Kpi0 = V_int/(0.5*(Vpy/(Kppy+1.) + Vgr/(Kpgr+1.))) - 1.
     Kpi1=Kpi0
+
     
     pyrope.params['V_0'] = Vpy
     pyrope.params['K_0'] = Kpy
@@ -141,7 +146,6 @@ def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vi1, Ki1, ai1, Vgr, Kgr, agr
 cPT_obs = zip(*[p_py, P_obs, T_obs])
 guesses = [pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['a_0'], \
            pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['a_0'], \
-           pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['a_0'], \
            grossular.params['V_0'], grossular.params['K_0'], grossular.params['a_0']]
 
 
@@ -151,6 +155,7 @@ for i, p in enumerate(popt):
     print p, np.sqrt(pcov[i][i])
 
 
+print 'WARNING: K_0 for intermediates tweaked here'
 intermediate0.params['K_0'] += 3.e9 # Tweak to make sure excess volume doesn't go negative
 intermediate1.params['K_0'] += 3.e9 # Tweak to make sure excess volume doesn't go negative
 
