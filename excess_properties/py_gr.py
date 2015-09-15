@@ -43,8 +43,9 @@ intermediate0 = minerals.HP_2011_ds62.py()
 intermediate1 = minerals.HP_2011_ds62.py()
 
 
-H_ex0, H_ex1, S_ex0, S_ex1 = [9834., 21627., 5.78, 5.78] # Ganguly params
-Sconf = -2.*burnman.constants.gas_constant*0.5*3.*np.log(0.5)
+H_ex0, H_ex1, S_ex0, S_ex1 = [0., 0., 0., 0.] # Ganguly params
+Sconf = -2.*burnman.constants.gas_constant*0.5*3.*np.log(0.5) # 2 atoms mixing, equal proportions (0.5) on 3 sites
+print Sconf
 
 # Cp_scaling = ((py.params['S_0'] + gr.params['S_0'])*0.5 + S_ex/4)/((py.params['S_0'] + gr.params['S_0'])*0.5)
 # Haselton and Westrum (1980) show that the excess entropy is primarily a result of a low temperature spike in Cp
@@ -56,7 +57,7 @@ Cp_pygr = [(pyrope.params['Cp'][0] + grossular.params['Cp'][0])*0.5*Cp_scaling,
            (pyrope.params['Cp'][2] + grossular.params['Cp'][2])*0.5*Cp_scaling,
            (pyrope.params['Cp'][3] + grossular.params['Cp'][3])*0.5*Cp_scaling]
 
-intermediate0.params['H_0'] = 0.5*(pyrope.params['H_0'] + grossular.params['H_0']) + H_ex0/4.
+intermediate0.params['H_0'] = 0.5*(pyrope.params['H_0'] + grossular.params['H_0']) + H_ex0/4
 intermediate1.params['H_0'] = 0.5*(pyrope.params['H_0'] + grossular.params['H_0']) + H_ex1/4.
 intermediate0.params['S_0'] = 0.5*(pyrope.params['S_0'] + grossular.params['S_0']) + Sconf + S_ex0/4.
 intermediate1.params['S_0'] = 0.5*(pyrope.params['S_0'] + grossular.params['S_0']) + Sconf + S_ex1/4.
@@ -67,9 +68,9 @@ class mg_fe_ca_garnet_Ganguly(burnman.SolidSolution):
         self.name='Subregular pyrope-almandine-grossular garnet'
         self.type='subregular'
         self.endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],[minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'], [minerals.HP_2011_ds62.spss(), '[Mn]3[Al]2Si3O12']]
-        self.enthalpy_interaction=[[[2117., 695.], [9834., 21627.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
+        self.enthalpy_interaction=[[[2117., 695.], [0., 0.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
         self.volume_interaction=[[[0.07e-5, 0.], [0.058e-5, 0.012e-5], [0.04e-5, 0.03e-5]],[[0.03e-5, 0.],[0.04e-5, 0.01e-5]],[[0., 0.]]]
-        self.entropy_interaction=[[[0., 0.], [5.78, 5.78], [7.67, 7.67]],[[1.69, 1.69],[0., 0.]],[[0., 0.]]]
+        self.entropy_interaction=[[[0., 0.], [0., 0.], [7.67, 7.67]],[[1.69, 1.69],[0., 0.]],[[0., 0.]]]
         
         # Published values are on a 4-oxygen (1-cation) basis
         for interaction in [self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction]:
@@ -160,6 +161,8 @@ intermediate1.params['K_0'] += 3.e9 # Tweak to make sure excess volume doesn't g
 compositions = np.linspace(0.0, 1.0, 101)
 excess_gibbs_garnet = np.empty_like(compositions)
 excess_gibbs_garnet_ganguly = np.empty_like(compositions)
+bulk_moduli_garnet = np.empty_like(compositions)
+bulk_moduli_garnet_ganguly = np.empty_like(compositions)
 for i, c in enumerate(compositions):
     garnet.set_composition([c, 1.-c])
     garnet_ganguly.set_composition([c, 0., 1.-c, 0.])
@@ -168,10 +171,17 @@ for i, c in enumerate(compositions):
     garnet_ganguly.set_state(1.e5, 298.15)
 
     excess_gibbs_garnet[i] = garnet.excess_gibbs
-    excess_gibbs_garnet_ganguly[i] = garnet.excess_gibbs
+    excess_gibbs_garnet_ganguly[i] = garnet_ganguly.excess_gibbs
+    bulk_moduli_garnet[i] = garnet.K_T
+    bulk_moduli_garnet_ganguly[i] = garnet_ganguly.K_T
 
+    
 plt.plot(compositions, excess_gibbs_garnet, marker='o', linestyle='None')
 plt.plot(compositions, excess_gibbs_garnet_ganguly)
+plt.show()
+
+plt.plot(compositions, bulk_moduli_garnet, marker='o', linestyle='None')
+plt.plot(compositions, bulk_moduli_garnet_ganguly)
 plt.show()
     
 # Plot volumes obtained from the model
