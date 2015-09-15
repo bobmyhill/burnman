@@ -149,8 +149,8 @@ guesses = [jadeite.params['V_0'], jadeite.params['K_0'], \
 
 popt, pcov = curve_fit(fit_ss_data, cP_obs, V_obs, guesses, Verr_obs)
 
-print popt
-
+for i, p in enumerate(popt):
+    print p, np.sqrt(pcov[i][i])
 
 
 comps = np.linspace(0.0, 1.0, 101)
@@ -220,3 +220,11 @@ print 'Bulk modulus excess according to KV:', (KV_average/V - K_average)/1.e9, '
 print 'Bulk modulus excess is actually', (K_T - K_average)/1.e9, 'GPa'
 
 
+print (K_T - K_average)/(KV_average/V - K_average)
+
+
+
+print jadeite.params
+print aegirine.params
+print intermediate0.params
+print intermediate1.params
