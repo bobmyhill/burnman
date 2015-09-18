@@ -124,6 +124,8 @@ for i, T in enumerate(temperatures):
     pressures[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage, multiplicities))[0]
     pressures_2[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage_2, multiplicities_2))[0]
     mft.set_state(pressures[i], T)
+    per.set_state(pressures[i], T)
+    mg2fe2o5.set_state(pressures[i], T)
     print pressures[i]/1.e9, T, mft.gibbs + per.gibbs - mg2fe2o5.gibbs, 'should be positive for this line to be stable relative to mft + per' 
 plt.plot(pressures/1.e9, temperatures - 273.15)
 plt.plot(pressures_2/1.e9, temperatures - 273.15)

@@ -97,9 +97,10 @@ def fit_data(equilibria, Hex):
     return XMg2SiO4_diff
 
 guesses = [0.]
-print optimize.curve_fit(fit_data, equilibria, zeros, guesses)
+popt, pcov = optimize.curve_fit(fit_data, equilibria, zeros, guesses)
 
-
+for i, p in enumerate(popt):
+    print p, '+/-', np.sqrt(pcov[i][i])
 
 
 print ''
