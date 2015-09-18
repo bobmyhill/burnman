@@ -190,3 +190,12 @@ def eqm_temperature(minerals, multiplicities):
             gibbs = gibbs + mineral.gibbs*multiplicities[i]
         return gibbs
     return eqm
+
+def invariant(minerals):
+    def eqm(data):
+        P, T = data
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P, T)
+        return [minerals[0].gibbs - minerals[1].gibbs, \
+                minerals[0].gibbs - minerals[2].gibbs]
+    return eqm

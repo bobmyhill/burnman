@@ -56,18 +56,35 @@ popt, pcov = optimize.curve_fit(fit_PVT_data_Ka(FeO), PT, V_FeO, guesses, Verr_F
 for i, p in enumerate(popt):
     print popt[i], '+/-', np.sqrt(pcov[i][i])
 
-# Now for the liquid
 
-pressures = np.linspace(1.e9, 200.e9, 20)
+    
+# Plot the melting temperature of Fe and FeO
+P_inv, T_inv = optimize.fsolve(invariant([Fe_hcp, Fe_fcc, Fe_liq]), [70.e9, 3000.])
+
+melting_pressures = np.linspace(1.e9, 200.e9, 200)
+fcc_hcp_pressures = np.linspace(50.e9, P_inv, 50)
+
 #pressures = [10.e9, 20.e9, 30.e9, 65.e9]
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = optimize.fsolve(eqm_temperature([FeO, FeO_liq], [1., -1.]), [2000.], args=(P))[0]
-    print P/1.e9, temperatures[i]
+melting_temperatures_FeO = np.empty_like(melting_pressures)
+melting_temperatures_Fe = np.empty_like(melting_pressures)
+fcc_hcp_temperatures = np.empty_like(fcc_hcp_pressures)
+for i, P in enumerate(fcc_hcp_pressures):
+    fcc_hcp_temperatures[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_hcp], [1., -1.]), [2000.], args=(P))[0]
+    
+for i, P in enumerate(melting_pressures):
+    melting_temperatures_FeO[i] = optimize.fsolve(eqm_temperature([FeO, FeO_liq], [1., -1.]), [2000.], args=(P))[0]
 
-plt.plot(pressures, temperatures)
-#plt.plot(pressures, temperatures_Komabayashi)
+    if P < P_inv:
+        melting_temperatures_Fe[i] = optimize.fsolve(eqm_temperature([Fe_fcc, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+    else:
+        melting_temperatures_Fe[i] = optimize.fsolve(eqm_temperature([Fe_hcp, Fe_liq], [1., -1.]), [2000.], args=(P))[0]
+
+
+plt.plot(fcc_hcp_pressures/1.e9, fcc_hcp_temperatures)
+plt.plot(melting_pressures/1.e9, melting_temperatures_Fe)
+plt.plot(melting_pressures/1.e9, melting_temperatures_FeO)
 plt.show()
+
 
 
 
@@ -164,8 +181,8 @@ temperatures = []
 Hex0 = []
 Hex1 = []
 weighting=[]
-HP_weighting = 2.
-eutectic_weighting = 5.
+HP_weighting = 2
+eutectic_weighting = 3.
 # HCP IRON above ~50 GPa (Seagle et al., 2008)
 for datum in eutectic_PTc:
     P, Perr, T, Terr, c, cerr = datum
@@ -200,7 +217,7 @@ for datum in solvus_PTcc:
 
 # Finally, apply the constraint that at very high pressures, excess volumes are zero
 ideal_pressures = np.linspace(200.e9, 300.e9, 5)
-T = 3000.
+T = 4000.
 for P in ideal_pressures:
     pressures.append(P)
     temperatures.append(T)
@@ -314,6 +331,14 @@ plt.plot(pressures, Gex0, marker='o', linestyle='None', label='0, Fit')
 plt.plot(pressures, Gex1, marker='o', linestyle='None', label='1 , Fit')
 
 
+# Also print this data to file
+filename = 'figures/data/Fe_FeO_interaction_parameters_observed.dat'
+f = open(filename, 'w')
+for i, P in enumerate(pressures):
+    f.write(str(P/1.e9)+' '+str(Hex0[i]/1.e3)+' '+str(Hex1[i]/1.e3)+'\n')
+f.close()
+print 'Data (over)written to file', filename
+
 
 pressures = np.linspace(1.e9, 200.e9, 100)
 temperatures = [2273., 3273.]
@@ -326,6 +351,9 @@ ideal = np.empty_like(pressures)
 
 for T in temperatures:
     print 'Calculating interaction parameters at', T, 'K'
+    # Also print this data to file
+    filename = 'figures/data/Fe_FeO_interaction_parameters_'+str(T)+'K.dat'
+    f = open(filename, 'w')
     for i, P in enumerate(pressures):
 
         
@@ -333,11 +361,17 @@ for T in temperatures:
                     - 0.5*(Fe_liq.calcgibbs(P,T) + FeO_liq.calcgibbs(P,T)))
         W1[i] = 4.*(intermediate_1.calcgibbs(P,T) \
                     - 0.5*(Fe_liq.calcgibbs(P,T) + FeO_liq.calcgibbs(P,T)))
+
         
-        W0_Frost[i] = 135943. - 31.122*T - 0.059*P/1.e5 # P in bars
-        W1_Frost[i] = 83307. - 8.978*T - 0.09*P/1.e5
+        W0_Frost[i] = 83307. - 8.978*T - 0.09*P/1.e5 # Fe-FeO,  P in bars
+        W1_Frost[i] = 135943. - 31.122*T - 0.059*P/1.e5 # FeO-Fe
         
         ideal[i] = 0.
+
+        f.write(str(P/1.e9)+' '+str(W0[i]/1000.)+' ' \
+                +str(W1[i]/1000.)+' '+str(W0_Frost[i]/1000.)+' ' \
+                +str(W1_Frost[i]/1000.)+' '+str(ideal[i]/1000.)+'\n')
+        
     if T <3000:
         plt.plot(pressures, W0, 'r--', label='W0, '+str(T))
         plt.plot(pressures, W1, 'r-.', label='W1, '+str(T))
@@ -351,6 +385,12 @@ for T in temperatures:
         plt.plot(pressures, W1_Frost, 'g--', linewidth=2, label='W1 Frost, '+str(T))
         plt.plot(pressures, ideal, 'b-', linewidth=2, label='ideal (Komabayashi)')
 
+
+
+    f.write('\n')
+    f.close()
+    print 'Data (over)written to file', filename
+        
 plt.legend(loc='lower left')
 plt.show()
 
@@ -417,14 +457,18 @@ print Fe_liq.params['Kprime_0'], FeO_liq.params['Kprime_0'], intermediate_0.para
 
 
 # Plot solvus
-temperatures = [2173., 2273., 2373., 2473., 2573.]
-pressures = np.linspace(1.e5, 28.e9, 30)
+# Also print this data to file
+filename = 'figures/data/Fe_FeO_solvus.dat'
+f = open(filename, 'w')
 
-compositions_1 = np.empty_like(pressures)
-compositions_2 = np.empty_like(pressures)
+temperatures = [2173., 2273., 2373., 2473., 2573.]
+pressures = np.linspace(1.e5, 28.e9, 200)
 
 
 for T in temperatures:
+    solvus_pressures = []
+    compositions_1 = []
+    compositions_2 = []
     c1=0.01
     c2=0.99
     for i, P in enumerate(pressures):
@@ -438,10 +482,30 @@ for T in temperatures:
         burnman.SolidSolution.__init__(model)
         c1, c2 = optimize.fsolve(eqm_two_liquid, [c1, c2], 
                                  args=(P, T, model), factor = 0.1, xtol=1.e-12)
-        compositions_1[i] = c1
-        compositions_2[i] = c2
-    plt.plot(compositions_1, pressures/1.e9, label='Metallic at '+str(T)+' K')
-    plt.plot(compositions_2, pressures/1.e9, label='Ionic at '+str(T)+' K')
+        if np.abs(c1 - c2) > 0.00001:
+            solvus_pressures.append(P)
+            compositions_1.append(c1)
+            compositions_2.append(c2)
+
+    solvus_pressures = np.array(solvus_pressures)
+    compositions_1 = np.array(compositions_1)
+    compositions_2 = np.array(compositions_2)
+    reversed_pressures = solvus_pressures[::-1]
+    reversed_compositions_2 = compositions_2[::-1]
+
+    solvus_pressures = np.concatenate((solvus_pressures, reversed_pressures))
+    solvus_compositions = np.concatenate((compositions_1, reversed_compositions_2))
+    plt.plot(solvus_compositions, solvus_pressures/1.e9, label='Solvus at '+str(T)+' K')
+
+    f.write('>>\n')
+    for i, c in enumerate(solvus_compositions):
+        f.write(str(c)+' '+str(solvus_pressures[i]/1.e9)+'\n')
+
+
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
 
 plt.plot(solvus_PTcc[4], solvus_PTcc[0]/1.e9, marker='o', linestyle='None')
 plt.plot(solvus_PTcc[6], solvus_PTcc[0]/1.e9, marker='o', linestyle='None')
@@ -452,12 +516,12 @@ plt.show()
 
 
 # Plot eutectic temperatures and compositions
-pressures = np.linspace(30.e9, 250.e9, 100)
-eutectic_compositions = np.empty_like(pressures)
-eutectic_temperatures = np.empty_like(pressures)
+eutectic_pressures = np.linspace(30.e9, 200.e9, 100)
+eutectic_compositions = np.empty_like(eutectic_pressures)
+eutectic_temperatures = np.empty_like(eutectic_pressures)
 
 c, T = [0.5, 4000.]
-for i, P in enumerate(pressures):
+for i, P in enumerate(eutectic_pressures):
     print c, T
     c, T = optimize.fsolve(eutectic_liquid, [c, T], 
                            args=(P, model, intermediate_0, intermediate_1, Fe_hcp, FeO))
@@ -466,12 +530,53 @@ for i, P in enumerate(pressures):
     eutectic_temperatures[i] = T
 
 
-plt.plot(pressures/1.e9, eutectic_compositions)
+
+# Plot eutectic compositions
+# Also print this data to file
+filename = 'figures/data/composition_Fe_FeO_melt.dat'
+f = open(filename, 'w')
+
+f.write('>>\n')
+for i, P in enumerate(eutectic_pressures):
+    f.write(str(P/1.e9)+' '+str(eutectic_compositions[i])+'\n')
+
+
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
+plt.plot(eutectic_pressures/1.e9, eutectic_compositions)
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[4], marker='o', linestyle='None', label='Model')
 plt.legend(loc='lower right')
 plt.show()
 
-plt.plot(pressures/1.e9, eutectic_temperatures)
+
+# Plot melting temperatures of the eutectic composition, and of Fe and FeO
+# Also print this data to file
+filename = 'figures/data/temperature_Fe_FeO_melt.dat'
+f = open(filename, 'w')
+
+f.write('>> -W0.5,blue \n')
+for i, P in enumerate(fcc_hcp_pressures):
+    f.write(str(P/1.e9)+' '+str(fcc_hcp_temperatures[i])+'\n')
+f.write('>> -W0.5,blue \n')
+for i, P in enumerate(melting_pressures):
+    f.write(str(P/1.e9)+' '+str(melting_temperatures_Fe[i])+'\n')
+f.write('>> -W0.5,red,- \n')
+for i, P in enumerate(melting_pressures):
+    f.write(str(P/1.e9)+' '+str(melting_temperatures_FeO[i])+'\n')
+f.write('>> -W1,black \n')
+for i, P in enumerate(eutectic_pressures):
+    f.write(str(P/1.e9)+' '+str(eutectic_temperatures[i])+'\n')
+    
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
+plt.plot(fcc_hcp_pressures/1.e9, fcc_hcp_temperatures)
+plt.plot(melting_pressures/1.e9, melting_temperatures_Fe)
+plt.plot(melting_pressures/1.e9, melting_temperatures_FeO)
+plt.plot(eutectic_pressures/1.e9, eutectic_temperatures)
 plt.plot(eutectic_PT[0]/1.e9, eutectic_PT[2], marker='o', linestyle='None', label='Model')
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[2], marker='o', linestyle='None', label='Model')
 plt.legend(loc='lower right')
@@ -480,5 +585,5 @@ plt.show()
 
 
 
-print intermediate_0.params
-print intermediate_1.params
+#print intermediate_0.params
+#print intermediate_1.params
