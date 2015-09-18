@@ -17,20 +17,14 @@ Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
 Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
 Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
 
-#Fe_fcc_K = Komabayashi_2014.fcc_iron()
-#Fe_hcp_K = Komabayashi_2014.hcp_iron()
-#Fe_liq_K = Komabayashi_2014.liquid_iron()
 
 FeO = Fe_Si_O.FeO_solid_HP()
 FeO_liq = Fe_Si_O.FeO_liquid_HP()
 
-#FeO_Kom = Komabayashi_2014.FeO_solid()
-#FeO_liq_Kom = Komabayashi_2014.FeO_liquid()
-
 
 
 # First, the equation of state of FeO (B1)
-f=open('data/Fischer_2011_FeO_B1_EoS.dat', 'r')
+f=open('data/Fe_O_data/Fischer_2011_FeO_B1_EoS.dat', 'r')
 FeO_volumes = []
 datastream = f.read()  # We need to open the file
 f.close()
@@ -39,7 +33,7 @@ for line in datalines:
     if line[0] != "%" and line[10] != '-':
         FeO_volumes.append(map(float, line))
 
-f=open('data/Campbell_2009_FeO_B1_EoS.dat', 'r')
+f=open('data/Fe_O_data/Campbell_2009_FeO_B1_EoS.dat', 'r')
 datastream = f.read()  # We need to open the file
 f.close()
 datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
@@ -81,7 +75,7 @@ plt.show()
 # READ IN DATA
 eutectic_PT = []
 
-f=open('data/Fe_FeO_eutectic_temperature.dat', 'r')
+f=open('data/Fe_O_data/Fe_FeO_eutectic_temperature.dat', 'r')
 datastream = f.read()  # We need to open the file
 f.close()
 datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
@@ -92,7 +86,7 @@ for line in datalines:
 
 
 eutectic_PTc = []
-f=open('data/Fe_FeO_eutectic.dat', 'r')
+f=open('data/Fe_O_data/Fe_FeO_eutectic.dat', 'r')
 datastream = f.read()  # We need to open the file
 f.close()
 datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
@@ -103,7 +97,7 @@ for line in datalines:
                              float(line[4])/100., float(line[5])/100.])
 
 solvus_PTcc = []
-f=open('data/Fe_FeO_solvus.dat', 'r')
+f=open('data/Fe_O_data/Fe_FeO_solvus.dat', 'r')
 datastream = f.read()  # We need to open the file
 f.close()
 datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]

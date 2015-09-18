@@ -1,0 +1,3 @@
+% P (GPa) err     T (K)   err     ref
+50	      2       2500	  150
+74        2       3105    250     Seagle et al. (2008), lower/upper = 2990/3220 +/- 150
