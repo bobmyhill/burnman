@@ -104,7 +104,7 @@ RP_data = []
 datalines = [ line.strip().split() for idx, line in enumerate(f.read().split('\n')) if line.strip() ]
 for content in datalines:
     if content[0] != '%':
-        if content[0] != '0.790' and content[0] != '0.597' and content[0] != '0.195':
+        if content[0] != '0.397' and content[0] != '0.597':
             data.append(map(float,content))
         if float(content[2]) < 299.:
             RT_data.append(map(float,content))
@@ -183,7 +183,7 @@ class pyrope_grossular_binary(burnman.SolidSolution):
 
 garnet = pyrope_grossular_binary()
 
-def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
+def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, Kpi0, ai0, Vgr, Kgr, agr):
     
     Vi1 = Vi0
     Ki1 = Ki0
@@ -192,11 +192,11 @@ def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
     Kppy=4.4 # pyrope.params['Kprime_0']
     Kpgr=5.5 # grossular.params['Kprime_0']
 
-    V_int = 0.5*(Vi0+Vi1)
-    Kpi0 = V_int/(0.5*(Vpy/(Kppy+1.) + Vgr/(Kpgr+1.))) - 1.
-    Kpi1=Kpi0
+    Kpi1= Kpi0
 
-    
+    Kdpi0 = -50*Kpi0/Ki0
+    Kdpi1 = Kdpi0
+
     pyrope.params['V_0'] = Vpy
     pyrope.params['K_0'] = Kpy
     pyrope.params['Kprime_0'] = Kppy
@@ -206,13 +206,13 @@ def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
     pygr.params['V_0'] = Vi0
     pygr.params['K_0'] = Ki0
     pygr.params['Kprime_0'] = Kpi0
-    pygr.params['Kdprime_0'] = -Kpi0/Ki0
+    pygr.params['Kdprime_0'] = Kdpi0
     pygr.params['a_0'] = ai0
 
     grpy.params['V_0'] = Vi1
     grpy.params['K_0'] = Ki1
     grpy.params['Kprime_0'] = Kpi1
-    grpy.params['Kdprime_0'] = -Kpi1/Ki1
+    grpy.params['Kdprime_0'] = Kdpi1
     grpy.params['a_0'] = ai1
     
     grossular.params['V_0'] = Vgr
@@ -232,7 +232,7 @@ def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
 
 cPT_obs = zip(*[p_py, P_obs, T_obs])
 guesses = [pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['a_0'], \
-           pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['a_0'], \
+           pyrope.params['V_0'], pyrope.params['K_0'], pyrope.params['Kprime_0'], pyrope.params['a_0'], \
            grossular.params['V_0'], grossular.params['K_0'], grossular.params['a_0']]
 
 

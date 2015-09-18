@@ -7,10 +7,7 @@ import burnman
 from burnman import minerals
 from scipy.optimize import fsolve, curve_fit
 
-jadeite = minerals.HP_2011_ds62.jd()
-aegirine = minerals.HP_2011_ds62.jd() # note there is no aegirine in Holland and Powell...
-ae26 = minerals.HP_2011_ds62.jd()
-ae65 = minerals.HP_2011_ds62.jd()
+# Here's an EoS fitting function
 def fit_PV(mineral):
     def fit_EOS(pressures, V_0, K_0, Kprime_0):
         mineral.params['V_0'] = V_0
@@ -25,6 +22,15 @@ def fit_PV(mineral):
 
         return volumes
     return fit_EOS
+
+# This first part just fits the P-V data of each individual crystal. 
+# These fits are *not* used in the paper 
+# - they're just here for general interest
+
+jadeite = minerals.HP_2011_ds62.jd()
+aegirine = minerals.HP_2011_ds62.jd() # note there is no aegirine in Holland and Powell...
+ae26 = minerals.HP_2011_ds62.jd()
+ae65 = minerals.HP_2011_ds62.jd()
 
 xtls = [jadeite, ae26, ae65, aegirine]
 compositions = np.array([0.0, 0.26, 0.65, 1.0])
@@ -42,6 +48,8 @@ V_0err = Verr/Z*A3tom3*NA
 K_0 = np.array([134.0e9, 130.4e9, 124.4e9, 116.1e9])
 K_0err = np.array([0.7e9, 0.5e9, 0.6e9, 0.5e9])
 
+
+# Read in data from file
 all_data = []
 composition = []
 
@@ -62,10 +70,6 @@ for i, filename in enumerate(filenames):
     guesses = [jadeite.params['V_0'], jadeite.params['K_0'], jadeite.params['Kprime_0']]
     popt, pcov = curve_fit(fit_PV(xtls[i]), P, V, guesses, Verr)
 
-    
-    #print popt[0]*1.e6, '+/-', np.sqrt(pcov[0][0])*1.e6
-    #print popt[1]/1.e9, '+/-', np.sqrt(pcov[1][1])/1.e9 
-    #print popt[2], '+/-', np.sqrt(pcov[2][2]) 
 
 print 'Mineral, V (cm^3/mol), K_T (GPa), K\'_T'
 print 'ae0', xtls[0].params['V_0']*1.e6, xtls[0].params['K_0']*1.e-9, xtls[0].params['Kprime_0']
@@ -78,8 +82,10 @@ P_obs, Perr_obs, V_obs, Verr_obs = zip(*all_data)
 P_obs = np.array(P_obs)*1.e9
 Perr_obs = np.array(Perr_obs)*1.e9
 
-# Here's the model set up
 
+# SOLUTION MODEL CREATION
+
+# Here's the model set up
 # First, let's define our intermediates
 intermediate0 = minerals.HP_2011_ds62.jd()
 intermediate1 = minerals.HP_2011_ds62.jd()
@@ -175,14 +181,28 @@ plt.plot(comps, bulk_moduli)
 plt.show()
 
 # Plot volumes obtained from the model
+# Also print this data to file
+filename = 'figures/data/jadeite_aegirine_P_V.dat'
+f = open(filename, 'w')
+
 pressures = np.linspace(1.e5, 10.e9, 101)
 for c in compositions:
     pyroxene.set_composition([1.-c, c])
     volumes = np.empty_like(pressures)
+    f.write('>>\n')
     for i, P in enumerate(pressures):
         pyroxene.set_state(P, 298.15)
         volumes[i] = pyroxene.V
+
+        f.write(str(P/1.e9)+' '+str(volumes[i]*1.e6)+'\n')
+
     plt.plot(pressures/1.e9, volumes, label='Ae'+str(int(c*100.)))
+
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
+
     
 plt.errorbar(P_obs/1.e9, V_obs, yerr=Verr_obs, marker='.', linestyle='None')
 plt.legend(loc='lower left')
@@ -190,7 +210,11 @@ plt.show()
 
 
 # Plot excess volumes in the  middle of the binary
-pressures = np.linspace(1.e5, 400.e9, 101)
+# Also print this data to file
+filename = 'figures/data/jadeite50aegirine50_Vex.dat'
+f = open(filename, 'w')
+
+pressures = np.linspace(1.e5, 25.e9, 101)
 excess_volumes = np.empty_like(pressures)
 
 pyroxene.set_composition([0.5, 0.5])
@@ -198,6 +222,15 @@ pyroxene.set_composition([0.5, 0.5])
 for i, P in enumerate(pressures):
     pyroxene.set_state(P, 298.15)
     excess_volumes[i] = pyroxene.excess_volume
+    f.write(str(P/1.e9)+' '+str(excess_volumes[i]*1.e6)+'\n')
+
+
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
+
+
 
 plt.plot(pressures/1.e9, excess_volumes*1.e6)
 plt.xlabel('Pressure (GPa)')
