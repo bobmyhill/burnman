@@ -1,3 +1,0 @@
-% exp#  P   T       err FeO_liquid(mol%)  Fe_liquid(mol%)        ref
-% EXP1	50	2500	150	32.6	7.6	      67.4	7.9              Seagle et al. (2008)
-EXP2	93	3040	150	43.6	3.9	      56.4	4.1              Seagle et al. (2008)
