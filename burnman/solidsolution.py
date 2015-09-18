@@ -136,6 +136,8 @@ class SolidSolution(Mineral):
         self.S = sum([ self.endmembers[i][0].S * self.molar_fractions[i] for i in range(self.n_endmembers) ]) + self.excess_entropy
         self.V = sum([ self.endmembers[i][0].V * self.molar_fractions[i] for i in range(self.n_endmembers) ]) + self.excess_volume
 
+        self.rho = self.molar_mass()/self.V
+
         self.C_p = sum([ self.endmembers[i][0].C_p * self.molar_fractions[i] for i in range(self.n_endmembers) ]) + temperature*self.excess_dSdT
         self.alpha = (1./self.V) * ( sum([ self.endmembers[i][0].alpha * self.endmembers[i][0].V * self.molar_fractions[i] for i in range(self.n_endmembers) ]) + self.excess_dVdT )
         self.K_T = self.V / ( sum([ self.endmembers[i][0].V / (self.endmembers[i][0].K_T)  * self.molar_fractions[i] for i in range(self.n_endmembers) ] ) - self.excess_dVdP )

@@ -89,10 +89,10 @@ pysp_params=[1.5e3*3./4., 0., Sconf, 0., 0., 0.]
 pysp = make_intermediate(pyrope, spessartine, pysp_params)()
 sppy = make_intermediate(pyrope, spessartine, pysp_params)()
 
-pygr_params=[8500., 1.186, Sconf, 7.83e-7, -10.89e9, -7.919e-7]
+pygr_params=[8500., 1.186, Sconf, 7.83e-7, -10.93e9, -7.04e-7]
 pygr = make_intermediate(pyrope, grossular, pygr_params)()
 
-grpy_params=[8500., 1.186, Sconf, 7.83e-7, -10.89e9, -7.919e-7]
+grpy_params=[8500., 1.186, Sconf, 7.83e-7, -10.93e9, -7.04e-7]
 grpy = make_intermediate(pyrope, grossular, grpy_params)()
 
         

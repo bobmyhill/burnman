@@ -24,17 +24,21 @@ def make_intermediate(mbr0, mbr1, params):
     for key in formula:
         formula[key] /= 2.
 
-
+    # Standard conditions are those for an ideal solid solution
     H_0 = (mbr0.params['H_0'] + mbr1.params['H_0'])*0.5 + H_ex
     S_0 = (mbr0.params['S_0'] + mbr1.params['S_0'])*0.5 + Sconf + S_ex
-    V_0 = (mbr0.params['V_0'] + mbr1.params['V_0'])*0.5 + V_ex
 
-    K_0 = (mbr0.params['K_0'] + mbr1.params['K_0'])*0.5 + K_ex
-    a_0 = (mbr0.params['a_0'] + mbr1.params['a_0'])*0.5 + a_ex
+    V_ideal = (mbr0.params['V_0'] + mbr1.params['V_0'])*0.5
+
+    V_0 = V_ideal + V_ex
+    K_0 = V_ideal / (0.5*(mbr0.params['V_0']/mbr0.params['K_0'] \
+                              + mbr1.params['V_0']/mbr1.params['K_0'])) + K_ex
+    a_0 = 0.5*(mbr0.params['a_0']*mbr0.params['V_0'] \
+        + mbr1.params['a_0']*mbr1.params['V_0'])/V_ideal + a_ex
     
     Kprime_0 = V_0*2./(mbr0.params['V_0']/(mbr0.params['Kprime_0'] + 1.) \
-                       + mbr1.params['V_0']/(mbr1.params['Kprime_0'] + 1.))
-
+                       + mbr1.params['V_0']/(mbr1.params['Kprime_0'] + 1.)) \
+                       - 1.
 
     Cp_0 = [(mbr0.params['Cp'][0] + mbr1.params['Cp'][0])*0.5,
                (mbr0.params['Cp'][1] + mbr1.params['Cp'][1])*0.5,

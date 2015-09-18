@@ -313,8 +313,11 @@ plt.show()
 pressures = np.linspace(1.e5, 25.e9, 101)
 excess_volumes = np.empty_like(pressures)
 excess_gibbs = np.empty_like(pressures)
+bulk_sound = np.empty_like(pressures)
+
 excess_volumes_ganguly = np.empty_like(pressures)
 excess_gibbs_ganguly = np.empty_like(pressures)
+bulk_sound_ganguly = np.empty_like(pressures)
 
 garnet.set_composition([0.5, 0.5])
 garnet_ganguly.set_composition([0.5, 0.0, 0.5, 0.0])
@@ -327,6 +330,10 @@ for i, P in enumerate(pressures):
 
     excess_gibbs[i] = garnet.excess_gibbs
     excess_gibbs_ganguly[i] = garnet_ganguly.excess_gibbs
+
+    bulk_sound[i] = np.sqrt(garnet.K_S/garnet.rho)
+    bulk_sound_ganguly[i] = np.sqrt(garnet_ganguly.K_S/garnet_ganguly.rho)
+
     
 plt.plot(pressures/1.e9, excess_volumes*1.e6)
 plt.plot(pressures/1.e9, excess_volumes_ganguly*1.e6)
@@ -338,6 +345,12 @@ plt.plot(pressures/1.e9, excess_gibbs*1.e-3)
 plt.plot(pressures/1.e9, excess_gibbs_ganguly*1.e-3)
 plt.xlabel('Pressure (GPa)')
 plt.ylabel('Excess Gibbs free energy (kJ/mol)')
+plt.show()
+
+plt.plot(pressures/1.e9, bulk_sound*1.e-3)
+plt.plot(pressures/1.e9, bulk_sound_ganguly*1.e-3)
+plt.xlabel('Pressure (GPa)')
+plt.ylabel('Bulk sound velocity (km/s)')
 plt.show()
 
 
@@ -367,16 +380,28 @@ print grpy.params
 '''
 
 # H_ex, S_ex, Sconf, V_ex, K_ex, a_ex
+V_ideal = (pyrope.params['V_0'] + grossular.params['V_0'])*0.5
+
 
 print 'H_ex', pygr.params['H_0'] - (pyrope.params['H_0'] + grossular.params['H_0'])*0.5
 print 'S_ex', pygr.params['S_0'] - Sconf - (pyrope.params['S_0'] + grossular.params['S_0'])*0.5
-print 'V_ex', pygr.params['V_0'] - (pyrope.params['V_0'] + grossular.params['V_0'])*0.5
-print 'K_ex', pygr.params['K_0'] - (pyrope.params['K_0'] + grossular.params['K_0'])*0.5
-print 'a_ex', pygr.params['a_0'] - (pyrope.params['a_0'] + grossular.params['a_0'])*0.5
+print 'V_ex', pygr.params['V_0'] - V_ideal
+print 'K_ex', pygr.params['K_0'] \
+    - V_ideal / (0.5*(pyrope.params['V_0']/pyrope.params['K_0'] \
+                          + grossular.params['V_0']/grossular.params['K_0']))
+print 'a_ex', pygr.params['a_0'] \
+    - 0.5*(pyrope.params['a_0']*pyrope.params['V_0'] \
+               + grossular.params['a_0']*grossular.params['V_0'])/V_ideal
 
 
 print 'H_ex', grpy.params['H_0'] - (pyrope.params['H_0'] + grossular.params['H_0'])*0.5
 print 'S_ex', grpy.params['S_0'] - Sconf - (pyrope.params['S_0'] + grossular.params['S_0'])*0.5
-print 'V_ex', grpy.params['V_0'] - (pyrope.params['V_0'] + grossular.params['V_0'])*0.5
-print 'K_ex', grpy.params['K_0'] - (pyrope.params['K_0'] + grossular.params['K_0'])*0.5
-print 'a_ex', grpy.params['a_0'] - (pyrope.params['a_0'] + grossular.params['a_0'])*0.5
+
+
+print 'V_ex', grpy.params['V_0'] - V_ideal
+print 'K_ex', grpy.params['K_0'] \
+    - V_ideal / (0.5*(pyrope.params['V_0']/pyrope.params['K_0'] \
+                          + grossular.params['V_0']/grossular.params['K_0']))
+print 'a_ex', grpy.params['a_0'] \
+    - 0.5*(pyrope.params['a_0']*pyrope.params['V_0'] \
+               + grossular.params['a_0']*grossular.params['V_0'])/V_ideal
