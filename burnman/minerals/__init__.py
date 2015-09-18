@@ -36,3 +36,6 @@ import HHPH_2013
 
 # Other
 import other
+import Komabayashi_2014
+import Myhill_calibration_iron
+import Fe_Si_O
