@@ -244,6 +244,8 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
         Kprime_0 = V_0*(1. / (0.5*(FeO_liq.params['V_0']/(FeO_liq.params['Kprime_0']+1.)
                                    + Fe_liq.params['V_0']/(Fe_liq.params['Kprime_0']+1.)))) \
                                    - 1. + Kpex
+        print 'NB do not add Sconf? Check!!!'
+        Sconf = -2.*0.5*burnman.constants.gas_constant*np.log(0.5)
         #Kprime_0 = 2./(1./FeO_liq.params['Kprime_0'] + 1./Fe_liq.params['Kprime_0'])
 
         self.params = {
@@ -253,7 +255,7 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
             'T_0': FeO_liq.params['T_0'],
             'P_0': FeO_liq.params['P_0'],
             'H_0': (FeO_liq.params['H_0'] + Fe_liq.params['H_0'])/2. + Hex,
-            'S_0': (FeO_liq.params['S_0'] + Fe_liq.params['S_0'])/2. - Sex,
+            'S_0': (FeO_liq.params['S_0'] + Fe_liq.params['S_0'])/2. + Sex,
             'Cp': [(FeO_liq.params['Cp'][0] + Fe_liq.params['Cp'][0])/2.,
                    (FeO_liq.params['Cp'][1] + Fe_liq.params['Cp'][1])/2.,
                    (FeO_liq.params['Cp'][2] + Fe_liq.params['Cp'][2])/2.,
@@ -309,9 +311,15 @@ for i, P in enumerate(pressures):
 guesses = [0., 0., -0.84e-6, -0.56e-6, 75.e9, 66.e9, 0.0, 0.0]
 popt, pcov = optimize.curve_fit(fit_data, xdata, ydata, guesses, sigmas)
 
-print popt, pcov
+print 'Tref (K):', Fe_liq.params['T_0']
+print 'Pref (GPa):', Fe_liq.params['P_0']/1.e9
+params=['H0', 'H1', 'V0', 'V1', 'K0', 'K1', 'Kp0', 'Kp1']
+for i, param in enumerate(params):
+    print param, popt[i], '+/-', np.sqrt(pcov[i][i])
 
 H0, H1, V0, V1, K0, K1, Kp0, Kp1 = popt
+
+
 intermediate_0 = Fe_FeO_liq(H0, 0.0, V0, K0, Kp0, 0.0)
 intermediate_1 = Fe_FeO_liq(H1, 0.0, V1, K1, Kp1, 0.0)
 

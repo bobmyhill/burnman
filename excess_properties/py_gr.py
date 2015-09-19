@@ -241,6 +241,9 @@ popt, pcov = curve_fit(fit_ss_data, cPT_obs, V_obs, guesses, Verr_obs)
 for i, p in enumerate(popt):
     print p, np.sqrt(pcov[i][i])
 
+
+print 'K\' intermediate:', pygr.params['Kprime_0']
+    
 '''
 print 'WARNING: K_0 for intermediates tweaked here'
 pygr.params['K_0'] += 2.5e9 # Tweak to make sure excess volume doesn't go negative
