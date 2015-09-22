@@ -39,7 +39,7 @@ class symmetric_garnet(burnman.SolidSolution):
 # Here are the excess properties we want to use
 H_ex = 15000.*3. # J/mol; making a symmetric version of Ganguly et al., 1996.
 S_ex = 5.78*3. # m^3/mol; making a symmetric version of Ganguly et al., 1996.
-V_ex = 4.e-6 # m^3/mol, see Du et al, 2015
+V_ex = 1.e-6 # m^3/mol, see Ungaretti et al, 1995; Bosenick and Geiger, 1997
 
 
 # Now we define properties relative to the binary
@@ -81,7 +81,7 @@ Cp_pygr = [(py.params['Cp'][0] + gr.params['Cp'][0])*0.5*Cp_scaling,
            (py.params['Cp'][3] + gr.params['Cp'][3])*0.5*Cp_scaling] 
 
 # Overloaded heuristics
-K_pygr = 168.e9
+K_pygr = 172.5e9
 a_pygr = 2.3e-5
 
 # Creating the intermediate endmember is just like creating any other endmember

@@ -6,7 +6,6 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman import minerals
 from scipy.optimize import fsolve, curve_fit
-from make_intermediate import *
 
 # First, let's define the endmembers
 pyrope = minerals.HP_2011_ds62.py()
@@ -125,26 +124,30 @@ V_obs = np.array(V)*1.e-6
 Verr_obs =  np.array(V)*1.e-6
 
 
+# First, let's define our intermediates
+pygr = minerals.HP_2011_ds62.py()
+grpy = minerals.HP_2011_ds62.py()
+
 #H_ex0, H_ex1, S_ex0, S_ex1 = [9834.*3., 21627.*3., 5.78*3., 5.78*3.] # Ganguly params
+
+
 
 Sconf = -2.*burnman.constants.gas_constant*0.5*3.*np.log(0.5) # 2 atoms mixing, equal proportions (0.5) on 3 sites
 
 # Cp_scaling = ((py.params['S_0'] + gr.params['S_0'])*0.5 + S_ex/4)/((py.params['S_0'] + gr.params['S_0'])*0.5)
 # Haselton and Westrum (1980) show that the excess entropy is primarily a result of a low temperature spike in Cp
 # Therefore, at >=298.15 K, Cp is well approximated by a linear combination of pyrope and grossular 
+Cp_scaling = 1. 
 
-V_ex0 = 0.58*3.e-6
-K_ex0 = -2.5e9
-a_ex0 = 0.
-V_ex1 = 0.12*3.e-6
-K_ex1 = -2.5e9
-a_ex1 = 0.
+Cp_pygr = [(pyrope.params['Cp'][0] + grossular.params['Cp'][0])*0.5*Cp_scaling,
+           (pyrope.params['Cp'][1] + grossular.params['Cp'][1])*0.5*Cp_scaling,
+           (pyrope.params['Cp'][2] + grossular.params['Cp'][2])*0.5*Cp_scaling,
+           (pyrope.params['Cp'][3] + grossular.params['Cp'][3])*0.5*Cp_scaling]
 
-pygr_params = [H_ex0/4., S_ex0/4., Sconf, V_ex0/4., K_ex0, a_ex0]
-grpy_params = [H_ex1/4., S_ex1/4., Sconf, V_ex1/4., K_ex1, a_ex1]
-# First, let's define our intermediates
-pygr = make_intermediate(pyrope, grossular, pygr_params)()
-grpy = make_intermediate(pyrope, grossular, grpy_params)()
+pygr.params['H_0'] = 0.5*(pyrope.params['H_0'] + grossular.params['H_0']) + H_ex0/4
+grpy.params['H_0'] = 0.5*(pyrope.params['H_0'] + grossular.params['H_0']) + H_ex1/4.
+pygr.params['S_0'] = 0.5*(pyrope.params['S_0'] + grossular.params['S_0']) + Sconf + S_ex0/4.
+grpy.params['S_0'] = 0.5*(pyrope.params['S_0'] + grossular.params['S_0']) + Sconf + S_ex1/4.
 
 
 class mg_fe_ca_garnet_Ganguly(burnman.SolidSolution):
@@ -180,8 +183,6 @@ class pyrope_grossular_binary(burnman.SolidSolution):
 
 garnet = pyrope_grossular_binary()
 
-
-'''
 def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, ai0, Vgr, Kgr, agr):
     
     Vi1 = Vi0
@@ -239,9 +240,6 @@ popt, pcov = curve_fit(fit_ss_data, cPT_obs, V_obs, guesses, Verr_obs)
 
 for i, p in enumerate(popt):
     print p, np.sqrt(pcov[i][i])
-'''
-
-
 
 '''
 print 'WARNING: K_0 for intermediates tweaked here'

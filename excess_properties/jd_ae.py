@@ -82,7 +82,6 @@ P_obs, Perr_obs, V_obs, Verr_obs = zip(*all_data)
 P_obs = np.array(P_obs)*1.e9
 Perr_obs = np.array(Perr_obs)*1.e9
 
-
 # SOLUTION MODEL CREATION
 
 # Here's the model set up
@@ -211,31 +210,57 @@ plt.show()
 
 # Plot excess volumes in the  middle of the binary
 # Also print this data to file
-filename = 'figures/data/jadeite50aegirine50_Vex.dat'
+filename = 'figures/data/jadeite_aegirine_Vex.dat'
 f = open(filename, 'w')
 
 pressures = np.linspace(1.e5, 25.e9, 101)
 excess_volumes = np.empty_like(pressures)
 
-pyroxene.set_composition([0.5, 0.5])
+p_aegirines_of_interest = [0.5]
+for p_aegirine in p_aegirines_of_interest:
+    pyroxene.set_composition([1.-p_aegirine, p_aegirine])
+    f.write('>> -W0.5,grey,- \n')
+    for i, P in enumerate(pressures):
+        pyroxene.set_state(P, 298.15)
+        excess_volumes[i] = pyroxene.excess_volume
+        f.write(str(P/1.e9)+' '+str(excess_volumes[i]*1.e6)+' '+str(p_aegirine)+'\n')
 
-for i, P in enumerate(pressures):
-    pyroxene.set_state(P, 298.15)
-    excess_volumes[i] = pyroxene.excess_volume
-    f.write(str(P/1.e9)+' '+str(excess_volumes[i]*1.e6)+'\n')
-
+p_aegirines_of_interest = [0.26, 0.65]
+for p_aegirine in p_aegirines_of_interest:
+    pyroxene.set_composition([1.-p_aegirine, p_aegirine])
+    f.write('>> -W0.5,black,- \n')
+    for i, P in enumerate(pressures):
+        pyroxene.set_state(P, 298.15)
+        excess_volumes[i] = pyroxene.excess_volume
+        f.write(str(P/1.e9)+' '+str(excess_volumes[i]*1.e6)+' '+str(p_aegirine)+'\n')
 
 f.write('\n')
 f.close()
 print 'Data (over)written to file', filename
 
-
-
-
 plt.plot(pressures/1.e9, excess_volumes*1.e6)
 plt.xlabel('Pressure (GPa)')
 plt.ylabel('Excess volume (cm^3/mol)')
 plt.show()
+
+
+filename = 'figures/data/jadeite_aegirine_Vex_obs.dat'
+f = open(filename, 'w')
+
+for p_aegirine in p_aegirines_of_interest:
+    f.write('>> -Ggrey -W0.5,black \n')
+    for i, c in enumerate(composition):
+        if np.abs(c-p_aegirine)<0.0001:
+            jadeite.set_state(P_obs[i], 298.15)
+            aegirine.set_state(P_obs[i], 298.15)
+            ideal_V = p_aegirine*aegirine.V + (1.-p_aegirine)*jadeite.V
+            V_excess_obs = V_obs[i] - ideal_V
+            f.write(str(P_obs[i]/1.e9)+' '+str(V_excess_obs*1.e6)+' '+str(p_aegirine)+'\n')
+
+f.write('\n')
+f.close()
+print 'Data (over)written to file', filename
+
 
 
 # Check KV rule of thumb
