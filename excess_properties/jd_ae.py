@@ -274,12 +274,7 @@ KV_ae = aegirine.params['K_0']*aegirine.params['V_0']
 
 K_average = 0.5*(jadeite.params['K_0'] + aegirine.params['K_0'])
 KV_average = 0.5*(KV_jd + KV_ae)
-print 'Bulk modulus excess according to KV:', (KV_average/V - K_average)/1.e9, 'GPa'
-print 'Bulk modulus excess is actually', (K_T - K_average)/1.e9, 'GPa'
-
-
-print (K_T - K_average)/(KV_average/V - K_average)
-
+print 'ksi:', (K_T - K_average) / ( (KV_average/V) - K_average)
 
 
 print jadeite.params

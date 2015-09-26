@@ -63,4 +63,4 @@ def make_intermediate(mbr0, mbr1, params):
                 'molar_mass': formula_mass(formula, atomic_masses)}
             burnman.Mineral.__init__(self)
 
-    return intermediate
+    return intermediate()

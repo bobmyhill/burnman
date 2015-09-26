@@ -194,7 +194,7 @@ def fit_ss_data(data, Vpy, Kpy, apy, Vi0, Ki0, Kpi0, ai0, Vgr, Kgr, agr):
 
     Kpi1= Kpi0
 
-    Kdpi0 = -50*Kpi0/Ki0
+    Kdpi0 = -51*Kpi0/Ki0
     Kdpi1 = Kdpi0
 
     pyrope.params['V_0'] = Vpy
@@ -241,11 +241,11 @@ popt, pcov = curve_fit(fit_ss_data, cPT_obs, V_obs, guesses, Verr_obs)
 for i, p in enumerate(popt):
     print p, np.sqrt(pcov[i][i])
 
-'''
+
 print 'WARNING: K_0 for intermediates tweaked here'
-pygr.params['K_0'] += 2.5e9 # Tweak to make sure excess volume doesn't go negative
-grpy.params['K_0'] += 2.5e9 # Tweak to make sure excess volume doesn't go negative
-'''
+pygr.params['K_0'] += 4.e9 # Tweak to make sure excess volume doesn't go negative
+grpy.params['K_0'] += 4.e9 # Tweak to make sure excess volume doesn't go negative
+
 
 # Finally, let's set up a model with a constant V_ex 
 pygr_excess_V = 4.*(pygr.params['V_0'] \
@@ -305,7 +305,7 @@ plt.show()
     
 # Plot volumes obtained from the model
 # Also print this data to file
-filename = 'figures/data/pyrope_grossular_P_V.dat'
+filename = 'figures/data/pyrope_grossular_P_V_disordered.dat'
 f = open(filename, 'w')
 
 compositions = np.array([0.0, 0.195, 0.397, 0.597, 0.790, 1.0])
@@ -350,7 +350,7 @@ plt.show()
 
 # Plot excess volumes, gibbs, bulk sound in the middle of the binary
 # Also print this data to file
-filename = 'figures/data/pyrope_grossular_bulk_sound_velocities.dat'
+filename = 'figures/data/pyrope_grossular_bulk_sound_velocities_disordered.dat'
 f = open(filename, 'w')
 
 pressures = np.linspace(1.e5, 25.e9, 101)

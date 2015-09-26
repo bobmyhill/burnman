@@ -1,16 +1,31 @@
 import numpy as np
 
-def fit_PVT_data(mineral):
+def fit_VT_data(mineral, Kprime_0):
+    def fit_data(pressures, V_0, K_0):
+        mineral.params['V_0'] = V_0
+        mineral.params['K_0'] = K_0
+        mineral.params['Kprime_0'] = Kprime_0
+        mineral.params['Kdprime_0'] = -Kprime_0/K_0
+
+        volumes=[]
+        for P in pressures:
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+
+        return volumes
+    return fit_data
+
+def fit_PVT_data(mineral, Kprime_0):
     def fit_data(PT, V_0, K_0, a_0):
         mineral.params['V_0'] = V_0
         mineral.params['K_0'] = K_0
-        Kprime_0 = 4.0
         mineral.params['Kprime_0'] = Kprime_0
         mineral.params['Kdprime_0'] = -Kprime_0/K_0
         mineral.params['a_0'] = a_0
 
         volumes=[]
-        for P, T in zip(*PT):
+        for datum in PT:
+            P, T = datum
             mineral.set_state(P, T)
             volumes.append(mineral.V)
 
@@ -189,4 +204,13 @@ def eqm_temperature(minerals, multiplicities):
             mineral.set_state(P, T[0])
             gibbs = gibbs + mineral.gibbs*multiplicities[i]
         return gibbs
+    return eqm
+
+def invariant(minerals):
+    def eqm(data):
+        P, T = data
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P, T)
+        return [minerals[0].gibbs - minerals[1].gibbs, \
+                minerals[0].gibbs - minerals[2].gibbs]
     return eqm

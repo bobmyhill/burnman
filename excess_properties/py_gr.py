@@ -243,6 +243,9 @@ for i, p in enumerate(popt):
 
 
 
+
+print 'K\' intermediate:', pygr.params['Kprime_0']
+    
 '''
 print 'WARNING: K_0 for intermediates tweaked here'
 pygr.params['K_0'] += 2.5e9 # Tweak to make sure excess volume doesn't go negative
