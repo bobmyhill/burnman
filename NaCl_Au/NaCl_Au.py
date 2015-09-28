@@ -11,10 +11,11 @@ parser.add_argument('--Au_hkl', nargs='+', type=float, help='hkl for gold', requ
 parser.add_argument('--NaCl_hkl', nargs='+', type=float, help='hkl for halite', required=True)
 parser.add_argument('--Au_d', nargs='+', type=float, help='d spacing for gold (Angstrom)', required=True)
 parser.add_argument('--NaCl_d', nargs='+', type=float, help='d spacing for halite (Angstrom)', required=True)
+parser.add_argument('--Au_a0', nargs='+', type=float, help='Measured unit cell length a0 for gold (Angstrom)', required=True)
+parser.add_argument('--NaCl_a0', nargs='+', type=float, help='Measured unit cell length a0 for halite (Angstrom)', required=True)
 
 
 args = parser.parse_args()
-
 atomic_masses=burnman.processchemistry.read_masses()
 Z_NaCl = 4.
 Z_Au = 4.
@@ -80,17 +81,27 @@ print 1.-Au.V/Au.params['V_0'], 'should be 0.34'
 '''
 
 
-def calcP_T(PT, NaCl_d_spacing, NaCl_hkl, Au_d_spacing, Au_hkl):
-    NaCl_V =  np.power(NaCl_d_spacing/np.linalg.norm(NaCl_hkl), 3.)/Z_NaCl*burnman.constants.Avogadro*Atom3
-    Au_V = np.power(Au_d_spacing/np.linalg.norm(Au_hkl), 3.)/Z_Au*burnman.constants.Avogadro*Atom3
-
+def calcP_T(PT, NaCl_V, Au_V):
     P, T = PT
     NaCl.set_state(P,T)
     Au.set_state(P,T)
     return [NaCl_V - NaCl.V, Au_V - Au.V]
 
 
-guesses = [1.e9, 298.15]
+guesses = [1.e9, 1000.15]
 
-P, T = fsolve(calcP_T, guesses, args=(args.NaCl_d[0], args.NaCl_hkl, args.Au_d[0], args.Au_hkl))
-print np.round(P/1.e9), 'GPa', np.round(T), 'K ('+str(np.round(T-273.15)), 'C)'
+NaCl_V0_over_V0_measured = NaCl.params['V_0']/(np.power(args.NaCl_a0[0], 3.)/Z_NaCl*burnman.constants.Avogadro*Atom3)
+Au_V0_over_V0_measured = Au.params['V_0']/(np.power(args.Au_a0[0], 3.)/Z_Au*burnman.constants.Avogadro*Atom3)
+
+print np.power((NaCl.params['V_0']*Z_NaCl/burnman.constants.Avogadro/Atom3), 1./3.)
+print np.power((Au.params['V_0']*Z_Au/burnman.constants.Avogadro/Atom3), 1./3.)
+
+
+NaCl_V = np.power(args.NaCl_d[0]*np.linalg.norm(args.NaCl_hkl), 3.) \
+         * NaCl_V0_over_V0_measured / Z_NaCl*burnman.constants.Avogadro*Atom3
+Au_V   = np.power(args.Au_d[0]*np.linalg.norm(args.Au_hkl), 3.) \
+         * Au_V0_over_V0_measured / Z_Au*burnman.constants.Avogadro*Atom3
+
+
+P, T = fsolve(calcP_T, guesses, args=(NaCl_V, Au_V))
+print "{0:.3f}".format(round(P/1.e9,3)), 'GPa', "{0:.1f}".format(round(T,1)), 'K ('+str("{0:.1f}".format(round(T-273.15,1))), 'C)'
