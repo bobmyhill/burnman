@@ -294,7 +294,7 @@ class MgFe3O5 (Mineral):
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 '''
-
+'''
 class MgFeFe2O5(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='(Mg,Fe)2Fe2O5'
@@ -304,7 +304,7 @@ class MgFeFe2O5(burnman.SolidSolution):
         self.enthalpy_interaction=[[0.0e3]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
-
+'''
 class olivine(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='olivine'
@@ -394,8 +394,8 @@ class Mg2Fe2O5 (Mineral):
             'name': 'Mg2Fe2O5',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -1987000.0 ,
-            'S_0': 169., # from Laura
+            'H_0': -2008000., # synthesis at 15GPa, 1550C, with transition 1 GPa lower  
+            'S_0': 155., # synthesis at 15GPa, 1550C # 159 estimate from Laura
             'V_0': 5.305e-05 , # from Nicki
             'Cp': [2.*60.5 + 163.9,
                    2.*0.000362 + 0.0,
@@ -417,6 +417,6 @@ class MgFeFe2O5(burnman.SolidSolution):
         self.type='symmetric'
         self.endmembers = [[Mg2Fe2O5(), '[Mg]2Fe2O5'],
                            [Fe4O5(), '[Fe]2Fe2O5']]
-        self.enthalpy_interaction=[[-2.0e3]]
+        self.enthalpy_interaction=[[0.0e3]]
         self.volume_interaction=[[0.]]
         burnman.SolidSolution.__init__(self, molar_fractions)

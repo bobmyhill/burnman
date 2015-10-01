@@ -96,12 +96,19 @@ per=minerals.HP_2011_ds62.per()
 hem=minerals.HP_2011_ds62.hem()
 mft=minerals.HP_2011_ds62.mft()
 mg2fe2o5 = Mg2Fe2O5()
+fe2fe2o5 = Fe4O5()
+fo = minerals.HP_2011_ds62.fo()
+fa = minerals.HP_2011_ds62.fa()
+
 
 assemblage = [per, hem, mg2fe2o5]
 multiplicities = [2., 1., -1.]
 
 assemblage_2 = [per, mft, mg2fe2o5]
 multiplicities_2 = [1., 1., -1.]
+
+assemblage_3 = [per, hem, mft]
+multiplicities_3 = [1., 1., -1.]
 
 def mg2fe2o5_boundary(temperatures, H_0, S_0):
     mg2fe2o5.params['H_0'] = H_0
@@ -112,27 +119,53 @@ def mg2fe2o5_boundary(temperatures, H_0, S_0):
     return pressures
 
 
+#mg2fe2o5.params['H_0'] = -2001000.
+#mg2fe2o5.params['S_0'] = 160.
+
+mg2fe2o5.params['H_0'] = -2008000.
+mg2fe2o5.params['S_0'] = 155.
+
 temperatures = np.array([1473.15, 1573.15])
 pressures = np.array([20.e9, 16.e9])
 guesses = [mg2fe2o5.params['H_0'], mg2fe2o5.params['S_0']]
-print optimize.curve_fit(mg2fe2o5_boundary, temperatures, pressures, guesses)
+#print optimize.curve_fit(mg2fe2o5_boundary, temperatures, pressures, guesses)
 
 temperatures = np.linspace(1473.15, 1873.15, 5)
 pressures = np.empty_like(temperatures)
 pressures_2 = np.empty_like(temperatures)
+pressures_3 = np.empty_like(temperatures)
 for i, T in enumerate(temperatures):
     pressures[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage, multiplicities))[0]
     pressures_2[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage_2, multiplicities_2))[0]
+    pressures_3[i] = optimize.fsolve(eqm_pressure, [10.e9], args=(T, assemblage_3, multiplicities_3))[0]
     mft.set_state(pressures[i], T)
     per.set_state(pressures[i], T)
     mg2fe2o5.set_state(pressures[i], T)
     print pressures[i]/1.e9, T, mft.gibbs + per.gibbs - mg2fe2o5.gibbs, 'should be positive for this line to be stable relative to mft + per' 
-plt.plot(pressures/1.e9, temperatures - 273.15)
-plt.plot(pressures_2/1.e9, temperatures - 273.15)
+plt.plot(pressures/1.e9, temperatures - 273.15, label='2per+hem->mg2fe2o5')
+plt.plot(pressures_2/1.e9, temperatures - 273.15, label='per+mft->mg2fe2o5')
+plt.plot(pressures_3/1.e9, temperatures - 273.15, label='per+hem->mft')
 plt.xlabel('Pressure (GPa)')
-plt.xlabel('Temperature (C)')
+plt.ylabel('Temperature (C)')
+plt.legend(loc='lower left')
 plt.show()
 
+P = 10.e9
+T = 1100.+273.15
+
+PTs = [[1.e5, 1373.15],
+       [5.e9, 1373.15],
+       [10.e9, 1373.15]]
+
+for (P,T) in PTs:
+    mg2fe2o5.set_state(P, T)
+    fo.set_state(P, T)
+    fa.set_state(P, T)
+    fe2fe2o5.set_state(P, T)
+    print mg2fe2o5.gibbs - (fo.gibbs - fa.gibbs + fe2fe2o5.gibbs)
+
+
+'''
 Nb=6.022e23
 Z=4
 A3_to_m3=1e-30
@@ -144,3 +177,6 @@ print V
 V = 352.77 # A^3
 V=V*A3_to_m3*Nb/Z
 print V
+'''
+
+
