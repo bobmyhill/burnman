@@ -43,6 +43,7 @@ class Mineral(Material):
         self.method = None
         if 'equation_of_state' in self.params:
             self.set_method(self.params['equation_of_state'])
+        self.eos_data = {}
 
     def set_method(self, equation_of_state):
         """
@@ -118,38 +119,14 @@ class Mineral(Material):
         self.pressure = pressure
         self.temperature = temperature
         self.old_params = self.params
+        self.eos_data = {}
 
         if self.method is None:
             raise AttributeError, "no method set for mineral, or equation_of_state given in mineral.params"
 
-        self.V = self.method.volume(self.pressure, self.temperature, self.params)
-        self.gr = self.method.grueneisen_parameter(self.pressure, self.temperature, self.V, self.params)
-        self.K_T = self.method.isothermal_bulk_modulus(self.pressure, self.temperature, self.V, self.params)
-        self.K_S = self.method.adiabatic_bulk_modulus(self.pressure, self.temperature, self.V, self.params)
-        self.G = self.method.shear_modulus(self.pressure, self.temperature, self.V, self.params)
-        self.C_v = self.method.heat_capacity_v(self.pressure, self.temperature, self.V, self.params)
-        self.C_p = self.method.heat_capacity_p(self.pressure, self.temperature, self.V, self.params)
-        self.alpha = self.method.thermal_expansivity(self.pressure, self.temperature, self.V, self.params)
-
-        # Attempt to calculate the gibbs free energy and helmholtz free energy, but don't complain if the
-        # equation of state does not calculate it, or if the mineral params do not have the requisite entries.
-        try:
-            self.gibbs = self.method.gibbs_free_energy(self.pressure, self.temperature, self.V, self.params)
-        except (KeyError, NotImplementedError):
-            self.gibbs = float('nan')
-        try:
-            self.helmholtz = self.method.helmholtz_free_energy(self.pressure, self.temperature, self.V, self.params)
-        except (KeyError, NotImplementedError):
-            self.helmholtz = float('nan')
-        try:
-            self.S = self.method.entropy(self.pressure, self.temperature, self.V, self.params)
-        except (KeyError, NotImplementedError):
-            self.S = float('nan')
-        try:
-            self.H = self.method.enthalpy(self.pressure, self.temperature, self.V, self.params)
-        except (KeyError, NotImplementedError):
-            self.H = float('nan')
-
+        self.V = self.method.volume(self)
+        self.gr = self.K_T = self.K_S = self.G = self.C_v = self.C_p = self.alpha = None
+        self.gibbs = self.helmholtz = self.S = self.H = None
 
     # The following gibbs function avoids having to calculate a bunch of unnecessary parameters over P-T space. This will be useful for gibbs minimisation.
     def calcgibbs(self, pressure, temperature):
@@ -176,42 +153,57 @@ class Mineral(Material):
         """
         Returns grueneisen parameter of the mineral [unitless]
         """
+        self.gr = self.gr or self.method.grueneisen_parameter(self)
         return self.gr
+
     def isothermal_bulk_modulus(self):
         """
         Returns isothermal bulk modulus of the mineral [Pa]
         """
+        self.K_T = self.K_T or self.method.isothermal_bulk_modulus(self)
         return self.K_T
+
     def compressibility(self):
         """
-        Returns compressibility of the mineral (or inverse isothermal bulk modulus) [1/Pa]
+        Returns isothermal bulk modulus of the mineral [Pa]
         """
-        return 1./self.K_T
+        return 1./self.isothermal_bulk_modulus()
+
     def adiabatic_bulk_modulus(self):
         """
         Returns adiabatic bulk modulus of the mineral [Pa]
         """
+        self.K_S = self.K_S or self.method.adiabatic_bulk_modulus(self)
         return self.K_S
+
     def shear_modulus(self):
         """
         Returns shear modulus of the mineral [Pa]
         """
+        self.G = self.G or self.method.shear_modulus(self)
         return self.G
+
     def thermal_expansivity(self):
         """
         Returns thermal expansion coefficient of the mineral [1/K]
         """
+        self.alpha = self.alpha or self.method.thermal_expansivity(self)
         return self.alpha
+
     def heat_capacity_v(self):
         """
         Returns heat capacity at constant volume of the mineral [J/K/mol]
         """
+        self.C_v = self.C_v or self.method.heat_capacity_v(self)
         return self.C_v
+
     def heat_capacity_p(self):
         """
         Returns heat capacity at constant pressure of the mineral [J/K/mol]
         """
+        self.C_p = self.C_p or self.method.heat_capacity_p(self)
         return self.C_p
+
     def v_s(self):
         """
         Returns shear wave speed of the mineral [m/s]
@@ -234,22 +226,26 @@ class Mineral(Material):
         """
         Returns Gibbs free energy of the mineral [J]
         """
+        self.gibbs = self.gibbs or self.method.gibbs_free_energy(self)
         return self.gibbs
 
     def molar_helmholtz(self):
         """
         Returns Helmholtz free energy of the mineral [J]
         """
+        self.helmholtz = self.helmholtz or self.method.helmholtz_free_energy(self)
         return self.helmholtz
 
     def molar_enthalpy(self):
         """
         Returns enthalpy of the mineral [J]
         """
+        self.H = self.H or self.method.enthalpy(self)
         return self.H
 
     def molar_entropy(self):
         """
         Returns enthalpy of the mineral [J]
         """
+        self.S = self.S or self.method.entropy(self)
         return self.S

@@ -29,7 +29,7 @@ class mypericlase(burnman.Mineral):
             'grueneisen_0': 1.5,
             'q_0': 1.5,
             'eta_s_0': 2.8}
-
+        burnman.Mineral.__init__(self)
 
 class eos(BurnManTest):
     def test_reference_values(self):
@@ -39,32 +39,38 @@ class eos(BurnManTest):
         eoses = [burnman.eos.SLB2(), burnman.eos.SLB3(), burnman.eos.BM2(), burnman.eos.BM3()]
 
         for i in eoses:
-            Volume_test = i.volume(pressure, temperature, rock.params)
+            rock.method=i
+            rock.set_state(pressure, temperature)
+            Volume_test = i.volume(rock)
             self.assertFloatEqual(Volume_test, rock.params['V_0'])
-            Kt_test = i.isothermal_bulk_modulus(pressure, 300., rock.params['V_0'], rock.params)
+            Kt_test = i.isothermal_bulk_modulus(rock)
             self.assertFloatEqual(Kt_test, rock.params['K_0'])
-            # K_S is based on 0 reference temperature:
-            Kt_test = i.isothermal_bulk_modulus(pressure, 0., rock.params['V_0'], rock.params)
-            K_test = i.adiabatic_bulk_modulus(pressure, 0., rock.params['V_0'], rock.params)
+            # Compare K_T and K_S at 0 K:
+            rock.set_state(pressure, 0.)
+            Kt_test = i.isothermal_bulk_modulus(rock)
+            K_test = i.adiabatic_bulk_modulus(rock)
+            rock.set_state(pressure, temperature)
             self.assertFloatEqual(K_test, Kt_test)
-            G_test = i.shear_modulus(pressure, temperature, rock.params['V_0'], rock.params)
+            G_test = i.shear_modulus(rock)
             self.assertFloatEqual(G_test, rock.params['G_0'])
-            Density_test = i.density(pressure, temperature, rock.params)
+            Density_test = i.density(rock)
             self.assertFloatEqual(Density_test, rock.params['molar_mass'] / rock.params['V_0'])
-            alpha_test = i.thermal_expansivity(pressure, temperature, rock.params['V_0'], rock.params)
-            Cp_test = i.heat_capacity_p(pressure, temperature, rock.params['V_0'], rock.params)
-            Cv_test = i.heat_capacity_v(pressure, temperature, rock.params['V_0'], rock.params)
-            Grun_test = i.grueneisen_parameter(pressure, temperature, rock.params['V_0'], rock.params)
+            alpha_test = i.thermal_expansivity(rock)
+            Cp_test = i.heat_capacity_p(rock)
+            Cv_test = i.heat_capacity_v(rock)
+            Grun_test = i.grueneisen_parameter(rock)
 
         eoses_thermal = [burnman.eos.SLB2(), burnman.eos.SLB3()]
         for i in eoses_thermal:
-            Cp_test = i.heat_capacity_p(pressure, temperature, rock.params['V_0'], rock.params)
+            rock.method=i
+            rock.set_state(pressure, temperature)
+            Cp_test = i.heat_capacity_p(rock)
             self.assertFloatEqual(Cp_test, 37.076768469502042)
-            Cv_test = i.heat_capacity_v(pressure, temperature, rock.params['V_0'], rock.params)
+            Cv_test = i.heat_capacity_v(rock)
             self.assertFloatEqual(Cv_test, 36.577717628901553)
-            alpha_test = i.thermal_expansivity(pressure, temperature, rock.params['V_0'], rock.params)
+            alpha_test = i.thermal_expansivity(rock)
             self.assertFloatEqual(alpha_test, 3.031905596878513e-05)
-            Grun_test = i.grueneisen_parameter(pressure, temperature, rock.params['V_0'], rock.params)
+            Grun_test = i.grueneisen_parameter(rock)
             self.assertFloatEqual(Grun_test, rock.params['grueneisen_0'])
 
 

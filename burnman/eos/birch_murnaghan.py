@@ -79,56 +79,56 @@ class BirchMurnaghanBase(eos.EquationOfState):
     has no temperature dependence.  However, the shear modulus is sometimes fit to a second order 
     function, so if this is the case, you should use that.  For more see :class:`burnman.birch_murnaghan.BM2` and :class:`burnman.birch_murnaghan.BM3`.
     """
-    def volume(self,pressure, temperature, params):
+    def volume(self, mineral):
         """
         Returns volume :math:`[m^3]` as a function of pressure :math:`[Pa]`.
         """
-        return volume(pressure,params)
+        return volume(mineral.pressure, mineral.params)
 
     def pressure(self, temperature, volume, params):
         return birch_murnaghan(params['V_0']/volume, params)
 
-    def isothermal_bulk_modulus(self,pressure,temperature, volume, params):
+    def isothermal_bulk_modulus(self, mineral):
         """
         Returns isothermal bulk modulus :math:`K_T` :math:`[Pa]` as a function of pressure :math:`[Pa]`,
         temperature :math:`[K]` and volume :math:`[m^3]`. 
         """
-        return bulk_modulus(volume, params)
+        return bulk_modulus(mineral.molar_volume(), mineral.params)
 
-    def adiabatic_bulk_modulus(self,pressure, temperature, volume, params):
+    def adiabatic_bulk_modulus(self, mineral):
         """
         Returns adiabatic bulk modulus :math:`K_s` of the mineral. :math:`[Pa]`.
         """
-        return bulk_modulus(volume,params)
+        return bulk_modulus(mineral.molar_volume(), mineral.params)
 
-    def shear_modulus(self,pressure, temperature, volume, params):
+    def shear_modulus(self, mineral):
         """
         Returns shear modulus :math:`G` of the mineral. :math:`[Pa]`
         """
         if(self.order == 2):
-          return shear_modulus_second_order(volume,params)
+          return shear_modulus_second_order(mineral.molar_volume(), mineral.params)
         elif(self.order == 3):
-          return shear_modulus_third_order(volume,params)
+          return shear_modulus_third_order(mineral.molar_volume(), mineral.params)
 
-    def heat_capacity_v(self,pressure, temperature, volume, params):
+    def heat_capacity_v(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
         return 1.e99
 
-    def heat_capacity_p(self,pressure, temperature, volume, params):
+    def heat_capacity_p(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
         return 1.e99
 
-    def thermal_expansivity(self,pressure, temperature, volume, params):
+    def thermal_expansivity(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[1/K]`
         """
         return 0.
 
-    def grueneisen_parameter(self,pressure,temperature,volume,params):
+    def grueneisen_parameter(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[unitless]`
         """

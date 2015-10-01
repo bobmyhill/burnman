@@ -23,7 +23,7 @@ class EquationOfState(object):
     does not make sense for them to be functions of volume or density.
     """
 
-    def volume(self, pressure, temperature, params):
+    def volume(self, mineral):
         """
         Parameters
         ----------
@@ -59,7 +59,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def density(self, pressure, temperature, params):
+    def density(self, mineral):
         """
         Calculate the density of the mineral :math:`[kg/m^3]`.  
         The params object must include a "molar_mass" field.
@@ -78,9 +78,9 @@ class EquationOfState(object):
         density : float
             Density of the mineral. :math:`[kg/m^3]`
         """
-        return params["molar_mass"] / self.volume(pressure, temperature, params)
+        return mineral.params["molar_mass"] / self.volume(mineral)
 
-    def grueneisen_parameter(self, pressure, temperature, volume, params):
+    def grueneisen_parameter(self, mineral):
         """
         Parameters
         ----------
@@ -101,7 +101,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def isothermal_bulk_modulus(self, pressure, temperature, volume, params):
+    def isothermal_bulk_modulus(self, mineral):
         """
         Parameters
         ----------
@@ -122,7 +122,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def adiabatic_bulk_modulus(self, pressure, temperature, volume, params):
+    def adiabatic_bulk_modulus(self, mineral):
         """
         Parameters
         ----------
@@ -143,7 +143,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def shear_modulus(self, pressure, temperature, volume, params):
+    def shear_modulus(self, mineral):
         """
         Parameters
         ----------
@@ -164,7 +164,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def heat_capacity_v(self, pressure, temperature, volume, params):
+    def heat_capacity_v(self, mineral):
         """
         Parameters
         ----------
@@ -185,7 +185,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def heat_capacity_p(self, pressure, temperature, volume, params):
+    def heat_capacity_p(self, mineral):
         """
         Parameters
         ----------
@@ -206,7 +206,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def thermal_expansivity(self, pressure, temperature, volume, params):
+    def thermal_expansivity(self, mineral):
         """
         Parameters
         ----------
@@ -227,25 +227,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def reference_temperature( self, params ):
-        """
-        Parameters
-        ----------
-        params : dictionary
-            Dictionary containing material parameters required by the equation of state.
-
-        Returns
-        -------
-        T_0 : float
-            If params contains a "T_0" entry, return that reference temperature, otherwise
-            return 300.0 Kelvin
-        """
-        if 'T_0' in params:
-            return params['T_0']
-        else:
-            return 300.0
-
-    def gibbs_free_energy( self, pressure, temperature, volume, params ):
+    def gibbs_free_energy( self, mineral):
         """
         Parameters
         ----------
@@ -266,7 +248,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def helmholtz_free_energy( self, pressure, temperature, volume, params ):
+    def helmholtz_free_energy( self, mineral ):
         """
         Parameters
         ----------
@@ -285,14 +267,14 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def entropy( self, pressure, temperature, volume, params):
+    def entropy( self, mineral):
         """
         Returns the entropy at the pressure and temperature of the mineral [J/K/mol]
         """
 
         raise NotImplementedError("")
 
-    def enthalpy( self, pressure, temperature, volume, params ):
+    def enthalpy( self, mineral ):
         """
         Parameters
         ----------
@@ -310,7 +292,7 @@ class EquationOfState(object):
         """
         raise NotImplementedError("")
 
-    def internal_energy( self, pressure, temperature, volume, params ):
+    def internal_energy( self, mineral ):
         """
         Parameters
         ----------
