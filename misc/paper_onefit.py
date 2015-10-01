@@ -87,7 +87,7 @@ def array_to_rock(arr, names):
         if isinstance(phase, HelperSolidSolution):
             for min in phase.endmembers:
                 for key in min.params:
-                    if key != 'equation_of_state' and key != 'F_0':
+                    if key != 'equation_of_state' and key != 'F_0' and key != 'T_0' and key != 'P_0':
                         assert(names[idx]==min.to_string()+'.'+key)
                         min.params[key] = arr[idx]
                         idx += 1

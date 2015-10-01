@@ -13,9 +13,6 @@ import burnman.constants as constants
 
 import warnings
 
-T_0=298.15 # Standard temperature = 25 C
-P_0=1.e5 # Standard pressure = 1.e5 Pa
-
 def cork_variables(cork, cork_P, cork_T, temperature):
     a=cork[0][0]*cork_T**(2.5)/cork_P + cork[0][1]*cork_T**(1.5)/cork_P*temperature
     b=cork[1][0]*cork_T/cork_P
@@ -80,13 +77,11 @@ class CORK(eos.EquationOfState):
         return 0.
 
     # Heat capacity at ambient pressure
-    def heat_capacity_p0(self,mineral):
+    def heat_capacity_p0(self, temperature, params):
         """
         Returns heat capacity at ambient pressure as a function of temperature [J/K/mol]
         Cp = a + bT + cT^-2 + dT^-0.5 in Holland and Powell, 2011
         """
-        temperature = mineral.temperature
-        params = mineral.params
         Cp = params['Cp'][0] + params['Cp'][1]*temperature + params['Cp'][2]*np.power(temperature,-2.) + params['Cp'][3]*np.power(temperature,-0.5)
         return Cp
 
@@ -113,6 +108,8 @@ class CORK(eos.EquationOfState):
         temperature = mineral.temperature
         pressure = mineral.pressure
         params = mineral.params
+        P_0 = params['P_0']
+        T_0 = params['T_0']
 
        # Calculate temperature and pressure integrals
         intCpdT = (params['Cp'][0]*temperature + 0.5*params['Cp'][1]*np.power(temperature,2.) - params['Cp'][2]/temperature + 2.*params['Cp'][3]*np.sqrt(temperature)) - (params['Cp'][0]*T_0 + 0.5*params['Cp'][1]*T_0*T_0 - params['Cp'][2]/T_0 + 2.0*params['Cp'][3]*np.sqrt(T_0))
@@ -139,6 +136,10 @@ class CORK(eos.EquationOfState):
         """
         Check for existence and validity of the parameters
         """
+        if 'T_0' not in params:
+            params['T_0'] = 298.15
+        if 'P_0' not in params:
+            params['P_0'] = 1.e5
 
         #if G and Gprime are not included this is presumably deliberate,
         #as we can model density and bulk modulus just fine without them,
@@ -167,7 +168,7 @@ class CORK(eos.EquationOfState):
         if params['cork_P'] < 1.e4 or params['cork_P'] > 1.e8:
             warnings.warn( 'Unusual value for cork_P', stacklevel=2 )
 
-        if self.heat_capacity_p0(T_0,params) < 0.:
+        if self.heat_capacity_p0(params['T_0'],params) < 0.:
             warnings.warn( 'Negative heat capacity at T_0', stacklevel=2 )
         if self.heat_capacity_p0(2000.,params) < 0.:
             warnings.warn( 'Negative heat capacity at 2000K', stacklevel=2 )

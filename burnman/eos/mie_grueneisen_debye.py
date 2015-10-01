@@ -62,7 +62,7 @@ class MGDBase(eos.EquationOfState):
         """
         params = mineral.params
         temperature = mineral.temperature
-        pressure = mineral.pressure
+        volume = mineral.molar_volume()
         T_0 = params['T_0']
 
         K_T = bm.bulk_modulus(volume, params) + \
@@ -141,6 +141,9 @@ class MGDBase(eos.EquationOfState):
         """
         K_T= mineral.isothermal_bulk_modulus()
         alpha = mineral.thermal_expansivity()
+        params = mineral.params
+        volume = mineral.molar_volume()
+
         gr = self.__grueneisen_parameter(params['V_0']/volume, params)
         K_S = K_T*(1. + gr * alpha * mineral.temperature)
         return K_S
