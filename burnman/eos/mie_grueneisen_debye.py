@@ -24,19 +24,25 @@ class MGDBase(eos.EquationOfState):
     #def __init__(self):
     #    pass
 
-    def grueneisen_parameter(self, pressure, temperature, volume, params):
+    def grueneisen_parameter(self, mineral):
         """
         Returns grueneisen parameter [unitless] as a function of pressure,
         temperature, and volume (EQ B6)
         """
+        params = mineral.params
+        volume = mineral.molar_volume()
         return self.__grueneisen_parameter(params['V_0']/volume, params)
 
-    def volume(self, pressure,temperature,params):
+    def volume(self, mineral):
         """
         Returns volume [m^3] as a function of pressure [Pa] and temperature [K]
         EQ B7
         """
-        T_0 = self.reference_temperature( params )
+        params = mineral.params
+        temperature = mineral.temperature
+        pressure = mineral.pressure
+        T_0 = params['T_0']
+
         func = lambda x: bm.birch_murnaghan(params['V_0']/x, params) + \
             self.__thermal_pressure(temperature, x, params) - \
             self.__thermal_pressure(T_0, x, params) - pressure
@@ -49,24 +55,32 @@ class MGDBase(eos.EquationOfState):
             self.__thermal_pressure(300., volume, params)
         return P
 
-    def isothermal_bulk_modulus(self, pressure,temperature,volume, params):
+    def isothermal_bulk_modulus(self, mineral):
         """
         Returns isothermal bulk modulus [Pa] as a function of pressure [Pa],
         temperature [K], and volume [m^3].  EQ B8
         """
-        T_0 = self.reference_temperature( params )
+        params = mineral.params
+        temperature = mineral.temperature
+        pressure = mineral.pressure
+        T_0 = params['T_0']
+
         K_T = bm.bulk_modulus(volume, params) + \
             self.__thermal_bulk_modulus(temperature,volume, params) - \
             self.__thermal_bulk_modulus(T_0,volume, params)  #EQB13
         return K_T
 
     #calculate the mgd shear modulus as a function of P, V, and T
-    def shear_modulus(self, pressure, temperature, volume, params):
+    def shear_modulus(self, mineral):
         """
         Returns shear modulus [Pa] as a function of pressure [Pa],
         temperature [K], and volume [m^3].  EQ B11
         """
-        T_0 = self.reference_temperature( params )
+        params = mineral.params
+        temperature = mineral.temperature
+        volume = mineral.molar_volume()
+        T_0 = params['T_0']
+
         if self.order==2:
             return bm.shear_modulus_second_order(volume,params) + \
                 self.__thermal_shear_modulus(temperature,volume, params) - \
@@ -79,44 +93,56 @@ class MGDBase(eos.EquationOfState):
             raise NotImplementedError("")
 
     #heat capacity at constant volume
-    def heat_capacity_v(self, pressure, temperature, volume, params):
+    def heat_capacity_v(self, mineral):
         """
         Returns heat capacity at constant volume at the pressure, temperature, and volume [J/K/mol]
         """
+        params = mineral.params
+        temperature = mineral.temperature
+        volume = mineral.molar_volume()
+
         Debye_T = self.__debye_temperature(params['V_0']/volume, params)
         C_v = debye.heat_capacity_v(temperature, Debye_T, params['n'])
         return C_v
 
-    def thermal_expansivity(self, pressure, temperature, volume , params):
+    def thermal_expansivity(self, mineral):
         """
         Returns thermal expansivity at the pressure, temperature, and volume [1/K]
         """
-        C_v = self.heat_capacity_v(pressure,temperature,volume,params)
+        params = mineral.params
+        temperature = mineral.temperature
+        volume = mineral.molar_volume()
+
+        C_v = mineral.heat_capacity_v()
         gr = self.__grueneisen_parameter(params['V_0']/volume, params)
-        K = self.isothermal_bulk_modulus(pressure, temperature, volume ,params)
+        K = mineral.isothermal_bulk_modulus()
         alpha = gr * C_v / K / volume
         return alpha
 
     #heat capacity at constant pressure
-    def heat_capacity_p(self,pressure, temperature,volume,params):
+    def heat_capacity_p(self, mineral):
         """
         Returns heat capacity at constant pressure at the pressure, temperature, and volume [J/K/mol]
         """
-        alpha = self.thermal_expansivity(pressure,temperature,volume,params)
+        params = mineral.params
+        temperature = mineral.temperature
+        volume = mineral.molar_volume()
+
+        alpha = mineral.thermal_expansivity()
         gr = self.__grueneisen_parameter(params['V_0']/volume, params)
-        C_v = self.heat_capacity_v(pressure,temperature,volume,params)
+        C_v = mineral.heat_capacity_v()
         C_p = C_v*(1. + gr * alpha * temperature)
         return C_p
 
-    def adiabatic_bulk_modulus(self,pressure,temperature,volume,params):
+    def adiabatic_bulk_modulus(self, mineral):
         """
         Returns adiabatic bulk modulus [Pa] as a function of pressure [Pa],
         temperature [K], and volume [m^3].  EQ D6
         """
-        K_T= self.isothermal_bulk_modulus(pressure,temperature,volume,params)
-        alpha = self.thermal_expansivity(pressure,temperature,volume,params)
+        K_T= mineral.isothermal_bulk_modulus()
+        alpha = mineral.thermal_expansivity()
         gr = self.__grueneisen_parameter(params['V_0']/volume, params)
-        K_S = K_T*(1. + gr * alpha * temperature)
+        K_S = K_T*(1. + gr * alpha * mineral.temperature)
         return K_S
 
     def pressure(self, temperature, volume, params):
@@ -124,7 +150,7 @@ class MGDBase(eos.EquationOfState):
         Returns pressure [Pa] as a function of temperature [K] and volume[m^3]
         EQ B7
         """
-        T_0 = self.reference_temperature( params )
+        T_0 = params['T_0']
         return bm.birch_murnaghan(params['V_0']/volume, params) + \
                 self.__thermal_pressure(temperature,volume, params) - \
                 self.__thermal_pressure(T_0,volume, params)
@@ -174,6 +200,10 @@ class MGDBase(eos.EquationOfState):
         """
         Check for existence and validity of the parameters
         """
+        if 'T_0' not in params:
+            params['T_0'] = 300.
+        if 'P_0' not in params:
+            params['P_0'] = 1.e5
 
         #if G and Gprime are not included this is presumably deliberate,
         #as we can model density and bulk modulus just fine without them,

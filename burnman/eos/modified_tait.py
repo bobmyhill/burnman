@@ -1,12 +1,10 @@
-# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
-# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
-
+# BurnMan - a lower mantle toolkit
+# Copyright (C) 2012-2014, Myhill, R., Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
+# Released under GPL v2 or later.
 
 import numpy as np
 import equation_of_state as eos
 import warnings
-
-P_0=1.e5 # Standard pressure = 1.e5 Pa
 
 def tait_constants(params):
     """
@@ -27,7 +25,7 @@ def modified_tait(x, params):
     EQ 2 from Holland and Powell, 2011
     """
     a, b, c = tait_constants(params)
-    return (np.power((x + a - 1.) / a, -1./c) - 1.)/b
+    return (np.power((x + a - 1.) / a, -1./c) - 1.)/b + params['P_0']
 
 def volume(pressure,params):
     """
@@ -35,7 +33,7 @@ def volume(pressure,params):
     EQ 12
     """
     a, b, c = tait_constants(params)
-    x = 1 - a*( 1. - np.power(( 1. + b*(pressure)), -1.0*c))
+    x = 1 - a*( 1. - np.power(( 1. + b*(pressure-params['P_0'])), -1.0*c))
     return x*params['V_0']
 
 def bulk_modulus(pressure, params):
@@ -44,7 +42,7 @@ def bulk_modulus(pressure, params):
     EQ 13+2
     """
     a, b, c = tait_constants(params)
-    return params['K_0']*(1. + b*(pressure))*(a + (1.-a)*np.power((1. + b*(pressure)), c))
+    return params['K_0']*(1. + b*(pressure-params['P_0']))*(a + (1.-a)*np.power((1. + b*(pressure-params['P_0'])), c))
 
 
 class MT(eos.EquationOfState):
@@ -59,11 +57,11 @@ class MT(eos.EquationOfState):
     equation_of_state = 'mt').
     """
 
-    def volume(self, pressure,temperature,params):
+    def volume(self, mineral):
         """
         Returns volume :math:`[m^3]` as a function of pressure :math:`[Pa]`.
         """
-        return volume(pressure,params)
+        return volume(mineral.pressure,mineral.params)
 
     def pressure(self, temperature, volume, params):
         """
@@ -71,19 +69,19 @@ class MT(eos.EquationOfState):
         """
         return modified_tait(params['V_0']/volume, params)
 
-    def isothermal_bulk_modulus(self, pressure,temperature,volume, params):
+    def isothermal_bulk_modulus(self, mineral):
         """
         Returns isothermal bulk modulus :math:`K_T` of the mineral. :math:`[Pa]`.
         """
-        return bulk_modulus(pressure, params)
+        return bulk_modulus(mineral.pressure, mineral.params)
 
-    def adiabatic_bulk_modulus(self,pressure, temperature, volume, params):
+    def adiabatic_bulk_modulus(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[Pa]`
         """
         return 1.e99
 
-    def shear_modulus(self, pressure, temperature, volume, params):
+    def shear_modulus(self, mineral):
         """
         Not implemented in the Modified Tait EoS. :math:`[Pa]`
         Returns 0. 
@@ -91,25 +89,25 @@ class MT(eos.EquationOfState):
         """
         return 0.
 
-    def heat_capacity_v(self, pressure, temperature, volume, params):
+    def heat_capacity_v(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
         return 1.e99
 
-    def heat_capacity_p(self, pressure, temperature, volume, params):
+    def heat_capacity_p(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
         return 1.e99
 
-    def thermal_expansivity(self,pressure, temperature, volume, params):
+    def thermal_expansivity(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[1/K]`
         """
         return 0.
 
-    def grueneisen_parameter(self,pressure,temperature,volume,params):
+    def grueneisen_parameter(self, mineral):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[unitless]`
         """
@@ -119,6 +117,9 @@ class MT(eos.EquationOfState):
         """
         Check for existence and validity of the parameters
         """
+
+        if 'P_0' not in params:
+            params['P_0'] = 1.e5
      
         # G and Gprime are not defined in this equation of state,
         # We can model density and bulk modulus just fine without them,

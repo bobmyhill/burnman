@@ -160,12 +160,18 @@ def check_slb_fig3():
     mgd_eos = mgd.MGD2()
     
 
+    #call with dummy P and T, they do not change it
+    perovskite.temperature = 500.
+    perovskite.pressure = 1.e9
+    
     #calculate its thermal properties
     for i in range(len(volume)):
-        #call with dummy pressure and temperatures, they do not change it
-        grueneisen_slb[i] = slb_eos.grueneisen_parameter(0., 0., volume[i]*perovskite.params['V_0'], perovskite.params)
-        grueneisen_mgd[i] = mgd_eos.grueneisen_parameter(0., 0., volume[i]*perovskite.params['V_0'], perovskite.params)
-        q_slb[i] = slb_eos.volume_dependent_q(1./volume[i], perovskite.params)
+        perovskite.V = volume[i]*perovskite.params['V_0']
+        perovskite.method = slb_eos
+        grueneisen_slb[i] = slb_eos.grueneisen_parameter(perovskite)
+        perovskite.method = mgd_eos
+        grueneisen_mgd[i] = mgd_eos.grueneisen_parameter(perovskite)
+        q_slb[i] = slb_eos.volume_dependent_q(perovskite)
         q_mgd[i] = perovskite.params['q_0']
 
     #compare with figure 7

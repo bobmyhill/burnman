@@ -30,23 +30,26 @@ class CORK(eos.EquationOfState):
     and Holland and Powell (2011; followed here).
     """
 
-    def grueneisen_parameter(self, pressure, temperature, volume, params):
+    def grueneisen_parameter(self, mineral):
         """
         Returns grueneisen parameter [unitless] as a function of pressure,
         temperature, and volume.
         """
         return 0.
 
-    def volume(self, pressure,temperature,params):
+    def volume(self, mineral):
         """
         Returns volume [m^3] as a function of pressure [Pa] and temperature [K]
         Eq. 7 in Holland and Powell, 1991
         """
-        cork=cork_variables(params['cork_params'], params['cork_P'], params['cork_T'], temperature)
+        temperature = mineral.temperature
+        pressure = mineral.pressure
+
+        cork=cork_variables(mineral.params['cork_params'], mineral.params['cork_P'], mineral.params['cork_T'], temperature)
         V = constants.gas_constant*temperature/pressure + (cork[1] - cork[0]*constants.gas_constant*np.sqrt(temperature)/((constants.gas_constant*temperature + cork[1]*pressure)*(constants.gas_constant*temperature + 2.*cork[1]*pressure)) + cork[2]*np.sqrt(pressure) + cork[3]*pressure)
         return V
 
-    def isothermal_bulk_modulus(self, pressure,temperature,volume, params):
+    def isothermal_bulk_modulus(self, mineral):
         """
         Returns isothermal bulk modulus [Pa] as a function of pressure [Pa],
         temperature [K], and volume [m^3].  EQ 13+2
@@ -54,7 +57,7 @@ class CORK(eos.EquationOfState):
         return 0.
 
     #calculate the shear modulus as a function of P, V, and T
-    def shear_modulus(self, pressure, temperature, volume, params):
+    def shear_modulus(self, mineral):
         """
         Not implemented. 
         Returns 0. 
@@ -63,13 +66,13 @@ class CORK(eos.EquationOfState):
         return 0.
 
     # Cv, heat capacity at constant volume
-    def heat_capacity_v(self, pressure, temperature, volume, params):
+    def heat_capacity_v(self, mineral):
         """
         Returns heat capacity at constant volume at the pressure, temperature, and volume [J/K/mol].
         """
         return 0.
 
-    def thermal_expansivity(self, pressure, temperature, volume , params):
+    def thermal_expansivity(self, mineral):
         """
         Returns thermal expansivity at the pressure, temperature, and volume [1/K]
         Replace -Pth in EQ 13+1 with P-Pth for non-ambient temperature 
@@ -77,34 +80,40 @@ class CORK(eos.EquationOfState):
         return 0.
 
     # Heat capacity at ambient pressure
-    def heat_capacity_p0(self,temperature,params):
+    def heat_capacity_p0(self,mineral):
         """
         Returns heat capacity at ambient pressure as a function of temperature [J/K/mol]
         Cp = a + bT + cT^-2 + dT^-0.5 in Holland and Powell, 2011
         """
+        temperature = mineral.temperature
+        params = mineral.params
         Cp = params['Cp'][0] + params['Cp'][1]*temperature + params['Cp'][2]*np.power(temperature,-2.) + params['Cp'][3]*np.power(temperature,-0.5)
         return Cp
 
 
-    def heat_capacity_p(self, pressure, temperature, volume, params):
+    def heat_capacity_p(self, mineral):
         """
         Returns heat capacity at constant pressure at the pressure, temperature, and volume [J/K/mol]
         """
         return 0
 
 
-    def adiabatic_bulk_modulus(self,pressure,temperature,volume,params):
+    def adiabatic_bulk_modulus(self, mineral):
         """
         Returns adiabatic bulk modulus [Pa] as a function of pressure [Pa],
         temperature [K], and volume [m^3].  
         """
         return 0.
 
-    def gibbs_free_energy(self,pressure,temperature,volume,params):
+    def gibbs_free_energy(self, mineral):
         """
         Returns the gibbs free energy [J/mol] as a function of pressure [Pa]
         and temperature [K].
         """
+        temperature = mineral.temperature
+        pressure = mineral.pressure
+        params = mineral.params
+
        # Calculate temperature and pressure integrals
         intCpdT = (params['Cp'][0]*temperature + 0.5*params['Cp'][1]*np.power(temperature,2.) - params['Cp'][2]/temperature + 2.*params['Cp'][3]*np.sqrt(temperature)) - (params['Cp'][0]*T_0 + 0.5*params['Cp'][1]*T_0*T_0 - params['Cp'][2]/T_0 + 2.0*params['Cp'][3]*np.sqrt(T_0))
 

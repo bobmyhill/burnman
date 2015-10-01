@@ -54,7 +54,7 @@ class SLBBase(eos.EquationOfState):
         a2_iikk = -12.*params['grueneisen_0']+36.*pow(params['grueneisen_0'],2.) - 18.*params['q_0']*params['grueneisen_0'] # EQ 47
         return params['Debye_0'] * np.sqrt(1. + a1_ii * f + 1./2. * a2_iikk*f*f)
 
-    def _volume_dependent_q(self, mineral):
+    def volume_dependent_q(self, mineral):
         """
         Finite strain approximation for :math:`q`, the isotropic volume strain
         derivative of the grueneisen parameter.
@@ -180,8 +180,9 @@ class SLBBase(eos.EquationOfState):
     def grueneisen_parameter(self, mineral):
         gruen_0 = mineral.params['grueneisen_0']
         V_0 = mineral.params['V_0']
+        V = mineral.molar_volume()
         q_0 = mineral.params['q_0']
-        return _grueneisen_parameter_fast(V_0, mineral.V, gruen_0, q_0)
+        return _grueneisen_parameter_fast(V_0, V, gruen_0, q_0)
 
 
     def isothermal_bulk_modulus(self, mineral):
@@ -206,7 +207,7 @@ class SLBBase(eos.EquationOfState):
         C_v = debye.heat_capacity_v(temperature, debye_T, n) #heat capacity at temperature T
         C_v_ref = debye.heat_capacity_v(T_0, debye_T, n) #heat capacity at reference temperature
 
-        q = self._volume_dependent_q(mineral)
+        q = self.volume_dependent_q(mineral)
 
         K = bm.bulk_modulus(volume, mineral.params) \
             + (gr + 1.-q)* ( gr / volume ) * (E_th - E_th_ref) \
@@ -276,7 +277,7 @@ class SLBBase(eos.EquationOfState):
         """
         Returns the Gibbs free energy at the pressure and temperature of the mineral [J/mol]
         """
-        F = mineral.molar_helmholtz(mineral)
+        F = mineral.molar_helmholtz()
         G = F + mineral.pressure * mineral.molar_volume()
         return G
 
@@ -292,7 +293,7 @@ class SLBBase(eos.EquationOfState):
         """
         Returns the enthalpy at the pressure and temperature of the mineral [J/mol]
         """
-        F = mineral.molar_helmholtz(mineral)
+        F = mineral.molar_helmholtz()
         entropy = mineral.molar_entropy()
         return F + mineral.temperature * entropy
 

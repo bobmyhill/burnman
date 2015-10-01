@@ -109,13 +109,6 @@ class Mineral(Material):
         This updates the other properties of this class (v_s, v_p, ...).
         """
 
-        #in an effort to avoid additional work, don't do all the calculations if nothing has changed
-        try:
-            if self.pressure == pressure and self.temperature == temperature and self.old_params == self.params:
-                return
-        except AttributeError:
-            pass  #do nothing
-
         self.pressure = pressure
         self.temperature = temperature
         self.old_params = self.params
@@ -124,9 +117,56 @@ class Mineral(Material):
         if self.method is None:
             raise AttributeError, "no method set for mineral, or equation_of_state given in mineral.params"
 
+        # Wipe attributes
+        self.V = self.gr = self.K_T = self.K_S \
+        = self.G = self.C_v = self.C_p = self.alpha \
+        = self.gibbs = self.helmholtz = self.S = self.H = None
+
+        del self.V
+        del self.gr
+        del self.K_T
+        del self.K_S
+        del self.G
+        del self.C_v
+        del self.C_p
+        del self.alpha
+        del self.gibbs
+        del self.helmholtz
+        del self.S
+        del self.H
+            
         self.V = self.method.volume(self)
-        self.gr = self.K_T = self.K_S = self.G = self.C_v = self.C_p = self.alpha = None
-        self.gibbs = self.helmholtz = self.S = self.H = None
+        self.K_T = self.method.isothermal_bulk_modulus(self)
+        self.K_S = self.method.adiabatic_bulk_modulus(self)
+
+        self.gr = self.method.grueneisen_parameter(self)
+        self.alpha = self.method.thermal_expansivity(self)
+
+        self.G = self.method.shear_modulus(self)
+
+        self.C_p = self.method.heat_capacity_p(self)
+        self.C_v = self.method.heat_capacity_v(self)
+
+        # Attempt to calculate the gibbs free energy and helmholtz free energy, 
+        # but don't complain if the equation of state does not calculate it, 
+        # or if the mineral params do not have the requisite entries.
+        try:
+            self.gibbs = self.method.gibbs_free_energy(self)
+        except (KeyError, NotImplementedError):
+            self.gibbs = float('nan')
+        try:
+            self.helmholtz = self.method.helmholtz_free_energy(self)
+        except (KeyError, NotImplementedError):
+            self.helmholtz = float('nan')
+        try:
+            self.S = self.method.entropy(self)
+        except (KeyError, NotImplementedError):
+            self.S = float('nan')
+        try:
+            self.H = self.method.enthalpy(self)
+        except (KeyError, NotImplementedError):
+            self.H = float('nan')
+
 
     # The following gibbs function avoids having to calculate a bunch of unnecessary parameters over P-T space. This will be useful for gibbs minimisation.
     def calcgibbs(self, pressure, temperature):
@@ -149,19 +189,27 @@ class Mineral(Material):
         Returns molar volume of the mineral [m^3/mol]
         """
         return self.V
+
     def grueneisen_parameter(self):
         """
         Returns grueneisen parameter of the mineral [unitless]
         """
-        self.gr = self.gr or self.method.grueneisen_parameter(self)
-        return self.gr
+        try:
+            return self.gr
+        except:
+            self.gr = self.method.grueneisen_parameter(self)
+            return self.gr
+
 
     def isothermal_bulk_modulus(self):
         """
         Returns isothermal bulk modulus of the mineral [Pa]
         """
-        self.K_T = self.K_T or self.method.isothermal_bulk_modulus(self)
-        return self.K_T
+        try:
+            return self.K_T 
+        except:
+            self.K_T = self.method.isothermal_bulk_modulus(self)
+            return self.K_T
 
     def compressibility(self):
         """
@@ -173,36 +221,51 @@ class Mineral(Material):
         """
         Returns adiabatic bulk modulus of the mineral [Pa]
         """
-        self.K_S = self.K_S or self.method.adiabatic_bulk_modulus(self)
-        return self.K_S
-
+        try:
+            return self.K_S 
+        except:
+            self.K_S = self.method.adiabatic_bulk_modulus(self)
+            return self.K_S
+    
     def shear_modulus(self):
         """
         Returns shear modulus of the mineral [Pa]
         """
-        self.G = self.G or self.method.shear_modulus(self)
-        return self.G
+        try:
+            return self.G 
+        except:
+            self.G = self.method.shear_modulus(self)
+            return self.G
 
     def thermal_expansivity(self):
         """
         Returns thermal expansion coefficient of the mineral [1/K]
         """
-        self.alpha = self.alpha or self.method.thermal_expansivity(self)
-        return self.alpha
+        try:
+            return self.alpha 
+        except:
+            self.alpha = self.method.thermal_expansivity(self)
+            return self.alpha
 
     def heat_capacity_v(self):
         """
         Returns heat capacity at constant volume of the mineral [J/K/mol]
         """
-        self.C_v = self.C_v or self.method.heat_capacity_v(self)
-        return self.C_v
+        try:
+            return self.C_v
+        except:
+            self.C_v = self.method.heat_capacity_v(self)
+            return self.C_v
 
     def heat_capacity_p(self):
         """
         Returns heat capacity at constant pressure of the mineral [J/K/mol]
         """
-        self.C_p = self.C_p or self.method.heat_capacity_p(self)
-        return self.C_p
+        try: 
+            return self.C_p
+        except:
+            self.C_p = self.method.heat_capacity_p(self)
+            return self.C_p
 
     def v_s(self):
         """
@@ -216,6 +279,7 @@ class Mineral(Material):
         """
         return np.sqrt((self.adiabatic_bulk_modulus() + 4. / 3. * \
             self.shear_modulus()) / self.density())
+
     def v_phi(self):
         """
         Returns bulk sound speed of the mineral [m/s]
@@ -233,19 +297,28 @@ class Mineral(Material):
         """
         Returns Helmholtz free energy of the mineral [J]
         """
-        self.helmholtz = self.helmholtz or self.method.helmholtz_free_energy(self)
-        return self.helmholtz
+        try: 
+            return self.helmholtz
+        except:
+            self.helmholtz = self.method.helmholtz_free_energy(self)
+            return self.helmholtz
 
     def molar_enthalpy(self):
         """
         Returns enthalpy of the mineral [J]
         """
-        self.H = self.H or self.method.enthalpy(self)
-        return self.H
+        try:
+            return self.H 
+        except:
+            self.H = self.method.enthalpy(self)
+            return self.H
 
     def molar_entropy(self):
         """
         Returns enthalpy of the mineral [J]
         """
-        self.S = self.S or self.method.entropy(self)
-        return self.S
+        try:
+            return self.S
+        except:
+            self.S = self.method.entropy(self)
+            return self.S
