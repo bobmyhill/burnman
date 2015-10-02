@@ -47,17 +47,36 @@ def f_to_y(f):
 
 wus=ferropericlase()
 
-iron=fcc_iron()
+fcc_iron=fcc_iron()
+bcc_iron=bcc_iron()
 fper=minerals.HP_2011_ds62.fper()
 mt=minerals.HP_2011_ds62.mt()
 hem=minerals.HP_2011_ds62.hem()
 high_mt=high_mt()
 
+def_wus = defect_wustite()
+def_wus_2 = defect_wustite_2()
+
+def_wus.set_state(1.e5, 900.)
+def_wus_2.set_state(1.e5, 900.)
+print def_wus.gibbs - def_wus_2.gibbs
+def_wus.set_state(1.e5, 1100.)
+def_wus_2.set_state(1.e5, 1100.)
+print def_wus.gibbs - def_wus_2.gibbs
+def_wus.set_state(1.e5, 1300.)
+def_wus_2.set_state(1.e5, 1300.)
+print def_wus.gibbs - def_wus_2.gibbs
+def_wus.set_state(1.e5, 1500.)
+def_wus_2.set_state(1.e5, 1500.)
+print def_wus.gibbs - def_wus_2.gibbs
+
+
+
 O2=minerals.HP_2011_fluids.O2()
 
 wus_SLB=minerals.SLB_2011.wuestite()
 
-iron.set_state( 1e5, 298.15 )
+fcc_iron.set_state( 1e5, 298.15 )
 O2.set_state( 1e5, 298.15 )
 
 
@@ -95,7 +114,7 @@ wus_entropies = np.empty_like(comp)
 wus_gibbs = np.empty_like(comp)
 wus_gibbs_SG1996 = np.empty_like(comp)
 T=900.
-iron.set_state( 1e5, T )
+fcc_iron.set_state( 1e5, T )
 O2.set_state( 1e5, T )
 for i,c in enumerate(comp):
         molar_fractions=[0.0, 1.0-c, c]
@@ -104,7 +123,7 @@ for i,c in enumerate(comp):
         wus_entropies[i] = wus.solution_model._configurational_entropy( molar_fractions ) - wus.solution_model._endmember_configurational_entropy_contribution( molar_fractions )
         wus_gibbs[i] = wus.gibbs
         x=f_to_x(c)
-        wus_gibbs_SG1996[i] = (Gwus(x,T) + (1.-x)*iron.gibbs + x*O2.gibbs*0.5) / x
+        wus_gibbs_SG1996[i] = (Gwus(x,T) + (1.-x)*fcc_iron.gibbs + x*O2.gibbs*0.5) / x
 
 
 # Model configurational entropy of solution
@@ -157,7 +176,7 @@ wus_gibbs_SG1996_2 = np.empty_like(comp)
 wus_gibbs_SG1996_3 = np.empty_like(comp)
 wus_gibbs_SG1996_4 = np.empty_like(comp)
 for i,T in enumerate(temperature):
-    iron.set_state( 1e5, T )
+    fcc_iron.set_state( 1e5, T )
     O2.set_state( 1e5, T )
 
     fper.set_state( 1e5, T )
@@ -190,16 +209,16 @@ for i,T in enumerate(temperature):
     wus_gibbs_model_4[i] = wus.gibbs
 
     x=0.5
-    wus_gibbs_SG1996[i] = (Gwus(x,T) + (1.-x)*iron.gibbs + x*O2.gibbs*0.5) / x
+    wus_gibbs_SG1996[i] = (Gwus(x,T) + (1.-x)*fcc_iron.gibbs + x*O2.gibbs*0.5) / x
 
     x=0.6
-    wus_gibbs_SG1996_2[i] = (Gwus(x,T) + (1.-x)*iron.gibbs + x*O2.gibbs*0.5) / x
+    wus_gibbs_SG1996_2[i] = (Gwus(x,T) + (1.-x)*fcc_iron.gibbs + x*O2.gibbs*0.5) / x
    
     x=y_to_x(0.90)
-    wus_gibbs_SG1996_3[i] = (Gwus(x,T) + (1.-x)*iron.gibbs + x*O2.gibbs*0.5) / x
+    wus_gibbs_SG1996_3[i] = (Gwus(x,T) + (1.-x)*fcc_iron.gibbs + x*O2.gibbs*0.5) / x
 
     x=y_to_x(0.75)
-    wus_gibbs_SG1996_4[i] = (Gwus(x,T) + (1.-x)*iron.gibbs + x*O2.gibbs*0.5) / x
+    wus_gibbs_SG1996_4[i] = (Gwus(x,T) + (1.-x)*fcc_iron.gibbs + x*O2.gibbs*0.5) / x
 
 
 
@@ -301,18 +320,20 @@ def iron_wus_mt_eqm(arg, P):
     wus.set_state(P,T)
     mu_iron=chemical_potentials([wus],[dictionarize_formula('Fe')])[0]
     mu_mt=chemical_potentials([wus],[dictionarize_formula('Fe3O4')])[0]
-    return [mu_iron-iron.calcgibbs(P,T),mu_mt-mt.calcgibbs(P,T)]
+    return [mu_iron-bcc_iron.calcgibbs(P,T),mu_mt-mt.calcgibbs(P,T)]
 
 
 T_eqm=optimize.fsolve(iron_wus_mt_eqm, [0.5,800.], args=(P))[1]
-comp_eqm=f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T_eqm, wus, iron))[0])
+comp_eqm=f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T_eqm, wus, fcc_iron))[0])
 
 temperatures=np.linspace(T_eqm-50.,1700.,101)
-iron_wus_comp=np.empty_like(temperatures)
+fcc_iron_wus_comp=np.empty_like(temperatures)
+bcc_iron_wus_comp=np.empty_like(temperatures)
 mt_wus_comp=np.empty_like(temperatures)
 
 for idx, T in enumerate(temperatures):
-    iron_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, iron))[0])
+    fcc_iron_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, fcc_iron))[0])
+    bcc_iron_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, bcc_iron))[0])
     mt_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(eqm_with_wus, 0.16, args=(P, T, wus, mt))[0])
 
 crosses=np.array([[1222.07160224,1172.8465432,1121.78241653,1072.56293888,1021.49881221,972.212357893,922.987298852,871.878521071,871.325963574,923.883111764,972.862589695,1023.7090422,1072.76107818,1121.84102112,1172.74328751,1223.66787946],[0.0428177641654,0.0435528330781,0.0448392036753,0.0453905053599,0.0466768759571,0.0494333843798,0.0501684532925,0.0529249617152,0.0711179173047,0.08067381317,0.0880245022971,0.0939050535988,0.0988667687596,0.102909647779,0.106952526799,0.110260336907]])
@@ -331,7 +352,8 @@ phase_boundaries=np.array(datalines, np.float32).T
 phase_boundaries[0]=[1.0-x_to_y(phase_boundaries[0][i]) for i in range(len(phase_boundaries[0]))]
 
 plt.plot( [0., 0.25], [T_eqm, T_eqm], 'r-', linewidth=3., label='iron-wus-mt')
-plt.plot( iron_wus_comp, temperatures, 'r-', linewidth=3., label='iron-wus')
+plt.plot( fcc_iron_wus_comp, temperatures, 'r-', linewidth=3., label='iron-wus')
+plt.plot( bcc_iron_wus_comp, temperatures, 'r-', linewidth=3., label='iron-wus')
 plt.plot( mt_wus_comp, temperatures, 'r-', linewidth=3., label='wus-mt')
 
 
@@ -364,7 +386,7 @@ iron_wus_comp=np.empty_like([XMgOs]*len(pressures))
 for pidx, P in enumerate(pressures):
     for idx,XMgO in enumerate(XMgOs):
         # Find equilibrium with metallic iron
-        Xdefect=optimize.fsolve(eqm_with_wus, 0.01, args=(P, T, wus, iron))[0]
+        Xdefect=optimize.fsolve(eqm_with_wus, 0.01, args=(P, T, wus, fcc_iron))[0]
         iron_wus_comp[pidx][idx]=(2./3.*Xdefect)/(1.-Xdefect/3.)
 
 for pidx, P in enumerate(pressures):

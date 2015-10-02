@@ -193,7 +193,7 @@ class defect_wustite (Mineral): # starting guess is hem/3.
         formula='Fe2/3O'
         formula = dictionarize_formula(formula)
         self.params = {
-            'name': 'hem',
+            'name': 'defect wustite',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -258541.6 ,
@@ -209,6 +209,26 @@ class defect_wustite (Mineral): # starting guess is hem/3.
             'landau_Tc': 955.0 ,
             'landau_Smax': 15.6/3. ,
             'landau_Vmax': 0.0 }
+        Mineral.__init__(self)
+
+class defect_wustite_2 (Mineral): # starting guess is hem/3.
+    def __init__(self):
+        formula='Fe2/3O'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'defect wustite',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -258541.6 ,
+            'S_0': 34.09 ,
+            'V_0': 1.10701e-05 , # From Simons (1980)
+            'Cp': [163.9/3., 0.0, -2257200.0/3., -657.6/3.] ,
+            'a_0': 2.79e-05 ,
+            'K_0': 1.52e+11 ,
+            'Kprime_0': 4.9 ,
+            'Kdprime_0': -3.2e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
 class ferropericlase(burnman.SolidSolution):
