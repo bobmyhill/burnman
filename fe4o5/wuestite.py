@@ -57,20 +57,16 @@ high_mt=high_mt()
 def_wus = defect_wustite()
 def_wus_2 = defect_wustite_2()
 
-def_wus.set_state(1.e5, 900.)
-def_wus_2.set_state(1.e5, 900.)
-print def_wus.gibbs - def_wus_2.gibbs
-def_wus.set_state(1.e5, 1100.)
-def_wus_2.set_state(1.e5, 1100.)
-print def_wus.gibbs - def_wus_2.gibbs
-def_wus.set_state(1.e5, 1300.)
-def_wus_2.set_state(1.e5, 1300.)
-print def_wus.gibbs - def_wus_2.gibbs
-def_wus.set_state(1.e5, 1500.)
-def_wus_2.set_state(1.e5, 1500.)
-print def_wus.gibbs - def_wus_2.gibbs
+temperatures = np.linspace(900., 1700., 101)
+gibbs = np.empty_like(temperatures)
+for i, T in enumerate(temperatures):
+    def_wus.set_state(1.e5, T)
+    def_wus_2.set_state(1.e5, T)
+    gibbs[i] = def_wus_2.gibbs - def_wus.gibbs
 
-
+plt.plot(temperatures, gibbs)
+plt.show()
+    
 
 O2=minerals.HP_2011_fluids.O2()
 
