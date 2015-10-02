@@ -47,26 +47,33 @@ def f_to_y(f):
 
 wus=ferropericlase()
 
-fcc_iron=fcc_iron()
-bcc_iron=bcc_iron()
+fcc_iron=minerals.Myhill_calibration_iron.fcc_iron()
+bcc_iron=minerals.Myhill_calibration_iron.bcc_iron()
+HP_iron=minerals.HP_2011_ds62.iron()
 fper=minerals.HP_2011_ds62.fper()
 mt=minerals.HP_2011_ds62.mt()
 hem=minerals.HP_2011_ds62.hem()
 high_mt=high_mt()
 
-def_wus = defect_wustite()
-def_wus_2 = defect_wustite_2()
+temperatures = np.linspace(600., 1700., 11)
+for T in temperatures:
+    HP_iron.set_state(1.e5, T)
+    fcc_iron.set_state(1.e5, T)
+    bcc_iron.set_state(1.e5, T)
+    print HP_iron.gibbs - min(fcc_iron.gibbs, bcc_iron.gibbs)
 
-temperatures = np.linspace(900., 1700., 101)
-gibbs = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    def_wus.set_state(1.e5, T)
-    def_wus_2.set_state(1.e5, T)
-    gibbs[i] = def_wus_2.gibbs - def_wus.gibbs
+exit()
 
-plt.plot(temperatures, gibbs)
-plt.show()
-    
+# TWEAK TO FIT FO2 FOR WUS-MT
+# mt.params['H_0'] = mt.params['H_0'] - 900.
+
+# Check
+wus.set_composition([0.0, 0.5, 0.5])
+wus.set_state(1.e5, 1200.)
+bcc_iron.set_state(1.e5, 1200.)
+mt.set_state(1.e5, 1200.)
+print wus.gibbs, bcc_iron.gibbs, mt.gibbs
+
 
 O2=minerals.HP_2011_fluids.O2()
 
@@ -141,6 +148,66 @@ plt.ylabel("Gibbs free energy of wuestite (kJ/mol)")
 plt.xlabel("Fraction ferric iron")
 plt.legend(loc='lower right')
 plt.show()
+
+
+
+# fO2
+# First load fO2 data
+phase_T_ys=[]
+logfO2=[]
+sigma_fO2=[]
+Pr=1.e5
+phase_T_ys_GG=[]
+logfO2_GG=[]
+for line in open('../magnesiowustite/Giddings_Gordon_1973.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        phase_T_ys_GG.append([wus, float(content[0]), float(content[2])/100.])
+        logfO2_GG.append(float(content[1]))
+        phase_T_ys.append([wus, float(content[0]), float(content[2])/100.])
+        logfO2.append(float(content[1]))
+        sigma_fO2.append(0.1)
+
+plt.plot( zip(*phase_T_ys_GG)[2], logfO2_GG, marker='o', linestyle='none', label='Giddings and Gordon, 1973')
+
+phase_T_ys_BH=[]
+logfO2_BH=[]
+for line in open('../magnesiowustite/Bransky_Hed_1968.dat'):
+    content=line.strip().split()
+    if content[0] != '%':
+        phase_T_ys_BH.append([wus, float(content[0]), float(content[2])/100.])
+        logfO2_BH.append(float(content[1]))
+        phase_T_ys.append([wus, float(content[0]), float(content[2])/100.])
+        logfO2.append(float(content[1]))
+        sigma_fO2.append(0.005)
+
+plt.plot( zip(*phase_T_ys_BH)[2], logfO2_BH, marker='o', linestyle='none', label='Bransky and Hed, 1968')
+
+def fO2_wus_model(ys, T):
+    fO2=[]
+    for y in ys:
+        wus.set_composition([0., 1-3.*y, 3.*y])
+        wus.set_state(Pr, T)
+        O2.set_state(Pr, T)
+        fO2.append(np.log10(fugacity(O2, [wus])))
+    return fO2
+
+
+Ts=np.linspace(1073.15, 1573.15, 11)
+ys=np.linspace(0.04, 0.16, 21)
+y_Fe=np.empty_like(Ts)
+y_Fe3O4=np.empty_like(Ts)
+fO2_Fe=np.empty_like(Ts)
+fO2_Fe3O4=np.empty_like(Ts)
+for i, T in enumerate(Ts):
+    plt.plot( ys, fO2_wus_model(ys, T), linewidth=1)
+
+
+plt.legend(loc="upper left")
+plt.ylabel("log10(fO2)")
+plt.xlabel("y in Fe(1-y)O")
+plt.show()
+
 
 
 # Figure 1 from Stolen and Gronvold, 1996
@@ -340,6 +407,80 @@ plusses=np.array([[1172.38886932,1073.97223957,971.888637339,862.459927372,918.5
 
 # Iron-Wuestite-Magnetite phase diagram
 
+'''
+Plot the completed phase diagram!
+'''
+def wus_eqm(mineral):
+    def mineral_equilibrium(c, P, T, XMg):
+        wus.set_composition([XMg, 1.0-XMg-c[0],c[0]])
+        wus.set_state(P, T)
+        mineral.set_state(P, T)
+        mu_mineral=chemical_potentials([wus], [mineral.params['formula']])[0]   
+        return  mu_mineral-mineral.gibbs
+    return mineral_equilibrium
+
+def wus_2mineral_eqm(mineral1, mineral2):
+    def mineral_equilibrium(arg, P):
+        c=arg[0]
+        T=arg[1]
+        wus.set_composition([0.0, 1.0-c,c])
+        wus.set_state(P, T)
+        mineral1.set_state(P, T)
+        mu_mineral1=chemical_potentials([wus], [mineral1.params['formula']])[0]  
+        mineral2.set_state(P, T)
+        mu_mineral2=chemical_potentials([wus], [mineral2.params['formula']])[0]   
+        return  [mu_mineral1-mineral1.gibbs, mu_mineral2-mineral2.gibbs]
+    return mineral_equilibrium
+
+P=1.e5
+XMg=0.0
+
+comp_eqm, T_eqm=optimize.fsolve(wus_2mineral_eqm(bcc_iron,mt), [0.16, 800.], args=(P))
+
+temperatures=np.linspace(T_eqm-50.,1700.,101)
+bcc_wus_comp=np.empty_like(temperatures)
+fcc_wus_comp=np.empty_like(temperatures)
+mt_wus_comp=np.empty_like(temperatures)
+
+for idx, T in enumerate(temperatures):
+    bcc_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(wus_eqm(bcc_iron), 0.16, args=(P, T, XMg))[0])
+    fcc_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(wus_eqm(fcc_iron), 0.16, args=(P, T, XMg))[0])
+    mt_wus_comp[idx]=1.0-f_to_y(optimize.fsolve(wus_eqm(mt), 0.16, args=(P, T, XMg))[0])
+
+
+plt.plot( [0., 0.25], [T_eqm, T_eqm], 'r-', linewidth=3., label='iron-wus-mt')
+plt.plot( bcc_wus_comp, temperatures, 'r-', linewidth=3., label='bcc-wus')
+plt.plot( fcc_wus_comp, temperatures, 'r--', linewidth=3., label='fcc-wus')
+plt.plot( mt_wus_comp, temperatures, 'r-', linewidth=3., label='wus-mt')
+
+
+for filename in ['../magnesiowustite/Lykasov_Fe-FeO.dat',
+                 '../magnesiowustite/Vallet_FeOW1-Fe3O4.dat',
+                 '../magnesiowustite/Darken_Fe-FeO.dat',
+                 '../magnesiowustite/Darken_FeOW1-Fe3O4.dat',
+                 '../magnesiowustite/Asao_et_al_1970.dat',
+                 '../magnesiowustite/Barbi_1964.dat',
+                 '../magnesiowustite/Barbera_et_al_1980.dat']:
+    f=open(filename, 'r')
+    datastream = f.read()
+    f.close()
+    datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
+    phase_boundaries=np.array(datalines, np.float32).T
+    phase_boundaries[0]=[1.0-x_to_y(phase_boundaries[0][i]) for i in range(len(phase_boundaries[0]))]
+    plt.plot( phase_boundaries[0], phase_boundaries[1], 'o', linestyle='none', label=filename)
+    #print filename, phase_boundaries[0], phase_boundaries[1]
+
+plt.xlim(0.,0.30)
+plt.ylim(700.,1700.)
+plt.title('Equilibrium at %5.0f K, Fe%6.3f O'%(T_eqm, 1.-comp_eqm))
+plt.ylabel("Temperature (K)")
+plt.xlabel("(1-y) in FeyO")
+plt.legend(loc='lower right')
+plt.show()
+
+
+
+'''
 f=open('Fe-O_boundaries_int.dat', 'r')
 datastream = f.read()  # We need to re-open the file
 f.close()
@@ -366,7 +507,7 @@ plt.ylabel("Temperature (K)")
 plt.xlabel("(1-y) in FeyO")
 plt.legend(loc='lower right')
 plt.show()
-
+'''
 
 # Equilibrium with metallic iron
 

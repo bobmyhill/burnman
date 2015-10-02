@@ -2,7 +2,7 @@
 
 base="equilibria_Kds"
 
-psbasemap -JX10/10 -R0/0.5/0/0.25 -B0.1f0.05:"X@-Mg@- Fe@-4@-O@-5@-":/0.05f0.01:"Fe/Mg Kd Fe@-2@-SiO@-4@-/Fe@-4@-O@-5@-":SWen -Sc0.1c -P -K > ${base}.ps 
+psbasemap -JX10/10 -R0/0.5/0/0.25 -B0.1f0.05:"X@-Mg@- Fe@-4@-O@-5@-":/0.05f0.01:"K@-D@-":SWen -Sc0.1c -P -K > ${base}.ps 
 
 
 awk '$3=="ol" {print $6/2, ((1-$10)/$10)/($8/$6)}' phasePTX.dat | psxy -J -R -O -K -Sc0.2c -W1,black >> ${base}.ps 

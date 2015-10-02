@@ -3,7 +3,7 @@ from burnman.mineral import Mineral
 from burnman.processchemistry import *
 atomic_masses=read_masses()
 
-
+'''
 class bcc_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
@@ -49,7 +49,7 @@ class fcc_iron (Mineral):
             'magnetic_moment': [2.1, 0.0] ,
             'magnetic_structural_parameter': 0.28 }
         Mineral.__init__(self)
-
+'''
 
 hen=burnman.minerals.HHPH_2013.hen()
 hfs=burnman.minerals.HHPH_2013.hfs()
@@ -133,10 +133,10 @@ class Fe5O6 (Mineral):
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -1592000. , # stable at 9.5 GPa.
-            'S_0': 300.0 , # Fe4O5 + FeO
+            'S_0': 300. , # Fe4O5 + FeO
             'V_0': 6.633e-05 , # Lavina and Meng, 2014, 440.6 A^3
-            'Cp': [351.3, 0.009355, -4354600.0, -1285.3] , # Sum FeO, Fe3O4
-            'a_0': 1.50e-05 , # Lavina and Meng, 2014
+            'Cp': [351.3, 0.009355, -4354600.0, -1285.3] , # Sum FeO, Fe4O5
+            'a_0': 1.435e-05 , # Lavina and Meng, 2014
             'K_0': 1.730e+11 , # Lavina and Meng, 2014
             'Kprime_0': 4.00 , # Lavina and Meng, 2014
             'Kdprime_0': -2.312e-11 , # Heuristic
@@ -167,7 +167,7 @@ class periclase (Mineral):
 
 
 
-class wustite (Mineral): # similar to Holland and Powell, ds62
+class wustite (Mineral): # similar to Holland and Powell, ds62, from wustite_model_20150305.py
     def __init__(self):
         formula='Fe1.0O1.0'
         formula = dictionarize_formula(formula)
@@ -175,7 +175,7 @@ class wustite (Mineral): # similar to Holland and Powell, ds62
             'name': 'fper',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -265450.0 ,
+            'H_0': -265453.0 ,
             'S_0': 58.0 ,
             'V_0': 1.2239e-05 , # From Simons (1980)
             'Cp': [42.63803582, 0.008971021, -260780.8155, 196.5978421], # By linear extrapolation from Fe0.9254O and hematite/3..
@@ -188,7 +188,7 @@ class wustite (Mineral): # similar to Holland and Powell, ds62
         Mineral.__init__(self)
 
 
-class defect_wustite (Mineral): # starting guess is hem/3.
+class defect_wustite (Mineral): # starting guess is hem/3. from wustite_model_20150305.py
     def __init__(self):
         formula='Fe2/3O'
         formula = dictionarize_formula(formula)
@@ -196,33 +196,10 @@ class defect_wustite (Mineral): # starting guess is hem/3.
             'name': 'defect wustite',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
-            'H_0': -258541.6 ,
-            'S_0': 34.09 ,
+            'H_0': -255168. ,
+            'S_0': 38.501 ,
             'V_0': 1.10701e-05 , # From Simons (1980)
-            'Cp': [163.9/3., 0.0, -2257200.0/3., -657.6/3.] ,
-            'a_0': 2.79e-05 ,
-            'K_0': 1.52e+11 ,
-            'Kprime_0': 4.9 ,
-            'Kdprime_0': -3.2e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'landau_Tc': 955.0 ,
-            'landau_Smax': 15.6/3. ,
-            'landau_Vmax': 0.0 }
-        Mineral.__init__(self)
-
-class defect_wustite_2 (Mineral): # starting guess is hem/3.
-    def __init__(self):
-        formula='Fe2/3O'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'defect wustite',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -258541.6 ,
-            'S_0': 34.09 ,
-            'V_0': 1.10701e-05 , # From Simons (1980)
-            'Cp': [163.9/3., 0.0, -2257200.0/3., -657.6/3.] ,
+            'Cp': [54.6333, 0.0, -752400., -219.2] ,
             'a_0': 2.79e-05 ,
             'K_0': 1.52e+11 ,
             'Kprime_0': 4.9 ,
@@ -231,6 +208,7 @@ class defect_wustite_2 (Mineral): # starting guess is hem/3.
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
+
 class ferropericlase(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         # Name
@@ -238,9 +216,9 @@ class ferropericlase(burnman.SolidSolution):
         self.endmembers = [[burnman.minerals.HP_2011_ds62.per(), '[Mg]O'],[wustite(), '[Fe]O'],[defect_wustite(), '[Fef2/3Vc1/3]O']]
         self.type='subregular'
         # Interaction parameters
-        self.enthalpy_interaction=[[[0., 0.],[0.,0.]],[[-39613., -4236.]]]
+        self.enthalpy_interaction=[[[0., 0.],[0.,0.]],[[-40120., -4572.]]]
         self.volume_interaction=[[[0., 0.],[0.,0.]],[[0., 0.]]]
-        self.entropy_interaction=[[[0., 0.],[0.,0.]],[[-4.048, -4.048]]]
+        self.entropy_interaction=[[[0., 0.],[0.,0.]],[[-4.27, -4.27]]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -355,9 +333,9 @@ class ringwoodite(burnman.SolidSolution):
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 
-class orthopyroxene(burnman.SolidSolution):
+class HP_clinopyroxene(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
-        self.name='Fe-Mg orthopyroxene'
+        self.name='Fe-Mg C2/c clinopyroxene'
         self.type='symmetric'
         self.endmembers=[[burnman.minerals.HHPH_2013.hen(), '[Mg][Mg]Si2O6'],
                          [burnman.minerals.HHPH_2013.hfs(), '[Fe][Fe]Si2O6'],

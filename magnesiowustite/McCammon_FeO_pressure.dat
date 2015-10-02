@@ -1,0 +1,7 @@
+% SynthesisPressureTemperatureCelldimension(a)FeOtechnique(GPa)(0C)ofFeO(pm)composition*
+Evac.silicatube       1.e-4    0.0    1000       5      431.09 0.05 0.952 0.002
+Pistoncylinder        1.5      0.5    1000      10      431.35 0.05 0.957 0.002
+Multianvilpress       5.0      0.5    1000      50      431.92 0.05 0.969 0.002
+Multianvilpress       10.0     0.5    1000     100      432.37 0.05 0.978 0.002
+Multianvilpress       14.0     0.5    1000     100      432.41 0.05 0.979 0.003
+Multianvilpress       18.0     0.5    1000     100      432.44 0.05 0.980 0.002

@@ -105,13 +105,13 @@ evince ${base}.pdf
 #################################################
 
 
-base="ol_opx_fe4o5"
+base="ol_hpx_fe4o5"
 
 psxy ${base}.dat -JX15/10 -R8/18/-4/6 -K -P > ${base}.ps
-echo "10.5 1.2 ol + opx + (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
-echo "16.25 5.4 wad + opx +" | pstext -J -R -O -K >> ${base}.ps 
+echo "10.5 1.2 ol + hpx + (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
+echo "16.25 5.4 wad + hpx +" | pstext -J -R -O -K >> ${base}.ps 
 echo "16.25 4.8 (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
-echo "16.25 0.6 rw + opx +" | pstext -J -R -O -K >> ${base}.ps
+echo "16.25 0.6 rw + hpx +" | pstext -J -R -O -K >> ${base}.ps
 echo "16.25 0. (Mg,Fe)@-2@-Fe@-2@-O@-5@-" | pstext -J -R -O -K >> ${base}.ps
 
 echo "8.25 -1.20 0.80" | pstext -F+a-7+f10,grey -J -R -O -K >> ${base}.ps
@@ -129,7 +129,7 @@ pslegend -J -R -O -K -Dx0/10/0/0/TL -C0.1i/0.1i -L1.2 << EOF >> ${base}.ps
 N 1
 S 0.3c - 0.5c - 1,blue 0.7c QFM (metastable)
 S 0.3c - 0.5c - 1,red 0.7c \`EMOD' (HP-cen + magnesite + ol/wad/rw + diamond)
-S 0.3c - 0.5c - 0.5,grey 0.7c Mg/(Mg+Fe) (ol/wad/rw + opx)
+S 0.3c - 0.5c - 0.5,grey 0.7c Mg/(Mg+Fe) (ol/wad/rw + hpx)
 EOF
 
 

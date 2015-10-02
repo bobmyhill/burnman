@@ -19,7 +19,7 @@ from slb_models_new import *
 from equilibrium_functions import *
 
 
-iron=fcc_iron()
+iron=minerals.Myhill_calibration_iron.fcc_iron()
 fper=minerals.HP_2011_ds62.fper()
 wus=ferropericlase()
 fe4o5=Fe4O5()
