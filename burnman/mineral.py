@@ -48,8 +48,9 @@ class Mineral(Material):
         """
         Set the equation of state to be used for this mineral.
         Takes a string corresponding to any of the predefined
-        equations of state:  'bm2', 'bm3', 'mgd2', 'mgd3', 'slb2', 'slb3',
-        'v_ag', 'mt', 'hp_tmt', or 'cork'.  Alternatively, you can pass a user defined
+        equations of state:  'bm2', 'bm3', 'mgd2', 'mgd3', 'slb2', 'slb3', 
+        'dks_l', 'dks_s', 'v_ag', 'mt', 'hp_tmt', or 'cork'.  
+        Alternatively, you can pass a user defined
         class which derives from the equation_of_state base class.
         After calling set_method(), any existing derived properties
         (e.g., elastic parameters or thermodynamic potentials) will be out

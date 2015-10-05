@@ -19,3 +19,9 @@ Note that we are not using scipy.constants.Boltzmann because it is not
 available in older versions.
 """
 Boltzmann = 1.3806488e-23 
+
+
+"""
+Dirac constant (hbar, Planck constant / 2*pi) in J s^-1
+"""
+Dirac = 1.054571726e-34

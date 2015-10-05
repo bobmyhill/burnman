@@ -68,6 +68,9 @@ class SLBBase(eos.EquationOfState):
         P_th = gr * debye.thermal_energy(T,Debye_T, params['n'])/V
         return P_th
 
+    def pressure_residual(self, volume, pressure, temperature, params):
+        return pressure - self.pressure(temperature, volume, params)
+
     def volume(self, pressure, temperature, params):
         """
         Returns molar volume. :math:`[m^3]`
@@ -87,7 +90,7 @@ class SLBBase(eos.EquationOfState):
         # we need to have a sign change in [a,b] to find a zero. Let us start with a
         # conservative guess:
         a = 0.6*params['V_0']
-        b = 1.2*params['V_0']
+        b = 1.20*params['V_0']
 
         # if we have a sign change, we are done:
         if func(a)*func(b)<0:
