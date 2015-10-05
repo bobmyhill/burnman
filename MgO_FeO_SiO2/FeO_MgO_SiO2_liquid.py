@@ -49,4 +49,17 @@ class FeO_MgO_SiO2_liquid(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 
+liquids = [burnman.minerals.DKS_2013_liquids.SiO2_liquid(),
+           burnman.minerals.DKS_2013_liquids.MgSiO3_liquid(),
+           burnman.minerals.DKS_2013_liquids.MgSi2O5_liquid(),
+           burnman.minerals.DKS_2013_liquids.MgSi3O7_liquid(),
+           burnman.minerals.DKS_2013_liquids.MgSi5O11_liquid(),
+           burnman.minerals.DKS_2013_liquids.Mg2SiO4_liquid(),
+           burnman.minerals.DKS_2013_liquids.Mg3Si2O7_liquid(),
+           burnman.minerals.DKS_2013_liquids.Mg5SiO7_liquid(),
+           burnman.minerals.DKS_2013_liquids.MgO_liquid()]
+
+for liquid in liquids:
+    composition = liquid.params['formula']['Mg']
+    print composition
 
