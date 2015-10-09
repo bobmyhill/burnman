@@ -39,7 +39,7 @@ Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
 
 
 # Properties of FeSi liquid (relative to Fe and Si) at 1 bar
-temperatures=np.linspace(1800., 3200., 8)
+temperatures=np.linspace(1800., 3000., 8)
 old=0.
 for T in temperatures:
     Fe_liq.set_state(1.e5, T)

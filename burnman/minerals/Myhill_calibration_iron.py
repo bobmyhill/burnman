@@ -49,28 +49,14 @@ class bcc_iron (Mineral):
             'magnetic_moment': [2.22, 0.0] ,
             'magnetic_structural_parameter': 0.4 }
         Mineral.__init__(self)
-'''
-class fcc_iron (Mineral): # No magnetism
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {'S_0': 35.907, 'a_0': 4.9057399193621506e-05, 'K_0': 151102660510.68918, 'T_einstein': 378.82000000000005, 'Kprime_0': 5.5, 'T_0': 298.15, 'Kdprime_0': -3.6399094373397373e-11, 'V_0': 6.9364989947404524e-06, 'name': 'FCC iron', 'H_0': 7973.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'formula': {'Fe': 1.0}, 'Cp': [22.24, 0.0088656, -221517.0, 47.1998], 'P_0': 99999.99}
-        Mineral.__init__(self)
-'''
+
 class fcc_iron (Mineral): # No magnetism
     def __init__(self):
         formula='Fe1.0'
         formula = dictionarize_formula(formula)
         self.params = {'S_0': 35.907, 'V_0': 6.9359301440628439e-06, 'name': 'FCC iron', 'H_0': 7973.0, 'a_0': 4.9105508240851435e-05, 'K_0': 150885687310.07358, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'P_0': 99999.99, 'formula': {'Fe': 1.0}, 'T_einstein': 378.82000000000005, 'Kprime_0': 5.6, 'T_0': 298.15, 'Cp': [22.24, 0.0088656, -221517.0, 47.1998], 'Kdprime_0': -3.7114189555248337e-11}
         Mineral.__init__(self)
-'''
-class hcp_iron (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {'S_0': 31.426500159503139, 'a_0': 4.7602079599957996e-05, 'K_0': 162295349883.27124, 'T_einstein': 378.82000000000005, 'Kprime_0': 5.1312284277268976, 'T_0': 298.15, 'Kdprime_0': -3.1616607816659349e-11, 'V_0': 6.7813155012469347e-06, 'name': 'HCP iron', 'H_0': 5902.3667637576928, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'formula': {'Fe': 1.0}, 'Cp': [22.24, 0.0088656, -221517.0, 47.1998], 'P_0': 99999.99}
-        Mineral.__init__(self)
-'''
+
 class hcp_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
@@ -90,12 +76,12 @@ class liquid_iron (Mineral):
             'P_0': 0.999999e5,
             'H_0': 74206. , # Barin
             'S_0': 100.725 , # Barin
-            'V_0': 55.845/6.85e6 ,
+            'V_0': 55.845/6.85e6 , # Hixson et al., 1990, Nasch and Manghnani; 6.85 to fit melting curve
             'Cp': [46.024, 0., 0., 0.] , # Barin
-            'a_0': 6.5e-05 ,
-            'K_0': 95.e+9 ,
+            'a_0': 6.0e-05 , # Hixson et al., 1990, Nasch and Manghnani
+            'K_0': 98.e+9 ,
             'Kprime_0': 5.4 ,
-            'Kdprime_0': -5.40/95.e+9,
+            'Kdprime_0': -5.40/98.e+9,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)

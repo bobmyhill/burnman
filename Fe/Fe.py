@@ -53,12 +53,11 @@ Fe_fcc=Myhill_calibration_iron.fcc_iron_HP()
 Fe_hcp=Myhill_calibration_iron.hcp_iron_HP()
 Fe_liq=Myhill_calibration_iron.liquid_iron()
 
+
 from HP_convert import *
-Cp_LT = 1809.
-Cp_HT = 2400.
-T_ref = 1809.
-P_ref = 50.e9
-HP_convert(Fe_liq, Cp_LT, Cp_HT, T_ref, P_ref)
+#HP_convert(Fe_fcc, 300., 3000., 1809., 50.e9)
+#HP_convert(Fe_hcp, 300., 3000., 1809., 50.e9)
+HP_convert(Fe_liq, 1809., 2400., 1809., 50.e9)
 
 print 'converted'
 

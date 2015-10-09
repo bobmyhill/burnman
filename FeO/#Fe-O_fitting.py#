@@ -10,17 +10,13 @@ from fitting_functions import *
 from scipy import optimize, integrate
 import matplotlib.pyplot as plt
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
-from HP_convert import *
 
 atomic_masses=read_masses()
 
-Fe_fcc = Myhill_calibration_iron.fcc_iron()
-Fe_hcp = Myhill_calibration_iron.hcp_iron()
-Fe_liq = Myhill_calibration_iron.liquid_iron()
+Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
+Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
+Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
 
-HP_convert(Fe_fcc, 500., 2000., 1809., 50.e9)
-HP_convert(Fe_hcp, 500., 2000., 1809., 50.e9)
-HP_convert(Fe_liq, 500., 2000., 1809., 50.e9)
 #Fe_fcc_K = Komabayashi_2014.fcc_iron()
 #Fe_hcp_K = Komabayashi_2014.hcp_iron()
 #Fe_liq_K = Komabayashi_2014.liquid_iron()
@@ -31,6 +27,7 @@ FeO_liq = Fe_Si_O.FeO_liquid_HP()
 FeO_Kom = Komabayashi_2014.FeO_solid()
 FeO_liq_Kom = Komabayashi_2014.FeO_liquid()
 
+Fe_Si_O_liq = metallic_Fe_Si_O_liquid()
 
 
 # First, the equation of state of FeO (B1)
@@ -222,43 +219,6 @@ plt.plot(pressures, Hex0, marker='o', linestyle='None', label='0')
 plt.plot(pressures, Hex1, marker='o', linestyle='None', label='1')
 
 
-from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
-
-# Fit excess properties
-class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember without the entropy of mixing
-    def __init__(self, Hex, Sex, Vex, Kex, Kpex, aex):
-        formula='Fe1.0O0.5'
-        formula = dictionarize_formula(formula)
-        V_0 = (FeO_liq.params['V_0'] + Fe_liq.params['V_0'])/2. + Vex
-        K_0 = V_0*(1. / (0.5*(FeO_liq.params['V_0']/FeO_liq.params['K_0']
-                              + Fe_liq.params['V_0']/Fe_liq.params['K_0']))) + Kex
-        a_0 = 1./V_0*(0.5*(FeO_liq.params['a_0']*FeO_liq.params['V_0'] 
-                           + Fe_liq.params['a_0']*Fe_liq.params['V_0'])) + aex
-        Kprime_0 = V_0*(1. / (0.5*(FeO_liq.params['V_0']/(FeO_liq.params['Kprime_0']+1.)
-                                   + Fe_liq.params['V_0']/(Fe_liq.params['Kprime_0']+1.)))) \
-                                   - 1. + Kpex
-        #Kprime_0 = 2./(1./FeO_liq.params['Kprime_0'] + 1./Fe_liq.params['Kprime_0'])
-
-        self.params = {
-            'name': 'Liquid iron excesses',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'T_0': FeO_liq.params['T_0'],
-            'P_0': FeO_liq.params['P_0'],
-            'H_0': (FeO_liq.params['H_0'] + Fe_liq.params['H_0'])/2. + Hex,
-            'S_0': (FeO_liq.params['S_0'] + Fe_liq.params['S_0'])/2. - Sex,
-            'Cp': [(FeO_liq.params['Cp'][0] + Fe_liq.params['Cp'][0])/2.,
-                   (FeO_liq.params['Cp'][1] + Fe_liq.params['Cp'][1])/2.,
-                   (FeO_liq.params['Cp'][2] + Fe_liq.params['Cp'][2])/2.,
-                   (FeO_liq.params['Cp'][3] + Fe_liq.params['Cp'][3])/2.],
-            'V_0': V_0,
-            'K_0': K_0 ,
-            'Kprime_0': Kprime_0, # 4.425
-            'Kdprime_0': -Kprime_0/K_0, 
-            'a_0': a_0,
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'n': sum(formula.values())}
-        burnman.Mineral.__init__(self)
         
 # Ambient pressure values are from Kowalski and Spencer (1995)
 # Taken from Frost et al, 2010
@@ -269,6 +229,9 @@ class Fe_FeO_liq(burnman.Mineral): # This should be the fictitious endmember wit
 #S1 = 31.122/4.
 
 def fit_data(xdata, H0, H1, V0, V1, K0, K1, Kp0, Kp1):
+
+
+
     print V0, V1, K0, K1
     # initialise properties
     intermediate_0 = Fe_FeO_liq(H0, 0.0, V0, K0, Kp0, 0.0)

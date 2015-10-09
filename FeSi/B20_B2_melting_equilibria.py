@@ -34,9 +34,46 @@ Si_liq=minerals.Fe_Si_O.Si_liquid()
 Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
 Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
-Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
+Fe_liq=minerals.Myhill_calibration_iron.liquid_iron()
+Fe_liq_Komabayashi=minerals.Komabayashi_2014.liquid_iron()
 
-HP_convert(Si_liq, 1000., 3000., 1800., 10.e9)
+
+HP_convert(Fe_liq, 1000., 3000., 1800., 50.e9)
+HP_convert(Si_liq, 1000., 3000., 1800., 50.e9)
+HP_convert(FeSi_melt, 1000., 3000., 1800., 50.e9)
+
+# Data from Hixson et al., 1990
+T_obs   = [2125, 2250, 2340, 2490, 2600, 2735, 2860, 2990,
+           3100, 3230, 3360, 3475, 3585, 3710, 3835, 3950]
+rho_obs = [6.85, 6.75, 6.64, 6.54, 6.40, 6.34, 6.29, 6.22, 
+           6.15, 6.07, 6.02, 5.98, 5.90, 5.80, 5.65, 5.54]
+
+Fe_molar_mass = 55.845
+P = 1.e5
+temperatures = np.linspace(2000., 4000., 101)
+densities = np.empty_like(temperatures)
+#densities_Kom = np.empty_like(temperatures)
+for i, T in enumerate(temperatures):
+    Fe_liq.set_state(P, T)
+    #Fe_liq_Komabayashi.set_state(P, T)
+    densities[i] = Fe_molar_mass/Fe_liq.V/1.e6
+    #densities_Kom[i] = Fe_molar_mass/Fe_liq_Komabayashi.V/1.e6
+
+plt.plot(temperatures, densities)
+#plt.plot(temperatures, densities_Kom)
+plt.plot(T_obs, rho_obs, 'o', linestyle='None')
+plt.show()
+
+Fe_liq.set_state(1.e5, 1873.)
+FeSi_melt.set_state(1.e5, 1873.)
+Si_liq.set_state(1.e5, 1873.)
+print Fe_liq.K_T
+print FeSi_melt.K_T
+print Si_liq.K_T
+
+print Fe_liq.V
+print FeSi_melt.V
+print Si_liq.V
 
 # Let's get the melting curve of FeSi first of all...
 
@@ -63,9 +100,9 @@ def melting_curve(data, V_0, K_0, Kprime_0):
     temperatures = []
     for FeSi_phase, P in data:
         if FeSi_phase == B20:
-            temperatures.append(optimize.fsolve(eqm_temperature([FeSi_phase, FeSi_melt], [1., -2.]), [2000.], args=(P))[0])
+            temperatures.append(optimize.fsolve(eqm_temperature([FeSi_phase, FeSi_melt], [1., -2.]), [1000.], args=(P))[0])
         else:
-            temperatures.append(optimize.fsolve(eqm_temperature([FeSi_phase, FeSi_melt], [1., -1.]), [2000.], args=(P))[0])
+            temperatures.append(optimize.fsolve(eqm_temperature([B2, FeSi_melt], [1., -1.]), [1000.], args=(P))[0])
     return temperatures
 
 guesses = [FeSi_melt.params['V_0'], 100.e9, 4.]
@@ -93,47 +130,22 @@ S_ex = 4.*(FeSi_melt.S - 0.5*(Fe_liq.S + Si_liq.S) + constants.gas_constant*np.l
 V_ex = 4.*(FeSi_melt.V - 0.5*(Fe_liq.V + Si_liq.V))
 print S_ex, V_ex
 
-class liquid_Fe_Si(burnman.SolidSolution):
-    def __init__(self, molar_fractions=None):
-        self.name='liquid Fe-Si solid solution'
-        self.type='subregular'
-        self.endmembers = [[Fe_liq, '[Fe]'],[Si_liq, '[Si]']]
-        self.enthalpy_interaction=[[[H_ex, H_ex]]]
-        self.volume_interaction=[[[V_ex, V_ex]]]
-        self.entropy_interaction=[[[S_ex, S_ex]]]
-        burnman.SolidSolution.__init__(self, molar_fractions)
 
-Fe_Si_liq = liquid_Fe_Si()
-Fe_Si_liq.set_composition([0.5, 0.5])
 
 FeSi_melt.set_state(1.e5, 1683.)
-Fe_Si_liq.set_state(1.e5, 1683.)
-print FeSi_melt.V, Fe_Si_liq.V
-print FeSi_melt.S, Fe_Si_liq.S
-print FeSi_melt.H, Fe_Si_liq.H
-print FeSi_melt.K_T/1.e9, Fe_Si_liq.K_T/1.e9
 
 pressures = np.linspace(1.e5, 170.e9, 40)
 temperatures = np.empty_like(pressures)
-temperatures_ss = np.empty_like(pressures)
-V_ex = np.empty_like(pressures)
 for i, P in enumerate(pressures):
     if P < 30.e9:
         temperatures[i] = optimize.fsolve(eqm_temperature([B20, FeSi_melt], [1., -2.]), [2000.], args=(P))[0]
-        temperatures_ss[i] = optimize.fsolve(eqm_temperature([B20, Fe_Si_liq], [1., -2.]), [2000.], args=(P))[0]
     else:
         temperatures[i] = optimize.fsolve(eqm_temperature([B2, FeSi_melt], [1., -1.]), [2000.], args=(P))[0]
-        temperatures_ss[i] = optimize.fsolve(eqm_temperature([B2, Fe_Si_liq], [1., -1.]), [2000.], args=(P))[0]
 
-    print P/1.e9, temperatures[i], FeSi_melt.V, Fe_Si_liq.V
-    FeSi_melt.set_state(P, temperatures[i])
-    Fe_liq.set_state(P, temperatures[i])
-    Si_liq.set_state(P, temperatures[i])
-    V_ex[i] = FeSi_melt.V - 0.5*(Fe_liq.V - Si_liq.V)
+    print P/1.e9, temperatures[i], FeSi_melt.V
 
 plt.plot(pressures/1.e9, temperatures, label='Fitted curve')
-plt.plot(pressures/1.e9, temperatures_ss, label='Fitted curve (solid solution)')
-plt.plot(np.array(P_melting)/1.e9, np.array(T_melting), 'o', linestyle='None', label='Data')
+plt.errorbar(np.array(P_melting)/1.e9, np.array(T_melting), xerr=np.array(Perr_melting)/1.e9, yerr=Terr_melting, linestyle='None', label='Data')
 plt.legend(loc='lower left')
 plt.show()
 

@@ -63,16 +63,15 @@ for datum in Ozawa_data:
 
 XFeO_mw = 0.2
 temperatures = np.linspace(2873., 3173., 4)
-pressures = np.linspace(20.e9, 140.e9, 61)
+pressures = np.linspace(20.e9, 200.e9, 101)
 for T in temperatures:
     print T
     lnKd = np.empty_like(pressures)
     for i, P in enumerate(pressures):
         XFeO_melt = fsolve(fper_melt_eqm, [0.01], args=(P, T, XFeO_mw))[0]
         lnKd[i] = np.log(XFeO_melt/XFeO_mw)
-    plt.plot(pressures, lnKd, label=str(T)+'K')
+    plt.plot(pressures/1.e9, lnKd)
 
 plt.xlabel('Pressure (GPa)')
-plt.ylabel('ln KD')
-plt.legend(loc='upper right')
+plt.ylabel('lnKd')
 plt.show()

@@ -47,12 +47,12 @@ class FeSi_liquid (Mineral):
             'P_0': 1.e5,
             'H_0': 75015./2. , # Barin
             'S_0': 183.619/2. , # Barin
-            'V_0': 8.2e-06 ,
+            'V_0': 8.35e-06 ,
             'Cp': [83.680/2., 0., 0., 0.], # Barin
-            'a_0': 3.057e-05 ,
-            'K_0': 1.09e+11 ,
-            'Kprime_0': 4.0 ,
-            'Kdprime_0': -4.0/1.09e+11,
+            'a_0': 5.0e-05 ,
+            'K_0': 72.e+9 ,
+            'Kprime_0': 5.2 ,
+            'Kdprime_0': -5.2/72.e+9,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses) }
         Mineral.__init__(self)
@@ -177,8 +177,8 @@ class Si_liquid (Mineral):
             'a_0': 3.915e-05 , # Fit to Chathoth et al., 2008
             'T_einstein': 764., # As for others
             'K_0': 85.00e9, # Fit to high pressure melting (see Cannon, 1974)
-            'Kprime_0': 4., # Similar to A4
-            'Kdprime_0': -4./85.e9 , # HP heuristic
+            'Kprime_0': 5., # Similar to Fe liquid
+            'Kdprime_0': -5./85.e9 , # HP heuristic
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
