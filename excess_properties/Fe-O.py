@@ -13,9 +13,14 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 
 atomic_masses=read_masses()
 
-Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
-Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
-Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
+Fe_fcc = Myhill_calibration_iron.fcc_iron()
+Fe_hcp = Myhill_calibration_iron.hcp_iron()
+Fe_liq = Myhill_calibration_iron.liquid_iron()
+
+from HP_convert import *
+HP_convert(Fe_fcc, 300., 2200., 1809., 50.e9)
+HP_convert(Fe_hcp, 300., 2200., 1809., 50.e9)
+HP_convert(Fe_liq, 1809., 2400., 1809., 50.e9)
 
 
 FeO = Fe_Si_O.FeO_solid_HP()
