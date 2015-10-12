@@ -12,11 +12,21 @@ import matplotlib.pyplot as plt
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 
 from Fe_Si_O_liquid_models import *
+from HP_convert import *
+
 FeSiO_melt = metallic_Fe_Si_O_liquid()
 
-Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
-Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
-Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
+Fe_fcc = Myhill_calibration_iron.fcc_iron()
+Fe_hcp = Myhill_calibration_iron.hcp_iron()
+Fe_liq = Myhill_calibration_iron.liquid_iron()
+
+T_ref = 1809.
+P_ref = 50.e9
+HP_convert(Fe_fcc, 300., 2200., T_ref, P_ref)
+HP_convert(Fe_hcp, 300., 2200., T_ref, P_ref)
+HP_convert(Fe_liq, 1809., 2400., T_ref, P_ref)
+
+
 
 FeO = Fe_Si_O.FeO_solid_HP()
 FeO_liq = Fe_Si_O.FeO_liquid_HP()

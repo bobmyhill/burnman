@@ -85,26 +85,3 @@ class liquid_iron (Mineral):
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
-
-
-class hcp_iron_HP (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {'S_0': 71.803, 'V_0': 5.8175e-06, 'name': 'HCP iron', 'H_0': 351039.0, 'a_0': 2.6143e-05, 'K_0': 336240000000.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'Kdprime_0': -1.377e-11, 'Kprime_0': 4.3846, 'T_einstein': 378.82, 'formula': {'Fe': 1.0}, 'T_0': 1809.0, 'Cp': [114.4, -0.014984, 11124000.0, -2563.1], 'P_0': 50000000000.0}
-        Mineral.__init__(self)
-
-
-class fcc_iron_HP (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {'S_0': 75.879, 'V_0': 5.9147e-06, 'name': 'FCC iron', 'H_0': 358436.0, 'a_0': 2.4852e-05, 'K_0': 339380000000.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'P_0': 50000000000.0, 'formula': {'Fe': 1.0}, 'T_einstein': 378.82, 'Kprime_0': 4.671, 'T_0': 1809.0, 'Cp': [148.21, -0.02239, 15632000.0, -3548.3], 'Kdprime_0': -1.4502e-11}
-        Mineral.__init__(self)
-
-class liquid_iron_HP (Mineral):
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {'S_0': 89.202, 'a_0': 1.8963e-05, 'K_0': 325630000000.0, 'T_einstein': 99.249, 'Kprime_0': 4.1181, 'T_0': 1809.0, 'Kdprime_0': -1.3702e-11, 'V_0': 6.2864e-06, 'name': 'Liquid iron', 'H_0': 403124.0, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'formula': {'Fe': 1.0}, 'Cp': [75.261, -0.0086939, 3401400.0, -812.75], 'P_0': 50000000000.0}
-        Mineral.__init__(self)
