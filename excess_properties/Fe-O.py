@@ -454,6 +454,22 @@ def eutectic_liquid(cT, P, model, intermediate_0, intermediate_1, Fe_phase, FeO_
                   FeO_phase.calcgibbs(P, T) - ( FeO_liq.calcgibbs(P, T) + partial_excesses[1] ) ]
     return equations
 
+
+def eutectic_liquid_Frost(cT, P, model, Fe_phase, FeO_phase):
+    c, T = cT
+    
+    Gex_0 = 83307. - 8.978*T - 0.09*P/1.e5 # Fe-FeO,  P in bars
+    Gex_1 = 135943. - 31.122*T - 0.059*P/1.e5 # FeO-Fe
+    
+    model.enthalpy_interaction = [[[Gex_0, Gex_1]]]
+    burnman.SolidSolution.__init__(model, [1.-c, c])
+    model.set_state(P, T)
+
+    partial_excesses = model.excess_partial_gibbs
+    equations = [ Fe_phase.calcgibbs(P, T) - ( Fe_liq.calcgibbs(P, T) + partial_excesses[0] ),
+                  FeO_phase.calcgibbs(P, T) - ( FeO_liq.calcgibbs(P, T) + partial_excesses[1] ) ]
+    return equations
+
 print ''
 print Fe_liq.params['V_0'], Fe_liq.params['K_0'], Fe_liq.params['V_0']*Fe_liq.params['K_0']
 print FeO_liq.params['V_0'], FeO_liq.params['K_0'], FeO_liq.params['V_0']*FeO_liq.params['K_0']
@@ -524,19 +540,25 @@ plt.show()
 
 
 # Plot eutectic temperatures and compositions
-eutectic_pressures = np.linspace(30.e9, 200.e9, 100)
+eutectic_pressures = np.linspace(30.e9, 350.e9, 150)
 eutectic_compositions = np.empty_like(eutectic_pressures)
 eutectic_temperatures = np.empty_like(eutectic_pressures)
+eutectic_compositions_Frost = np.empty_like(eutectic_pressures)
+eutectic_temperatures_Frost = np.empty_like(eutectic_pressures)
 
 c, T = [0.5, 4000.]
 for i, P in enumerate(eutectic_pressures):
-    print c, T
     c, T = optimize.fsolve(eutectic_liquid, [c, T], 
                            args=(P, model, intermediate_0, intermediate_1, Fe_hcp, FeO))
-    print P, T, model.enthalpy_interaction
+    print P, T, model.enthalpy_interaction,
     eutectic_compositions[i] = c
     eutectic_temperatures[i] = T
-
+    
+    c, T = optimize.fsolve(eutectic_liquid_Frost, [c, T], 
+                           args=(P, model, Fe_hcp, FeO))
+    print model.enthalpy_interaction
+    eutectic_compositions_Frost[i] = c
+    eutectic_temperatures_Frost[i] = T
 
 
 # Plot eutectic compositions
@@ -544,9 +566,8 @@ for i, P in enumerate(eutectic_pressures):
 filename = 'figures/data/composition_Fe_FeO_melt.dat'
 f = open(filename, 'w')
 
-f.write('>>\n')
 for i, P in enumerate(eutectic_pressures):
-    f.write(str(P/1.e9)+' '+str(eutectic_compositions[i])+'\n')
+    f.write(str(P/1.e9)+' '+str(eutectic_compositions[i])+' '+str(eutectic_compositions_Frost[i])+'\n')
 
 
 f.write('\n')
@@ -576,6 +597,9 @@ for i, P in enumerate(melting_pressures):
 f.write('>> -W1,black \n')
 for i, P in enumerate(eutectic_pressures):
     f.write(str(P/1.e9)+' '+str(eutectic_temperatures[i])+'\n')
+f.write('>> -W1,black,. \n')
+for i, P in enumerate(eutectic_pressures):
+    f.write(str(P/1.e9)+' '+str(eutectic_temperatures_Frost[i])+'\n')
     
 f.write('\n')
 f.close()
@@ -585,6 +609,7 @@ plt.plot(fcc_hcp_pressures/1.e9, fcc_hcp_temperatures)
 plt.plot(melting_pressures/1.e9, melting_temperatures_Fe)
 plt.plot(melting_pressures/1.e9, melting_temperatures_FeO)
 plt.plot(eutectic_pressures/1.e9, eutectic_temperatures)
+plt.plot(eutectic_pressures/1.e9, eutectic_temperatures_Frost)
 plt.plot(eutectic_PT[0]/1.e9, eutectic_PT[2], marker='o', linestyle='None', label='Model')
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[2], marker='o', linestyle='None', label='Model')
 plt.legend(loc='lower right')

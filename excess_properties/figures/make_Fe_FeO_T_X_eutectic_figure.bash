@@ -18,21 +18,24 @@ echo "150 3800 HCP" | pstext -J -R -O -K -F+jRM >> ${base}.ps
 
 
 
-printf "5 950\n10 1050" | psxy -J -R -O -K -W0.5,red,- >> ${base}.ps
-printf "5 700\n10 800" | psxy -J -R -O -K -W0.5,blue  >> ${base}.ps
+printf "5 1200\n10 1300" | psxy -J -R -O -K -W0.5,red,- >> ${base}.ps
+printf "5 950\n10 1050" | psxy -J -R -O -K -W0.5,blue  >> ${base}.ps
+printf "7.5 750" | psxy -J -R -O -K -Sc0.1c -Gblack -W0.5,black >> ${base}.ps
 printf "5 450\n10 550" | psxy -J -R -O -K -W1,black >> ${base}.ps
-printf "7.5 250" | psxy -J -R -O -K -Sc0.1c -Gblack -W0.5,black >> ${base}.ps
+printf "5 200\n10 300" | psxy -J -R -O -K -W1,black,. >> ${base}.ps
 
-echo "12 1000 FeO melting curve" | pstext -J -R -O -K -F+jLM >> ${base}.ps
-echo "12 750 Fe phase boundaries" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
-echo "12 500 Eutectic melting curve" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
-echo "12 250 Seagle et al. (2008)" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
+echo "12 1250 FeO melting curve" | pstext -J -R -O -K -F+jLM >> ${base}.ps
+echo "12 1000 Fe phase boundaries" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
+echo "12 750 Eutectic data (Seagle et al., 2008)" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
+echo "12 500 Eutectic melting curve (This study)" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
+echo "12 250 Eutectic melting curve (Frost et al., 2010)" | pstext -J -R -O -K -F+jLM  >> ${base}.ps
 
 
 # Inset
 
 psbasemap -X7 -Y1 -JX4/3 -R0/200/0.20/0.55 -Ba50f25:"":/a0.1f0.05:"X@-FeO@-":SWen -O -K >> ${base}.ps
-psxy  data/composition_Fe_FeO_melt.dat -J -R -O -K -W1,black >> ${base}.ps
+awk '{print $1, $2}' data/composition_Fe_FeO_melt.dat | psxy -J -R -O -K -W1,black >> ${base}.ps
+awk '$1>30 {print $1, $3}' data/composition_Fe_FeO_melt.dat | psxy  -J -R -O -K -W1,black,. >> ${base}.ps
 
 awk '$1!="%" {print $2, $5/100, $2-2, $2, $2, $2+2, ($5-$6)/100, $5/100, $5/100, ($5+$6)/100}' ../data/Fe_O_data/Fe_FeO_eutectic.dat | psxy -J -R -O -EXY0 -Sc0.15c -Gblack -W0.5,black >> ${base}.ps
 
