@@ -12,10 +12,6 @@ import einstein
 
 from burnman.endmemberdisorder import *
 
-
-T_0=298.15 # Standard temperature = 25 C
-
-
 class HP_TMT(eos.EquationOfState):
     """
     Base class for the Holland and Powell (2011) correction to
@@ -91,7 +87,7 @@ class HP_TMT(eos.EquationOfState):
         Pth=self.__relative_thermal_pressure(temperature,params)
         psubpth=pressure-params['P_0']-Pth
 
-        C_V0 = einstein.heat_capacity_v( params['T_0'], params['T_einstein'], params['n'] )
+        C_V0 = einstein.heat_capacity_v(params['T_0'], params['T_einstein'], params['n'] )
         C_V =  einstein.heat_capacity_v(temperature, params['T_einstein'],params['n'])
         alpha = params['a_0'] * (C_V/C_V0) *1./((1.+b*psubpth)*(a + (1.-a)*np.power((1+b*psubpth), c)))
  
@@ -237,7 +233,9 @@ class HP_TMT(eos.EquationOfState):
         # constant over a wide range of compressions.
 
         # Note that the xi function in HP2011 is just the Einstein heat capacity
-        # divided by 3nR.  I don't know why they don't use that, but anyhow...
+        # divided by 3nR. This function is *not* used to calculate the
+        # heat capacity - Holland and Powell (2011) prefer the additional 
+        # freedom provided by their polynomial expression.
 
         E_th = einstein.thermal_energy( T, params['T_einstein'], params['n'] )
         C_V0 = einstein.heat_capacity_v( params['T_0'], params['T_einstein'], params['n'] )
@@ -292,7 +290,7 @@ class HP_TMT(eos.EquationOfState):
         if 'T_0' not in params:
             params['T_0'] = 298.15
         if 'P_0' not in params:
-            params['P_0'] = 0.9999999e5
+            params['P_0'] = 1.e5
 
         #if G and Gprime are not included this is presumably deliberate,
         #as we can model density and bulk modulus just fine without them,
