@@ -23,9 +23,6 @@ tail -1 ../data/jd_ae_PV_data/ae065_PV.dat | awk '{print $1+0.5, $3*1e6+0.3, xtl
 tail -1 ../data/jd_ae_PV_data/ae100_PV.dat | awk '{print $1-0.25, $3*1e6+0.5, xtl}' xtl="Aeg" | pstext -J -R -O >> ${base}.ps
 
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps
 

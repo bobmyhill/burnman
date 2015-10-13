@@ -25,9 +25,5 @@ echo "0.05 142 Du et al. (2015; py@-20@-, py@-80@-)" | pstext -J -R -O -F+jLM >>
 
 
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
-
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps

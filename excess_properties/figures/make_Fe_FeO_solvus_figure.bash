@@ -30,9 +30,8 @@ echo "0.39 2" | psxy -J -R -O -K -Sa0.2c -Gblue -W0.5,black >> ${base}.ps
 echo "0.45 4 T < 2473 K" | pstext -J -R -O -K -F+jLM >> ${base}.ps
 echo "0.45 2 T >= 2473 K" | pstext -J -R -O -F+jLM >> ${base}.ps
 
+
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps
 
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &

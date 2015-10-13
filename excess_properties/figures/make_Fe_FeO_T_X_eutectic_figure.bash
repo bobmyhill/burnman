@@ -41,11 +41,6 @@ awk '$1!="%" {print $2, $5/100, $2-2, $2, $2, $2+2, ($5-$6)/100, $5/100, $5/100,
 
 
 
-
-
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps

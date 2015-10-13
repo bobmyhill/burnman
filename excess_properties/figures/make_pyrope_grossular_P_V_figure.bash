@@ -19,11 +19,6 @@ echo "9.3 118 Py@-20@-" | pstext -J -R -O -K -F+jLM >> ${base}.ps
 echo "9.4 120 Gr" | pstext -J -R -O -F+jLM >> ${base}.ps
 
 
-
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
-
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps

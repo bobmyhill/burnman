@@ -14,9 +14,7 @@ echo "24 -0.08 Jd@-50@-Aeg@-50@-" | pstext -J -R -O -K -F+jRM+fgrey >> ${base}.p
 echo "24 -0.11 Jd@-35@-Aeg@-65@-" | pstext -J -R -O -K -F+jRM >> ${base}.ps
 echo "24 -0.03 Jd@-74@-Aeg@-26@-" | pstext -J -R -O -F+jRM >> ${base}.ps
 
+
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps

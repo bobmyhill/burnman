@@ -39,8 +39,5 @@ echo "12 -90 W@-Fe-FeO@-        W@-FeO-Fe@- Experimental data" | pstext -J -R -O
 
 
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps

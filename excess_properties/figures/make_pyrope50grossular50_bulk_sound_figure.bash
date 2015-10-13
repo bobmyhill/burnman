@@ -24,9 +24,8 @@ printf "1 8.8 \n 2.5 8.8" | psxy -J -R -O -K -W0.5,black,. >> ${base}.ps
 echo "3 8.8 Ganguly et al. (1996; constant V@+xs@+)" | pstext -J -R -O -K -F+jLM >> ${base}.ps
 
 echo "24 6.2 298.15 K" | pstext -J -R -O -F+jRM >> ${base}.ps
+
+
 ps2epsi ${base}.ps
-epstopdf ${base}.epsi
-
-rm ${base}.ps ${base}.epsi
-
-evince ${base}.pdf &
+rm ${base}.ps
+mv ${base}.epsi ${base}.eps
