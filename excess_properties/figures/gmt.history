@@ -1,0 +1,10 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.1.3
+B	a1f0.5:Pressure (GPa):/a2f1:Volume (cm@+3@+/mol):SWen
+J	X
+JX	X12/8
+R	0/10/106/126
+X	7
+Y	1
+L	10
+END
