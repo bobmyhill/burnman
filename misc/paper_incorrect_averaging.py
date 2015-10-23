@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     #seismic model for comparison:
     seismic_model = burnman.seismic.PREM() # pick from .prem() .slow() .fast() (see burnman/seismic.py)
     depths = map(seismic_model.depth, pressure)
-    seis_p, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+    seis_p, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate(['pressure','density','v_p','v_s','v_phi'],depths)
 
     #pure perovskite
     perovskitite = burnman.Composite( ( (perovskite(0.06), 1.0),) )
@@ -200,7 +200,8 @@ if __name__ == "__main__":
     plt.xlabel("Pressure (GPa)")
     plt.ylabel("Shear Velocity Vs (km/s)")
     plt.tight_layout()
-    plt.savefig("example_incorrect_averaging.pdf",bbox_inches='tight')
+    if "RUNNING_TESTS" not in globals():
+        plt.savefig("example_incorrect_averaging.pdf",bbox_inches='tight')
     plt.show()
 
 

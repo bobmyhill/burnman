@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
     
@@ -38,7 +38,7 @@ figsize=(6,5)
 prop={'size':12}
 plt.rc('text', usetex=True)
 plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-plt.rc('font', family='sanserif')
+plt.rc('font', family='sans-serif')
 figure=plt.figure(dpi=100,figsize=figsize)
 
 
@@ -109,5 +109,6 @@ if __name__ == "__main__":
         plt.ylabel(r'Shear velocity ${V}_{\mathlarger{\mathlarger{\mathlarger{s}}}}$ (km/s)')
     plt.xlabel("Pressure (GPa)")
     plt.legend(loc = "lower right",prop=prop)
-    plt.savefig("example_fit_data.pdf", bbox_inches='tight')
+    if "RUNNING_TESTS" not in globals():
+        plt.savefig("example_fit_data.pdf", bbox_inches='tight')
     plt.show()

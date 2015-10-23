@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
 example_geotherms
@@ -40,7 +40,7 @@ from burnman import minerals
 if __name__ == "__main__":
 
 # we want to evaluate several geotherms at these values
-    pressures = np.arange(8.5e9,128e9,3e9)
+    pressures = np.arange(9.0e9,128e9,3e9)
 
     #load two builtin geotherms and evaluate the temperatures at all pressures
     temperature1 = burnman.geotherm.brown_shankland(pressures)

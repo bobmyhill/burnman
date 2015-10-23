@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2014, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
 
@@ -109,7 +109,7 @@ if __name__=='__main__':
     max_depth = 2800.e3
     n_depths = 10
     depths = np.linspace(min_depth, max_depth, n_depths)
-    pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+    pressure, seis_rho, seis_vphi, seis_vs = seismic_model.evaluate(['pressure', 'density', 'v_phi', 'v_s'], depths)
     pressures_sampled = np.linspace(pressure[0], pressure[-1], 20*len(pressure))
 
     temperature = burnman.geotherm.brown_shankland(pressure)

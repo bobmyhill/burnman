@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012-2014, Myhill, R., Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 import numpy as np
 import equation_of_state as eos
@@ -129,16 +129,16 @@ class MT(eos.EquationOfState):
         if 'Gprime_0' not in params:
             params['Gprime_0'] = float('nan')
   
-        #check that all the required keys are in the dictionary
+        # Check that all the required keys are in the dictionary
         expected_keys = ['V_0', 'K_0', 'Kprime_0', 'Kdprime_0', 'G_0', 'Gprime_0']
         for k in expected_keys:
             if k not in params:
                 raise KeyError('params object missing parameter : ' + k)
         
-        #now check that the values are reasonable.  I mostly just
-        #made up these values from experience, and we are only 
-        #raising a warning.  Better way to do this? [IR]
-        if params['V_0'] < 1.e-7 or params['V_0'] > 1.e-3:
+        # Finally, check that the values are reasonable. 
+        if params['P_0'] < 0.:
+            warnings.warn( 'Unusual value for P_0', stacklevel=2 )
+        if params['V_0'] < 1.e-7 or params['V_0'] > 1.e-2:
             warnings.warn( 'Unusual value for V_0', stacklevel=2 )
         if params['K_0'] < 1.e9 or params['K_0'] > 1.e13:
             warnings.warn( 'Unusual value for K_0', stacklevel=2 )

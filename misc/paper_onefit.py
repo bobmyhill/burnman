@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, 2014, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
     
@@ -69,12 +69,12 @@ def realization_to_array(rock, anchor_t):
         if( isinstance(ph.mineral, burnman.minerals_base.helper_solid_solution) ):
             for min in ph.mineral.endmembers:
                 for key in min.params:
-                    if key != 'equation_of_state':
+                    if key != 'equation_of_state' and key != 'F_0' and key != 'T_0' and key != 'P_0':
                         arr.append(min.params[key])
                         names.append(min.to_string()+'.'+key)
         else:
             for key in ph.mineral.params:
-                    if key != 'equation_of_state':
+                    if key != 'equation_of_state' and key != 'F_0' and key != 'T_0' and key != 'P_0':
                         arr.append(ph.mineral.params[key])
                         names.append(mph.mineral.to_string()+'.'+key)
     return arr, names
@@ -87,7 +87,7 @@ def array_to_rock(arr, names):
         if isinstance(phase, HelperSolidSolution):
             for min in phase.endmembers:
                 for key in min.params:
-                    if key != 'equation_of_state' and key != 'F_0':
+                    if key != 'equation_of_state' and key != 'F_0' and key != 'T_0' and key != 'P_0':
                         assert(names[idx]==min.to_string()+'.'+key)
                         min.params[key] = arr[idx]
                         idx += 1
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     seismic_model = burnman.seismic.PREM()
     npts = 10
     depths = np.linspace(850e3,2700e3, npts)
-    pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+    pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate(['pressure','density','v_p','v_s','v_phi'],depths)
 
     pressures_sampled = np.linspace(pressure[0], pressure[-1], 20*len(pressure))
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     prop={'size':12}
     plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
     figure=plt.figure(dpi=100,figsize=figsize)
 
     #plot v_s
@@ -280,6 +280,7 @@ if __name__ == "__main__":
     plt.legend(bbox_to_anchor=(1.0, 0.9),prop={'size':12})
     plt.xlim(25,135)
     #plt.ylim(6,11)
-    plt.savefig("onefit.pdf", bbox_inches='tight')
+    if "RUNNING_TESTS" not in globals():
+        plt.savefig("onefit.pdf", bbox_inches='tight')
     print "wrote onefit.pdf"
     #plt.show()

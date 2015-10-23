@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2015, Heister, T., Unterborn, C., Rose, I. Cottaar, S., and Myhill, R.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 
 '''
@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
     plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
 
     #Come up with axes for the final plot
     figure = plt.figure( figsize = (12,10) )

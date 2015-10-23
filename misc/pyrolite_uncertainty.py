@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, 2014, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 
 import os.path,sys
@@ -127,7 +127,7 @@ def array_to_rock(arr, names):
 seismic_model = burnman.seismic.PREM()
 npts = 10
 depths = np.linspace(850e3,2700e3, npts)
-pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate(['pressure','density','v_p','v_s','v_phi'], depths)
 
 n_realizations = 10000
 min_error = np.inf
@@ -186,7 +186,7 @@ if whattodo=="plotgood":
     prop={'size':12}
     #plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
     figure=plt.figure(dpi=150,figsize=figsize)
     plt.subplots_adjust(hspace=0.3)
     for name in names:
@@ -454,7 +454,7 @@ if whattodo=="plotone":
     prop={'size':12}
     plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
     figure=plt.figure(dpi=100,figsize=figsize)
 
 
@@ -599,7 +599,7 @@ elif whattodo=="plot":
     #do some setup for the figure
     plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\usepackage{relsize}'
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
     plt.subplots_adjust(wspace=0.3)
 
     plt.subplot(111, aspect='equal')
@@ -637,5 +637,6 @@ elif whattodo=="plot":
     #save and show the image
     fig = plt.gcf()
     fig.set_size_inches(6.0, 6.0)
-    fig.savefig("pyrolite_uncertainty.pdf",bbox_inches='tight', dpi=100)
+    if "RUNNING_TESTS" not in globals():
+        fig.savefig("pyrolite_uncertainty.pdf",bbox_inches='tight', dpi=100)
     plt.show()

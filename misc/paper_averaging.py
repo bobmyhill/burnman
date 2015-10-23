@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
     
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     figsize=(6,5)
     prop={'size':12}
     #plt.rc('text', usetex=True)
-    plt.rc('font', family='sanserif')
+    plt.rc('font', family='sans-serif')
     figure=plt.figure(dpi=100,figsize=figsize)
 
     """ choose 'slb2' (finite-strain 2nd order shear modulus,
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     depths = np.linspace(700e3, 2800e3, number_of_points)
     #alternatively, we could use the values where prem is defined:
     #depths = seismic_model.internal_depth_list()
-    pressures, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+    pressures, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate(['pressure','density','v_p','v_s','v_phi'],depths)
 
     temperatures = burnman.geotherm.brown_shankland(pressures)
 
@@ -150,5 +150,6 @@ if __name__ == "__main__":
 
     plt.xlabel('Pressure (GPa)')
     plt.ylabel('Shear velocity $V_s$ (km/s)')
-    plt.savefig("example_averaging.pdf",bbox_inches='tight')
+    if "RUNNING_TESTS" not in globals():
+        plt.savefig("example_averaging.pdf",bbox_inches='tight')
     plt.show()

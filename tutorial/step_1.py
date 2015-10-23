@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2014, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
 CIDER 2014 BurnMan Tutorial --- step 1
@@ -77,7 +77,7 @@ if __name__=='__main__':
     min_depth = 850.e3
     max_depth = 2800.e3
     depths = np.linspace(min_depth, max_depth, n_depths)
-    pressure, seis_rho, seis_vp, seis_vs, seis_vphi = seismic_model.evaluate_all_at(depths)
+    pressure, seis_rho, seis_vp, seis_vs = seismic_model.evaluate(['pressure', 'density', 'v_p', 'v_s'], depths)
 
 
     # Now we get an array of temperatures at which will be used for computing

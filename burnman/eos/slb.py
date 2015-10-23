@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 import numpy as np
 import scipy.optimize as opt
@@ -68,9 +68,6 @@ class SLBBase(eos.EquationOfState):
         P_th = gr * debye.thermal_energy(T,Debye_T, params['n'])/V
         return P_th
 
-    def pressure_residual(self, volume, pressure, temperature, params):
-        return pressure - self.pressure(temperature, volume, params)
-
     def volume(self, pressure, temperature, params):
         """
         Returns molar volume. :math:`[m^3]`
@@ -90,7 +87,7 @@ class SLBBase(eos.EquationOfState):
         # we need to have a sign change in [a,b] to find a zero. Let us start with a
         # conservative guess:
         a = 0.6*params['V_0']
-        b = 1.20*params['V_0']
+        b = 1.2*params['V_0']
 
         # if we have a sign change, we are done:
         if func(a)*func(b)<0:
@@ -262,40 +259,29 @@ class SLBBase(eos.EquationOfState):
         """
         if 'T_0' not in params:
             params['T_0'] = 300.
-        if 'P_0' not in params:
-            params['P_0'] = 0.
 
-        #if G and Gprime are not included this is presumably deliberate,
-        #as we can model density and bulk modulus just fine without them,
-        #so just add them to the dictionary as nans
-        if 'G_0' not in params:
-            params['G_0'] = float('nan')
-        if 'Gprime_0' not in params:
-            params['Gprime_0'] = float('nan')
+        # If eta_s_0 is not included this is presumably deliberate,
+        # as we can model density and bulk modulus just fine without it,
+        # so just add it to the dictionary as nan
+        # The same goes for the standard state Helmholtz free energy
         if 'eta_s_0' not in params:
             params['eta_s_0'] = float('nan')
         if 'F_0' not in params:
             params['F_0'] = float('nan')
-  
-        #check that all the required keys are in the dictionary
-        expected_keys = ['V_0', 'K_0', 'Kprime_0', 'G_0', 'Gprime_0', 'molar_mass', 'n', 'Debye_0', 'grueneisen_0', 'q_0', 'eta_s_0']
+
+        # First, let's check the EoS parameters for Tref
+        bm.BirchMurnaghanBase.validate_parameters(bm.BirchMurnaghanBase(),params)
+
+        # Now check all the required keys for the 
+        # thermal part of the EoS are in the dictionary
+        expected_keys = ['molar_mass', 'n', 'Debye_0', 'grueneisen_0', 'q_0', 'eta_s_0']
         for k in expected_keys:
             if k not in params:
                 raise KeyError('params object missing parameter : ' + k)
         
-        #now check that the values are reasonable.  I mostly just
-        #made up these values from experience, and we are only 
-        #raising a warning.  Better way to do this? [IR]
-        if params['V_0'] < 1.e-7 or params['V_0'] > 1.e-3:
-            warnings.warn( 'Unusual value for V_0', stacklevel=2 )
-        if params['K_0'] < 1.e9 or params['K_0'] > 1.e13:
-            warnings.warn( 'Unusual value for K_0', stacklevel=2 )
-        if params['Kprime_0'] < 0. or params['Kprime_0'] > 10.:
-            warnings.warn( 'Unusual value for Kprime_0', stacklevel=2 )
-        if params['G_0'] < 0. or params['G_0'] > 1.e13:
-            warnings.warn( 'Unusual value for G_0', stacklevel=2 )
-        if params['Gprime_0'] < -5. or params['Gprime_0'] > 10.:
-            warnings.warn( 'Unusual value for Gprime_0', stacklevel=2 )
+        # Finally, check that the values are reasonable.
+        if params['T_0'] < 0.:
+            warnings.warn( 'Unusual value for T_0', stacklevel=2 )
         if params['molar_mass'] < 0.001 or params['molar_mass'] > 10.:
             warnings.warn( 'Unusual value for molar_mass', stacklevel=2 )
         if params['n'] < 1. or params['n'] > 1000.:

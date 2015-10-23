@@ -1,6 +1,6 @@
-# BurnMan - a lower mantle toolkit
-# Copyright (C) 2012, 2013, Heister, T., Unterborn, C., Rose, I. and Cottaar, S.
-# Released under GPL v2 or later.
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 
 """
 example_compare_enstpyro
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     ##let's create PREM for reference
     s=burnman.seismic.PREM()
     depths = map(s.depth, seis_p_1)
-    pressures, rho_prem, vp_prem, vs_prem, v_phi_prem = s.evaluate_all_at(depths)
+    pressures, rho_prem, vp_prem, vs_prem, v_phi_prem = s.evaluate(['pressure','density','v_p','v_s','v_phi'],depths)
 
 
     ##Now let's plot the comparison.

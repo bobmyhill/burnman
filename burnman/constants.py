@@ -1,3 +1,6 @@
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# Copyright (C) 2012 - 2015 by the BurnMan team, released under the GNU GPL v2 or later.
+
 import scipy.constants
 
 """
@@ -22,6 +25,7 @@ Boltzmann = 1.3806488e-23
 
 
 """
-Dirac constant (hbar, Planck constant / 2*pi) in J s^-1
+Newtonian constant of gravitation (G) in m^3 kg^-1 s^-2
 """
-Dirac = 1.054571726e-34
+
+G = scipy.constants.G
