@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
+# This model is taken from the paper of Waldner and Pelton (2003)
 g0 = [-104888.10, 0.338] # 0
 gx0 = [[0., 0.],
        [35043.32, -9.880], # 10
