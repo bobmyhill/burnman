@@ -51,10 +51,15 @@ class Si_liquid_DQF (burnman.Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         burnman.Mineral.__init__(self)
 
-Fe_liq=burnman.minerals.Myhill_calibration_iron.liquid_iron_HP()
+Fe_liq=burnman.minerals.Myhill_calibration_iron.liquid_iron()
 #Si_liq=burnman.minerals.Fe_Si_O.Si_liquid()
 Si_liq_DQF=Si_liquid_DQF()
-FeO_liq = burnman.minerals.Fe_Si_O.FeO_liquid_HP()
+FeO_liq = burnman.minerals.Fe_Si_O.FeO_liquid()
+
+T_ref = 1809.
+P_ref = 50.e9
+HP_convert(Fe_liq, 1809., 2400., T_ref, P_ref)
+HP_convert(FeO_liq, 1809., 2400., T_ref, P_ref)
 
 FeFeO_liq_0 = FeFeO_liquid()
 FeFeO_liq_1 = FeOFe_liquid()

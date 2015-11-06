@@ -14,9 +14,15 @@ from burnman.solidsolution import SolidSolution
 import numpy as np
 from scipy.optimize import fsolve
 
-Fe_fcc = Myhill_calibration_iron.fcc_iron_HP()
-Fe_hcp = Myhill_calibration_iron.hcp_iron_HP()
-Fe_liq = Myhill_calibration_iron.liquid_iron_HP()
+Fe_fcc = Myhill_calibration_iron.fcc_iron()
+Fe_hcp = Myhill_calibration_iron.hcp_iron()
+Fe_liq = Myhill_calibration_iron.liquid_iron()
+
+T_ref = 1809.
+P_ref = 50.e9
+HP_convert(Fe_fcc, 300., 2200., T_ref, P_ref)
+HP_convert(Fe_hcp, 300., 2200., T_ref, P_ref)
+HP_convert(Fe_liq, 1809., 2400., T_ref, P_ref)
 
 # N.B. HHPH2013 have a positive interaction parameter (12 kJ/mol) 
 # but also a negative DQF for fpv (-8 kJ/mol) ... these more or less 
@@ -158,7 +164,7 @@ plt.show()
 
 
 P = 25.e9
-XFeSiO3_bdg = 0.2
+XFeSiO3_bdg = 0.1
 temperatures = np.linspace(2773., 4273., 4)
 X_Sis = np.linspace(0.002, 0.2, 101)
 
@@ -178,6 +184,10 @@ for T in temperatures:
 
     plt.plot(X_Os_wt, X_Sis_wt, label=str(T)+'K')
 
+plt.title('Metallic melt in equilibrium with '+\
+              'Mg'+str(1.-XFeSiO3_bdg)+\
+              'Fe'+str(XFeSiO3_bdg)+\
+              'SiO3 at '+str(P/1.e9)+' GPa')
 plt.xlabel('XO (wt %)')
 plt.ylabel('XSi (wt %)')
 plt.xlim(0.0, 10.0)

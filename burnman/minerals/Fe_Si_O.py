@@ -238,3 +238,202 @@ class FeO_liquid_HP (Mineral):
         formula = dictionarize_formula(formula)
         self.params = {'S_0': 165.19, 'a_0': 1.6534e-05, 'K_0': 279960000000.0, 'einstein_T': 227.82, 'Kprime_0': 3.1829, 'T_0': 1809.0, 'Kdprime_0': -1.2457e-11, 'V_0': 1.0577e-05, 'name': 'FeO liquid', 'H_0': 424324.0, 'molar_mass': 0.071844, 'equation_of_state': 'hp_tmt', 'n': 2.0, 'formula': {'Fe': 1.0, 'O': 1.0}, 'Cp': [60.545, 0.0061334, 1576000.0, -391.61], 'P_0': 50000000000.0}
         Mineral.__init__(self)
+
+
+class FeS_II (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS II',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -98522.16 ,
+            'S_0': 70.8 ,
+            'V_0': 1.830e-05 ,
+            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
+            'a_0': 5.73e-05 ,
+            'K_0': 40.9e+9 ,
+            'Kprime_0': 4.0 ,
+            'Kdprime_0': -4.0/40.9e9 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+
+class FeS_III (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS III',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -84793.24,
+            'S_0': 70.8 ,
+            'V_0': 1.819e-05 ,
+            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
+            'a_0': 5.73e-05 ,
+            'K_0': 46.e9 ,
+            'Kprime_0': 4.0 ,
+            'Kdprime_0': -4.0/40.e9 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+
+class FeS_IV_HP (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS IV HP',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': 406200.,
+            'S_0': 37.42, 
+            'V_0': 1.706e-05, 
+            'K_0': 42.67e9,  
+            'Kprime_0': 6.5, 
+            'Kdprime_0': -2.512e-11,  
+            'a_0': 1.7323e-04, 
+            'Cp': [72.3, -0.00095, -15786.172, -478.648], 
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
+
+class FeS_IV_V_Evans (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'tro',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -97760.0 ,
+            'S_0': 70.8 ,
+            'V_0': 1.819e-05 ,
+            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
+            'a_0': 11.14e-05/2. , # corrected from ds62
+            'K_0': 65.8e9, 
+            'Kprime_0': 4.18, 
+            'Kdprime_0': -6.3e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'landau_Tc': 598.0 ,
+            'landau_Smax': 12.0 ,
+            'landau_Vmax': 4.1e-07 }
+        Mineral.__init__(self)
+
+'''
+# Not actually any way to fit EoS data for troilite...
+# The below is the best I can do, but it's terrible
+class FeS_IV_V (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'tro',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -97760.0 ,
+            'S_0': 70.8 ,
+            'V_0': 1.819e-05 ,
+            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
+            'a_0': 10.5e-05/2. , # corrected from ds62
+            'K_0': 46.e9, #40.e9, # new
+            'Kprime_0': 6.0, #6.0 , # new
+            'Kdprime_0': -6.3e-11 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'landau_Tc': 598.0 ,
+            'landau_Smax': 12.0 ,
+            'landau_Vmax': 4.1e-07 }
+        Mineral.__init__(self)
+'''
+
+class FeS_dummy (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'just a dummy phase',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'H_0': -97760.0 ,
+            'S_0': 70.8 ,
+            'V_0': 1.819e-05 ,
+            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
+            'a_0': 5.73e-05 ,
+            'K_0': 47.e9 , # 65.8e9 in HP2011
+            'Kprime_0': 0.5 ,
+            'Kdprime_0': -0.5/47.e9 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses) }
+        Mineral.__init__(self)
+
+class FeS_VI (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS VI',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',  
+            'T_0': 298.0, 
+            'P_0': 36.e9,
+            'H_0': 404141.,
+            'S_0': 35.73, 
+            'V_0': 1.2643e-05, 
+            'K_0': 283.7e9,  
+            'Kprime_0': 4.4, 
+            'Kdprime_0': -1.55e-11,   
+            'a_0': 3.8e-05, 
+            'T_einstein': 254., 
+            'Cp': [72.3, -0.00095, -15786.172, -478.648],
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)
+            }
+        Mineral.__init__(self)
+
+class FeS_liquid (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS liquid',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'P_0': 1.e5,# room pressure
+            'T_0': 1463., # Barin melting
+            'H_0': 5237.8, # 7.e3, # Barin melting
+            'S_0': 188.4606,# 190.074, # Barin melting
+            'Cp': [62.551, 0., 0., 0.],# Barin melting
+            'V_0': 2.244e-5, # 2.244e-05, from density 3.9-4.0 g/cm^3 at Tm (Kaiura and Toguri, 1979)
+            'K_0': 20.e9 ,
+            'Kprime_0': 4.0,
+            'Kdprime_0': -12.5/15.e9 ,
+            'a_0': 1.5e-4, # to fit Kaiura and Toguri (1979) data
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'n': sum(formula.values()),}
+        Mineral.__init__(self)
+
+class FeS_liquid_HP (Mineral):
+    def __init__(self):
+        formula='Fe1.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS liquid (above 0.4 GPa)',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'P_0': 1.e5,# room pressure
+            'T_0': 1463.,# Barin melting
+            'H_0': 7.e3 - 65818. ,# Barin melting
+            'S_0': 168.568 - 29.4 + 6.79, # Barin, with Chen deltaS melting
+            'Cp': [62.551, 0., 0., 0.],# Barin melting
+            'V_0': 2.1535e-05,
+            'K_0': 5.5e9 ,
+            'Kprime_0': 19.,
+            'Kdprime_0': -19. / 5.5e9 , # 
+            'a_0': 1.3e-4, # Kaiura and Toguri, 1979
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'n': sum(formula.values()),}
+        Mineral.__init__(self)

@@ -1,11 +1,57 @@
 import numpy as np
 
+def fit_PV_data(mineral):
+    def fit_data(pressures, V_0, K_0):
+        mineral.params['V_0'] = V_0
+        mineral.params['K_0'] = K_0
+        Kprime_0 =  mineral.params['Kprime_0']
+        mineral.params['Kdprime_0'] = -Kprime_0/K_0
+
+        volumes=[]
+        T = mineral.params['T_0']
+        for P in pressures:
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+
+        return volumes
+    return fit_data
+
+def fit_PVT_data_noa(mineral):
+    def fit_data(PT, V_0, K_0):
+        mineral.params['V_0'] = V_0
+        mineral.params['K_0'] = K_0
+        Kprime_0 =  mineral.params['Kprime_0']
+        mineral.params['Kdprime_0'] = -Kprime_0/K_0
+
+        volumes=[]
+        for P, T in zip(*PT):
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+
+        return volumes
+    return fit_data
+
+def fit_EoS_data(mineral, fit_params):
+    def fit_data(PT, *params):
+        '''
+        fit_params is a list of params (e.g. 'V_0', 'a_0')
+        '''
+        for i, param in enumerate(fit_params):
+            mineral.params[param] = params[i]
+
+        volumes=[]
+        for P, T in zip(*PT):
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+
+        return volumes
+    return fit_data
+
 def fit_PVT_data(mineral):
     def fit_data(PT, V_0, K_0, a_0):
         mineral.params['V_0'] = V_0
         mineral.params['K_0'] = K_0
-        Kprime_0 = 4.0
-        mineral.params['Kprime_0'] = Kprime_0
+        Kprime_0 =  mineral.params['Kprime_0']
         mineral.params['Kdprime_0'] = -Kprime_0/K_0
         mineral.params['a_0'] = a_0
 
@@ -21,6 +67,21 @@ def fit_PVT_data_Ka(mineral):
     def fit_data(PT, K_0, a_0):
         mineral.params['K_0'] = K_0
         Kprime_0 = mineral.params['Kprime_0'] 
+        mineral.params['Kdprime_0'] = -Kprime_0/K_0
+        mineral.params['a_0'] = a_0
+
+        volumes=[]
+        for P, T in zip(*PT):
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+
+        return volumes
+    return fit_data
+
+def fit_PVT_data_Kprimea(mineral):
+    def fit_data(PT, Kprime_0, a_0):
+        mineral.params['Kprime_0'] = Kprime_0
+        K_0 = mineral.params['K_0'] 
         mineral.params['Kdprime_0'] = -Kprime_0/K_0
         mineral.params['a_0'] = a_0
 
