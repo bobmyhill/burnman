@@ -265,3 +265,6 @@ plt.plot(pressures/1.e9, temperatures)
 plt.xlabel("P (GPa)")
 plt.ylabel("T (K)")
 plt.show()
+
+
+print liq_FeS.params

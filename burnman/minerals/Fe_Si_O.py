@@ -437,3 +437,35 @@ class FeS_liquid_HP (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses),
             'n': sum(formula.values()),}
         Mineral.__init__(self)
+
+
+class Fe3S (Mineral):
+    def __init__(self):
+        formula='Fe3.0S1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'Fe3S (space group I-4, Z=8)',
+            'formula': formula,
+            'equation_of_state': 'hp_tmt',
+            'T_0': 300., # room temperature
+            'P_0': 1.e5, # room pressure
+            'H_0': 5237.8, # TO FIT
+            'S_0': 188.4606, # TO FIT
+            'Cp': [72.3+2.*22.24, 
+                   -0.00095+2.*0.0088656, 
+                   -15786.172+2.*-221517.0, 
+                   -478.648+2.*47.1998], # 2*Fe (fcc) + FeS
+            'V_0': 2.8358e-5, # fit to Fei et al. (2000) and Seagle et al. (2006)
+            'K_0': 154.e9, # fit to Fei et al. (2000) and Seagle et al. (2006)
+            'Kprime_0': 4.0, # f-F suggests ~ 4.
+            'Kdprime_0': -4.0/154.e9 , # Holland and Powell heuristic
+            'a_0': 3.393e-05, # Value for Fe3P (ignoring Vlandau, K_0 Fe3P ~ Fe3S)
+            'molar_mass': formula_mass(formula, atomic_masses),
+            'n': sum(formula.values())}
+        Mineral.__init__(self)
+
+
+class FeS_liquid_new (Mineral):
+    def __init__(self):
+        self.params = {'S_0': 165.67194549319876, 'a_0': 1.5595297926897984e-05, 'K_0': 192365674196., 'Kprime_0': 3.6208957833862305, 'T_0': 1463.0, 'T_einstein': 105.65181587816863, 'Kdprime_0': -3.4539794921961683e-11, 'V_0': 1.4843781831066251e-05, 'name': 'FeS liquid', 'H_0': 589315.26474883151, 'molar_mass': 0.08791, 'equation_of_state': 'hp_tmt', 'n': 2.0, 'formula': {'S': 1.0, 'Fe': 1.0}, 'Cp': [106.85718932371381, -0.023554086164566546, 1138790.7904570682, -873.48148327148374], 'P_0': 36000000000.0}
+        Mineral.__init__(self)

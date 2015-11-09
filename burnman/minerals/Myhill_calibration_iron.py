@@ -54,7 +54,18 @@ class fcc_iron (Mineral): # No magnetism
     def __init__(self):
         formula='Fe1.0'
         formula = dictionarize_formula(formula)
-        self.params = {'S_0': 35.907, 'V_0': 6.9359301440628439e-06, 'name': 'FCC iron', 'H_0': 7973.0, 'a_0': 4.9105508240851435e-05, 'K_0': 150885687310.07358, 'molar_mass': 0.055845, 'equation_of_state': 'hp_tmt', 'n': 1.0, 'P_0': 99999.99, 'formula': {'Fe': 1.0}, 'T_einstein': 378.82000000000005, 'Kprime_0': 5.6, 'T_0': 298.15, 'Cp': [22.24, 0.0088656, -221517.0, 47.1998], 'Kdprime_0': -3.7114189555248337e-11}
+        self.params = {'S_0': 35.907, 
+                       'V_0': 6.9359301440628439e-06, 
+                       'name': 'FCC iron',
+                       'H_0': 7973.0, 
+                       'a_0': 4.9105508240851435e-05, 
+                       'K_0': 150885687310.07358, 
+                       'molar_mass': 0.055845, 
+                       'equation_of_state': 'hp_tmt', 
+                       'n': 1.0, 
+                       'P_0': 99999.99, 
+                       'formula': {'Fe': 1.0}, 
+                       'T_einstein': 378.82000000000005, 'Kprime_0': 5.6, 'T_0': 298.15, 'Cp': [22.24, 0.0088656, -221517.0, 47.1998], 'Kdprime_0': -3.7114189555248337e-11}
         Mineral.__init__(self)
 
 class hcp_iron (Mineral):
