@@ -96,3 +96,39 @@ class liquid_iron (Mineral):
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
+
+
+class hcp_iron_SLB (Mineral):
+    def __init__(self):
+        formula='Fe'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'Fe',
+            'formula': formula,
+            'equation_of_state': 'slb3',
+            'T_0': 300.,
+            'F_0': -3719000.0 ,
+            'V_0': 0.00010045 ,
+            'K_0': 60000000000.0 ,
+            'Kprime_0': 4.0 ,
+            'Debye_0': 470.0 ,
+            'grueneisen_0': 0.57 ,
+            'q_0': 1.0 ,
+            'G_0': 36000000000.0 ,
+            'Gprime_0': 1.4 ,
+            'eta_s_0': 1.0 ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+
+        self.uncertainties = {
+            'err_F_0': 5000.0 ,
+            'err_V_0': 0.0 ,
+            'err_K_0': 5000000000.0 ,
+            'err_K_prime_0': 1.0 ,
+            'err_Debye_0': 13.0 ,
+            'err_grueneisen_0': 0.03 ,
+            'err_q_0': 1.0 ,
+            'err_G_0': 5000000000.0 ,
+            'err_Gprime_0': 0.5 ,
+            'err_eta_s_0': 1.0 }
+        Mineral.__init__(self)
