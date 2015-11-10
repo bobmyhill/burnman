@@ -9,7 +9,7 @@ import burnman
 from HP_convert import *
 from listify_xy_file import *
 from fitting_functions import *
-
+from scipy.interpolate import interp1d
 
 tro = burnman.minerals.Fe_Si_O.FeS_IV_V_Evans()
 FeS_IV_HP = burnman.minerals.Fe_Si_O.FeS_IV_HP()
@@ -232,13 +232,16 @@ temperatures = np.empty_like(pressures)
 for i, P in enumerate(pressures):
     temperatures[i] = fsolve(eqm_temperature([FeS_VI, liq_FeS], [1.0, -1.0]), 
                              [1400.], args=(P))[0]
-
+    print P/1.e9, temperatures[i], liq_FeS.S - FeS_VI.S
+    
 # Find the melting curve with IV_HP
 pressures2 = np.linspace(20.e9, 36.e9, 101)
 temperatures2 = np.empty_like(pressures2)
 for i, P in enumerate(pressures2):
     temperatures2[i] = fsolve(eqm_temperature([FeS_VI, liq_FeS], [1.0, -1.0]), 
                               [1400.], args=(P))[0]
+
+    
 
 # Find the melting curve with tro
 pressures3 = np.linspace(1.e5, 5.e9, 101)
@@ -257,6 +260,15 @@ plt.errorbar(WJ1990_solid[0]/1.e9, WJ1990_solid[1], yerr=WJ1990_solid[2], linest
 
 data = listify_xy_file('data/Fe12S13_melting_Ryzhenko_Kennedy_1973.dat')
 plt.plot(data[0], data[1], linestyle='None', marker='o')
+
+
+melting_curve_data = listify_xy_file('data/FeS_melting_curve_Williams_Jeanloz_1990.dat')
+melting_temperature = interp1d(melting_curve_data[0]*1.e9, 
+                               melting_curve_data[1], 
+                               kind='cubic')
+
+Pm = np.linspace(1.e5, 120.e9, 101)
+plt.plot(Pm/1.e9, melting_temperature(Pm))
 
 
 plt.plot(pressures3/1.e9, temperatures3)
