@@ -29,7 +29,7 @@ V_0 = Fe_hcp.V
 K_0 = Fe_hcp.K_T
 a_0 = Fe_hcp.alpha
 
-Fe_hcp2.params['S_0'] = Fe_hcp2.params['S_0'] + 96.
+Fe_hcp2.params['S_0'] = Fe_hcp2.params['S_0'] + 71.
 guesses = [V_0, K_0, 4., -4./K_0, a_0]
 
 
