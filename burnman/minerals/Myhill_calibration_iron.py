@@ -115,8 +115,25 @@ class liquid_iron (Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
 
+class fcc_iron_SLB (Mineral):
+    def __init__(self):
+        formula='Fe'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FCC iron',
+            'formula': formula,
+            'equation_of_state': 'slb3',
+            'F_0': -2805. ,
+            'V_0': 6.835e-6 ,
+            'K_0': 165.3e9 ,
+            'Kprime_0': 5.5 ,
+            'Debye_0': 417.0 ,
+            'grueneisen_0': 1.72 ,
+            'q_0': 1. ,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        Mineral.__init__(self)
 
-'''
 class hcp_iron_SLB (Mineral):
     def __init__(self):
         formula='Fe'
@@ -125,29 +142,17 @@ class hcp_iron_SLB (Mineral):
             'name': 'HCP iron',
             'formula': formula,
             'equation_of_state': 'slb3',
-            'F_0': -4015000.0 ,
-            'V_0': 6.753e-6 ,
-            'K_0': 166.e9 ,
-            'Kprime_0': 5.2 ,
-            'Debye_0': 417.0 ,
-            'grueneisen_0': 3. ,
-            'q_0': 1.0 ,
+            'F_0': 1000. , # needs to be changed
+            'V_0': 6.756e-6 ,
+            'K_0': 169.e9 ,
+            'Kprime_0': 4.90 ,
+            'Debye_0': 422.0 , # 422 K at 0 GPa; Sharma, 2009
+            'grueneisen_0': 1.72 ,
+            'q_0': 1. ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
-
-        self.uncertainties = {
-            'err_F_0': 4000.0 ,
-            'err_V_0': 0.0 ,
-            'err_K_0': 5000000000.0 ,
-            'err_K_prime_0': 1.0 ,
-            'err_Debye_0': 2.0 ,
-            'err_grueneisen_0': 0.05 ,
-            'err_q_0': 1.0 ,
-            'err_G_0': 3000000000.0 ,
-            'err_Gprime_0': 0.5 ,
-            'err_eta_s_0': 1.0 }
         Mineral.__init__(self)
-'''
+
 '''
 class hcp_iron (Mineral):
     def __init__(self):

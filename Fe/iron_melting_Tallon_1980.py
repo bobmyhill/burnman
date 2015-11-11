@@ -28,7 +28,7 @@ Fe_fcc = burnman.minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp = burnman.minerals.Myhill_calibration_iron.hcp_iron()
 
 melting_curve_data = listify_xy_file('data/Anzellini_2013_Fe_melting_curve.dat')
-melting_curve_data = listify_xy_file('data/Fe_melting_Komabayashi.dat')
+#melting_curve_data = listify_xy_file('data/Fe_melting_Komabayashi.dat')
 melting_temperature = interp1d(melting_curve_data[0]*1.e9, 
                                melting_curve_data[1], 
                                kind='cubic')
@@ -98,7 +98,8 @@ plt.plot(temperatures, Cps_fcc)
 plt.legend(loc="lower right")
 plt.show()
 '''
-'''
+
+
 # Convert liquid phase parameters to HP
 P_ref = 97.e9
 T_ref = melting_temperature(P_ref)
@@ -260,12 +261,12 @@ for i, P in enumerate(pressures):
         temperatures_2[i] = fsolve(eqm_temperature([Fe_fcc, Fe_hcp], [1.0,-1.0]), [2000.], args=(P))[0]
 plt.plot(pressures, temperatures)
 plt.plot(pressures, temperatures_2)
-'''
+
 
 data = listify_xy_file('data/Fe_melting_Anzellini_2003.dat')
 plt.plot(data[0]*1.e9, data[1], linestyle='None', marker='o')
-data = listify_xy_file('data/Fe_melting_Komabayashi.dat')
-plt.plot(data[0]*1.e9, data[1], 'r--')
+#data = listify_xy_file('data/Fe_melting_Komabayashi.dat')
+plt.plot(pressures, melting_temperature(pressures), 'r--')
 
 plt.show()
 
