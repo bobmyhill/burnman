@@ -9,6 +9,7 @@ import birch_murnaghan as bm
 import modified_tait as mt
 import hp 
 import cork
+import slb_with_el as slbel
 from equation_of_state import EquationOfState
 
 
@@ -18,6 +19,10 @@ def create(method):
     a class EquationOfState, or an instance of EquationOfState.
     """
     if isinstance(method, basestring):
+        if method == "slbel2":
+            return slbel.SLBEL2()
+        if method == "slbel3":
+            return slbel.SLBEL3()
         if method == "slb2":
             return slb.SLB2()
         elif method == "mgd2":

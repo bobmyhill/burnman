@@ -16,6 +16,7 @@ from slb import SLB2, SLB3
 from modified_tait import MT
 from hp import HP_TMT
 from cork import CORK
+from slb_with_el import SLBEL2, SLBEL3
 
 from helper import create
 
