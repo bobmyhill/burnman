@@ -9,6 +9,15 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 from listify_xy_file import *
 atomic_masses=read_masses()
 
+'''
+from scipy.constants import physical_constants
+r_B = physical_constants['Bohr radius'][0]
+print r_B
+print 47.e-30 / np.power(r_B, 3.) / 4.
+exit()
+'''
+print 'NB: also possibility of an anharmonic contribution'
+
 class fcc_iron (burnman.Mineral):
     def __init__(self):
         formula='Fe'
@@ -18,13 +27,13 @@ class fcc_iron (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': 0.,
-            'V_0': 6.835e-6 ,
-            'K_0': 165.3e9 ,
-            'Kprime_0': 5.5 ,
-            'Debye_0': 422. ,
+            'V_0': 46./1.e30*burnman.constants.Avogadro/4. ,
+            'K_0': 133.0e9 ,
+            'Kprime_0': 5.0 ,
+            'Debye_0': 417. ,
             'grueneisen_0': 1.72 ,
-            'q_0': 1 ,
-            'Cv_el': 2.5,
+            'q_0': 1.6 ,
+            'Cv_el': 2.7,
             'T_el': 9000.,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
@@ -73,18 +82,26 @@ plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
 fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
 plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
 plt.show()
-exit()
 
-pressures = [50.e9, 100.e9, 150.e9]
-temperatures = np.linspace(1., 6000., 101)
-alphas = np.empty_like(temperatures)
-for P in pressures:
-    for i, T in enumerate(temperatures):
-        hcp.set_state(P, T)
-        alphas[i] = hcp.alpha
+P = 1.e5
+temperatures = np.linspace(1., 1700., 101)
+volumes = np.empty_like(temperatures)
+for i, T in enumerate(temperatures):
+    fcc.set_state(P, T)
+    volumes[i] = fcc.V
+plt.plot(temperatures, volumes)
 
-    plt.plot(temperatures, alphas, label=str(P/1.e9)+' GPa')
-plt.legend(loc="lower left")
+Z_fcc = 4.
+T_Onink_et_al_1993 = np.linspace(1180., 1250., 101)
+def V(T):
+    return np.power(0.36320*(1+24.7e-6*(T - 1000.)),3.)*1e-27*burnman.constants.Avogadro/Z_fcc
+
+plt.plot(T_Onink_et_al_1993, V(T_Onink_et_al_1993))
+
+
+fcc_V_data = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
+plt.plot(fcc_V_data[0], fcc_V_data[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
+
 plt.show()
 
 
