@@ -6,7 +6,30 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
+from listify_xy_file import *
 atomic_masses=read_masses()
+
+class fcc_iron (burnman.Mineral):
+    def __init__(self):
+        formula='Fe'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FCC iron',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': 0.,
+            'V_0': 6.835e-6 ,
+            'K_0': 165.3e9 ,
+            'Kprime_0': 5.5 ,
+            'Debye_0': 422. ,
+            'grueneisen_0': 1.72 ,
+            'q_0': 1 ,
+            'Cv_el': 2.5,
+            'T_el': 9000.,
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+
+        burnman.Mineral.__init__(self)
 
 class hcp_iron (burnman.Mineral):
     def __init__(self):
@@ -30,46 +53,27 @@ class hcp_iron (burnman.Mineral):
 
         burnman.Mineral.__init__(self)
 
-
+fcc = fcc_iron()
 hcp = hcp_iron()
-'''
+
+
+temperatures = np.linspace(1185., 1665., 49)
+Cps = np.empty_like(temperatures)
+Ss = np.empty_like(temperatures)
 P = 1.e5
-T = 2000.
+for i, T in enumerate(temperatures):
+    fcc.set_state(P, T)
+    Cps[i] = fcc.C_p
+    Ss[i] = fcc.S
+    print T, fcc.C_p, fcc.S, fcc.gibbs
 
-#eos = burnman.eos.slb.SLB3()
-eos = burnman.eos.slb_with_el.SLBEL3()
-
-hcp.set_state(P, T)
-V = hcp.V
-
-F = eos.helmholtz_free_energy(P, T, V, hcp.params)
-H = eos.enthalpy(P, T, V, hcp.params)
-S = eos.entropy(P, T, V, hcp.params)
-C_v = eos.heat_capacity_v(P, T, V, hcp.params)
-K_S = eos.adiabatic_bulk_modulus(P, T, V, hcp.params)
-K_T = eos.isothermal_bulk_modulus(P, T, V, hcp.params)
-
-dT = 1.
-F0 = eos.helmholtz_free_energy(P, T-0.5*dT, V, hcp.params)
-F1 = eos.helmholtz_free_energy(P, T+0.5*dT, V, hcp.params)
-print 'S:', S, -(F1-F0)/dT
-
-dFdT0 = (F-F0)/(0.5*dT)
-dFdT1 = (F1-F)/(0.5*dT)
-Td2FdT2 = -T*(dFdT1 - dFdT0)/(0.5*dT)
-print 'C_v:', C_v, Td2FdT2
-
-
-dV = 1.e-9
-F0 = eos.helmholtz_free_energy(P, T, V-0.5*dV, hcp.params)
-F1 = eos.helmholtz_free_energy(P, T, V+0.5*dV, hcp.params)
-
-dFdV0 = (F - F0)/(0.5*dV)
-dFdV1 = (F1 - F)/(0.5*dV)
-
-Vd2FdV2 = V*(dFdV1 - dFdV0)/(0.5*dV)
-print 'K_T:', K_T/1.e9, Vd2FdV2/1.e9
-'''
+plt.plot(temperatures, Cps)
+fcc_Cp_data = listify_xy_file('data/fcc_Cp_Chen_Sundman_2001.dat')
+plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
+plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+plt.show()
+exit()
 
 pressures = [50.e9, 100.e9, 150.e9]
 temperatures = np.linspace(1., 6000., 101)
