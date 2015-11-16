@@ -19,6 +19,33 @@ Fe_fcc2 = burnman.minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp2 = burnman.minerals.Myhill_calibration_iron.hcp_iron()
 Fe_liq2 = burnman.minerals.Myhill_calibration_iron.liquid_iron()
 
+
+# To compare with Wassermann
+'''
+temperatures = np.linspace(1000., 5000., 10)
+alphas = np.empty_like(temperatures)
+for P in [50.e9, 100.e9, 200.e9]:
+    for i, T in enumerate(temperatures): 
+        print P/1.e9, T
+        Fe_fcc.set_state(P, T)
+        alphas[i] = Fe_fcc.alpha
+
+    plt.plot(temperatures, alphas, label=str(P/1.e9)+' GPa')
+plt.legend(loc='upper left')
+plt.show()
+'''
+T = 715.
+pressures = np.linspace(1.e5, 200.e9, 21)
+alphas = np.empty_like(pressures)
+for i, P in enumerate(pressures): 
+        print P/1.e9, T
+        Fe_fcc.set_state(P, T)
+        alphas[i] = Fe_fcc.alpha
+
+plt.plot(pressures, alphas, label=str(T)+' K')
+plt.legend(loc='upper right')
+plt.show()
+
 T_0 = 4000.
 P_0 =  100.e9
 Fe_hcp2.params['T_0'] = T_0

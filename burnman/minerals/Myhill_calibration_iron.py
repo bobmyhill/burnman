@@ -142,13 +142,14 @@ class hcp_iron_SLB (Mineral):
             'name': 'HCP iron',
             'formula': formula,
             'equation_of_state': 'slb3',
+            'T_0': 300.,
             'F_0': 1000. , # needs to be changed
-            'V_0': 6.756e-6 ,
-            'K_0': 169.e9 ,
-            'Kprime_0': 4.90 ,
+            'V_0': 6.828e-6, # Uchida and Dewaele 6.73e-6 , # fit to Dewaele et al. (2006) (up to 100 GPa)
+            'K_0': 141.e9, # Uchida and Dewaele 165.0e9 , # fit to Dewaele et al. (2006) (up to 100 GPa)
+            'Kprime_0': 5.83, # fit to Uchida and Dewaele # 5.32 , # gr = 0.5*K' - 0.94 (Anderson, 2000)
             'Debye_0': 422.0 , # 422 K at 0 GPa; Sharma, 2009
-            'grueneisen_0': 1.72 ,
-            'q_0': 1. ,
+            'grueneisen_0': 2.46, # fit to Uchida # 1.72 , # (Anderson, 2000)
+            'q_0': 1. , # needs to be changed?
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
