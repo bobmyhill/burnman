@@ -18,27 +18,6 @@ exit()
 '''
 print 'NB: also possibility of an anharmonic contribution'
 
-class fcc_iron (burnman.Mineral):
-    def __init__(self):
-        formula='Fe'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'FCC iron',
-            'formula': formula,
-            'equation_of_state': 'slbel3',
-            'F_0': 0.,
-            'V_0': 46./1.e30*burnman.constants.Avogadro/4. ,
-            'K_0': 133.0e9 ,
-            'Kprime_0': 5.0 ,
-            'Debye_0': 417. ,
-            'grueneisen_0': 1.72 ,
-            'q_0': 1.6 ,
-            'Cv_el': 2.7,
-            'T_el': 9000.,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-
-        burnman.Mineral.__init__(self)
 
 class hcp_iron (burnman.Mineral):
     def __init__(self):
@@ -56,53 +35,72 @@ class hcp_iron (burnman.Mineral):
             'grueneisen_0': 1.72 ,
             'q_0': 1 ,
             'Cv_el': 2.7,
-            'T_el': 10000,
+            'T_el': 6500.,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 
         burnman.Mineral.__init__(self)
 
-fcc = fcc_iron()
 hcp = hcp_iron()
 
 
-temperatures = np.linspace(1185., 1665., 49)
-Cps = np.empty_like(temperatures)
-Ss = np.empty_like(temperatures)
-P = 1.e5
-for i, T in enumerate(temperatures):
-    fcc.set_state(P, T)
-    Cps[i] = fcc.C_p
-    Ss[i] = fcc.S
-    print T, fcc.C_p, fcc.S, fcc.gibbs
+pressures = np.linspace(50.e9, 170.e9, 51)
+arr_Cv = []
+arr_alpha = []
+arr_aKT = []
+arr_gamma = []
+for T in [2000., 4000., 6000.]:
+    Cvs = np.empty_like(pressures)
+    alphas = np.empty_like(pressures)
+    aKTs = np.empty_like(pressures)
+    gammas = np.empty_like(pressures)
+    print T, 'K'
+    for i, P in enumerate(pressures):
+        hcp.set_state(P, T)
+        Cvs[i] = hcp.C_v/burnman.constants.gas_constant
+        alphas[i] = hcp.alpha
+        aKTs[i] = hcp.alpha*hcp.K_T
+        gammas[i] = hcp.gr
 
-plt.plot(temperatures, Cps)
-fcc_Cp_data = listify_xy_file('data/fcc_Cp_Chen_Sundman_2001.dat')
-plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
-fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
-plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+    arr_Cv.append([T, Cvs])
+    arr_alpha.append([T, alphas])
+    arr_aKT.append([T, aKTs])
+    arr_gamma.append([T, gammas])
+
+for T, arr in arr_Cv:
+    print T
+    plt.plot(pressures/1.e9, arr, label=str(T)+' K')
+plt.title("C_V")
+plt.legend(loc="lower right")
+plt.ylim(3.5, 5.5)
+plt.xlim(50., 350.)
 plt.show()
 
-P = 1.e5
-temperatures = np.linspace(1., 1700., 101)
-volumes = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    fcc.set_state(P, T)
-    volumes[i] = fcc.V
-plt.plot(temperatures, volumes)
-
-Z_fcc = 4.
-T_Onink_et_al_1993 = np.linspace(1180., 1250., 101)
-def V(T):
-    return np.power(0.36320*(1+24.7e-6*(T - 1000.)),3.)*1e-27*burnman.constants.Avogadro/Z_fcc
-
-plt.plot(T_Onink_et_al_1993, V(T_Onink_et_al_1993))
-
-
-fcc_V_data = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
-plt.plot(fcc_V_data[0], fcc_V_data[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
-
+for T, arr in arr_alpha:
+    plt.plot(pressures/1.e9, arr*1.e5, label=str(T)+' K')
+plt.title("Thermal expansivity")
+plt.legend(loc="lower right")
+plt.ylim(0.5, 4.)
+plt.xlim(0., 350.)
 plt.show()
+
+
+for T, arr in arr_aKT:
+    plt.plot(pressures/1.e9, arr, label=str(T)+' K')
+plt.title("alpha * K_T")
+plt.legend(loc="lower right")
+plt.ylim(9.e6, 16.e6)
+plt.xlim(50., 350.)
+plt.show()
+
+for T, arr in arr_gamma:
+    plt.plot(pressures/1.e9, arr, label=str(T)+' K')
+plt.title("Gruneisen")
+plt.legend(loc="lower right")
+plt.ylim(1.36, 1.6)
+plt.xlim(50., 350.)
+plt.show()
+
 
 
 
