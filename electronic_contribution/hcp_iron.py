@@ -212,3 +212,11 @@ plt.legend(loc='lower right')
 plt.ylim(0., 50.)
 plt.title("Heat capacity")
 plt.show()
+
+
+pressures = np.linspace(1.e5, 200.e9, 101)
+temperatures, volumes = burnman.tools.hugoniot(hcp, 1.e5, 298.15, pressures)
+
+plt.title("Hugoniot")
+plt.plot(pressures/1.e9, temperatures)
+plt.show()
