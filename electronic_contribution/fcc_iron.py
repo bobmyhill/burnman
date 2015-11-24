@@ -29,14 +29,14 @@ class fcc_iron (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': 0.,
-            'V_0': 46.35/1.e30*burnman.constants.Avogadro/4. ,
-            'K_0': 145.0e9 ,
+            'V_0': 6.974e-6 ,
+            'K_0': 145.2e9 ,
             'Kprime_0': 5.3 ,
             'Debye_0': 417. ,
-            'grueneisen_0': 1.8 , # 2. ok
-            'q_0': 0.5 , # 0., ok
+            'grueneisen_0': 1.92 , # 2. ok
+            'q_0': 0.07 , # 0., ok
             'Cv_el': 2.7,
-            'T_el': 10000., # 10000. ok
+            'T_el': 9500., # 10000. ok
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 
@@ -81,7 +81,15 @@ plt.plot(T_Onink_et_al_1993, V(T_Onink_et_al_1993))
 
 fcc_V_data_B = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
 plt.plot(fcc_V_data_B[0], fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
-plt.plot(fcc_V_data_B[0], 0.9905*fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
+plt.plot(fcc_V_data_B[0], 0.990*fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
+
+
+
+
+fcc_V_data_F = listify_xy_file('data/Feng_2015_fcc_volumes_RP.dat')
+plt.plot(fcc_V_data_F[0], np.power(fcc_V_data_F[1], 3.)/1.e27*burnman.constants.Avogadro/4., marker='o', linestyle='None')
+
+
 
 plt.show()
 
@@ -109,30 +117,16 @@ plt.show()
 
 Ps = fcc_V_data_B[0]*0. + 1.e5
 Ts = fcc_V_data_B[0]
-Vs = fcc_V_data_B[1]
+Vs = 0.99*fcc_V_data_B[1]/11.7024*7.17433e-6 # the 0.9905 correction is to fit the Onink et al data
 
+Ps = fcc_V_data_F[0]*0. + 1.e5
+Ts = fcc_V_data_F[0]
+Vs = np.power(fcc_V_data_F[1], 3.)/1.e27*burnman.constants.Avogadro/4.
 
 Ps = np.concatenate((Ps, P_N))
 Ts = np.concatenate((Ts, T_N))
-PTs = []
+PTs = [Ps, Ts]
 Vs = np.concatenate((Vs, V_N))
 
-guesses = [fcc.params['V_0'], fcc.params['K_0'], fcc.params['grueneisen_0'], fcc.params['q_0'], fcc.params['T_el']]
-fsolve(fit_EoS_data(fcc, ['V_0', 'K_0', 'grueneisen_0', 'q_0', 'T_el']), PTs, guesses, Vs)
-
-'''
-            'name': 'FCC iron',
-            'formula': formula,
-            'equation_of_state': 'slbel3',
-            'F_0': 0.,
-            'V_0': 46.35/1.e30*burnman.constants.Avogadro/4. ,
-            'K_0': 145.0e9 ,
-            'Kprime_0': 5.3 ,
-            'Debye_0': 417. ,
-            'grueneisen_0': 1.8 , # 2. ok
-            'q_0': 0.5 , # 0., ok
-            'Cv_el': 2.7,
-            'T_el': 10000., # 10000. ok
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-'''
+popt, pcov = burnman.tools.fit_PVT_data(fcc, ['V_0', 'K_0', 'grueneisen_0', 'q_0'], PTs, Vs)
+print popt, pcov

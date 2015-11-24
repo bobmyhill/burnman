@@ -8,6 +8,7 @@ import os
 import pkgutil
 import numpy as np
 import constants
+from scipy.optimize import fsolve, curve_fit
 
 def pretty_print_table(table,use_tabs=False):
     """
@@ -93,3 +94,131 @@ def molar_volume_from_unit_cell_volume(unit_cell_v, z):
     """
     return  unit_cell_v*constants.Avogadro/1e30/z
 
+def fit_PVT_data(mineral, fit_params, PT, V, V_sigma=None):
+    """
+    Given a mineral of any type, a list of fit parameters 
+    and a set of PTV points and (optional) uncertainties, 
+    this function returns a list of optimized parameters 
+    and their associated covariances, fitted using the 
+    scipy.optimize.curve_fit routine.
+
+    Parameters
+    ----------
+    mineral : mineral
+        Mineral for which the parameters should be optimized
+
+    fit_params : list of strings
+        List of dictionary keys contained in mineral.params
+        corresponding to the variables to be optimized 
+        during fitting. Initial guesses are taken from the existing 
+        values for the parameters
+
+    PT : list of two lists of floats (or numpy arrays)
+        The two lists contain a set of pressures [Pa] 
+        and temperatures [K] of the volume data points
+
+    V : list (or numpy array) of floats
+        Volumes [m^3/mol] of the mineral at the P,T condition
+        given by parameter PT
+
+    V_sigma : list (or numpy array) of floats
+        Optional uncertainties on the volumes [m^3/mol] 
+        of the mineral at the P,T condition
+        given by parameter PT
+
+    Returns
+    -------
+    popt : numpy array of floats
+        A list of optimized parameters
+
+    pcov : 2D numpy array of floats
+        The covariance matrix of the optimized parameters
+    """
+    def fit_data(PT, *params):
+        for i, param in enumerate(fit_params):
+            mineral.params[param] = params[i]
+        volumes=[]
+        
+        for P, T in zip(*PT):
+            mineral.set_state(P, T)
+            volumes.append(mineral.V)
+        return volumes
+
+
+    guesses = [mineral.params[param] for param in fit_params]
+    popt, pcov = curve_fit(fit_data, PT, V, guesses, V_sigma)
+    
+    return popt, pcov
+
+
+def equilibrium_pressure(minerals, stoichiometry, temperature, pressure_initial_guess=1.e5):
+    """
+    Given a list of minerals, their reaction stoichiometries and a temperature of interest, 
+    compute the equilibrium pressure of the reaction.
+    
+    Parameters
+    ----------
+    minerals : list of minerals
+        List of minerals involved in the reaction.
+    
+    stoichiometry : list of floats
+        Reaction stoichiometry for the minerals provided. 
+        Reactants and products should have the opposite signs [mol]
+    
+    temperature : float
+        Temperature of interest [K]
+
+    pressure_initial_guess : optional float
+        Initial pressure guess [Pa]
+    
+    Returns
+    -------
+    pressure : float
+        The equilibrium pressure of the reaction [Pa]
+    """
+    def eqm(P, T):
+        gibbs = 0.
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P[0], T)
+            gibbs = gibbs + mineral.gibbs*stoichiometry[i]
+        return gibbs
+
+    pressure = fsolve(eqm, [pressure_initial_guess], args=(temperature))[0]
+    
+    return pressure
+
+def equilibrium_temperature(minerals, stoichiometry, pressure, temperature_initial_guess=1000.):
+    """
+    Given a list of minerals, their reaction stoichiometries and a pressure of interest, 
+    compute the equilibrium temperature of the reaction.
+    
+    Parameters
+    ----------
+    minerals : list of minerals
+        List of minerals involved in the reaction.
+    
+    stoichiometry : list of floats
+        Reaction stoichiometry for the minerals provided. 
+        Reactants and products should have the opposite signs [mol]
+    
+    pressure : float
+        Pressure of interest [Pa]
+
+    temperature_initial_guess : optional float
+        Initial temperature guess [K]
+    
+    Returns
+    -------
+    temperature : float
+        The equilibrium temperature of the reaction [K]
+    """
+    def eqm(T, P):
+        gibbs = 0.
+        for i, mineral in enumerate(minerals):
+            mineral.set_state(P, T[0])
+            gibbs = gibbs + mineral.gibbs*stoichiometry[i]
+        return gibbs
+
+    temperature = fsolve(eqm, [temperature_initial_guess], args=(pressure))[0]
+    
+    return temperature
