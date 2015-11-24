@@ -5,8 +5,10 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 
 import burnman
 from burnman import minerals
+from scipy.optimize import fsolve
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 from listify_xy_file import *
+from fitting_functions import *
 atomic_masses=read_masses()
 
 '''
@@ -77,9 +79,9 @@ def V(T):
 plt.plot(T_Onink_et_al_1993, V(T_Onink_et_al_1993))
 
 
-fcc_V_data = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
-plt.plot(fcc_V_data[0], fcc_V_data[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
-plt.plot(fcc_V_data[0], 0.9905*fcc_V_data[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
+fcc_V_data_B = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
+plt.plot(fcc_V_data_B[0], fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
+plt.plot(fcc_V_data_B[0], 0.9905*fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
 
 plt.show()
 
@@ -103,3 +105,34 @@ for T in [1223., 1273., 1323.]:
     plt.plot(pressures/1.e9, volumes)
 plt.plot(P_N/1.e9, V_N, marker='o', linestyle='None')
 plt.show()
+
+
+Ps = fcc_V_data_B[0]*0. + 1.e5
+Ts = fcc_V_data_B[0]
+Vs = fcc_V_data_B[1]
+
+
+Ps = np.concatenate((Ps, P_N))
+Ts = np.concatenate((Ts, T_N))
+PTs = []
+Vs = np.concatenate((Vs, V_N))
+
+guesses = [fcc.params['V_0'], fcc.params['K_0'], fcc.params['grueneisen_0'], fcc.params['q_0'], fcc.params['T_el']]
+fsolve(fit_EoS_data(fcc, ['V_0', 'K_0', 'grueneisen_0', 'q_0', 'T_el']), PTs, guesses, Vs)
+
+'''
+            'name': 'FCC iron',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': 0.,
+            'V_0': 46.35/1.e30*burnman.constants.Avogadro/4. ,
+            'K_0': 145.0e9 ,
+            'Kprime_0': 5.3 ,
+            'Debye_0': 417. ,
+            'grueneisen_0': 1.8 , # 2. ok
+            'q_0': 0.5 , # 0., ok
+            'Cv_el': 2.7,
+            'T_el': 10000., # 10000. ok
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+'''
