@@ -159,7 +159,13 @@ class HP_TMT(eos.EquationOfState):
 
         return params['H_0'] + self.__intCpdT(temperature, params) - temperature*(params['S_0'] + self.__intCpoverTdT(temperature, params)) + intVdP + Gdisord + Gmagnetic
 
-
+    def helmholtz_free_energy( self, pressure, temperature, volume, params):
+        """
+        Returns the Gibbs free energy at the pressure and temperature of the mineral [J/mol]
+        """
+        F = self.gibbs_free_energy( pressure, temperature, volume, params) - pressure * volume
+        return F
+    
     def entropy(self,pressure,temperature, volume, params):
         """
         Returns the entropy [J/K/mol] as a function of pressure [Pa]

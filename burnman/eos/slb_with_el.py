@@ -84,7 +84,7 @@ class SLBELBase(eos.EquationOfState):
 
         vdiff = lambda x: pressure - self.pressure( temperature, x, params)
 
-        return opt.fsolve(vdiff, [params['V_0']], args=())[0]
+        return opt.fsolve(vdiff, [params['V_0']/10.], args=())[0]
         '''
         print 'HERE'
         T_0 = params['T_0']

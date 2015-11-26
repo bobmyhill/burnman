@@ -224,7 +224,7 @@ def equilibrium_temperature(minerals, stoichiometry, pressure, temperature_initi
     return temperature
 
 
-def hugoniot(mineral, P_ref, T_ref, pressures):
+def hugoniot(mineral, P_ref, T_ref, pressures, reference_mineral=None):
     """
     Calculates the temperatures (and volumes) along a Hugoniot
     as a function of pressure according to the Hugoniot equation
@@ -247,6 +247,12 @@ def hugoniot(mineral, P_ref, T_ref, pressures):
         Set of pressures [Pa] for which the Hugoniot temperature
         and volume should be calculated
     
+    reference_mineral : mineral
+        Mineral which is stable at the reference conditions
+        Provides an alternative U_0 and V_0 when the reference
+        mineral transforms to the mineral of interest at some
+        (unspecified) pressure.
+
     Returns
     -------
     temperatures : numpy array of floats
@@ -264,9 +270,12 @@ def hugoniot(mineral, P_ref, T_ref, pressures):
         return (U - U_ref) - 0.5*(P - P_ref)*(V_ref - V)
 
 
-    mineral.set_state(P_ref, T_ref)
-    U_ref = mineral.helmholtz + T_ref*mineral.S
-    V_ref = mineral.V
+    if reference_mineral is None:
+        reference_mineral = mineral
+        
+    reference_mineral.set_state(P_ref, T_ref)
+    U_ref = reference_mineral.helmholtz + T_ref*reference_mineral.S
+    V_ref = reference_mineral.V
 
     temperatures = np.empty_like(pressures)
     volumes = np.empty_like(pressures)

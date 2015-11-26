@@ -9,15 +9,12 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 from listify_xy_file import *
 atomic_masses=read_masses()
 
-'''
+
 from scipy.constants import physical_constants
 r_B = physical_constants['Bohr radius'][0]
-print r_B
-print 47.e-30 / np.power(r_B, 3.) / 4.
-exit()
-'''
-print 'NB: also possibility of an anharmonic contribution'
+V_B = np.power(r_B, 3.)
 
+print 'NB: also possibility of an anharmonic contribution'
 
 class hcp_iron (burnman.Mineral):
     def __init__(self):
@@ -28,14 +25,14 @@ class hcp_iron (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': 0.,
-            'V_0': 6.733e-6 ,
-            'K_0': 166.e9 ,
-            'Kprime_0': 5.32 ,
+            'V_0': 6.764e-6, # 6.733e-6 ,
+            'K_0': 161.9e9, # 166.e9 ,
+            'Kprime_0': 5.15, # 5.32 ,
             'Debye_0': 422. ,
-            'grueneisen_0': 1.72 ,
-            'q_0': 1 ,
-            'Cv_el': 2.7,
-            'T_el': 6500.,
+            'grueneisen_0': 2.0 ,
+            'q_0': 1.0 ,
+            'Cv_el': 3.0, # 2.7,
+            'T_el': 6000., # 6500.
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 
@@ -43,8 +40,109 @@ class hcp_iron (burnman.Mineral):
 
 hcp = hcp_iron()
 
+print hcp.params['V_0']/V_B/burnman.constants.Avogadro
 
-pressures = np.linspace(50.e9, 170.e9, 51)
+####
+# Room temperature EoS: data
+####
+
+PV_data = listify_xy_file('data/Dewaele_et_al_2006_iron_using_ruby.dat')
+T_D, P_D, V_D, V_D_err = PV_data
+P_D = P_D*1.e9
+V_D = V_D/1.e30*burnman.constants.Avogadro
+V_D_err = V_D_err/1.e30*burnman.constants.Avogadro
+
+####
+# Room temperature EoS: fitting
+####
+
+PT_D = [P_D, T_D]
+popt, pcov = burnman.tools.fit_PVT_data(hcp, ['V_0', 'K_0', 'Kprime_0'], PT_D, V_D, V_D_err)
+print popt
+print pcov
+
+
+####
+# Room temperature EoS: Plotting
+####
+
+pressures = np.linspace(1.e5, 350.e9, 101)
+volumes = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    hcp.set_state(P, 298.15)
+    volumes[i] = hcp.V
+
+    
+PV_data = listify_xy_file('data/Dewaele_et_al_2006_iron_using_tungsten.dat')
+T_Dall, P_Dall, V_Dall, V_Dall_err = PV_data
+P_Dall = P_Dall*1.e9
+V_Dall = V_Dall/1.e30*burnman.constants.Avogadro
+V_Dall_err = V_Dall_err/1.e30*burnman.constants.Avogadro
+
+plt.plot(pressures/1.e9, volumes)
+plt.plot(P_Dall/1.e9, V_Dall, marker='o', linestyle='None')
+plt.plot(P_D/1.e9, V_D, marker='o', linestyle='None')
+plt.show()
+
+
+'''
+pressures = np.linspace(50.e9, 200.e9, 101)
+volumes = np.empty_like(pressures)
+gammas = np.empty_like(pressures)
+qs = np.empty_like(pressures)
+for T in [1000., 2000., 3000.]:
+    for i, P in enumerate(pressures):
+        hcp.set_state(P, T)
+        volumes[i] = hcp.V
+        gammas[i] = hcp.gr
+        dP = 1.e6
+        hcp.set_state(P+dP, T)
+        qs[i] = (np.log(gammas[i]) - np.log(hcp.gr))/(np.log(volumes[i]) - np.log(hcp.V))
+    plt.plot(volumes/V_B/burnman.constants.Avogadro, gammas, label=str(T)+' K (gr)')
+    plt.plot(volumes/V_B/burnman.constants.Avogadro, qs, label=str(T)+' K (q)')
+
+
+plt.legend(loc="upper left")
+plt.xlim(45, 65)
+plt.ylim(1., 3.)
+plt.show()
+'''
+
+
+# Figure 12a of Wasserman et al.
+pressures = np.linspace(1.e5, 200.e9, 101)
+alphas = np.empty_like(pressures)
+for T in [715., 1000., 2000.]:
+    for i, P in enumerate(pressures):
+        hcp.set_state(P, T)
+        alphas[i] = hcp.alpha
+    plt.plot(pressures/1.e9, alphas, label=str(T)+' K')
+
+# Duffy and Ahrens shock data
+P = 202.e9
+T_0 = 300.
+T = 5200.
+hcp.set_state(P, T_0)
+V_0 = hcp.V
+hcp.set_state(P, T)
+V = hcp.V
+
+abar = np.log(V/V_0)/(T - T_0)
+print abar, 'should be 9.1 +/- 2 x 10^-6 /K'
+plt.plot(P/1.e9, abar, marker='o', label='Duffy and Ahrens')
+
+plt.legend(loc="upper left")
+plt.xlim(0, 300)
+plt.ylim(0., 10.e-5)
+plt.show()
+
+
+
+
+
+
+
+pressures = np.linspace(50.e9, 350.e9, 51)
 arr_Cv = []
 arr_alpha = []
 arr_aKT = []
@@ -102,7 +200,43 @@ plt.xlim(50., 350.)
 plt.show()
 
 
+####
+# HUGONIOT
+####
 
+hugoniot_data = listify_xy_file('data/iron_hugoniot.dat')
+P_obs, P_err_obs, rho_obs, rho_err_obs = hugoniot_data
+P_obs = 1.e9*P_obs
+P_err_obs = 1.e9*P_err_obs
+V_obs = 55.845*1.e-6/rho_obs # Mg/m^3
+V_err_obs = V_obs*rho_err_obs/rho_obs # Mg/m^3
+
+bcc = burnman.minerals.HP_2011_ds62.iron()
+
+bcc.set_state(1.e5, 300.)
+hcp.params['F_0'] = bcc.helmholtz + 3800.
+
+print 'Equilibrium bcc-hcp pressure:'
+print burnman.tools.equilibrium_pressure([bcc, hcp], [1.0, -1.0], 298.15, 5.e9)/1.e9, 'GPa'
+print 'ca. 12 GPa from Wang and Ingalls, 1998'
+
+pressures = np.linspace(1.e5, 300.e9, 21)
+for T in [298.15, 500.]:
+    temperatures, volumes = burnman.tools.hugoniot(hcp, 1.e5, T, pressures, bcc)
+    plt.plot(pressures/1.e9, volumes, label=str(T)+' K')
+
+plt.errorbar(P_obs/1.e9, V_obs, xerr=P_err_obs/1.e9, yerr=V_err_obs, marker='o', linestyle='None')
+plt.xlim(0., 300.)
+plt.legend(loc='upper left')
+plt.title("Hugoniot")
+plt.show()
+
+####
+# Checks
+####
+
+
+'''
 
 P = 1.e5
 temperatures = np.linspace(1., 2000., 101)
@@ -212,11 +346,41 @@ plt.legend(loc='lower right')
 plt.ylim(0., 50.)
 plt.title("Heat capacity")
 plt.show()
+'''
+
+'''
+print 'slb'
+hcp_slb.set_state(370.e9, 298.15)
+
+print 'slbel3'
+hcp.set_state(370.e9, 298.15)
+print hcp.gibbs, hcp_slb.gibbs
+print hcp.V, hcp_slb.V
+print hcp.C_v, hcp_slb.C_v
+print hcp.C_p, hcp_slb.C_p
+print hcp.S, hcp_slb.S
+exit()
+'''
+
+'''
+def volume_dependent_q(x):
+    """
+    Finite strain approximation for :math:`q`, the isotropic volume strain
+    derivative of the grueneisen parameter.
+    """
+    grueneisen_0 = 1.72
+    q_0 = 1.
+    f = 1./2. * (pow(x, 2./3.) - 1.)
+    a1_ii = 6. * grueneisen_0 # EQ 47
+    a2_iikk = -12.*grueneisen_0+36.*pow(grueneisen_0,2.) - 18.*q_0*grueneisen_0 # EQ 47
+    nu_o_nu0_sq = 1.+ a1_ii*f + (1./2.)*a2_iikk * f*f # EQ 41
+    gr = 1./6./nu_o_nu0_sq * (2.*f+1.) * ( a1_ii + a2_iikk*f )
+    q = 1./9.*(18.*gr - 6. - 1./2. / nu_o_nu0_sq * (2.*f+1.)*(2.*f+1.)*a2_iikk/gr)
+    return q
 
 
-pressures = np.linspace(1.e5, 200.e9, 101)
-temperatures, volumes = burnman.tools.hugoniot(hcp, 1.e5, 298.15, pressures)
+for x in [0.7, 0.8, 0.9, 1.0]:
+    print volume_dependent_q(1./x)
 
-plt.title("Hugoniot")
-plt.plot(pressures/1.e9, temperatures)
-plt.show()
+exit()
+'''
