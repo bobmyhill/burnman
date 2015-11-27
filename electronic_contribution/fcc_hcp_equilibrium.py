@@ -10,27 +10,48 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 from listify_xy_file import *
 from fitting_functions import *
 
+import matplotlib.image as mpimg
+
 from fcc_iron import fcc_iron
 from hcp_iron import hcp_iron
 
+
+bcc = minerals.HP_2011_ds62.iron()
 fcc = fcc_iron()
 hcp = hcp_iron()
 
-# FCC gibbs free energy is -56656 J/mol at 1200 K
-G_1200 = -56656.
-fcc.set_state(1.e5, 1200.)
-print fcc.gibbs
-fcc.params['F_0'] = fcc.params['F_0'] - (fcc.gibbs - G_1200)
 
 # Metastable fcc <-> hcp at 1 bar is ca. 500 K
 # bcc <-> hcp at 300 K is at ca. 12 GPa
-fcc.set_state(1.e5, 500.)
-hcp.set_state(1.e5, 500.)
-hcp.params['F_0'] = hcp.params['F_0'] - (hcp.gibbs - fcc.gibbs)
+print burnman.tools.equilibrium_temperature([fcc, hcp], [1.0, -1.0], 1.e5)
+print burnman.tools.equilibrium_pressure([bcc, hcp], [1.0, -1.0], 298.15)/1.e9
 
 
 
-temperatures = np.linspace(500., 4000., 11)
+
+fig1 = mpimg.imread('data/Anzellini_2013_Fe_melting.png')  # Uncomment these two lines if you want to overlay the plot on a screengrab from SLB2011
+plt.imshow(fig1, extent=[0., 230., 1200., 5200.], aspect='auto')
+
+
+
+# Find triple point
+P_inv, T_inv = burnman.tools.invariant_point([fcc, hcp], [1.0, -1.0],\
+                                             [bcc, hcp], [1.0, -1.0],\
+                                             [10.e9, 800.])
+
+temperatures = np.linspace(298.15, T_inv, 11)
+pressures = np.empty_like(temperatures)
+for i, T in enumerate(temperatures):
+    pressures[i] = burnman.tools.equilibrium_pressure([bcc, hcp], [1.0, -1.0], T, 10.e9)
+plt.plot(pressures/1.e9, temperatures)
+
+pressures = np.linspace(1.e5, P_inv, 11)
+temperatures = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    temperatures[i] = burnman.tools.equilibrium_temperature([bcc, fcc], [1.0, -1.0], P, 1000.)
+plt.plot(pressures/1.e9, temperatures)
+
+temperatures = np.linspace(T_inv, 3600., 11)
 pressures = np.empty_like(temperatures)
 fcc_volumes = np.empty_like(pressures)
 hcp_volumes = np.empty_like(pressures)
@@ -50,6 +71,8 @@ for i, T in enumerate(temperatures):
 
 plt.plot(pressures/1.e9, temperatures)
 plt.plot([98., 116.], [3635., 3862.])
+plt.ylim(300., 7000.)
+plt.xlim(0., 350.)
 plt.xlabel("Pressure (GPa)")
 plt.ylabel("Temperature (K)")
 plt.show()

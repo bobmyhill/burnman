@@ -224,6 +224,50 @@ def equilibrium_temperature(minerals, stoichiometry, pressure, temperature_initi
     return temperature
 
 
+def invariant_point(minerals_r1, stoichiometry_r1,
+                    minerals_r2, stoichiometry_r2,
+                    pressure_temperature_initial_guess=[1.e9, 1000.]):
+    """
+    Given a list of minerals, their reaction stoichiometries and a pressure of interest, 
+    compute the equilibrium temperature of the reaction.
+    
+    Parameters
+    ----------
+    minerals : list of minerals
+        List of minerals involved in the reaction.
+    
+    stoichiometry : list of floats
+        Reaction stoichiometry for the minerals provided. 
+        Reactants and products should have the opposite signs [mol]
+    
+    pressure : float
+        Pressure of interest [Pa]
+
+    temperature_initial_guess : optional float
+        Initial temperature guess [K]
+    
+    Returns
+    -------
+    temperature : float
+        The equilibrium temperature of the reaction [K]
+    """
+    def eqm(PT):
+        P, T = PT
+        gibbs_r1 = 0.
+        for i, mineral in enumerate(minerals_r1):
+            mineral.set_state(P, T)
+            gibbs_r1 = gibbs_r1 + mineral.gibbs*stoichiometry_r1[i]
+        gibbs_r2 = 0.
+        for i, mineral in enumerate(minerals_r2):
+            mineral.set_state(P, T)
+            gibbs_r2 = gibbs_r2 + mineral.gibbs*stoichiometry_r2[i]
+        return [gibbs_r1, gibbs_r2]
+
+    pressure, temperature = fsolve(eqm, pressure_temperature_initial_guess)
+    
+    return pressure, temperature
+
+
 def hugoniot(mineral, P_ref, T_ref, pressures, reference_mineral=None):
     """
     Calculates the temperatures (and volumes) along a Hugoniot

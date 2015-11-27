@@ -9,6 +9,7 @@ from scipy.optimize import fsolve
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 from listify_xy_file import *
 from fitting_functions import *
+import matplotlib.image as mpimg
 atomic_masses=read_masses()
 
 '''
@@ -28,15 +29,15 @@ class fcc_iron (burnman.Mineral):
             'name': 'FCC iron',
             'formula': formula,
             'equation_of_state': 'slbel3',
-            'F_0': 0.,
+            'F_0': -2784.,
             'V_0': 6.97e-6 ,
-            'K_0': 145.2e9 ,
+            'K_0': 145.e9 ,
             'Kprime_0': 5.3 ,
-            'Debye_0': 280. ,
-            'grueneisen_0': 1.92 , # 2. ok
-            'q_0': 0.065 , # 0., ok
+            'Debye_0': 285. ,
+            'grueneisen_0': 1.90 , # 2. ok
+            'q_0': 0.06 , # 0., ok
             'Cv_el': 2.7,
-            'T_el': 9500., # 10000. ok
+            'T_el': 9200., # 10000. ok
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 
@@ -45,6 +46,12 @@ class fcc_iron (burnman.Mineral):
 if __name__ == "__main__":
     fcc = fcc_iron()
 
+    # First, compare gibbs free energy and entropy at the alpha -> gamma transition
+    fcc.set_state(1.e5, 1184.)
+    print fcc.gibbs, 'should be -55437. Correction:', fcc.gibbs + 55437.
+    print fcc.S, 'should be 75.962. Correction:', fcc.S - 75.962
+
+    
     bcc_M = burnman.minerals.Myhill_calibration_iron.bcc_iron()
     fcc_M = burnman.minerals.Myhill_calibration_iron.fcc_iron()
     temperatures = np.linspace(1200., 1600., 5)
@@ -52,11 +59,13 @@ if __name__ == "__main__":
         bcc_M.set_state(1.e5, T)
         fcc_M.set_state(1.e5, T)
         fcc.set_state(1.e5, T)
-        print T, fcc.C_p - fcc_M.C_p, fcc.C_p, fcc.S - fcc_M.S, fcc.S
+        #print T, fcc.C_p - fcc_M.C_p, fcc.C_p, fcc.S - fcc_M.S, fcc.S
 
 
+    fig1 = mpimg.imread('data/Fe_Cp_Desai_1986.png')  # Uncomment these two lines if you want to overlay the plot on a screengrab from SLB2011
+    plt.imshow(fig1, extent=[800., 2000.0, 20., 50.], aspect='auto')
     
-    temperatures = np.linspace(300., 1665., 49)
+    temperatures = np.linspace(1185., 1667., 21)
     Cps = np.empty_like(temperatures)
     Ss = np.empty_like(temperatures)
     P = 1.e5
@@ -64,13 +73,15 @@ if __name__ == "__main__":
         fcc.set_state(P, T)
         Cps[i] = fcc.C_p
         Ss[i] = fcc.S
-        print T, fcc.C_p, fcc.S, fcc.gibbs
+        #print T, fcc.C_p, fcc.S, fcc.gibbs
 
-    plt.plot(temperatures, Cps)
-    fcc_Cp_data = listify_xy_file('data/fcc_Cp_Chen_Sundman_2001.dat')
-    plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
-    fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
-    plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+    plt.plot(temperatures, Cps, linewidth=4)
+    #fcc_Cp_data = listify_xy_file('data/fcc_Cp_Chen_Sundman_2001.dat')
+    #plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+    #fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
+    #plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
+    plt.xlim(1000., 1800.)
+    plt.ylim(30., 45.)
     plt.show()
     
     P = 1.e5

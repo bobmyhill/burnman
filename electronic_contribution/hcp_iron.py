@@ -24,11 +24,11 @@ class hcp_iron (burnman.Mineral):
             'name': 'HCP iron',
             'formula': formula,
             'equation_of_state': 'slbel3',
-            'F_0': 0.,
+            'F_0': -4165.,
             'V_0': 6.764e-6, # 6.733e-6 ,
             'K_0': 161.9e9, # 166.e9 ,
             'Kprime_0': 5.15, # 5.32 ,
-            'Debye_0': 395. ,
+            'Debye_0': 396. ,
             'grueneisen_0': 2.0 ,
             'q_0': 1.0 ,
             'Cv_el': 3.0, # 2.7,
@@ -209,16 +209,9 @@ if __name__ == "__main__":
     P_err_obs = 1.e9*P_err_obs
     V_obs = 55.845*1.e-6/rho_obs # Mg/m^3
     V_err_obs = V_obs*rho_err_obs/rho_obs # Mg/m^3
-    
+
     bcc = burnman.minerals.HP_2011_ds62.iron()
-    
-    bcc.set_state(1.e5, 300.)
-    hcp.params['F_0'] = bcc.helmholtz + 3800.
-    
-    print 'Equilibrium bcc-hcp pressure:'
-    print burnman.tools.equilibrium_pressure([bcc, hcp], [1.0, -1.0], 298.15, 5.e9)/1.e9, 'GPa'
-    print 'ca. 12 GPa from Wang and Ingalls, 1998'
-    
+
     pressures = np.linspace(1.e5, 300.e9, 21)
     for T in [298.15, 500.]:
         temperatures, volumes = burnman.tools.hugoniot(hcp, 1.e5, T, pressures, bcc)
