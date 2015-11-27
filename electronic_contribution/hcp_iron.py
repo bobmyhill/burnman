@@ -28,7 +28,7 @@ class hcp_iron (burnman.Mineral):
             'V_0': 6.764e-6, # 6.733e-6 ,
             'K_0': 161.9e9, # 166.e9 ,
             'Kprime_0': 5.15, # 5.32 ,
-            'Debye_0': 396. ,
+            'Debye_0': 395. ,
             'grueneisen_0': 2.0 ,
             'q_0': 1.0 ,
             'Cv_el': 3.0, # 2.7,
