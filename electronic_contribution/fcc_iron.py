@@ -29,12 +29,12 @@ class fcc_iron (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': 0.,
-            'V_0': 6.974e-6 ,
+            'V_0': 6.97e-6 ,
             'K_0': 145.2e9 ,
             'Kprime_0': 5.3 ,
-            'Debye_0': 417. ,
+            'Debye_0': 280. ,
             'grueneisen_0': 1.92 , # 2. ok
-            'q_0': 0.07 , # 0., ok
+            'q_0': 0.065 , # 0., ok
             'Cv_el': 2.7,
             'T_el': 9500., # 10000. ok
             'n': sum(formula.values()),
@@ -45,8 +45,18 @@ class fcc_iron (burnman.Mineral):
 if __name__ == "__main__":
     fcc = fcc_iron()
 
+    bcc_M = burnman.minerals.Myhill_calibration_iron.bcc_iron()
+    fcc_M = burnman.minerals.Myhill_calibration_iron.fcc_iron()
+    temperatures = np.linspace(1200., 1600., 5)
+    for i, T in enumerate(temperatures):
+        bcc_M.set_state(1.e5, T)
+        fcc_M.set_state(1.e5, T)
+        fcc.set_state(1.e5, T)
+        print T, fcc.C_p - fcc_M.C_p, fcc.C_p, fcc.S - fcc_M.S, fcc.S
 
-    temperatures = np.linspace(1185., 1665., 49)
+
+    
+    temperatures = np.linspace(300., 1665., 49)
     Cps = np.empty_like(temperatures)
     Ss = np.empty_like(temperatures)
     P = 1.e5
