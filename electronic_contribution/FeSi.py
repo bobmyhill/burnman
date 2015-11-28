@@ -26,14 +26,14 @@ class FeSi_B20 (Mineral):
             'V_0': V_0 ,
             'K_0': 1.79e+11 ,
             'Kprime_0': 4.9 ,
-            'Debye_0': 596.0 , # Acker et al.
+            'Debye_0': 596.0 , # 596. Acker
             'grueneisen_0': 1.53 ,
-            'q_0': 0. ,
+            'q_0': 1. ,
             'G_0': 59000000000.0 ,
             'Gprime_0': 1.4 ,
             'eta_s_0': -0.1 ,
-            #'T_el': 10000.,
-            #'Cv_el': 3.0,
+            'T_el': 3500.,
+            'Cv_el': 2.7,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         Mineral.__init__(self)
@@ -43,7 +43,7 @@ FeSi = FeSi_B20()
 
 
 P = 1.e5
-temperatures = np.linspace(300., 2500., 101)
+temperatures = np.linspace(20., 2500., 101)
 volumes = np.empty_like(temperatures)
 Ss = np.empty_like(temperatures)
 Cps = np.empty_like(temperatures)
@@ -60,8 +60,8 @@ T, Cp, DS, DH, phi = Acker_data
 Cp = Cp*burnman.constants.gas_constant
 DS = DS*burnman.constants.gas_constant
 
-JANAF_data = listify_xy_file("data/FeO_Cp_JANAF.py")
-T_J, Cp_J, DS_J, GHT_J, H_J, fH_J, fG_J, logKf_J = JANAF_data
+Barin_data = listify_xy_file("data/Barin_FeSi_B20.dat")
+T_B, Cp_B = Barin_data
 
 plt.plot(temperatures, volumes, label='model')
 plt.legend(loc='lower right')
@@ -71,7 +71,7 @@ plt.show()
 
 plt.plot(temperatures, Cps, label='model')
 plt.plot(T, Cp, marker='o', linestyle='None')
-plt.plot(T_J, Cp_J, marker='o', linestyle='None')
+plt.plot(T_B, Cp_B, marker='o', linestyle='None')
 plt.legend(loc='lower right')
 plt.title("Cps")
 plt.xlabel("Temperature (K)")
@@ -80,7 +80,6 @@ plt.show()
 
 plt.plot(temperatures, Ss, label='model')
 plt.plot(T, DS, marker='o', linestyle='None')
-plt.plot(T_J, DS_J, marker='o', linestyle='None')
 plt.legend(loc='lower right')
 plt.title("Ss")
 plt.xlabel("Temperature (K)")
