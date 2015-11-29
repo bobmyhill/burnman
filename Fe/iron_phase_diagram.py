@@ -7,8 +7,6 @@ import burnman
 from burnman import minerals
 from scipy.optimize import fsolve
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
-from listify_xy_file import *
-from fitting_functions import *
 
 import matplotlib.image as mpimg
 

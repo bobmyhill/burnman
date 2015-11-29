@@ -6,7 +6,6 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
-from listify_xy_file import *
 atomic_masses=read_masses()
 
 
@@ -47,7 +46,7 @@ if __name__ == "__main__":
     Room temperature EoS: data
     """  
 
-    PV_data = listify_xy_file('data/Dewaele_et_al_2006_iron_using_ruby.dat')
+    PV_data = burnman.tools.array_from_file('data/Dewaele_et_al_2006_iron_using_ruby.dat')
     T_D, P_D, V_D, V_D_err = PV_data
     P_D = P_D*1.e9
     V_D = V_D/1.e30*burnman.constants.Avogadro
@@ -74,7 +73,7 @@ if __name__ == "__main__":
         volumes[i] = hcp.V
         
     
-    PV_data = listify_xy_file('data/Dewaele_et_al_2006_iron_using_tungsten.dat')
+    PV_data = burnman.tools.array_from_file('data/Dewaele_et_al_2006_iron_using_tungsten.dat')
     T_Dall, P_Dall, V_Dall, V_Dall_err = PV_data
     P_Dall = P_Dall*1.e9
     V_Dall = V_Dall/1.e30*burnman.constants.Avogadro
@@ -203,7 +202,7 @@ if __name__ == "__main__":
     HUGONIOT
     """
 
-    hugoniot_data = listify_xy_file('data/iron_hugoniot.dat')
+    hugoniot_data = burnman.tools.array_from_file('data/iron_hugoniot.dat')
     P_obs, P_err_obs, rho_obs, rho_err_obs = hugoniot_data
     P_obs = 1.e9*P_obs
     P_err_obs = 1.e9*P_err_obs

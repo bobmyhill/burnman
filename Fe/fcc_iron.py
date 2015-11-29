@@ -7,8 +7,6 @@ import burnman
 from burnman import minerals
 from scipy.optimize import fsolve
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
-from listify_xy_file import *
-from fitting_functions import *
 import matplotlib.image as mpimg
 atomic_masses=read_masses()
 
@@ -76,9 +74,9 @@ if __name__ == "__main__":
         #print T, fcc.C_p, fcc.S, fcc.gibbs
 
     plt.plot(temperatures, Cps, linewidth=4)
-    #fcc_Cp_data = listify_xy_file('data/fcc_Cp_Chen_Sundman_2001.dat')
+    #fcc_Cp_data = burnman.tools.array_from_file('data/fcc_Cp_Chen_Sundman_2001.dat')
     #plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
-    #fcc_Cp_data = listify_xy_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
+    #fcc_Cp_data = burnman.tools.array_from_file('data/fcc_Cp_Rogez_le_Coze_1980.dat')
     #plt.plot(fcc_Cp_data[0], fcc_Cp_data[1], marker='o', linestyle='None')
     plt.xlim(1000., 1800.)
     plt.ylim(30., 45.)
@@ -100,19 +98,19 @@ if __name__ == "__main__":
     plt.plot(T_Onink_et_al_1993, V(T_Onink_et_al_1993))
 
 
-    fcc_V_data_B = listify_xy_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
+    fcc_V_data_B = burnman.tools.array_from_file('data/Basinski_et_al_1955_fcc_volumes_RP.dat')
     plt.plot(fcc_V_data_B[0], fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
     plt.plot(fcc_V_data_B[0], 0.990*fcc_V_data_B[1]/11.7024*7.17433e-6, marker='o', linestyle='None')
 
 
-    fcc_V_data_F = listify_xy_file('data/Feng_2015_fcc_volumes_RP.dat')
+    fcc_V_data_F = burnman.tools.array_from_file('data/Feng_2015_fcc_volumes_RP.dat')
     plt.plot(fcc_V_data_F[0], np.power(fcc_V_data_F[1], 3.)/1.e27*burnman.constants.Avogadro/4., marker='o', linestyle='None')
 
     plt.show()
 
 
     # High temperature data from Nishihara et al., 2012
-    fcc_V_data = listify_xy_file('data/Nishihara_et_al_2012_fcc_volumes.dat')
+    fcc_V_data = burnman.tools.array_from_file('data/Nishihara_et_al_2012_fcc_volumes.dat')
     P_N, T_N, V_N, Verr_N = fcc_V_data
     P_N = P_N*1.e9
     V_N = V_N/1.e30*burnman.constants.Avogadro/4.

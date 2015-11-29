@@ -15,8 +15,6 @@ from scipy.interpolate import interp1d
 from scipy.optimize import fsolve, curve_fit
 import burnman
 from burnman import minerals
-from listify_xy_file import *
-from fitting_functions import *
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 atomic_masses=read_masses()
 
@@ -77,7 +75,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-    Hixson_data = listify_xy_file("data/Fe_1bar_rho_Hixson_et_al_1990.dat")
+    Hixson_data = burnman.tools.array_from_file("data/Fe_1bar_rho_Hixson_et_al_1990.dat")
     H, T, rho, VoverV0, rhoel = Hixson_data
     V = 55.845/(rho*1.e6)
     
@@ -86,7 +84,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-    melting_curve_data = listify_xy_file('data/Anzellini_2013_Fe_melting_curve.dat')
+    melting_curve_data = burnman.tools.array_from_file('data/Anzellini_2013_Fe_melting_curve.dat')
     melting_temperature = interp1d(melting_curve_data[0]*1.e9, 
                                    melting_curve_data[1], 
                                    kind='cubic')

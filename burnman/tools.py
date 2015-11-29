@@ -69,6 +69,25 @@ def read_table(filename):
             table.append(numbers)
     return np.array(table)
 
+def array_from_file(filename):
+    """
+    Generic function to read a file containing floats and commented lines
+    into a 2D numpy array.
+
+    Commented lines are prefixed by the characters # or %.
+    """
+    f=open(filename, 'r')
+    data = []
+    datastream = f.read() 
+    f.close()
+    datalines = [ line.strip().split() for line in datastream.split('\n') if line.strip() ]
+    for line in datalines:
+        if line[0] != "#" and line[0] != "%":
+            data.append(map(float, line))
+
+    data = np.array(zip(*data))
+    return data
+
 def cut_table(table, min_value, max_value):
     tablen=[]
     for i in range(min_value,max_value,1):
@@ -87,12 +106,25 @@ def lookup_and_interpolate(table_x, table_y, x_value):
 
 def molar_volume_from_unit_cell_volume(unit_cell_v, z):
     """
-    Takes unit cell volume in Angstroms^3 per unitcell, as is often reported,
-    and the z number for the mineral (number of formula units per unit cell,
-    NOT number of atoms per formula unit), and calculates
-    the molar volume, as expected by the equations of state.
+    Converts a unit cell volume from Angstroms^3 per unitcell, 
+    to m^3/mol.
+
+    Parameters
+    ----------
+    unit_cell_v : float
+        Unit cell volumes [A^3/unit cell]
+
+    z : float
+        Number of formula units per unit cell
+
+
+    Returns
+    -------
+    V : float
+        Volume [m^3/mol]
     """
-    return  unit_cell_v*constants.Avogadro/1e30/z
+    V = unit_cell_v*constants.Avogadro/1.e30/z
+    return V  
 
 def fit_PVT_data(mineral, fit_params, PT, V, V_sigma=None):
     """
