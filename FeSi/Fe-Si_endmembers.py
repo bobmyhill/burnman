@@ -33,9 +33,9 @@ Si_bcc=minerals.Fe_Si_O.Si_bcc_A2()
 Si_liq=minerals.Fe_Si_O.Si_liquid()
 
 Fe_bcc=minerals.Myhill_calibration_iron.bcc_iron()
-Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron_HP()
-Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron_HP()
-Fe_liq=minerals.Myhill_calibration_iron.liquid_iron_HP()
+Fe_fcc=minerals.Myhill_calibration_iron.fcc_iron()
+Fe_hcp=minerals.Myhill_calibration_iron.hcp_iron()
+Fe_liq=minerals.Myhill_calibration_iron.liquid_iron()
 
 
 # Properties of FeSi liquid (relative to Fe and Si) at 1 bar
