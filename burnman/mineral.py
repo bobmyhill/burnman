@@ -150,6 +150,19 @@ class Mineral(Material):
         except (KeyError, NotImplementedError):
             self.H = float('nan')
 
+        # Now let's deal with the excess gibbs(P, T) contributions (Landau, DQFs)
+        try:
+            eos.endmember_contributions.landau(self)
+        except AttributeError:
+            pass
+        try:
+            eos.endmember_contributions.landau_HP(self)
+        except AttributeError:
+            pass
+        try:
+            eos.endmember_contributions.DQF(self)
+        except AttributeError:
+            pass
 
     # The following gibbs function avoids having to calculate a bunch of unnecessary parameters over P-T space. This will be useful for gibbs minimisation.
     def calcgibbs(self, pressure, temperature):

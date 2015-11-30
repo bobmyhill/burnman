@@ -50,7 +50,6 @@ def gibbs_disorder_Landau(P, T, params):
     # Here we follow tc337L, where Vt=1 ("the simplest way to proceed"; Roger Powell, pers. comm. 2014/08/22). 
     Vt=1.# EQ 13 would give: 1. - a + (a*(pow((1.-b*Pth), 1.-c) - pow((1. + b*(pressure-Pth)), 1.-c))/(b*(c-1.)*pressure))
     Gdisord=params['landau_Tc']*params['landau_Smax']*(np.power(Q_0,2) - np.power(Q_0,6)/3.0) - params['landau_Smax']*(Tcstar*np.power(Q,2) - params['landau_Tc']*np.power(Q,6)/3.0) - T*(params['landau_Smax']*(np.power(Q_0,2) - np.power(Q,2))) + P*(params['landau_Vmax']*np.power(Q_0,2)*Vt)
-
     return Gdisord
 
 def entropy_disorder_Landau(P, T, params):
