@@ -3,7 +3,7 @@ import os, sys, numpy as np, matplotlib.pyplot as plt
 tro = burnman.minerals.HP_2011_ds62.tro()
 tro2 = burnman.minerals.HP_2011_ds62.tro2()
 
-P = 1.e9
+P = 1.e10
 temperatures = np.linspace(300., 1400., 101)
 Ss = np.empty_like(temperatures)
 Cps = np.empty_like(temperatures)
@@ -39,7 +39,7 @@ for i, T in enumerate(temperatures):
     S = -(G1 - G0)/(2.*dT)
     #print Ss[i], S, (Ss[i]-S)/S, 'good'
     Cp = T*(S1 - S0)/(2.*dT)
-    #print Cps[i], Cp, (Cps[i] - Cp)/Cp, 'problem with base HP model'
+    #print Cps[i], Cp, (Cps[i] - Cp)/Cp, 'good'
     alpha = (V1 - V0)/(2.*dT)/volumes[i]
     #print (alpha - alpha2)/alpha, 'good'
     dP = 1000.

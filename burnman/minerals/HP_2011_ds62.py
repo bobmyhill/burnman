@@ -4072,7 +4072,8 @@ class tro (Mineral):
         self.landau = {
             'Tc_0': 598.0 ,
             'S_D': 12.0 ,
-            'V_D': 4.1e-07}
+            'V_D': 4.1e-07 
+            }
         Mineral.__init__(self)
 
 class tro2 (Mineral):
@@ -4117,10 +4118,11 @@ class lot (Mineral):
             'Kprime_0': 4.17 ,
             'Kdprime_0': -6.3e-11 ,
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'landau_Tc': 420.0 ,
-            'landau_Smax': 10.0 ,
-            'landau_Vmax': 0.0 }
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        self.landau_HP = {
+            'Tc_0': 420.0 ,
+            'S_D': 10.0 ,
+            'V_D': 0.0 }
         Mineral.__init__(self)
 
 class trov (Mineral):

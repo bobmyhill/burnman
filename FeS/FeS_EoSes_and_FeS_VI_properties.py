@@ -25,6 +25,7 @@ atomic_masses=read_masses()
 
 
 FeS_I = burnman.minerals.HP_2011_ds62.lot()
+FeS_IV = burnman.minerals.HP_2011_ds62.tro()
 #FeS_II = burnman.minerals.Fe_Si_O.FeS_II()
 #FeS_III = burnman.minerals.Fe_Si_O.FeS_III()
 #FeS_IV_HP = burnman.minerals.Fe_Si_O.FeS_IV_HP()
@@ -43,35 +44,77 @@ class FeS_I_new (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -4165.,
-            'V_0': 1.2e-5, # 6.733e-6 ,
+            'V_0': 1.822e-05, # 6.733e-6 ,
             'K_0': 161.9e9, # 166.e9 ,
             'Kprime_0': 5.15, # 5.32 ,
             'Debye_0': 594. ,
-            'grueneisen_0': 1.65 ,
-            'q_0': 0.0 ,
-            'Cv_el': 3.0, # 2.7,
-            'T_el': 6088., # 6500.
+            'grueneisen_0': 3.5 ,
+            'q_0': 1.4 ,
+            #'Cv_el': 3.0, # 2.7,
+            #'T_el': 6088., # 6500.
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
-
+        self.landau = {
+            'Tc_0': 598.0 ,
+            'S_D': 12.0 ,
+            'V_D': 4.1e-07 
+            }
         burnman.Mineral.__init__(self)
 
+'''
+class FeS_I_new (burnman.Mineral):
+    def __init__(self):
+        formula='FeS'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS I',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': -4165.,
+            'V_0': 1.822e-05, # 6.733e-6 ,
+            'K_0': 161.9e9, # 166.e9 ,
+            'Kprime_0': 5.15, # 5.32 ,
+            'Debye_0': 385. ,
+            'grueneisen_0': 3.5 ,
+            'q_0': 1.4 ,
+            #'Cv_el': 3.0, # 2.7,
+            #'T_el': 6088., # 6500.
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        self.landau = {
+            'Tc_0': 420.0 ,
+            'S_D': 10.0 ,
+            'V_D': 0.e-07 
+            }
+        burnman.Mineral.__init__(self)
+'''
 FeS_I2 = FeS_I_new()
 # First, let's take a look at the heat capacity and entropy of FeS
 
-temperatures = np.linspace(300., 1200., 21)
+temperatures = np.linspace(10., 1200., 101)
 Cps = np.empty_like(temperatures)
 Ss =  np.empty_like(temperatures)
+Vs =  np.empty_like(temperatures)
+Cps_IV = np.empty_like(temperatures)
+Ss_IV =  np.empty_like(temperatures)
+Vs_IV =  np.empty_like(temperatures)
 Cps2 = np.empty_like(temperatures)
 Ss2 =  np.empty_like(temperatures)
+Vs2 =  np.empty_like(temperatures)
 P = 1.e5
 for i, T in enumerate(temperatures):
     FeS_I.set_state(P, T)
     Cps[i] = FeS_I.C_p
     Ss[i] = FeS_I.S
+    Vs[i] = FeS_I.V
+    FeS_IV.set_state(P, T)
+    Cps_IV[i] = FeS_IV.C_p
+    Ss_IV[i] = FeS_IV.S
+    Vs_IV[i] = FeS_IV.V
     FeS_I2.set_state(P, T)
     Cps2[i] = FeS_I2.C_p
     Ss2[i] = FeS_I2.S
+    Vs2[i] = FeS_I2.V
 
 PT = [temperatures*0.0 + 1.e5, temperatures]
 
@@ -85,15 +128,25 @@ JANAF_data = burnman.tools.array_from_file("data/FeS_JANAF.dat")
 
 plt.plot(temperatures, Cps, label='HP')
 plt.plot(temperatures, Cps2, label='new')
+plt.plot(temperatures, Cps_IV, label='IV')
 plt.plot(Gronvold_data[0], Gronvold_data[1]*4.184, marker='o', linestyle='None')
 plt.plot(JANAF_data[0], JANAF_data[1], marker='o', linestyle='None')
 plt.legend(loc="lower left")
+plt.ylim(0., 100.)
 plt.show()
 
 plt.plot(temperatures, Ss, label='HP')
 plt.plot(temperatures, Ss2, label='new')
+plt.plot(temperatures, Ss_IV, label='IV')
 plt.plot(Gronvold_data[0], Gronvold_data[2]*4.184, marker='o', linestyle='None')
 plt.plot(JANAF_data[0], JANAF_data[2], marker='o', linestyle='None')
+plt.legend(loc="lower left")
+plt.ylim(0., 200.)
+plt.show()
+
+plt.plot(temperatures, Vs, label='HP')
+plt.plot(temperatures, Vs2, label='new')
+plt.plot(temperatures, Vs_IV, label='IV')
 plt.legend(loc="lower left")
 plt.show()
 

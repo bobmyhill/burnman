@@ -3,28 +3,31 @@ from burnman.constants import gas_constant
 
 def _Landau_excesses(pressure, temperature, params):
     Tc = params['Tc_0'] + params['V_D']*pressure/params['S_D']
+
+    G_disordered = params['S_D']*((temperature - Tc) + params['Tc_0']/3.)
+    dGdT_disordered = params['S_D']
+    dGdP_disordered = -params['V_D']
+
     if temperature < Tc:
         # Wolfram input to check partial differentials
         # x = T, y = P, a = S, c = Tc0, d = V
-        # D[D[a ((x - c - d*y/a)*(1 - x/(c + d*y/a))^0.5 - c/3*(1 - x/(c + d*y/a))^1.5), x], x]
-        # Note sign error in Stixrude and Lithgow Bertelloni (2011; eqn 32)
-        # Q = np.power(1. - temperature/Tc, 0.25)
+        # D[D[a ((x - c - d*y/a)*(1 - x/(c + d*y/a))^0.5 + c/3*(1 - x/(c + d*y/a))^1.5), x], x]
         Q2 = np.sqrt(1. - temperature/Tc)
-        G = params['S_D']*((temperature - Tc)*Q2 - params['Tc_0']*Q2*Q2*Q2/3.)
-        dGdT = params['S_D']*Q2*(1.5 + 0.5*params['Tc_0']/Tc)
-        dGdP = -params['V_D']*Q2*(1. + 0.5*temperature/Tc*(1 + params['Tc_0']/Tc))
-        d2GdT2 = -params['S_D']/(Tc*Q2)*(0.25*params['Tc_0']/Tc + 0.75)
+        G = params['S_D']*((temperature - Tc)*Q2 + params['Tc_0']*Q2*Q2*Q2/3.) - G_disordered
+        dGdP = -params['V_D']*Q2*(1. + 0.5*temperature/Tc*(1. - params['Tc_0']/Tc)) - dGdP_disordered
+        dGdT = params['S_D']*Q2*(1.5 - 0.5*params['Tc_0']/Tc) - dGdT_disordered
         d2GdP2 = params['V_D']*params['V_D']*temperature/(params['S_D']*Tc*Tc*Q2) \
-            * (temperature*(1. - params['Tc_0']/Tc)/(4.*Tc) 
-               + Q2*Q2*(1. + params['Tc_0']/Tc) - 1.)
+            * (temperature*(1. + params['Tc_0']/Tc)/(4.*Tc) 
+               + Q2*Q2*(1. - params['Tc_0']/Tc) - 1.)
+        d2GdT2 = -params['S_D']/(Tc*Q2)*(0.75 - 0.25*params['Tc_0']/Tc)
         d2GdPdT = params['V_D']/(2.*Tc*Q2)*(1. + (temperature / (2.*Tc) - Q2*Q2)
-                                            *(1.+params['Tc_0']/Tc))
+                                            *(1. - params['Tc_0']/Tc))
                                          
     else:
         Q = 0.
-        G = 0.
-        dGdT = 0.
-        dGdP = 0.
+        G = -G_disordered
+        dGdT = -dGdT_disordered
+        dGdP = -dGdP_disordered
         d2GdT2 = 0.
         d2GdP2 = 0.
         d2GdPdT = 0.
@@ -34,13 +37,14 @@ def landau(mineral):
     """
     Applies a tricritical Landau correction to the properties 
     of an endmember which undergoes a displacive phase transition. 
-    This correction is done relative to the totally disordered 
+    This correction is relative to the totally *ordered* 
     state, and therefore differs from the implementation 
-    of Holland and Powell (1998).
-    This implementation is preferred, as the heat capacity 
-    curve must be fit to the disordered state anyway.
-    The Holland and Powell implementation may be accessed 
-    from the function landau_HP
+    of Holland and Powell (1998; relative to standard state) and 
+    Stixrude and Lithgow-Bertelloni 
+    (2011; relative to the disordered state).
+
+    In this implementation, the entropy and 
+    heat capacity naturally decrease to 0 at 0 K.
     """
     G, dGdT, dGdP, d2GdT2, d2GdP2, d2GdPdT = _Landau_excesses(mineral.pressure, mineral.temperature, mineral.landau)
 
