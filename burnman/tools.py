@@ -183,6 +183,72 @@ def fit_PVT_data(mineral, fit_params, PT, V, V_sigma=None):
     return popt, pcov
 
 
+def fit_PTp_data(mineral, p_name, fit_params, PT, p, p_sigma=None):
+    """
+    Given a mineral of any type, a list of fit parameters 
+    and a set of PTV points and (optional) uncertainties, 
+    this function returns a list of optimized parameters 
+    and their associated covariances, fitted using the 
+    scipy.optimize.curve_fit routine.
+
+    Parameters
+    ----------
+    mineral : mineral
+        Mineral for which the parameters should be optimized
+
+    p_name : string
+        Parameter to be fit
+
+    fit_params : list of strings
+        List of dictionary keys contained in mineral.params
+        corresponding to the variables to be optimized 
+        during fitting. Initial guesses are taken from the existing 
+        values for the parameters
+
+    PT : list of two lists of floats (or numpy arrays)
+        The two lists contain a set of pressures [Pa] 
+        and temperatures [K] of the volume data points
+
+    p : list (or numpy array) of floats
+        Property values [m^3/mol] of the mineral 
+        at the P,T conditions given by parameter PT
+
+    p_sigma : list (or numpy array) of floats
+        Optional uncertainties on the property values
+        of the mineral at the P,T condition
+        given by parameter PT
+
+    Returns
+    -------
+    popt : numpy array of floats
+        A list of optimized parameters
+
+    pcov : 2D numpy array of floats
+        The covariance matrix of the optimized parameters
+    """
+    def fit_data(PT, *params):
+        for i, param in enumerate(fit_params):
+            mineral.params[param] = params[i]
+            values=[]
+        
+        for P, T in zip(*PT):
+            mineral.set_state(P, T)
+            if p_name == 'V':
+                values.append(mineral.V)
+            elif p_name == 'C_p':
+                values.append(mineral.C_p)
+            elif p_name == 'C_v':
+                values.append(mineral.C_v)
+            
+        return values
+
+
+    guesses = [mineral.params[param] for param in fit_params]
+    popt, pcov = curve_fit(fit_data, PT, p, guesses, p_sigma)
+    
+    return popt, pcov
+
+
 def equilibrium_pressure(minerals, stoichiometry, temperature, pressure_initial_guess=1.e5):
     """
     Given a list of minerals, their reaction stoichiometries and a temperature of interest, 

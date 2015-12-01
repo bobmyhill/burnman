@@ -1,7 +1,7 @@
 import numpy as np
 from burnman.constants import gas_constant
 
-def _Landau_excesses(pressure, temperature, params):
+def _Landau_excesses_incorrect(pressure, temperature, params):
     Tc = params['Tc_0'] + params['V_D']*pressure/params['S_D']
     if temperature < Tc:
         # Wolfram input to check partial differentials
@@ -19,6 +19,46 @@ def _Landau_excesses(pressure, temperature, params):
         d2GdPdT = (2.*params['V_D']/Tc/Tc)*(params['Tc_0']*
                                             (np.power(Q, 5.) - 5.*temperature/Tc*np.power(Q, 4.)) 
                                             + 3.*temperature*Q)
+    else:
+        Q = 0.
+        G = 0.
+        dGdT = 0.
+        dGdP = 0.
+        d2GdT2 = 0.
+        d2GdP2 = 0.
+        d2GdPdT = 0.
+    return G, dGdT, dGdP, d2GdT2, d2GdP2, d2GdPdT
+
+
+def _Landau_excesses(pressure, temperature, params):
+    Tc = params['Tc_0'] + params['V_D']*pressure/params['S_D']
+    if temperature < Tc:
+        # Wolfram input to check partial differentials
+        # x = T, y = P, a = S, c = Tc0, d = V
+        # D[D[a ((x - c - d*y/a)*(1 - x/(c + d*y/a))^0.5 - c/3*(1 - x/(c + d*y/a))^1.5), x], x]
+        # Note mistake in Stixrude and Lithgow Bertelloni (2011) for the Vex term (equation 32)
+        Q = np.power(1. - temperature/Tc, 0.25)
+        G = params['S_D']*((temperature - Tc)*Q*Q - params['Tc_0']*np.power(Q, 6.)/3.)
+        dGdT = params['S_D']*(params['Tc_0']*Q*Q/(2.*Tc) + Q*Q - (temperature - Tc)/(2.*Tc*Q*Q))
+        dGdP = -params['V_D']*(Q*Q + params['Tc_0']*temperature*Q*Q/(2.*Tc*Tc) \
+                               - temperature*(temperature - Tc)/(2.*Tc*Tc*Q*Q))
+        
+        d2GdT2 = params['S_D']*(-params['Tc_0']/(4.*Tc*Tc*Q*Q) \
+                                - 1./(Tc*Q*Q) \
+                                - (temperature - Tc)/(4.*Tc*Tc*np.power(Q, 6.)))
+
+        d2GdP2 = params['V_D']*params['V_D']*temperature/(params['S_D']*Tc*Tc) \
+                 * (-params['Tc_0']*temperature/(4.*Tc*Tc*Q*Q)
+                    - temperature*(temperature - Tc)/(4.*Tc*Tc*np.power(Q, 6.))
+                    + params['Tc_0']*Q*Q/Tc - 1./(Q*Q)
+                    - (temperature - Tc)/(Tc*Q*Q))
+        
+        d2GdPdT = params['V_D']/(2.*Tc)*(-params['Tc_0']*Q*Q/Tc + 1./(Q*Q) \
+                                         + temperature / (Tc*Q*Q)
+                                         + (temperature - Tc)/(Tc*Q*Q)
+                                         + params['Tc_0']*temperature/(2.*Tc*Tc*Q*Q)
+                                         + temperature*(temperature - Tc)/(2.*Tc*Tc*np.power(Q, 6.)))
+                                         
     else:
         Q = 0.
         G = 0.
@@ -62,7 +102,6 @@ def landau(mineral):
     mineral.gr = mineral.alpha*mineral.K_T*mineral.V/mineral.C_v
     mineral.K_S = mineral.K_T*mineral.C_p/mineral.C_v
 
-    print "WARNING: Cp doesn't peak with this landau function! Problem with differentiation?"
     return None
 
 def landau_HP(mineral):
@@ -96,7 +135,8 @@ def landau_HP(mineral):
     G = params['Tc_0']*params['S_D']*(Q_0*Q_0 - np.power(Q_0, 6.)/3.) \
         - params['S_D']*(Tc*Q*Q - params['Tc_0']*np.power(Q, 6.)/3.) \
         - T*params['S_D']*(Q_0*Q_0 - Q*Q) + (P-P_0)*params['V_D']*Q_0*Q_0
-
+    
+    
     dGdT = params['S_D']*(Q*Q - Q_0*Q_0)
     dGdP = -params['V_D']*(Q*Q - Q_0*Q_0)
 
@@ -114,7 +154,7 @@ def landau_HP(mineral):
     mineral.gibbs = mineral.gibbs + G
     # Second derivatives first
     mineral.C_p = - mineral.temperature * ((- mineral.C_p / mineral.temperature) + d2GdT2) # -T*d2G/dT2
-    mineral.K_T = - (mineral.V + dGdP) / ((mineral.V / mineral.K_T) + d2GdP2) # - dGdP / (d2G/dP2)
+    mineral.K_T = (mineral.V + dGdP) / ((mineral.V / mineral.K_T) + d2GdP2) # - dGdP / (d2G/dP2)
     mineral.alpha = ((mineral.alpha*mineral.V) + d2GdPdT) / (mineral.V + dGdP) # d2GdPdT / dGdP
 
     # Now first derivatives 
@@ -151,8 +191,8 @@ def DQF(mineral):
     mineral.gibbs = mineral.gibbs + G
 
     # Second derivatives first
-    mineral.C_p = - temperature * ((- mineral.C_p / T) + d2G/dT2) # -T*d2G/dT2
-    mineral.K_T = - (mineral.V + dGdP) / ((mineral.V / mineral.K_T) + d2GdP2) # - dGdP / (d2G/dP2)
+    mineral.C_p = - temperature * ((-mineral.C_p / T) + d2GdT2) # -T*d2G/dT2
+    mineral.K_T = (mineral.V + dGdP) / ((mineral.V / mineral.K_T) + d2GdP2) # - dGdP / (d2G/dP2)
     mineral.alpha = ((mineral.alpha*mineral.V) + d2GdPdT) / (mineral.V + dGdP) # d2GdPdT / dGdP
 
     # Now first derivatives
