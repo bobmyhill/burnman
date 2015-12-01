@@ -4183,10 +4183,11 @@ class iron (Mineral):
             'Kprime_0': 5.16 ,
             'Kdprime_0': -3.1e-11 ,
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses),
-            'landau_Tc': 1042.0 ,
-            'landau_Smax': 8.3 ,
-            'landau_Vmax': 0.0 }
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        self.landau_HP = {
+            'Tc_0': 1042.0 ,
+            'S_D': 8.3 ,
+            'V_D': 0.0 }
         Mineral.__init__(self)
 
 class Ni (Mineral):
