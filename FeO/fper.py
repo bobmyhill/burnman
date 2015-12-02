@@ -19,45 +19,35 @@ class wuestite (Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -242000.0 ,
-            'V_0': 1.206e-05 ,
-            'K_0': 1.79e+11 ,
+            'V_0': 1.222e-05 , # 1.222 from Stolen et al., 1996; 1.216 from Katsura et al., 1967; 1.225 Hentschel, 1970
+            'K_0': 1.79e+11 , # 179 GPa in good agreement with K_S of Sumino et al; 184.3 from Will et al., 1980
             'Kprime_0': 4.9 ,
             'Debye_0': 500.0 ,
-            'grueneisen_0': 1.4 ,
-            'q_0': 0. ,
+            'grueneisen_0': 1.45 ,
+            'q_0': 0.3 ,
             'G_0': 59000000000.0 ,
             'Gprime_0': 1.4 ,
             'eta_s_0': -0.1 ,
-            'T_el': 4500.,
-            'Cv_el': 2.7,
+            'T_el': 2250., # 4000.
+            'Cv_el': 1.5, # 3
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         self.landau = {
-            'Tc_0':195.,
-            'S_D':11.,
+            'Tc_0':200.,
+            'S_D':12.,
             'V_D': 0.} 
         # V_D ~ 5e-8 (Sumino et al., 1980; Table 3b)
         # but likely to get smaller with increasing pressure
-        self.uncertainties = {
-            'err_F_0': 1000.0 ,
-            'err_V_0': 0.0 ,
-            'err_K_0': 1000000000.0 ,
-            'err_K_prime_0': 0.2 ,
-            'err_Debye_0': 21.0 ,
-            'err_grueneisen_0': 0.13 ,
-            'err_q_0': 1.0 ,
-            'err_G_0': 1000000000.0 ,
-            'err_Gprime_0': 0.1 ,
-            'err_eta_s_0': 1.0 }
         Mineral.__init__(self)
 
 
 fper = wuestite()
 fper_HP = minerals.HP_2011_ds62.fper()
+#fper_HP = minerals.SLB_2011.wuestite()
 
 
 P = 1.e5
-temperatures = np.linspace(1., 300., 101)
+temperatures = np.linspace(1., 2000., 101)
 volumes = np.empty_like(temperatures)
 Ss = np.empty_like(temperatures)
 Cps = np.empty_like(temperatures)
@@ -123,3 +113,25 @@ plt.title("K_Ss")
 plt.xlabel("Temperature (C)")
 plt.xlim(-100., 30.)
 plt.show()
+
+
+T = 298.15
+pressures = np.linspace(1.e5, 100.e9, 101)
+volumes = np.empty_like(temperatures)
+volumes_HP = np.empty_like(temperatures)
+
+for i, P in enumerate(pressures):
+    fper.set_state(P, T)
+    fper_HP.set_state(P, T)
+    volumes[i] = fper.V
+    volumes_HP[i] = fper_HP.V
+
+
+plt.plot(pressures/1.e9, volumes, label='model')
+plt.plot(pressures/1.e9, volumes_HP, label='model HP')
+plt.legend(loc='upper right')
+plt.title("Volumes")
+plt.xlabel("P (GPa)")
+plt.show()
+
+
