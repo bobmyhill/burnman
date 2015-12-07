@@ -51,7 +51,7 @@ data = zip(*data)
 plt.plot(data[0], data[1], linestyle='None', marker='o', label='data from Fei et al. and Urakawa et al.')
 plt.plot(temperatures, melt_volumes, label='melt model')
 plt.legend(loc='lower right')
-plt.show()
+
 
 
 
@@ -69,13 +69,36 @@ liq_FeS.set_state(P, T)
 print tro.gibbs
 Vsolid = tro.V
 Vmelt = Smelting*dTdP + tro.V
-print 'FAVOURED VMELT'
+print 'FAVOURED MELT'
+print 'dT/dP:', dTdP*1.e9
 print 'Vmelt:', Vmelt, 'using Rhysenko and Kennedy melting curve'
+print 'rho melt:', tro.molar_mass()/Vmelt # kg/m^3
+
 
 print 'ALTERNATIVELY'
 Vmelt = 2.244e-05 # Tm (Kaiura and Toguri, 1979)
 dTdP = (Vmelt - tro.V)/Smelting
 print 'dT/dP:', dTdP*1.e9, 'K/GPa from Kaiura and Toguri data'
+print 'Vmelt:', Vmelt
+print 'rho melt:', tro.molar_mass()/Vmelt # kg/m^3
+
+
+print 'Entropy of melting badly wrong?'
+
+print 'ALTERNATIVELY ALTERNATIVELY'
+Vmelt = 2.244e-05 # Tm (Kaiura and Toguri, 1979)
+dTdP = 65./1.e9
+Sfusion = (Vmelt - tro.V)/dTdP
+print 'dT/dP:', dTdP*1.e9, 'K/GPa from Kaiura and Toguri data'
+print 'Vmelt:', Vmelt
+print 'Sfusion:', Sfusion
+print 'rho melt:', tro.molar_mass()/Vmelt # kg/m^3
+
+
+plt.show()
+
+
+
 
 # First, let's plot the densities of FeS liquid at 1 bar
 P = 1.e5

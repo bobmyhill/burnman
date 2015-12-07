@@ -69,7 +69,7 @@ for datum in Ozawa_data:
     print P/1.e9, T, XFeO, XFeO_melt, fsolve(fper_melt_eqm, [XFeO_melt/10.], args=(P, T, XFeO))[0]
 
 XFeO_mw = 0.2
-temperatures = np.linspace(2873., 3173., 4)
+temperatures = np.linspace(2773., 3173., 5)
 pressures = np.linspace(20.e9, 140.e9, 61)
 for T in temperatures:
     print T
@@ -79,6 +79,10 @@ for T in temperatures:
         lnKd[i] = np.log(XFeO_melt/XFeO_mw)
     plt.plot(pressures, lnKd, label=str(T)+'K')
 
+    burnman.tools.array_to_file(['P (GPa)', 'lnKd'], [pressures/1.e9, lnKd], 'output/mw_melt_Fe_Kd_'+str(T)+'K')
+
+
+        
 plt.title('FeO partitioning between periclase and metallic melt')
 plt.xlabel('Pressure (GPa)')
 plt.ylabel('ln KD')

@@ -163,34 +163,36 @@ plt.show()
 '''
 
 
-P = 25.e9
 XFeSiO3_bdg = 0.1
 temperatures = np.linspace(2773., 4273., 4)
 X_Sis = np.linspace(0.002, 0.2, 101)
 
-for T in temperatures:
-    print T
-    X_Os = np.empty_like(X_Sis)
-    X_Sis_wt = np.empty_like(X_Sis)
-    X_Os_wt = np.empty_like(X_Sis)
-    for i, XSi_melt in enumerate(X_Sis):
-        XFeO_melt = fsolve(melt_bdg_eqm, [0.01], args=(P, T, XFeSiO3_bdg, XSi_melt))[0]
-
-        X_Os[i] = XFeO_melt / (1. + XFeO_melt)
-
-        wt_total = 55.845*(1. - X_Sis[i] - X_Os[i]) + 28.0855*X_Sis[i] + 15.9994*X_Os[i]
-        X_Sis_wt[i] = 28.0855*X_Sis[i] / wt_total * 100.
-        X_Os_wt[i] = 15.9994*X_Os[i] / wt_total * 100.
-
-    plt.plot(X_Os_wt, X_Sis_wt, label=str(T)+'K')
-
-plt.title('Metallic melt in equilibrium with '+\
+for P in [25.e9, 120.e9]:
+    for T in temperatures:
+        print T
+        X_Os = np.empty_like(X_Sis)
+        X_Sis_wt = np.empty_like(X_Sis)
+        X_Os_wt = np.empty_like(X_Sis)
+        for i, XSi_melt in enumerate(X_Sis):
+            XFeO_melt = fsolve(melt_bdg_eqm, [0.01], args=(P, T, XFeSiO3_bdg, XSi_melt))[0]
+            
+            X_Os[i] = XFeO_melt / (1. + XFeO_melt)
+            
+            wt_total = 55.845*(1. - X_Sis[i] - X_Os[i]) + 28.0855*X_Sis[i] + 15.9994*X_Os[i]
+            X_Sis_wt[i] = 28.0855*X_Sis[i] / wt_total * 100.
+            X_Os_wt[i] = 15.9994*X_Os[i] / wt_total * 100.
+            
+        plt.plot(X_Os_wt, X_Sis_wt, label=str(T)+'K')
+    
+        burnman.tools.array_to_file(['P (GPa)', 'lnKd'], [X_Os_wt, X_Sis_wt], 'output/'+str(P/1.e9)+'GPa_'+str(XFeSiO3_bdg)+'_FeSiO3_bdg_melt_wt_O_Si_'+str(T)+'K')
+    
+    plt.title('Metallic melt in equilibrium with '+\
               'Mg'+str(1.-XFeSiO3_bdg)+\
               'Fe'+str(XFeSiO3_bdg)+\
               'SiO3 at '+str(P/1.e9)+' GPa')
-plt.xlabel('XO (wt %)')
-plt.ylabel('XSi (wt %)')
-plt.xlim(0.0, 10.0)
-plt.ylim(0.0, 10.0)
-plt.legend(loc='upper right')
-plt.show()
+    plt.xlabel('XO (wt %)')
+    plt.ylabel('XSi (wt %)')
+    plt.xlim(0.0, 10.0)
+    plt.ylim(0.0, 10.0)
+    plt.legend(loc='upper right')
+    plt.show()
