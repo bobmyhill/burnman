@@ -18,6 +18,7 @@ from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 atomic_masses=read_masses()
 
+'''
 class liq_iron (burnman.Mineral):
     def __init__(self):
         formula='Fe'
@@ -27,19 +28,64 @@ class liq_iron (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': 8127.,
-            'V_0': 7.245e-6, # 6.733e-6 ,
+            'V_0': 7.15e-6, # 6.733e-6 ,
             'K_0': 124.0e9, # 166.e9 ,
             'Kprime_0': 5.32, # 5.32 ,
-            'Debye_0': 229. ,
+            'Debye_0': 305. ,
+            'grueneisen_0': 1.9 ,
+            'q_0': 0.06 ,
+            'Cv_el': 1.5, # 2.7,
+            'T_el': 2000., # 6500.
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+
+        burnman.Mineral.__init__(self)
+'''
+
+class liq_iron (burnman.Mineral):
+    def __init__(self):
+        formula='Fe'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'Liquid iron',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': 4763.,
+            'V_0': 7.185e-6, # 6.733e-6 ,
+            'K_0': 126.5e9, # 166.e9 ,
+            'Kprime_0': 5.32, # 5.32 ,
+            'Debye_0': 301. ,
             'grueneisen_0': 1.8 ,
             'q_0': 0.2 ,
-            'Cv_el': 2.7, # 2.7,
-            'T_el': 6500., # 6500.
+            'Cv_el': 1.5, # 2.7,
+            'T_el': 2000., # 6500.
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
 
         burnman.Mineral.__init__(self)
 
+'''
+class liq_iron (burnman.Mineral): # No magnetism
+    def __init__(self):
+        formula='Fe1.0'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'S_0': 35.907, 
+            'V_0': 6.9359301440628439e-06, 
+            'name': 'Liq iron',
+            'H_0': 7973.0, 
+            'a_0': 7.9e-05, 
+            'K_0': 150885687310.07358, 
+            'molar_mass': 0.055845, 
+            'equation_of_state': 'hp_tmt', 
+            'n': 1.0, 
+            'formula': formula, 
+            'Kprime_0': 5.6, 
+            'T_0': 1808., 
+            'Cp': [52.2754, -0.000355156, 790710.86, -619.07], 
+            'Kdprime_0': -3.7114189555248337e-11}
+        burnman.Mineral.__init__(self)
+'''
 
 if __name__ == "__main__":
     from fcc_iron import fcc_iron
@@ -54,7 +100,9 @@ if __name__ == "__main__":
     fcc.set_state(5.2e9, 1991.)
     liq.set_state(5.2e9, 1991.)
     liq.params['F_0'] = liq.params['F_0'] + (fcc.gibbs - liq.gibbs)
-    print liq.params['F_0']
+    print liq.params['F_0'], 'REMEMBER TO CHANGE THIS!'
+    #liq.params['H_0'] = liq.params['H_0'] + (fcc.gibbs - liq.gibbs)
+    #print liq.params['H_0'], 'REMEMBER TO CHANGE THIS!'
     
     dTdP = 3.85
     dTdP_err = 0.1
@@ -67,7 +115,7 @@ if __name__ == "__main__":
     Cps = np.empty_like(temperatures)
     volumes = np.empty_like(temperatures)
     for i, T in enumerate(temperatures):
-        liq.set_state(1.e9, T)
+        liq.set_state(1.e5, T)
         Cps[i] = liq.C_p
         volumes[i] = liq.V
     
@@ -78,8 +126,9 @@ if __name__ == "__main__":
     Hixson_data = burnman.tools.array_from_file("data/Fe_1bar_rho_Hixson_et_al_1990.dat")
     H, T, rho, VoverV0, rhoel = Hixson_data
     V = 55.845/(rho*1.e6)
-    
+    V_Mizuno = lambda T: 0.055845/(7162 - 0.735*(T - 1808))
     plt.plot(T, V, marker='o', linestyle='None')
+    plt.plot(temperatures, V_Mizuno(temperatures), marker='o', linestyle='None')
     plt.plot(temperatures, volumes)
     plt.show()
 
@@ -105,30 +154,37 @@ if __name__ == "__main__":
     S_1bar = 99.765
     Tm_1bar = 1809.
 
+    P_inv, T_inv = burnman.tools.invariant_point([hcp, liq], [1.0, -1.0],
+                                                 [fcc, liq], [1.0, -1.0],
+                                                 [100.e9, 3000.])
+    
     for i, P in enumerate(pressures):
-        if P > 97.e9:
+        if P > P_inv:
             Fe_phase = hcp
         else:
             Fe_phase = fcc
 
         dP = 100. # Pa
-        dT = melting_temperature(P + dP/2.) - melting_temperature(P - dP/2.)
-        dTdP = dT/dP
-        T = melting_temperature(P)
-        Fe_phase.set_state(P, T)
+        
+
+
+        T2 = burnman.tools.equilibrium_temperature([Fe_phase, liq], [1.0, -1.0], P+dP, 1800.)
+        T = burnman.tools.equilibrium_temperature([Fe_phase, liq], [1.0, -1.0], P, 1800.)
+        Tmelt_model[i] = T
+        dTdP = (T2-T)/dP
+        
         aK_T = Fe_phase.alpha*Fe_phase.K_T
         Sfusion[i] = burnman.constants.gas_constant*np.log(2.) / (1. - aK_T*dTdP)
         Vfusion[i] = Sfusion[i]*dTdP
         
         Smelt[i] = Fe_phase.S + Sfusion[i]
         Vmelt[i] = Fe_phase.V + Vfusion[i]
-        
+
         liq.set_state(P, T)
         Smelt_model[i] = liq.S
         Vmelt_model[i] = liq.V
     
         print int(P/1.e9), Sfusion[i], Vfusion[i]*1.e6, aK_T/1.e9, Fe_phase.S, (Fe_phase.K_T - liq.K_T)/1.e9
-        Tmelt_model[i] = burnman.tools.equilibrium_temperature([Fe_phase, liq], [1.0, -1.0], P, 1800.)
     
 
 

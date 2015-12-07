@@ -24,17 +24,39 @@ atomic_masses=read_masses()
 # thermal expansivity of VI.
 
 
+class FeS_VI_SLB (burnman.Mineral):
+    def __init__(self):
+        formula='FeS'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS VI',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': -4165.,
+            'V_0': 1.508e-05, # FIT
+            'K_0': 134.2e9, # HP
+            'Kprime_0': 4.7, # HP
+            'Debye_0': 450. ,
+            'grueneisen_0': 1.4 ,
+            'q_0': 1.8 ,
+            #'Cv_el': 3.0, # 2.7,
+            #'T_el': 6088., # 6500.
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        burnman.Mineral.__init__(self)
+        
 FeS_I = burnman.minerals.HP_2011_ds62.lot()
 FeS_IV = burnman.minerals.HP_2011_ds62.tro()
-#FeS_II = burnman.minerals.Fe_Si_O.FeS_II()
-#FeS_III = burnman.minerals.Fe_Si_O.FeS_III()
-#FeS_IV_HP = burnman.minerals.Fe_Si_O.FeS_IV_HP()
-#FeS_VI = burnman.minerals.Fe_Si_O.FeS_VI()
+FeS_II = burnman.minerals.HP_2011_ds62.fo() # just a dummy without Landau
+FeS_III = burnman.minerals.HP_2011_ds62.fo() # just a dummy without Landau
+FeS_IV_HP = burnman.minerals.HP_2011_ds62.fo() # just a dummy without Landau
+FeS_VI = FeS_VI_SLB()
 
 ##########################################
 ############# FeS I, II, III #############
 ##########################################
 
+'''
 class FeS_I_new (burnman.Mineral):
     def __init__(self):
         formula='FeS'
@@ -61,7 +83,7 @@ class FeS_I_new (burnman.Mineral):
             }
         burnman.Mineral.__init__(self)
 
-'''
+
 class FeS_I_new (burnman.Mineral):
     def __init__(self):
         formula='FeS'
@@ -71,12 +93,12 @@ class FeS_I_new (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -4165.,
-            'V_0': 1.822e-05, # 6.733e-6 ,
-            'K_0': 161.9e9, # 166.e9 ,
-            'Kprime_0': 5.15, # 5.32 ,
-            'Debye_0': 385. ,
-            'grueneisen_0': 3.5 ,
-            'q_0': 1.4 ,
+            'V_0': 1.822e-05, # FIT
+            'K_0': 65.8e9, # HP
+            'Kprime_0': 4.17, # HP
+            'Debye_0': 450. ,
+            'grueneisen_0': 1.4 ,
+            'q_0': 1.8 ,
             #'Cv_el': 3.0, # 2.7,
             #'T_el': 6088., # 6500.
             'n': sum(formula.values()),
@@ -87,8 +109,11 @@ class FeS_I_new (burnman.Mineral):
             'V_D': 0.e-07 
             }
         burnman.Mineral.__init__(self)
-'''
+
 FeS_I2 = FeS_I_new()
+'''
+
+
 # First, let's take a look at the heat capacity and entropy of FeS
 
 temperatures = np.linspace(10., 1200., 101)
@@ -111,11 +136,6 @@ for i, T in enumerate(temperatures):
     Cps_IV[i] = FeS_IV.C_p
     Ss_IV[i] = FeS_IV.S
     Vs_IV[i] = FeS_IV.V
-    FeS_I2.set_state(P, T)
-    Cps2[i] = FeS_I2.C_p
-    Ss2[i] = FeS_I2.S
-    Vs2[i] = FeS_I2.V
-
 PT = [temperatures*0.0 + 1.e5, temperatures]
 
 #popt, pcov = burnman.tools.fit_PTp_data(FeS_I2, 'C_p', ['Debye_0', 'grueneisen_0', 'T_el'], PT, Cps)
@@ -127,7 +147,7 @@ Gronvold_data = burnman.tools.array_from_file("data/FeS_CpSH_Gronvold_et_al_1959
 JANAF_data = burnman.tools.array_from_file("data/FeS_JANAF.dat")
 
 plt.plot(temperatures, Cps, label='HP')
-plt.plot(temperatures, Cps2, label='new')
+#plt.plot(temperatures, Cps2, label='new')
 plt.plot(temperatures, Cps_IV, label='IV')
 plt.plot(Gronvold_data[0], Gronvold_data[1]*4.184, marker='o', linestyle='None')
 plt.plot(JANAF_data[0], JANAF_data[1], marker='o', linestyle='None')
@@ -136,7 +156,7 @@ plt.ylim(0., 100.)
 plt.show()
 
 plt.plot(temperatures, Ss, label='HP')
-plt.plot(temperatures, Ss2, label='new')
+#plt.plot(temperatures, Ss2, label='new')
 plt.plot(temperatures, Ss_IV, label='IV')
 plt.plot(Gronvold_data[0], Gronvold_data[2]*4.184, marker='o', linestyle='None')
 plt.plot(JANAF_data[0], JANAF_data[2], marker='o', linestyle='None')
@@ -145,12 +165,11 @@ plt.ylim(0., 200.)
 plt.show()
 
 plt.plot(temperatures, Vs, label='HP')
-plt.plot(temperatures, Vs2, label='new')
+#plt.plot(temperatures, Vs2, label='new')
 plt.plot(temperatures, Vs_IV, label='IV')
 plt.legend(loc="lower left")
 plt.show()
 
-exit()
 
 
 
@@ -187,12 +206,10 @@ data_III = np.array(zip(*data_III))
 
 PT = [data_II[0], 298.15*np.ones(len(data_II[0]))]
 V = data_II[1]
-print curve_fit(fit_EoS_data(FeS_II, ['V_0', 'K_0']), 
-                PT, V, [1.648e-05, 75.e+9])
+popt, pcov = burnman.tools.fit_PVT_data(FeS_II, ['V_0', 'K_0'], PT, V)
 PT = [data_III[0], 298.15*np.ones(len(data_III[0]))]
 V = data_III[1]
-print curve_fit(fit_EoS_data(FeS_III, ['V_0', 'K_0']), 
-                PT, V, [1.648e-05, 75.e+9])
+popt, pcov = burnman.tools.fit_PVT_data(FeS_III, ['V_0', 'K_0'], PT, V)
 
 
 plt.plot(data_I[0]/1.e9, data_I[1], linestyle='None', marker='o', label='FeS I')
@@ -216,7 +233,7 @@ for i, P in enumerate(pressures):
 plt.plot(pressures/1.e9, volumes_I, label='FeS I (lot; HP_2011_ds62)')
 plt.plot(pressures/1.e9, volumes_II, label='FeS II')
 plt.plot(pressures/1.e9, volumes_III, label='FeS III')
-plt.legend(loc='lower left')
+plt.legend(loc='upper right')
 plt.show()
 
 # Now find standard enthalpies of II and III at 298 K
@@ -243,6 +260,8 @@ print 'H_0 for FeS III:', fsolve(find_enthalpy(FeS_III), [FeS_III.params['H_0']]
 
 FeS_III.set_state(P_III_VI, 298.15)
 FeS_VI_gibbs_points = [[P_III_VI, 298.15, FeS_III.gibbs]]
+print 'First gibbs free energy found'
+print FeS_VI_gibbs_points
 
 ##########################################
 ################# FeS VI #################
@@ -284,16 +303,12 @@ for line in datalines:
 
 P_VI, T_VI, V_VI, Verr_VI = zip(*data)
 
-P_VI = np.array(P_VI)
-T_VI = np.array(T_VI)
+PT_VI = np.array([P_VI, T_VI])
 V_VI = np.array(V_VI)
 Verr_VI = np.array(Verr_VI)
 
-guesses = [FeS_VI.params['V_0'],
-           FeS_VI.params['K_0'],
-           FeS_VI.params['Kprime_0']]  # V, K, K', a
-print curve_fit(fit_PV_data_full(FeS_VI), P_VI, V_VI, guesses, Verr_VI)
-
+popt, pcov= burnman.tools.fit_PVT_data(FeS_VI, ['V_0', 'K_0', 'Kprime_0'], PT_VI, V_VI, Verr_VI)
+print popt
 
 pressures = np.linspace(1.e5, 250.e9, 101)
 volumes_VI = np.empty_like(pressures)
@@ -304,7 +319,7 @@ for i, P in enumerate(pressures):
     volumes_VI[i] = FeS_VI.V
 
 plt.plot(pressures/1.e9, volumes_VI, 'b-', label='VI (300 K)')
-plt.plot(P_VI/1.e9, V_VI, marker='o', linestyle='None', label='Ohfuji et al. (2007)')
+plt.plot(PT_VI[0]/1.e9, V_VI, marker='o', linestyle='None', label='Ohfuji et al. (2007)')
 #plt.ylim(8.e-6, 14.e-6)
 plt.legend(loc="upper right")
 plt.show()
@@ -365,14 +380,13 @@ for T in temperatures:
     plt.plot(pressures/1.e9, volumes_IV, label='IV')
     plt.plot(pressures/1.e9, volumes_V, label='V')
 
-data = listify_xy_file('data/FeS_PV_500K_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_500K_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 
-data = listify_xy_file('data/FeS_PV_1200K_V_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_1200K_V_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 plt.legend(loc='upper right')
 plt.show()
-
 
 # Take a bunch of pressures and temperatures, 
 # and fit the model of Ohfuji et al to the Holland and Powell EoS.
@@ -389,16 +403,17 @@ for P in pressures:
 PT = zip(*PT)
 
 #########################################################
-##### Here we fix the Kprime so that the transition #####
+# Here we want to fix the Kprime so that the transition #
 ####### with FeS VI is of second order at 1200 K. #######
 # Note that we also tweak the thermal expansivity of VI #
 #########################################################
 
 FeS_IV_HP.params['Kprime_0'] = 6.5
-FeS_VI.params['a_0'] = 3.8e-05
+FeS_VI.params['grueneisen_0'] = 1.4
+FeS_VI.params['q_0'] = 2.
+FeS_VI.params['Debye_0'] = 424.
 
-print curve_fit(fit_EoS_data(FeS_IV_HP, ['V_0', 'K_0', 'a_0']), 
-                PT, V, [1.648e-05, 75.e+9, 1.07e-4])
+print burnman.tools.fit_PVT_data(FeS_IV_HP, ['V_0', 'K_0', 'a_0'], PT, V)
 
 
 temperatures = [500., 1200., 2000.]
@@ -420,16 +435,16 @@ for T in temperatures:
 
     plt.plot(pressures/1.e9, volumes_IV, label='IV')
     plt.plot(pressures/1.e9, volumes_V, label='V')
-    plt.plot(pressures/1.e9, volumes, 'r--', label='new')
+    plt.plot(pressures/1.e9, volumes, 'r--', label='IV_HP')
     plt.plot(pressures/1.e9, volumes_VI, 'b--', label='VI')
 
-data = listify_xy_file('data/FeS_PV_500K_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_500K_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 
-data = listify_xy_file('data/FeS_PV_1200K_IV_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_1200K_IV_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 
-data = listify_xy_file('data/FeS_PV_1200K_V_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_1200K_V_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 
 
@@ -450,19 +465,20 @@ plt.show()
 
 # Now calculate the Gibbs free energy at the FeS IV-VI transition at 1200 K
 P_IV_VI_1200 = 36.e9
-
-tro = burnman.minerals.Fe_Si_O.FeS_IV_V_Evans()
+print 'WARNING, HP CHANGED EVANS'
+#tro = burnman.minerals.Fe_Si_O.FeS_IV_V_Evans()
+tro = burnman.minerals.HP_2011_ds62.tro()
 tro.set_state(1.e5, 1200.)
 PVs = [[1.e5, tro.V]]
 
 V0 = 361.88 / 12 * burnman.constants.Avogadro * 1.e-30 # King and Prewitt, 1982
-data = listify_xy_file('data/FeS_PV_1200K_V_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_1200K_V_Urukawa.dat')
 for datum in zip(*data):
     P = datum[0]*1.e9
     V = datum[1]*V0
     PVs.append([P, V])
 
-data = listify_xy_file('data/FeS_PV_1200K_IV_Urukawa.dat')
+data = burnman.tools.array_from_file('data/FeS_PV_1200K_IV_Urukawa.dat')
 for datum in zip(*data):
     P = datum[0]*1.e9
     V = datum[1]*V0
@@ -484,10 +500,10 @@ G_IV_VI_1200 = tro.gibbs + VdP
 FeS_VI_gibbs_points.append([P_IV_VI_1200, 1200., G_IV_VI_1200])
 
 
-def find_enthalpy_entropy(phase):
-    def enthalpy_entropy(HS, points):
-        phase.params['H_0'] = HS[0]
-        phase.params['S_0'] = HS[1]
+def find_F_D(phase):
+    def enthalpy_entropy(FD, points):
+        phase.params['F_0'] = FD[0]
+        phase.params['Debye_0'] = FD[1]
 
         Gdiff = []
         for point in points:
@@ -498,8 +514,8 @@ def find_enthalpy_entropy(phase):
         return Gdiff
     return enthalpy_entropy
 
-print '[H_0, S_0] for FeS VI:', fsolve(find_enthalpy_entropy(FeS_VI), 
-                                       [FeS_VI.params['H_0'], FeS_VI.params['S_0']], 
-                                       args=(FeS_VI_gibbs_points))
+print '[F_0, Debye_0] for FeS VI:', fsolve(find_F_D(FeS_VI), 
+                                           [FeS_VI.params['F_0'], FeS_VI.params['Debye_0']], 
+                                           args=(FeS_VI_gibbs_points))
 
 

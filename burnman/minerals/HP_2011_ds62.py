@@ -4069,37 +4069,13 @@ class tro (Mineral):
             'Kdprime_0': -6.3e-11 ,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
-        self.landau = {
-            'Tc_0': 598.0 ,
-            'S_D': 12.0 ,
-            'V_D': 4.1e-07 
-            }
-        Mineral.__init__(self)
-
-class tro2 (Mineral):
-    def __init__(self):
-        formula='Fe1.0S1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'tro',
-            'formula': formula,
-            'equation_of_state': 'hp_tmt',
-            'H_0': -97760.0 ,
-            'S_0': 70.8 ,
-            'V_0': 1.819e-05 ,
-            'Cp': [50.2, 0.011052, -940000.0, 0.0] ,
-            'a_0': 5.73e-05 ,
-            'K_0': 65800000000.0 ,
-            'Kprime_0': 4.17 ,
-            'Kdprime_0': -6.3e-11 ,
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
         self.landau_HP = {
             'Tc_0': 598.0 ,
             'S_D': 12.0 ,
             'V_D': 4.1e-07 
             }
         Mineral.__init__(self)
+
 
 class lot (Mineral):
     def __init__(self):
