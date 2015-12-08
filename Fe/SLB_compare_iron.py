@@ -19,6 +19,17 @@ Fe_fcc2 = burnman.minerals.Myhill_calibration_iron.fcc_iron()
 Fe_hcp2 = burnman.minerals.Myhill_calibration_iron.hcp_iron()
 Fe_liq2 = burnman.minerals.Myhill_calibration_iron.liquid_iron()
 
+
+T = 300.
+pressures = np.linspace(1.e5, 350.e9, 101)
+alphas = np.empty_like(pressures)
+for i, P in enumerate(pressures):
+    Fe_hcp.set_state(P, T)
+    alphas[i] = Fe_hcp.alpha
+
+burnman.tools.array_to_file(['P (GPa)', 'alpha (1e-5/K)'],[pressures/1.e9, alphas*1.e5], 'output/Komabayashi_2014_hcp_alphas.dat')
+    
+
 Fe_hcp3 = burnman.minerals.Myhill_calibration_iron.hcp_iron_SLB()
 
 Fe_hcp2.params['S_0'] = Fe_hcp2.params['S_0'] + 10.
