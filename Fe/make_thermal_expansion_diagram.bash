@@ -7,11 +7,11 @@ if [ ! -d "figures" ]; then
     mkdir figures
 fi
 
-base="iron_phase_diagram"
+base="hcp_thermal_expansivities"
 
-psbasemap -JX12/10 -R0/350/500/6500 -B100f50:"Pressure (GPa)":/1000f500:"Temperature (K)":SWen -P -K > ${base}.ps
+psbasemap -JX12/10 -R0/350/0.5/4 -B100f50:"Pressure (GPa)":/0.5f0.1:"Thermal expansion (10@+-5@+/K)":SWen -P -K > ${base}.ps
 
-for file in output/*equilibrium.dat
+for file in output/hcp_alphas*
 do
     awk 'NR>1' ${file} | psxy -J -R -O -K -W1,black >> ${base}.ps
 done

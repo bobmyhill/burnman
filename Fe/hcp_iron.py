@@ -174,8 +174,11 @@ if __name__ == "__main__":
 
     for T, arr in arr_alpha:
         plt.plot(pressures/1.e9, arr*1.e5, label=str(T)+' K')
+        burnman.tools.array_to_file(['Pressures (GPa)', 'Thermal expansivity 1.e-5/K'], [pressures/1.e9, arr*1.e5], 'output/hcp_alphas_'+str(T)+'K.dat')
     plt.title("Thermal expansivity")
     plt.legend(loc="lower right")
+
+    
     plt.ylim(0.5, 4.)
     plt.xlim(0., 350.)
     plt.show()
