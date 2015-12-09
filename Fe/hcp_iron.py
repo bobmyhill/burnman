@@ -28,8 +28,8 @@ class hcp_iron (burnman.Mineral):
             'K_0': 161.9e9, # 166.e9 ,
             'Kprime_0': 5.15, # 5.32 ,
             'Debye_0': 395. ,
-            'grueneisen_0': 2.0 ,
-            'q_0': 1.0 ,
+            'grueneisen_0': 2.0, #1.5, 1.7, 2.0
+            'q_0': 1.0, #-1.0, 0.0 , 1.0
             'Cv_el': 3.0, # 2.7,
             'T_el': 6000., # 6500.
             'n': sum(formula.values()),
@@ -107,6 +107,28 @@ if __name__ == "__main__":
     plt.ylim(1., 3.)
     plt.show()
     '''
+
+    """
+    Figure 1 of Jeanloz, 1979
+    """
+    pressures = np.linspace(50.e9, 300.e9, 21)
+    rhos = np.empty_like(pressures)
+    gammas = np.empty_like(pressures)
+    alphas = np.empty_like(pressures)
+    for T in [300., 2000., 4000., 6000.]:
+        for i, P in enumerate(pressures):
+            hcp.set_state(P, T)
+            rhos[i] = hcp.density()
+            gammas[i] = hcp.gr
+            alphas[i] = hcp.alpha
+        #plt.plot(rhos, gammas, label=str(T)+' K')
+        plt.plot(rhos, alphas*1.e5, label=str(T)+' K')
+
+    plt.legend(loc='lower left')
+    plt.xlim(7500., 12000.)
+    plt.ylim(0., 5.)
+    plt.show()
+
     
     """
     Figure 12a of Wasserman et al.
@@ -172,9 +194,15 @@ if __name__ == "__main__":
     plt.xlim(50., 350.)
     plt.show()
 
+    
+
+    for T, arr in arr_aKT:
+        burnman.tools.array_to_file(['Pressures (GPa)', 'aKT 1.e-5/K'], [pressures/1.e9, arr*1.e5], 'output/hcp_aKTs_'+str(T)+'K.dat')
+        
     for T, arr in arr_alpha:
         plt.plot(pressures/1.e9, arr*1.e5, label=str(T)+' K')
         burnman.tools.array_to_file(['Pressures (GPa)', 'Thermal expansivity 1.e-5/K'], [pressures/1.e9, arr*1.e5], 'output/hcp_alphas_'+str(T)+'K.dat')
+        
     plt.title("Thermal expansivity")
     plt.legend(loc="lower right")
 
@@ -219,7 +247,13 @@ if __name__ == "__main__":
         temperatures, volumes = burnman.tools.hugoniot(hcp, 1.e5, T, pressures, bcc)
         plt.plot(pressures/1.e9, volumes, label=str(T)+' K')
 
+        burnman.tools.array_to_file(['Pressures (GPa)', 'Volumes (cm^3/mol)'], [pressures/1.e9, volumes*1.e6], 'output/hcp_hugoniot_'+str(T)+'K.dat')
+
+        
     plt.errorbar(P_obs/1.e9, V_obs, xerr=P_err_obs/1.e9, yerr=V_err_obs, marker='o', linestyle='None')
+
+    burnman.tools.array_to_file(['Pressures (GPa)', 'P err', 'Volumes (cm^3/mol)', 'V err'], [pressures/1.e9, P_err_obs/1.e9, volumes*1.e6, V_err_obs*1.e6], 'output/hcp_hugoniot_Brown_et_al_2000.dat')
+    
     plt.xlim(0., 300.)
     plt.legend(loc='upper left')
     plt.title("Hugoniot")

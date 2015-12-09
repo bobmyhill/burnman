@@ -16,7 +16,12 @@ do
     awk 'NR>1' ${file} | psxy -J -R -O -K -W1,black >> ${base}.ps
 done
 
-echo 0 0 | psxy -J -R -O >> ${base}.ps
+for file in data/Fe_hcp_alphas_*_Alfe_2001.dat
+do
+    psxy ${file} -J -R -O -K -W1,blue >> ${base}.ps
+done
+
+awk 'NR>1' data/Komabayashi_2014_hcp_alphas.dat | psxy -J -R -O -W1,red,- >> ${base}.ps
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
