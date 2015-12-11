@@ -1,0 +1,28 @@
+From Hixson
+
+rho a   Kt
+5.7 115 35  40
+7.1 90  90  81
+
+thus aKT decreases strongly with temperature at 1 bar
+
+gruneisen somewhat curved with density
+sound speeds linear with density (see Birch)
+
+K_S/rho = phi^2 ~ c*rho^2
+K_S ~ c*rho^3
+
+
+C_V roughly linear with rho, intercept at 0 kg/m^3
+
+
+One easy solution would be to take the energy, volume and bulk modulus data at 1 bar, assume some K' (or fix it), and then extrapolate up-pressure.
+Simple, but given the lack of data, I don't see anything else being much better.
+
+
+bulk modulus could be obtained from
+K_T = (gamma*Cv)/(alpha*V)
+
+gamma could be obtained from
+gamma = alpha*K_S*V/Cp
+
