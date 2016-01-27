@@ -65,25 +65,25 @@ class liq_iron (burnman.Mineral):
         burnman.Mineral.__init__(self)
 
 '''
-class liq_iron (burnman.Mineral): # No magnetism
+class liq_iron (burnman.Mineral): 
     def __init__(self):
         formula='Fe1.0'
         formula = dictionarize_formula(formula)
         self.params = {
-            'S_0': 35.907, 
-            'V_0': 6.9359301440628439e-06, 
+            'S_0': 100., 
+            'V_0': 7.8e-06, 
             'name': 'Liq iron',
             'H_0': 7973.0, 
-            'a_0': 7.9e-05, 
-            'K_0': 150885687310.07358, 
+            'a_0': 10.5e-05, 
+            'K_0': 120.e9, 
             'molar_mass': 0.055845, 
             'equation_of_state': 'hp_tmt', 
             'n': 1.0, 
             'formula': formula, 
-            'Kprime_0': 5.6, 
+            'Kprime_0': 5.0, 
             'T_0': 1808., 
-            'Cp': [52.2754, -0.000355156, 790710.86, -619.07], 
-            'Kdprime_0': -3.7114189555248337e-11}
+            'Cp': [52.2754, 0., 0., 0.], 
+            'Kdprime_0': 0.}
         burnman.Mineral.__init__(self)
 '''
 
@@ -103,6 +103,10 @@ if __name__ == "__main__":
     print liq.params['F_0'], 'REMEMBER TO CHANGE THIS!'
     #liq.params['H_0'] = liq.params['H_0'] + (fcc.gibbs - liq.gibbs)
     #print liq.params['H_0'], 'REMEMBER TO CHANGE THIS!'
+
+    fcc.set_state(5.2e9, 1991.0001)
+    liq.set_state(5.2e9, 1991.0001)
+    print fcc.gibbs, liq.gibbs
     
     dTdP = 3.85
     dTdP_err = 0.1
@@ -124,11 +128,14 @@ if __name__ == "__main__":
 
 
     Hixson_data = burnman.tools.array_from_file("data/Fe_1bar_rho_Hixson_et_al_1990.dat")
+    Mizuno_data = burnman.tools.array_from_file("../FeSi/data/Mizuno_Fe_melt_VT.dat")
+    
     H, T, rho, VoverV0, rhoel = Hixson_data
     V = 55.845/(rho*1.e6)
     V_Mizuno = lambda T: 0.055845/(7162 - 0.735*(T - 1808))
+    plt.plot(temperatures, V_Mizuno(temperatures))
+    plt.plot(Mizuno_data[0], 0.055845/Mizuno_data[1], marker='o', linestyle='None')
     plt.plot(T, V, marker='o', linestyle='None')
-    plt.plot(temperatures, V_Mizuno(temperatures), marker='o', linestyle='None')
     plt.plot(temperatures, volumes)
     plt.show()
 
@@ -184,7 +191,7 @@ if __name__ == "__main__":
         Smelt_model[i] = liq.S
         Vmelt_model[i] = liq.V
     
-        print int(P/1.e9), Sfusion[i], Vfusion[i]*1.e6, aK_T/1.e9, Fe_phase.S, (Fe_phase.K_T - liq.K_T)/1.e9
+        print int(P/1.e9), T, Sfusion[i], Vfusion[i]*1.e6, aK_T/1.e9, Fe_phase.S, (Fe_phase.K_T - liq.K_T)/1.e9
     
 
 
