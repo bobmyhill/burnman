@@ -21,4 +21,3 @@ from .cork import CORK
 from .property_modifiers import calculate_property_modifications
 
 from .helper import create
-

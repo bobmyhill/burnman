@@ -24,6 +24,15 @@ def thermal_energy(T, einstein_T, n):
     E_th = 3.*n*constants.gas_constant*einstein_T*( 0.5 + 1. / (np.exp( x ) - 1.0) ) # include the zero point energy
     return E_th
 
+def entropy(T,einstein_T,n):
+    """
+    Entropy at constant volume.  In J/K/mol
+    """
+    if T <= eps:
+        return 0.
+    x = einstein_T/T
+    S = 3.0*n*constants.gas_constant* (x*(1./(np.exp(x) - 1) + 1.) - np.log(np.exp(x) - 1.))
+    return S
 
 def heat_capacity_v(T,einstein_T,n):
     """
