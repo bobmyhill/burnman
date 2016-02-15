@@ -23,6 +23,37 @@ atomic_masses=read_masses()
 # Note that this script requires some user iteration of the Kprime of IV and 
 # thermal expansivity of VI.
 
+class FeS_I_new (burnman.Mineral):
+    def __init__(self):
+        formula='FeS'
+        formula = dictionarize_formula(formula)
+        self.params = {
+            'name': 'FeS I',
+            'formula': formula,
+            'equation_of_state': 'slbel3',
+            'F_0': -4165.,
+            'V_0': 1.816e-05, # 6.733e-6 ,
+            'K_0': 65.8e9, # HP, fits data ,
+            'Kprime_0': 4.0, # unimportant ,
+            'Debye_0': 400. ,
+            'grueneisen_0': 1.4 ,
+            'q_0': 1.0 ,
+            'Cv_el': 3.0, # 2.7,
+            'T_el': 12000., # 6500.
+            'n': sum(formula.values()),
+            'molar_mass': formula_mass(formula, atomic_masses)}
+        self.property_modifiers = [
+            ['landau', {'Tc_0': 420.0,
+                        'S_D': 10.,
+                        'V_D': 0.e-7}],
+            ['landau', {'Tc_0': 450.0,
+                        'S_D': 4.,
+                        'V_D': 0.e-7}],
+            ['landau', {'Tc_0': 598.0,
+                        'S_D': 10.,
+                        'V_D': 3.e-7}]]
+        
+        burnman.Mineral.__init__(self)
 
 class FeS_VI_SLB (burnman.Mineral):
     def __init__(self):
@@ -39,8 +70,8 @@ class FeS_VI_SLB (burnman.Mineral):
             'Debye_0': 450. ,
             'grueneisen_0': 1.4 ,
             'q_0': 1.8 ,
-            #'Cv_el': 3.0, # 2.7,
-            #'T_el': 6088., # 6500.
+            'Cv_el': 3.0, # 2.7,
+            'T_el': 6500., # 6500.
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         burnman.Mineral.__init__(self)
@@ -66,33 +97,6 @@ class FeS_I_new (burnman.Mineral):
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -4165.,
-            'V_0': 1.822e-05, # 6.733e-6 ,
-            'K_0': 161.9e9, # 166.e9 ,
-            'Kprime_0': 5.15, # 5.32 ,
-            'Debye_0': 594. ,
-            'grueneisen_0': 3.5 ,
-            'q_0': 1.4 ,
-            #'Cv_el': 3.0, # 2.7,
-            #'T_el': 6088., # 6500.
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-        self.landau = {
-            'Tc_0': 598.0 ,
-            'S_D': 12.0 ,
-            'V_D': 4.1e-07 
-            }
-        burnman.Mineral.__init__(self)
-
-
-class FeS_I_new (burnman.Mineral):
-    def __init__(self):
-        formula='FeS'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'FeS I',
-            'formula': formula,
-            'equation_of_state': 'slbel3',
-            'F_0': -4165.,
             'V_0': 1.822e-05, # FIT
             'K_0': 65.8e9, # HP
             'Kprime_0': 4.17, # HP
@@ -109,14 +113,15 @@ class FeS_I_new (burnman.Mineral):
             'V_D': 0.e-07 
             }
         burnman.Mineral.__init__(self)
-
-FeS_I2 = FeS_I_new()
 '''
+        
+FeS_I2 = FeS_I_new()
+
 
 
 # First, let's take a look at the heat capacity and entropy of FeS
 
-temperatures = np.linspace(10., 1200., 101)
+temperatures = np.linspace(10., 1400., 201)
 Cps = np.empty_like(temperatures)
 Ss =  np.empty_like(temperatures)
 Vs =  np.empty_like(temperatures)
@@ -132,6 +137,10 @@ for i, T in enumerate(temperatures):
     Cps[i] = FeS_I.C_p
     Ss[i] = FeS_I.S
     Vs[i] = FeS_I.V
+    FeS_I2.set_state(P, T)
+    Cps2[i] = FeS_I2.C_p
+    Ss2[i] = FeS_I2.S
+    Vs2[i] = FeS_I2.V
     FeS_IV.set_state(P, T)
     Cps_IV[i] = FeS_IV.C_p
     Ss_IV[i] = FeS_IV.S
@@ -144,33 +153,36 @@ PT = [temperatures*0.0 + 1.e5, temperatures]
 
 # T Cp S H Cp S H
 Gronvold_data = burnman.tools.array_from_file("data/FeS_CpSH_Gronvold_et_al_1959.dat")
+Gronvold_data2 = burnman.tools.array_from_file("data/Gronvold_Stolen_1992_Cp_FeS.dat")
 JANAF_data = burnman.tools.array_from_file("data/FeS_JANAF.dat")
 
 plt.plot(temperatures, Cps, label='HP')
-#plt.plot(temperatures, Cps2, label='new')
+plt.plot(temperatures, Cps2, label='new')
 plt.plot(temperatures, Cps_IV, label='IV')
-plt.plot(Gronvold_data[0], Gronvold_data[1]*4.184, marker='o', linestyle='None')
-plt.plot(JANAF_data[0], JANAF_data[1], marker='o', linestyle='None')
-plt.legend(loc="lower left")
-plt.ylim(0., 100.)
+plt.plot(Gronvold_data[0], Gronvold_data[1]*4.184, marker='o', linestyle='None', label='Gronvold et al. (1959)')
+plt.plot(Gronvold_data2[0], Gronvold_data2[1], marker='o', linestyle='None', label='Gronvold and Stolen (1992)')
+
+plt.legend(loc="lower right")
+plt.ylim(0., 120.)
 plt.show()
 
 plt.plot(temperatures, Ss, label='HP')
-#plt.plot(temperatures, Ss2, label='new')
+plt.plot(temperatures, Ss2, label='new')
 plt.plot(temperatures, Ss_IV, label='IV')
-plt.plot(Gronvold_data[0], Gronvold_data[2]*4.184, marker='o', linestyle='None')
-plt.plot(JANAF_data[0], JANAF_data[2], marker='o', linestyle='None')
-plt.legend(loc="lower left")
+plt.plot(Gronvold_data[0], Gronvold_data[2]*4.184, marker='o', linestyle='None', label='Gronvold data')
+plt.plot(JANAF_data[0], JANAF_data[2], marker='o', linestyle='None', label='JANAF data')
+plt.legend(loc="lower right")
 plt.ylim(0., 200.)
 plt.show()
 
+volume_data = burnman.tools.array_from_file("data/Tenailleau_et_al_FeS_volumes.dat")
+volume_data[1] = volume_data[1]*burnman.constants.Avogadro*1.e-30/2.
 plt.plot(temperatures, Vs, label='HP')
-#plt.plot(temperatures, Vs2, label='new')
+plt.plot(temperatures, Vs2, label='new')
 plt.plot(temperatures, Vs_IV, label='IV')
-plt.legend(loc="lower left")
+plt.plot(volume_data[0], volume_data[1], marker='o', linestyle='None', label='Tenailleau et al. data')
+plt.legend(loc="lower right")
 plt.show()
-
-
 
 
 f=open('data/FeS_PV_King_Prewitt_1982_294K.dat', 'r')
@@ -218,9 +230,13 @@ plt.plot(data_III[0]/1.e9, data_III[1], linestyle='None', marker='o', label='FeS
 
 pressures=np.linspace(1.e5, 36.e9, 101)
 volumes_I = np.empty_like(pressures)
+volumes_I2 = np.empty_like(pressures)
 volumes_II = np.empty_like(pressures)
 volumes_III = np.empty_like(pressures)
 for i, P in enumerate(pressures):
+    FeS_I2.set_state(P, 298.15)
+    volumes_I2[i] = FeS_I2.V
+    
     FeS_I.set_state(P, 298.15)
     volumes_I[i] = FeS_I.V
 
@@ -231,6 +247,7 @@ for i, P in enumerate(pressures):
     volumes_III[i] = FeS_III.V
 
 plt.plot(pressures/1.e9, volumes_I, label='FeS I (lot; HP_2011_ds62)')
+plt.plot(pressures/1.e9, volumes_I2, label='FeS I (this study)')
 plt.plot(pressures/1.e9, volumes_II, label='FeS II')
 plt.plot(pressures/1.e9, volumes_III, label='FeS III')
 plt.legend(loc='upper right')
@@ -369,24 +386,49 @@ plt.legend(loc='lower right')
 plt.show()
 
 # Compare volumes with experimental data from Urukawa et al. (2004)
-V0 = 361.88 / 12 * constants.Avogadro * 1.e-30 # King and Prewitt, 1982
 temperatures = [500., 1200., 2000.]
+pressures = np.linspace(1.e5, 10.e9, 101)
+volumes_EoS=np.empty_like(pressures)
+
+for T in temperatures:
+    for i, P in enumerate(pressures):
+        volumes_IV[i] = volume(P, T, IV_params)
+        volumes_V[i] = volume(P, T, V_params)
+        FeS_I2.set_state(P, T)
+        volumes_EoS[i] = FeS_I2.V
+    plt.plot(pressures/1.e9, volumes_EoS, label='EoS at '+str(T)+' K', linestyle="--")
+
+
+V0 = 361.88 / 12 * constants.Avogadro * 1.e-30 # King and Prewitt, 1982
 pressures = np.linspace(10.e9, 30.e9, 101)
 
 for T in temperatures:
     for i, P in enumerate(pressures):
         volumes_IV[i] = volume(P, T, IV_params)
         volumes_V[i] = volume(P, T, V_params)
+        FeS_I2.set_state(P, T)
+        volumes_EoS[i] = FeS_I2.V
+    plt.plot(pressures/1.e9, volumes_EoS, label='EoS', linestyle="--")
     plt.plot(pressures/1.e9, volumes_IV, label='IV')
     plt.plot(pressures/1.e9, volumes_V, label='V')
-
+   
 data = burnman.tools.array_from_file('data/FeS_PV_500K_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
 
 data = burnman.tools.array_from_file('data/FeS_PV_1200K_V_Urukawa.dat')
 plt.plot(data[0], data[1]*V0, linestyle='None', marker='o')
+
+
+# King data
+plt.plot(data_I[0]/1.e9, data_I[1], linestyle='None', marker='o', label='FeS I')
+plt.plot(data_II[0]/1.e9, data_II[1], linestyle='None', marker='o', label='FeS II')
+plt.plot(data_III[0]/1.e9, data_III[1], linestyle='None', marker='o', label='FeS III')
+
+
 plt.legend(loc='upper right')
 plt.show()
+exit()
+
 
 # Take a bunch of pressures and temperatures, 
 # and fit the model of Ohfuji et al to the Holland and Powell EoS.

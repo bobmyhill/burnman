@@ -35,7 +35,5 @@ from . import HP_2011_ds62
 from . import HP_2011_fluids
 from . import HHPH_2013
 
-import Myhill_calibration_iron
-
 # Other
 from . import other
