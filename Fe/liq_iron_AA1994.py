@@ -18,74 +18,45 @@ from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 atomic_masses=read_masses()
 
-'''
-class liq_iron (burnman.Mineral):
-    def __init__(self):
-        formula='Fe'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'name': 'Liquid iron',
-            'formula': formula,
-            'equation_of_state': 'slbel3',
-            'F_0': 8127.,
-            'V_0': 7.15e-6, # 6.733e-6 ,
-            'K_0': 124.0e9, # 166.e9 ,
-            'Kprime_0': 5.32, # 5.32 ,
-            'Debye_0': 305. ,
-            'grueneisen_0': 1.9 ,
-            'q_0': 0.06 ,
-            'Cv_el': 1.5, # 2.7,
-            'T_el': 2000., # 6500.
-            'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
 
-        burnman.Mineral.__init__(self)
-'''
 
 class liq_iron (burnman.Mineral):
     def __init__(self):
         formula='Fe'
         formula = dictionarize_formula(formula)
+        m = formula_mass(formula, atomic_masses)
+        rho_0 = 7019.
+        V_0 = m/rho_0
+        D = 7766.
+        Lambda = 1146.
         self.params = {
-            'name': 'Liquid iron',
+            'name': 'liquid iron',
             'formula': formula,
-            'equation_of_state': 'slbel3',
-            'F_0': 4763.,
-            'V_0': 7.185e-6, # 6.733e-6 ,
-            'K_0': 126.5e9, # 166.e9 ,
-            'Kprime_0': 5.32, # 5.32 ,
-            'Debye_0': 301. ,
-            'grueneisen_0': 1.8 ,
-            'q_0': 0.2 ,
-            'Cv_el': 1.5, # 2.7,
-            'T_el': 2000., # 6500.
+            'equation_of_state': 'aa',
+            'P_0': 1.e5,
+            'T_0': 1809.,
+            'S_0': 99.823, # to fit
+            'molar_mass': m,
+            'V_0': V_0,
+            'E_0': 72700.,
+            'K_S': 109.7e9,
+            'Kprime_S': 4.661,
+            'Kprime_prime_S': -0.043e-9,
+            'grueneisen_0': 1.735,
+            'grueneisen_prime': -0.130/m*1.e-6,
+            'grueneisen_n': -1.870,
+            'a': [248.92*m, 289.48*m],
+            'b': [0.4057*m, -1.1499*m],
+            'Theta': [1747.3, 1.537],
+            'theta': 5000.,
+            'lmda': [302.07*m, -325.23*m, 30.45*m],
+            'xi_0': 282.67*m,
+            'F': [D/rho_0, Lambda/rho_0],
             'n': sum(formula.values()),
-            'molar_mass': formula_mass(formula, atomic_masses)}
-
+            'molar_mass': m}
         burnman.Mineral.__init__(self)
 
-'''
-class liq_iron (burnman.Mineral): 
-    def __init__(self):
-        formula='Fe1.0'
-        formula = dictionarize_formula(formula)
-        self.params = {
-            'S_0': 100., 
-            'V_0': 7.8e-06, 
-            'name': 'Liq iron',
-            'H_0': 7973.0, 
-            'a_0': 10.5e-05, 
-            'K_0': 120.e9, 
-            'molar_mass': 0.055845, 
-            'equation_of_state': 'hp_tmt', 
-            'n': 1.0, 
-            'formula': formula, 
-            'Kprime_0': 5.0, 
-            'T_0': 1808., 
-            'Cp': [52.2754, 0., 0., 0.], 
-            'Kdprime_0': 0.}
-        burnman.Mineral.__init__(self)
-'''
+
 
 if __name__ == "__main__":
     from fcc_iron import fcc_iron
@@ -99,10 +70,8 @@ if __name__ == "__main__":
 
     fcc.set_state(5.2e9, 1991.)
     liq.set_state(5.2e9, 1991.)
-    liq.params['F_0'] = liq.params['F_0'] + (fcc.gibbs - liq.gibbs)
-    print liq.params['F_0'], 'REMEMBER TO CHANGE THIS!'
-    #liq.params['H_0'] = liq.params['H_0'] + (fcc.gibbs - liq.gibbs)
-    #print liq.params['H_0'], 'REMEMBER TO CHANGE THIS!'
+    liq.params['E_0'] = liq.params['E_0'] + (fcc.gibbs - liq.gibbs)
+    print liq.params['E_0'], 'REMEMBER TO CHANGE THIS!'
 
     fcc.set_state(5.2e9, 1991.0001)
     liq.set_state(5.2e9, 1991.0001)
