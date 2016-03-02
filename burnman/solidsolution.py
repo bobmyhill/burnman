@@ -58,22 +58,22 @@ class SolidSolution(Mineral):
             if self.type == 'ideal':
                 self.solution_model=IdealSolution(self.endmembers)
             else:
-                if hasattr(self, 'enthalpy_interaction') == False:
-                    self.enthalpy_interaction = None
+                if hasattr(self, 'energy_interaction') == False:
+                    self.energy_interaction = None
                 if hasattr(self, 'volume_interaction') == False:
                     self.volume_interaction = None
                 if hasattr(self, 'entropy_interaction') == False:
                     self.entropy_interaction = None
 
                 if self.type == 'symmetric':
-                    self.solution_model=SymmetricRegularSolution(self.endmembers, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
+                    self.solution_model=SymmetricRegularSolution(self.endmembers, self.energy_interaction, self.volume_interaction, self.entropy_interaction)
                 elif self.type == 'asymmetric':
                     try:
-                        self.solution_model=AsymmetricRegularSolution(self.endmembers, self.alphas, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
+                        self.solution_model=AsymmetricRegularSolution(self.endmembers, self.alphas, self.energy_interaction, self.volume_interaction, self.entropy_interaction)
                     except: 
                         raise Exception("'alphas' attribute missing from solid solution")
                 elif self.type == 'subregular':
-                    self.solution_model=SubregularSolution(self.endmembers, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
+                    self.solution_model=SubregularSolution(self.endmembers, self.energy_interaction, self.volume_interaction, self.entropy_interaction)
                 else:
                     raise Exception("Solution model type "+self.params['type']+"not recognised.")
         else:

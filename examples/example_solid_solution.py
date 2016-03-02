@@ -144,7 +144,7 @@ if __name__ == "__main__":
             self.name='Symmetric pyrope-almandine garnet'
             self.type='symmetric'
             self.endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12']]
-            self.enthalpy_interaction=[[2.5e3]]
+            self.energy_interaction=[[2.5e3]]
 
             burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             self.name='Symmetric pyrope-almandine-majorite garnet'
             self.type='symmetric'
             self.endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],[minerals.HP_2011_ds62.maj(), '[Mg]3[Mg1/2Si1/2]2Si3O12']]
-            self.enthalpy_interaction=[[2.5e3,0.0e3],[10.0e3]]
+            self.energy_interaction=[[2.5e3,0.0e3],[10.0e3]]
             self.entropy_interaction=[[0.0e3,0.0e3],[0.0e3]]
             self.volume_interaction=[[0.0e3,0.0e3],[0.0e3]]
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
                                [minerals.HP_2011_ds62.andr(), '[Ca]3[Fe]2Si3O12']]
             self.type='asymmetric'
             self.alphas = [1.0, 1.0, 2.7, 2.7]
-            self.enthalpy_interaction=[[2.5e3, 31.e3, 53.2e3],
+            self.energy_interaction=[[2.5e3, 31.e3, 53.2e3],
                                        [5.e3, 37.24e3],
                                        [2.e3]]
             burnman.SolidSolution.__init__(self, molar_fractions)
@@ -288,12 +288,12 @@ if __name__ == "__main__":
             self.name='Subregular pyrope-almandine-grossular garnet'
             self.type='subregular'
             self.endmembers = [[minerals.HP_2011_ds62.py(), '[Mg]3[Al]2Si3O12'],[minerals.HP_2011_ds62.alm(), '[Fe]3[Al]2Si3O12'],[minerals.HP_2011_ds62.gr(), '[Ca]3[Al]2Si3O12'], [minerals.HP_2011_ds62.spss(), '[Mn]3[Al]2Si3O12']]
-            self.enthalpy_interaction=[[[2117., 695.], [9834., 21627.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
+            self.energy_interaction=[[[2117., 695.], [9834., 21627.], [12083., 12083.]],[[6773., 873.],[539., 539.]],[[0., 0.]]]
             self.volume_interaction=[[[0.07e-5, 0.], [0.058e-5, 0.012e-5], [0.04e-5, 0.03e-5]],[[0.03e-5, 0.],[0.04e-5, 0.01e-5]],[[0., 0.]]]
             self.entropy_interaction=[[[0., 0.], [5.78, 5.78], [7.67, 7.67]],[[1.69, 1.69],[0., 0.]],[[0., 0.]]]
             
             # Published values are on a 4-oxygen (1-cation) basis
-            for interaction in [self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction]:
+            for interaction in [self.energy_interaction, self.volume_interaction, self.entropy_interaction]:
                 for i in range(len(interaction)):
                     for j in range(len(interaction[i])):
                         for k in range(len(interaction[i][j])):
