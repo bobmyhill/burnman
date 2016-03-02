@@ -1,6 +1,15 @@
 TO DO LIST
 
 ======
+TO DO DOCUMENT v.4
+======
+
+- Add more useful functions - e.g. Hugoniot calculation
+- Finish making suggested pull request changes
+- Split additiional contributions to the Gibbs free energy, add Landau/Magnetic/Bragg-Williams/Standard state entropy.
+- Add electronic contribution
+
+======
 TO DO DOCUMENT v.3 (Post pre-AGU 2014 Meeting)
 ======
 

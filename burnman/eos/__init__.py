@@ -17,8 +17,8 @@ from .slb import SLB2, SLB3
 from .modified_tait import MT
 from .hp import HP_TMT
 from .cork import CORK
+from .aa import AA
 
 from .property_modifiers import calculate_property_modifications
 
 from .helper import create
-

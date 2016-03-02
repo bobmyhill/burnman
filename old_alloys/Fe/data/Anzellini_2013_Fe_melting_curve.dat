@@ -1,0 +1,16 @@
+% P (GPa) T (K)  Phase
+0.        1780    1
+5.2       1991    1
+21.7      2442    1
+37.9      2790    1
+52.2      3063    1
+76.8      3420    1
+98.0      3635    1
+116.1     3862    2 
+135.9     4144    2
+158.1     4435    2
+330.0     6800    2
+% first point is an extrapolation
+% second point from Strong et al., 1973.
+% last point is a compromise between 
+% ab initio of Alfe (2009) and Sola and Alfe (2009)

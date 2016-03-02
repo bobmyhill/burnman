@@ -5,11 +5,13 @@ from __future__ import absolute_import
 
 import inspect
 from . import slb
+from . import slb_with_el as slbel
 from . import mie_grueneisen_debye as mgd
 from . import birch_murnaghan as bm
 from . import modified_tait as mt
 from . import hp 
 from . import cork
+from . import aa
 from .equation_of_state import EquationOfState
 
 
@@ -19,6 +21,12 @@ def create(method):
     a class EquationOfState, or an instance of EquationOfState.
     """
     if isinstance(method, str):
+        if method == "aa":
+            return aa.AA()
+        if method == "slbel2":
+            return slbel.SLBEL2()
+        if method == "slbel3":
+            return slbel.SLBEL3()
         if method == "slb2":
             return slb.SLB2()
         elif method == "mgd2":

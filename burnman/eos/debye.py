@@ -81,7 +81,7 @@ def debye_fn_cheb(x):
     """
     val_infinity = 19.4818182068004875;
     xcut = -log_eps
-
+    
     assert(x > 0.0) #check for invalid x
 
     if x < 2.0*np.sqrt(2.0)*sqrt_eps:

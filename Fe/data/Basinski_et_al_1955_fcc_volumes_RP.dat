@@ -1,0 +1,17 @@
+% T(K)  V/atom (kX)^3
+1189    12.0512
+1196    12.0542
+1223    12.0790
+1347    12.1808
+1457    12.2791
+1565    12.3759
+1635    12.4286
+1653    12.4529
+1661    12.4539
+% RT bcc has volume of 11.7024 kX^3
+% bcc volume at room temperature
+% reported as 7.17433e-6 m^3/mol
+%
+% no correction applied for lattice 
+% parameter as effects from refraction
+% poorly known
