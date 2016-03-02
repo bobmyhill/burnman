@@ -18,14 +18,12 @@ from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 atomic_masses=read_masses()
 
-
-
 class liq_iron (burnman.Mineral):
     def __init__(self):
         formula='Fe'
         formula = dictionarize_formula(formula)
         m = formula_mass(formula, atomic_masses)
-        rho_0 = 7019.
+        rho_0 = 7019. - 10.
         V_0 = m/rho_0
         D = 7766.
         Lambda = 1146.
@@ -39,7 +37,7 @@ class liq_iron (burnman.Mineral):
             'molar_mass': m,
             'V_0': V_0,
             'E_0': 72700.,
-            'K_S': 109.7e9,
+            'K_S': 108.8e9,
             'Kprime_S': 4.661,
             'Kprime_prime_S': -0.043e-9,
             'grueneisen_0': 1.735,
@@ -66,8 +64,8 @@ if __name__ == "__main__":
     fcc = fcc_iron()
     hcp = hcp_iron()
     liq = liq_iron()
-
     
+
     fcc.set_state(5.2e9, 1991.)
     liq.set_state(5.2e9, 1991.)
     liq.params['E_0'] = liq.params['E_0'] + (fcc.gibbs - liq.gibbs)
@@ -84,23 +82,6 @@ if __name__ == "__main__":
     print 'dT/dP:', (liq.V - fcc.V)/(liq.S - fcc.S), 'should be', dTdP, '+/-', dTdP_err 
     
 
-    temperatures = np.linspace(1800., 4000., 101)
-    aKT = np.empty_like(temperatures)
-    volumes = np.empty_like(temperatures)
-    grs = np.empty_like(temperatures)
-    for P in [1.e9, 50.e9, 100.e9, 200.e9]:
-        for i, T in enumerate(temperatures):
-            liq.set_state(P, T)
-            aKT[i] = liq.alpha*liq.K_T
-            volumes[i] = liq.V
-            
-            grs[i] = liq.gr
-    
-        plt.plot(temperatures, grs)
-    plt.show()
-    exit()
-
-    
     temperatures = np.linspace(1800., 4000., 101)
     Cps = np.empty_like(temperatures)
     volumes = np.empty_like(temperatures)

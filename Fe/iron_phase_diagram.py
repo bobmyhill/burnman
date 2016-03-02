@@ -12,7 +12,7 @@ import matplotlib.image as mpimg
 
 from fcc_iron import fcc_iron
 from hcp_iron import hcp_iron
-from liq_iron import liq_iron
+from liq_iron_modified_AA1994 import liq_iron
 
 
 bcc = minerals.HP_2011_ds62.iron()
@@ -50,7 +50,7 @@ for i, T in enumerate(temperatures):
     pressures[i] = burnman.tools.equilibrium_pressure([bcc, hcp], [1.0, -1.0], T, 10.e9)
 plt.plot(pressures/1.e9, temperatures)
 
-burnman.tools.array_to_file(['Pressures (GPa)', 'Temperatures (K)'], [pressures/1.e9, temperatures], 'output/bcc_hcp_equilibrium.dat')
+np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output/bcc_hcp_equilibrium.dat')
 
 pressures = np.linspace(1.e5, P_inv, 11)
 temperatures = np.empty_like(pressures)
@@ -58,7 +58,7 @@ for i, P in enumerate(pressures):
     temperatures[i] = burnman.tools.equilibrium_temperature([bcc, fcc], [1.0, -1.0], P, 1000.)
 plt.plot(pressures/1.e9, temperatures)
 
-burnman.tools.array_to_file(['Pressures (GPa)', 'Temperatures (K)'], [pressures/1.e9, temperatures], 'output/bcc_fcc_equilibrium.dat')
+np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output/bcc_fcc_equilibrium.dat')
 
 temperatures = np.linspace(T_inv, T_inv2, 11)
 pressures = np.empty_like(temperatures)
@@ -67,7 +67,7 @@ for i, T in enumerate(temperatures):
     
 plt.plot(pressures/1.e9, temperatures)
 
-burnman.tools.array_to_file(['Pressures (GPa)', 'Temperatures (K)'], [pressures/1.e9, temperatures], 'output/fcc_hcp_equilibrium.dat')
+np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output/fcc_hcp_equilibrium.dat')
 
 pressures = np.linspace(5.2e9, P_inv2, 11)
 temperatures = np.empty_like(pressures)
@@ -75,7 +75,7 @@ for i, P in enumerate(pressures):
     temperatures[i] = burnman.tools.equilibrium_temperature([fcc, liq], [1.0, -1.0], P, 1000.)
 plt.plot(pressures/1.e9, temperatures)
 
-burnman.tools.array_to_file(['Pressures (GPa)', 'Temperatures (K)'], [pressures/1.e9, temperatures], 'output/fcc_liq_equilibrium.dat')
+np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output/fcc_liq_equilibrium.dat')
 
 pressures = np.linspace(P_inv2, 350.e9, 11)
 temperatures = np.empty_like(pressures)
@@ -83,7 +83,7 @@ for i, P in enumerate(pressures):
     temperatures[i] = burnman.tools.equilibrium_temperature([hcp, liq], [1.0, -1.0], P, 3000.) 
 plt.plot(pressures/1.e9, temperatures)
 
-burnman.tools.array_to_file(['Pressures (GPa)', 'Temperatures (K)'], [pressures/1.e9, temperatures], 'output/hcp_liq_equilibrium.dat')
+np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output/hcp_liq_equilibrium.dat')
 
 plt.ylim(300., 7000.)
 plt.xlim(0., 350.)

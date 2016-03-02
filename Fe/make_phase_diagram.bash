@@ -23,5 +23,5 @@ epstopdf ${base}.epsi
 rm ${base}.ps ${base}.epsi
 
 mv ${base}.pdf figures/
-evince figures/${base}.pdf
+open -a /Applications/Adobe\ Acrobat\ Reader\ DC.app/Contents/MacOS/AdobeReader figures/${base}.pdf
 	    

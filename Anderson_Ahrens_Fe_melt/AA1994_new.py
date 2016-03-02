@@ -44,7 +44,32 @@ class liquid_iron( burnman.Mineral ):
             'molar_mass': m}
         burnman.Mineral.__init__(self)
 
+
+        
 liq = liquid_iron()
+
+# Find heat capacities
+temperatures = np.linspace(1000., 15000., 101)
+Cvs = np.empty_like(temperatures)
+m = 0.055845
+rhos = np.empty_like(temperatures)
+densities = [5.e3,10.e3, 15.e3]
+#densities = [8.5e3, 9.56e3, 10.81e3, 12.28e3, 14.03e3, 16.14e3, 18.68e3]
+for rho in densities:
+    V = m/rho
+    for i, T in enumerate(temperatures):
+        Cvs[i] = liq.method.heat_capacity_v(0., T, V, liq.params)/burnman.constants.gas_constant
+        #Cvs[i] = liq.method._C_v_el(V, T, liq.params)/burnman.constants.gas_constant
+
+    plt.plot(temperatures, Cvs)
+
+fig1 = mpimg.imread('TCv_different_densities.png')
+plt.imshow(fig1, extent=[1000., 15000., 0., 6.], aspect='auto')
+plt.ylim(0., 6.)
+plt.title('AA1994, Figure 5')
+plt.show()
+
+
 
 
 def temperature(T, P, rho, mineral):
@@ -75,8 +100,6 @@ for Prho in Prhos:
 liq.set_state(130.e9, 5000.)
 print liq.gr
 
-    
-exit()
 # Find volumes and temperatures up the reference isentrope
 # Check standard state values
 liq.set_state(1.e5, 1811.)
@@ -112,14 +135,19 @@ plt.show()
 temperatures = np.linspace(1800., 2400., 100)
 rhos = np.empty_like(temperatures)
 rhos_mizuno = np.empty_like(temperatures)
+Vps = np.empty_like(temperatures)
+
 
 P = 1.e5
 for i, T in enumerate(temperatures):
     liq.set_state(1.e5, T)
     rhos[i] = liq.density/1.e3
-
+    Vps[i] = np.sqrt(liq.K_S/liq.rho)
     rhos_mizuno[i] = (7162. - 0.735*(T - 1808.))/1.e3
-    
+
+plt.plot(temperatures, Vps)
+plt.title('Vp as a function of T at 1 bar')
+plt.show()
 
 fig1 = mpimg.imread('Trho_1bar.png')
 plt.imshow(fig1, extent=[1800., 2400., 6.65, 7.1], aspect='auto')
@@ -129,23 +157,3 @@ plt.ylim(6.65, 7.1)
 plt.title('AA1994 Figure 1')
 plt.show()
 
-'''
-# Find heat capacities
-temperatures = np.linspace(1000., 15000., 101)
-Cvs = np.empty_like(temperatures)
-
-rhos = np.empty_like(temperatures)
-densities = [5.e3,10.e3, 15.e3]
-for rho in densities:
-    V = m/rho
-    for i, T in enumerate(temperatures):
-        Cvs[i] = C_v(V, T, params)/burnman.constants.gas_constant
-
-    plt.plot(temperatures, Cvs)
-
-fig1 = mpimg.imread('TCv_different_densities.png')
-plt.imshow(fig1, extent=[1000., 15000., 0., 6.], aspect='auto')
-plt.ylim(0., 6.)
-plt.title('AA1994, Figure 5')
-plt.show()
-'''

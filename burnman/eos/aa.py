@@ -13,6 +13,7 @@ from . import debye
 from . import equation_of_state as eos
 from ..tools import bracket
 from ..constants import gas_constant
+from . import electronic as electronic
 
 class AA(eos.EquationOfState):
     """
@@ -61,20 +62,20 @@ class AA(eos.EquationOfState):
     # High temperature limit of the kinetic contribution to the heat capacity
     # Anderson and Ahrens (1994), just after equation 29.
     def _C_v_kin(self, V, T, params):
-        return 1.5*gas_constant
+        return 1.5*params['n']*gas_constant
     
     # Equation A1
     def _C_v_el(self, V, T, params):
         A, B, Theta = self._ABTheta(V, params)
         C_e = A*(1. - (Theta*Theta)/(Theta*Theta + T*T)) + B*np.power(T, 0.6)
         
+        #C_e = electronic.heat_capacity_v(T, params['V_0']/V, params['Tel_0'], params['Cvel_max'])
         return C_e
 
     # Equation A15
     def _C_v_pot(self, V, T, params):
         lmda, xi = self._lambdaxi(V, params)
         C_pot = (lmda*T + xi*params['theta']) / (params['theta'] + T)
-    
         return C_pot
 
     '''
@@ -82,41 +83,47 @@ class AA(eos.EquationOfState):
     '''
         
     def _internal_energy_kin(self, Ts, T, V, params):
-        return 1.5*gas_constant*(T - Ts)
+        E_kin = 1.5*params['n']*gas_constant*(T - Ts)
+        return E_kin
     
     def _internal_energy_el(self, Ts, T, V, params):
         A, B, Theta = self._ABTheta(V, params)
         E_el = A*(T - Ts - Theta*(np.arctan(T/Theta) - np.arctan(Ts/Theta))) + 0.625*B*(np.power(T, 1.6) - np.power(Ts, 1.6))
+        #E_el = electronic.thermal_energy(T, params['V_0']/V, params['Tel_0'], params['Cvel_max']) - electronic.thermal_energy(Ts, params['V_0']/V, params['Tel_0'], params['Cvel_max'])
         return E_el
     
     def _internal_energy_pot(self, Ts, T, V, params):
         lmda, xi = self._lambdaxi(V, params)
-        return (lmda*(T - Ts) + params['theta']*(xi - lmda)*np.log((params['theta'] + T)/(params['theta'] + Ts)))
-    
+        E_pot = (lmda*(T - Ts) + params['theta']*(xi - lmda)*np.log((params['theta'] + T)/(params['theta'] + Ts)))
+        return E_pot
     '''
     Contributions to entropy
     '''
     
     def _entropy_kin(self, Ts, T, V, params):
         if np.abs(T- Ts) > 1.e-10:
-            return 1.5*gas_constant*(np.log(T) - np.log(Ts))
+            S_kin = 1.5*params['n']*gas_constant*(np.log(T) - np.log(Ts))
         else:
-            return 0.
+            S_kin = 0.
+        return S_kin
         
     def _entropy_el(self, Ts, T, V, params):
         if np.abs(T- Ts) > 1.e-10:
             A, B, Theta = self._ABTheta(V, params)
-            return (A*(np.log(T/Ts) - 0.5*np.log(T*T*(Theta*Theta + Ts*Ts)/(Ts*Ts*(Theta*Theta + T*T)))) + 5./3.*B*(np.power(T, 0.6) - np.power(Ts, 0.6)))
+            S_el = (A*(np.log(T/Ts) - 0.5*np.log(T*T*(Theta*Theta + Ts*Ts)/(Ts*Ts*(Theta*Theta + T*T)))) + 5./3.*B*(np.power(T, 0.6) - np.power(Ts, 0.6)))
         else:
-            return 0.
+            S_el = 0.
+        #S_el = electronic.entropy(T, params['V_0']/V, params['Tel_0'], params['Cvel_max']) - electronic.entropy(Ts, params['V_0']/V, params['Tel_0'], params['Cvel_max'])
+        return S_el
     
     def _entropy_pot(self, Ts, T, V, params):
         if np.abs(T- Ts) > 1.e-10:
             lmda, xi = self._lambdaxi(V, params)
-            return (lmda*np.log((params['theta'] + T)/(params['theta'] + Ts)) + xi*np.log((T*(params['theta'] + Ts))/(Ts*(params['theta'] + T))))
+            S_pot = (lmda*np.log((params['theta'] + T)/(params['theta'] + Ts)) + xi*np.log((T*(params['theta'] + Ts))/(Ts*(params['theta'] + T))))
         else:
-            return 0.
-
+            S_pot = 0.
+        return S_pot
+            
     '''
     Isentropic and isochoric calculations
     '''
@@ -207,7 +214,7 @@ class AA(eos.EquationOfState):
         """
         Ts = self._isentropic_temperature(volume, params)
         dE = self._isochoric_energy_change(Ts, temperature, volume, params)
-        E1 = params['E_0'] + self._isentropic_energy_change(volume, params)
+        E1 = self._isentropic_energy_change(volume, params) # should also include params['E_0'] given the expression in Anderson and Ahrens. Here, we take the energy change relative to the reference isentrope (effective E_0 = 0). The energy at standard state is *only* used to calculate the final energies, not the physical properties.
         E2 = E1 + dE
         dP = (params['grueneisen_0']*dE
               + 0.5*params['grueneisen_prime']*np.power(params['V_0']/volume,
