@@ -83,7 +83,7 @@ if __name__ == "__main__":
     print 'DV:', (liq.V - fcc.V)*1.e6, 'should be', DV
     print 'dT/dP:', (liq.V - fcc.V)/(liq.S - fcc.S), 'should be', dTdP, '+/-', dTdP_err 
     
-
+    '''
     temperatures = np.linspace(1800., 4000., 101)
     aKT = np.empty_like(temperatures)
     volumes = np.empty_like(temperatures)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         plt.plot(temperatures, grs)
     plt.show()
     exit()
-
+    '''
     
     temperatures = np.linspace(1800., 4000., 101)
     Cps = np.empty_like(temperatures)

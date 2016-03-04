@@ -37,7 +37,7 @@ class liq_FeS (burnman.Mineral):
             'V_0': V_0,  # Fit to standard state data
             'E_0': -84840., # Fit to standard state data
             'K_S': 16.5e9, # Fit to standard state data
-            'Kprime_S': 4.661, # ?
+            'Kprime_S': 5.3, # ?
             'Kprime_prime_S': -0.043e-9, # ?
             'grueneisen_0': 0.87, # ?
             'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
@@ -125,25 +125,38 @@ plt.legend(loc="lower left")
 plt.title('Heat capacities at 1 bar')
 plt.show()
 
-exit()  
-
 if __name__ == "__main__":
-    from FeS_EoSes_and_FeS_VI_properties import FeS_I_new
+    from FeS_EoSes_and_FeS_VI_properties import FeS_I_new, FeS_VI_SLB
     
-    B20 = B20_FeSi()
+    FeS = FeS_I_new()
+    VI = FeS_VI_SLB()
+    
+    FeS.set_state(1.e5, liq.params['T_0'])
+    liq.set_state(1.e5, liq.params['T_0'])
 
-    pressures = np.linspace(1.e5, 40.e9, 101)
+    liq.params['E_0'] = liq.params['E_0'] - liq.gibbs + FeS.gibbs
+    
+    pressures = np.linspace(1.e5, 10.e9, 31)
     temperatures = np.empty_like(pressures)
     for i, P in enumerate(pressures):
-        temperatures[i] = burnman.tools.equilibrium_temperature([B20, liq], [1.0, -1.0], P, 1800.)
-        #print liq.S - B20.S
-
-
-    
-    fig1 = mpimg.imread('figures/FeSi_melting_curve_Lord_2010.png')
-    plt.imshow(fig1, extent=[0., 160., 1600., 4200.], aspect='auto')
+        temperatures[i] = burnman.tools.equilibrium_temperature([FeS, liq], [1.0, -1.0], P, 1800.)
     plt.plot(pressures/1.e9, temperatures, linewidth=4.)
+
+    pressures = np.linspace(10.e9, 100.e9, 31)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([VI, liq], [1.0, -1.0], P, 2500.)
+    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
+    
+    pressures_RK, temperatures_RK = np.loadtxt(fname='data/Fe12S13_melting_Ryzhenko_Kennedy_1973.dat', unpack=True)
+    plt.plot(pressures_RK, temperatures_RK, marker='o', linestyle='None')
+    pressures_WJ, temperatures_WJ = np.loadtxt(fname='data/FeS_melting_curve_Williams_Jeanloz_1990.dat', unpack=True)
+    plt.plot(pressures_WJ, temperatures_WJ, marker='o', linestyle='None')
+    #fig1 = mpimg.imread('figures/FeSi_melting_curve_Lord_2010.png')
+    #plt.imshow(fig1, extent=[0., 160., 1600., 4200.], aspect='auto')
     plt.show()
+    
+    exit()  
     '''
     fcc.set_state(5.2e9, 1991.)
     liq.set_state(5.2e9, 1991.)
