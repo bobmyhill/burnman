@@ -107,18 +107,20 @@ print liq.gr, liq.alpha, liq.K_S, liq.C_p, liq.density
 reference_entropy = liq.S
 
 def isentrope(T, P, Sref, mineral):
-    mineral.set_state(P, T)
+    mineral.set_state(P, T[0])
     return Sref - mineral.S
 
 pressures = np.linspace(0., 100.e9, 101)
 temperatures = np.empty_like(pressures)
 rhos = np.empty_like(pressures)
+Vps = np.empty_like(pressures)
 
 for i, P in enumerate(pressures):
     temperatures[i] = fsolve(isentrope, 1811., args=(P, reference_entropy, liq))[0]
     rhos[i] = liq.density
+    Vps[i] = np.sqrt(liq.K_S/liq.density)
 
-np.savetxt(header='Pressures (GPa)   Temperatures (K)   Densities (kg/m^3)', X=zip(*[pressures/1.e9, temperatures, rhos]), fname='isentropic_PTrho.dat')
+np.savetxt(header='Pressures (GPa)   Temperatures (K)   Densities (kg/m^3), Vps (km/s)', X=zip(*[pressures/1.e9, temperatures, rhos, Vps]), fname='isentropic_PTrhoVp.dat')
 
 fig1 = mpimg.imread('PTrho_reference_isentrope.png')
 
