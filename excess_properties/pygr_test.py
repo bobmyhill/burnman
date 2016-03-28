@@ -16,13 +16,46 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman import minerals
 
-def findPideal(P, V, Tstd, m1, m2):
-    m1.set_state(P[0], Tstd)
-    m2.set_state(P[0], Tstd)
+from burnman.solidsolution import SolidSolution
+
+
+class pyrope_grossular(SolidSolution):
+
+    def __init__(self, molar_fractions=None):
+        self.name = 'garnet'
+        self.type = 'full_subregular'
+        self.n_atoms = 20.
+        self.T_0 = 300.
+        self.P_0 = 1.e5
+        self.endmembers = [[minerals.SLB_2011.py(), '[Mg]3Al2Si3O12'],
+                           [minerals.SLB_2011.gr(), '[Ca]3Al2Si3O12']]
+        self.energy_interaction = [[[0., 0.]]]
+        self.volume_interaction = [[[1.2e-6, 1.2e-6]]]
+        SolidSolution.__init__(self, molar_fractions)
+
+
+
+pygr = pyrope_grossular()
+pygr.set_composition([0.5, 0.5])
+
+temperatures = [300., 1000., 2000.]
+pressures = np.linspace(1.e5, 100.e9, 31)
+Vex = np.empty_like(pressures)
+for T in temperatures:
+    for i, P in enumerate(pressures):
+        pygr.set_state(P, T)
+        Vex[i] = pygr.excess_volume
+    plt.plot(pressures/1.e9, Vex, label=str(T)+' K')
+
+
+
+def findPideal(P, V, T, m1, m2):
+    m1.set_state(P[0], T)
+    m2.set_state(P[0], T)
     return V - 0.5*(m1.V + m2.V)
 
-def volume_excess(Vexcess0, Videal0, Kideal0, Kprime, pressure):
-    Vnonideal0 = Videal0 + Vexcess0
+def volume_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
+    Vexcess0 = Vnonideal0 - Videal0
     Knonideal0 = Kideal0*np.power(Videal0/Vnonideal0, Kprime)
     bideal = Kprime/Kideal0
     bnonideal = Kprime/Knonideal0
@@ -30,120 +63,106 @@ def volume_excess(Vexcess0, Videal0, Kideal0, Kprime, pressure):
     return Vnonideal0*np.power((1.+bnonideal*pressure), -c) \
       - Videal0*np.power((1.+bideal*(pressure)), -c)
 
-def intVdP_excess(Vexcess0, Videal0, Kideal0, Kprime, pressure):
-    Vnonideal0 = Videal0 + Vexcess0
+def intVdP_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
+    if np.abs(pressure) < 1.:
+        pressure = 1.
+    Vexcess0 = Vnonideal0 - Videal0
     Knonideal0 = Kideal0*np.power(Videal0/Vnonideal0, Kprime)
     bideal = Kprime/Kideal0
     bnonideal = Kprime/Knonideal0
     c = 1./Kprime
     return -pressure*(Vnonideal0*np.power((1.+bnonideal*pressure), 1.-c)/(bnonideal*(c - 1.)*pressure) \
                       - Videal0*np.power((1.+bideal*pressure), 1.-c)/(bideal*(c - 1.)*pressure))
-    
 
-def gibbs_excess(P, T, Vxs0, Kprime, n_D, Gxs0, m1, m2):
 
-    # Ideal properties at standard state
-    n = m1.params['n']
-    T0 = m1.params['T_0']
-
-    m1.set_state(1.e5, T0)
-    m2.set_state(1.e5, T0)
+def gibbs_excess(P, T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, m1, m2):
+    # Ideal and nonideal properties at standard state
+    P_0 = 1.e5
+    m1.set_state(P_0, T0)
+    m2.set_state(P_0, T0)
     V0_ideal = 0.5*(m1.V + m2.V)
     K0_ideal = 2.0*V0_ideal/(m1.V/m1.K_T + m2.V/m2.K_T)
-    a0_ideal = 0.5/V0_ideal*(m1.alpha*m1.V + m2.alpha*m2.V)
-    Cp0_ideal = 0.5*(m1.C_p + m2.C_p)
-    debye0_ideal = np.sqrt(m1.params['Debye_0']*m2.params['Debye_0'])
-    Cv0_ideal = Cp0_ideal - V0_ideal*T0*a0_ideal*a0_ideal*K0_ideal
-    gr0_ideal = a0_ideal*K0_ideal*V0_ideal/Cv0_ideal
-    q0_ideal = 0.5*(m1.params['q_0'] + m2.params['q_0']) 
-
-    # Non ideal properties at standard state
     V0_nonideal = V0_ideal + Vxs0
-    V0overV0_ideal = V0_nonideal/V0_ideal
-    debye0_nonideal = debye0_ideal*np.power(V0overV0_ideal, n_D)
     
-    Cv0_nonideal = burnman.eos.debye.heat_capacity_v(T0, debye0_nonideal, n)
-    Cv0overCv0_ideal = Cv0_nonideal/Cv0_ideal
-    gr0_nonideal = gr0_ideal*V0overV0_ideal/Cv0overCv0_ideal
-    
-    # Ideal properties at pressure
+    # Properties at pressure
     m1.set_state(P, T)
     m2.set_state(P, T)
     V_ideal = 0.5*(m1.V + m2.V)
-    f_ideal = 0.5*(pow(V0_ideal/V_ideal, 2./3.) - 1.)
-    a2_iikk_ideal = -12.*gr0_ideal + 36.*gr0_ideal*gr0_ideal \
-                    - 18.*q0_ideal * gr0_ideal
-    fdebye_ideal = np.sqrt(1. + 6.*gr0_ideal*f_ideal + 0.5*a2_iikk_ideal*f_ideal*f_ideal)
-    debye_ideal = debye0_ideal * fdebye_ideal
     
-    # Non ideal volume at pressure
-    P_ideal = fsolve(findPideal, [P], args=(V_ideal, T0, m1, m2))[0]
-    Vxs = volume_excess(Vxs0, V0_ideal, K0_ideal, Kprime, P_ideal)
+    # First, heres Pth (\int aK_T dT | V) for the ideal phase
+    # when V=V0 and T=T1 
+    P_V0ideal_T = fsolve(findPideal, [P_0 + 5.e6*(T - T0)], args=(V0_ideal, T, m1, m2))[0]
+    Pth_V0ideal_T =  P_V0ideal_T - P_0
 
-    f_nonideal = 0.5*(pow((V0_ideal+Vxs0)/(V_ideal + Vxs), 2./3.) - 1.)
-    a2_iikk_nonideal = a2_iikk_ideal/(debye0_ideal*debye0_ideal)*(debye0_nonideal*debye0_nonideal)
-    fdebye_nonideal = np.sqrt(1. + 6.*gr0_nonideal*f_nonideal + 0.5*a2_iikk_nonideal*f_nonideal*f_nonideal)
-    debye_nonideal = debye0_nonideal * fdebye_nonideal
+    # Make the assumption that Pth(V0, T)_nonideal = Pth(V0, T)_ideal*f_Pth 
+    Pth_V0nonideal_T = Pth_V0ideal_T*f_Pth
+    m1.set_state(P_0 + Pth_V0nonideal_T, T)
+    m2.set_state(P_0 + Pth_V0nonideal_T, T)
+    V_V0nonideal_ideal = 0.5*(m1.V + m2.V)
     
-    # Calculate contributions to the excess Gibbs free energy
-    F_quasiharmonic_ideal = burnman.eos.debye.helmholtz_free_energy(T, debye_ideal, n) - \
-                            burnman.eos.debye.helmholtz_free_energy(T0, debye_ideal, n)
-    F_quasiharmonic_nonideal = burnman.eos.debye.helmholtz_free_energy(T, debye_nonideal, n) - \
-                               burnman.eos.debye.helmholtz_free_energy(T0, debye_nonideal, n)
-    
-    #S_quasiharmonic_ideal = burnman.eos.debye.entropy(T, debye_T_ideal, n)
-    #S_quasiharmonic_nonideal = burnman.eos.debye.entropy(T, debye_T_nonideal, n)
+    # Make the further assumption that the form of the excess volume curve is temperature independent
+    V_excess = volume_excess(V0_nonideal, V_V0nonideal_ideal,
+                             K0_ideal, Kprime,
+                             P - Pth_V0nonideal_T - P_0)
+    V_nonideal = V_ideal + V_excess
 
-    Gxs_T0 = intVdP_excess(Vxs0, V0_ideal, K0_ideal, Kprime, P_ideal) - intVdP_excess(Vxs0, V0_ideal, K0_ideal, Kprime, 1.e5)
-    Gxs_quasiharmonic = F_quasiharmonic_nonideal - F_quasiharmonic_ideal
-    Gxs = Gxs0 + Gxs_T0 + Gxs_quasiharmonic
-    return Gxs
+    # Calculate contributions to the gibbs free energy
+    # 1. The isothermal path along T0 from P0 to infinite pressure 
+    Gxs_T0 = - intVdP_excess(V0_nonideal, V0_ideal, K0_ideal, Kprime, P_0 - P_0)
+    # 2. The isobaric path at infinite pressure from T0 to T has no excess contribution
+    # 3. The isothermal path from infinite pressure down to P, T
+    Gxs_T = intVdP_excess(V0_nonideal, V_V0nonideal_ideal,
+                          K0_ideal, Kprime,
+                          P - Pth_V0nonideal_T - P_0)
+    
+    Gxs = Gxs0 + Gxs_T0 + Gxs_T
+    return Gxs, V_excess
 
 
 py = minerals.SLB_2011.pyrope()
 gr = minerals.SLB_2011.grossular()
 
-#py = minerals.HP_2011_ds62.hlt()
-#gr = minerals.HP_2011_ds62.syv()
-
-
 Vxs0 = 0.3e-6
 Kprime = 7.
-n_D = 1./6. - Kprime/2.
-#n_D = -1.
+f_Pth = 1.000
 Gxs0 = 0.
+T0=300.
+n = 20.
 
-
+'''
 pressures = [1.e5, 10.e9, 50.e9, 100.e9]
-temperatures = np.linspace(1., 2000., 31)
+temperatures = np.linspace(1., 2000., 101)
 gibbs_excesses = np.empty_like(temperatures)
 S_excesses = np.empty_like(temperatures)
 Cp_excesses = np.empty_like(temperatures)
 for P in pressures:
     for i, T in enumerate(temperatures):
-        gibbs_excesses[i] = gibbs_excess(P, T, Vxs0, Kprime, n_D, Gxs0, py, gr)
-        G0 = gibbs_excess(P, T-0.5, Vxs0, Kprime, n_D, Gxs0, py, gr)
-        G1 = gibbs_excess(P, T, Vxs0, Kprime, n_D, Gxs0, py, gr)
-        G2 = gibbs_excess(P, T+0.5, Vxs0, Kprime, n_D, Gxs0, py, gr)
+        G0 = gibbs_excess(P, T-0.5, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0]
+        G1 = gibbs_excess(P, T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0]
+        G2 = gibbs_excess(P, T+0.5, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0]
+        gibbs_excesses[i] = G1
         S_excesses[i] = G0 - G2
         Cp_excesses[i] = T*(2.*G1 - G0 - G2)/0.25
     plt.plot(temperatures, S_excesses, label=str(P/1.e9)+' GPa')
     
 plt.legend(loc='lower right')
 plt.show()
-
+'''
 
 temperatures = [300., 1000., 2000.]
-pressures = np.linspace(1.e5, 50.e9, 31)
+pressures = np.linspace(1.e5, 100.e9, 31)
 gibbs_excesses = np.empty_like(pressures)
 S_excesses = np.empty_like(pressures)
 V_excesses = np.empty_like(pressures)
+V2_excesses = np.empty_like(pressures)
 for T in temperatures:
     for i, P in enumerate(pressures):
-        gibbs_excesses[i] = gibbs_excess(P, T, Vxs0, Kprime, n_D, Gxs0, py, gr)
-        #S_excesses[i] = gibbs_excess(P, T-0.5, Vxs0, Kprime, n_D, Gxs0, py, gr) - gibbs_excess(P, T+0.5, Vxs0, Kprime, n_D, Gxs0, py, gr)
-        V_excesses[i] = (gibbs_excess(P+500., T, Vxs0, Kprime, n_D, Gxs0, py, gr) - gibbs_excess(P-500., T, Vxs0, Kprime, n_D, Gxs0, py, gr))/1000.
-    plt.plot(pressures/1.e9, gibbs_excesses, label=str(T)+' K')
+        gibbs_excesses[i] = gibbs_excess(P, T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0]
+        S_excesses[i] = gibbs_excess(P, T-0.5, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0] - gibbs_excess(P, T+0.5, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0]
+        V_excesses[i] = (gibbs_excess(P+500., T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0] - gibbs_excess(P-500., T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[0])/1000.
+        V2_excesses[i] = gibbs_excess(P+500., T, T0, n, Gxs0, Vxs0, Kprime, f_Pth, py, gr)[1]
+    plt.plot(pressures/1.e9, V_excesses, marker='o', linestyle='None', label=str(T)+' K')
+    plt.plot(pressures/1.e9, V2_excesses, marker='x', linestyle='None', label=str(T)+' K, direct')
     
 plt.legend(loc='lower right')
 plt.xlabel('P (GPa)')

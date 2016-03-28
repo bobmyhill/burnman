@@ -70,6 +70,13 @@ class SolidSolution(Mineral):
                     self.volume_interaction = None
                 if hasattr(self, 'entropy_interaction') == False:
                     self.entropy_interaction = None
+                
+                if hasattr(self, 'energy_interaction') == False:
+                    self.energy_interaction = None
+                if hasattr(self, 'kprime_interaction') == False:
+                    self.kprime_interaction = None
+                if hasattr(self, 'ndebye_interaction') == False:
+                    self.ndebye_interaction = None
 
                 if self.type == 'symmetric':
                     self.solution_model = SymmetricRegularSolution(
@@ -84,6 +91,11 @@ class SolidSolution(Mineral):
                 elif self.type == 'subregular':
                     self.solution_model = SubregularSolution(
                         self.endmembers, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
+                elif self.type == 'full_subregular':
+                    self.solution_model = FullSubregularSolution(
+                        self.endmembers, self.P_0, self.T_0, self.n_atoms,
+                        self.energy_interaction, self.volume_interaction,
+                        self.kprime_interaction, self.ndebye_interaction)
                 else:
                     raise Exception(
                         "Solution model type " + self.params['type'] + "not recognised.")
@@ -132,7 +144,9 @@ class SolidSolution(Mineral):
         Mineral.set_state(self, pressure, temperature)
         for i in range(self.n_endmembers):
             self.endmembers[i][0].set_state(pressure, temperature)
-
+            
+        self.solution_model.set_state(pressure, temperature, self.endmembers)
+        
     @material_property
     def activities(self):
         """
