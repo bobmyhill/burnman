@@ -543,13 +543,11 @@ class FullSubregularSolution (IdealSolution):
             for j in range(self.n_endmembers):
                 if i != j:
                     V0 = self.ideal_std[i][j]['V_0']
-                    V0ni = V0 + Wv[i][j]
+                    V0ni = V0 + Wv[i][j]/4.
                     Kprime = Wkprime[i][j]
-                    K0ni = K0*np.power(V0/V0ni, Wkprime[i][j])
                     self.nonideal_std[i][j] = {
                         'energy_xs': We[i][j],
                         'V_0': V0ni,
-                        'K_0': K0ni,
                         'Kprime_xs': Kprime,
                         'f_Pth': Wp[i][j] }
         
@@ -558,8 +556,8 @@ class FullSubregularSolution (IdealSolution):
 
     def set_state(self, pressure, temperature, endmembers):
         def _findPideal(P, V, T0, m1, m2):
-            V_m1 = m1.method.volume(P, T0, m1.params)
-            V_m2 = m2.method.volume(P, T0, m2.params)
+            V_m1 = m1.method.volume(P[0], T0, m1.params)
+            V_m2 = m2.method.volume(P[0], T0, m2.params)
             return V - 0.5*(V_m1 + V_m2)
     
         def _volume_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
@@ -608,22 +606,22 @@ class FullSubregularSolution (IdealSolution):
                     
                 
                     # Make the further assumption that the form of the excess volume curve is temperature independent
-                    self.Wv[i][j] = _volume_excess(self.nonideal_std[i][j]['V_0'],
-                                                   V_V0nonideal_ideal,
-                                                   self.ideal_std[i][j]['K_0'],
-                                                   self.nonideal_std[i][j]['Kprime_xs'],
-                                                   pressure - Pth_V0nonideal_T - self.P_0)
+                    self.Wv[i][j] = 4.*_volume_excess(self.nonideal_std[i][j]['V_0'],
+                                                      V_V0nonideal_ideal,
+                                                      self.ideal_std[i][j]['K_0'],
+                                                      self.nonideal_std[i][j]['Kprime_xs'],
+                                                      pressure - Pth_V0nonideal_T - self.P_0)
 
                     # Calculate contributions to the gibbs free energy
                     # 1. The isothermal path along T0 from P0 to infinite pressure 
-                    Gxs_T0 = - _intVdP_excess(self.nonideal_std[i][j]['V_0'],
+                    Gxs_T0 = -4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
                                               self.ideal_std[i][j]['V_0'],
                                               self.ideal_std[i][j]['K_0'],
                                               self.nonideal_std[i][j]['Kprime_xs']
                                               , 0.)
                     # 2. The isobaric path at infinite pressure from T0 to T has no excess contribution
                     # 3. The isothermal path from infinite pressure down to P, T
-                    Gxs_T = _intVdP_excess(self.nonideal_std[i][j]['V_0'],
+                    Gxs_T = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
                                            V_V0nonideal_ideal,
                                            self.ideal_std[i][j]['K_0'],
                                            self.nonideal_std[i][j]['Kprime_xs'],
@@ -634,7 +632,7 @@ class FullSubregularSolution (IdealSolution):
                                                                             self.P_0, self.T_0, self.T_0+1.,
                                                                             self.nonideal_std[i][j]['f_Pth'],
                                                                             endmembers[i][0], endmembers[j][0])
-                    Gxs_T01 = _intVdP_excess(self.nonideal_std[i][j]['V_0'],
+                    Gxs_T01 = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
                                              V_V0nonideal_ideal01,
                                              self.ideal_std[i][j]['K_0'],
                                              self.nonideal_std[i][j]['Kprime_xs'],
@@ -645,14 +643,14 @@ class FullSubregularSolution (IdealSolution):
                                                                           self.P_0, self.T_0, temperature+1.,
                                                                           self.nonideal_std[i][j]['f_Pth'],
                                                                           endmembers[i][0], endmembers[j][0])
-                    Gxs_T1 = _intVdP_excess(self.nonideal_std[i][j]['V_0'],
+                    Gxs_T1 = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
                                             V_V0nonideal_ideal1,
                                             self.ideal_std[i][j]['K_0'], 
                                             self.nonideal_std[i][j]['Kprime_xs'],
                                             pressure - Pth_V0nonideal_T1 - self.P_0)
 
                     Gxs0 = self.nonideal_std[i][j]['energy_xs'] \
-                           + self.T_0*(Gxs_T01 - Gxs_T0) - self.P_0*self.nonideal_std[i][j]['V_0']
+                           + (self.T_0*(Gxs_T01 - Gxs_T0) - self.P_0*(self.nonideal_std[i][j]['V_0'] - self.ideal_std[i][j]['V_0']))
                     Gxs = 0. + Gxs_T0 + Gxs_T
                                         
                     self.Ws[i][j] = Gxs_T - Gxs_T1

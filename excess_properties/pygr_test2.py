@@ -50,12 +50,18 @@ print pygr.excess_gibbs
 
 temperatures = [300., 1000., 2000.]
 pressures = np.linspace(1.e5, 100.e9, 31)
-Gex = np.empty_like(pressures)
+Vex = np.empty_like(pressures)
+Vex2 = np.empty_like(pressures)
 for T in temperatures:
     for i, P in enumerate(pressures):
         pygr.set_state(P, T)
-        Gex[i] = pygr.excess_gibbs
-    plt.plot(pressures/1.e9, Gex, label=str(T)+' K')
+        Vex[i] = pygr.excess_volume
+        G0 = pygr.excess_gibbs
+        pygr.set_state(P+100., T)
+        G1 = pygr.excess_gibbs
+        Vex2[i] = (G1-G0)/100.
+    plt.plot(pressures/1.e9, Vex, label=str(T)+' K')
+    plt.plot(pressures/1.e9, Vex2, label=str(T)+' K')
 
 
 plt.legend(loc='lower right')
@@ -65,13 +71,19 @@ plt.show()
 pressures = [1.e5, 20.e9, 100.e9]
 temperatures = np.linspace(1., 2000., 31)
 Sxs = np.empty_like(temperatures)
+Sxs2 = np.empty_like(temperatures)
 
 for P in pressures:
     for i, T in enumerate(temperatures):
         pygr.set_state(P, T)
         Sxs[i] = pygr.excess_entropy
+        G0 = pygr.excess_gibbs
+        pygr.set_state(P, T+1.)
+        G1 = pygr.excess_gibbs
+        Sxs2[i] = (G0-G1)/1.
         
     plt.plot(temperatures, Sxs, label=str(P/1.e9)+' GPa')
+    plt.plot(temperatures, Sxs2, label=str(P/1.e9)+' GPa')
 
 
 plt.legend(loc='lower right')

@@ -31,6 +31,8 @@ class pyrope_grossular(SolidSolution):
                            [minerals.SLB_2011.gr(), '[Ca]3Al2Si3O12']]
         self.energy_interaction = [[[0., 0.]]]
         self.volume_interaction = [[[1.2e-6, 1.2e-6]]]
+        self.kprime_interaction = [[[7., 7.]]]
+        self.thermal_pressure_interaction = [[[1.005, 1.005]]]
         SolidSolution.__init__(self, molar_fractions)
 
 
@@ -124,7 +126,7 @@ gr = minerals.SLB_2011.grossular()
 
 Vxs0 = 0.3e-6
 Kprime = 7.
-f_Pth = 1.000
+f_Pth = 1.005
 Gxs0 = 0.
 T0=300.
 n = 20.
