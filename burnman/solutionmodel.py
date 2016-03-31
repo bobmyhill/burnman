@@ -160,7 +160,7 @@ class SolutionModel(object):
         """
         return 0.0
 
-    def set_state(self, pressure, temperature):
+    def set_state(self, pressure, temperature, endmembers):
         return None
 
 
