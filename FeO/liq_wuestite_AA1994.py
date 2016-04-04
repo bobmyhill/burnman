@@ -18,13 +18,13 @@ from burnman import minerals
 from burnman.processchemistry import read_masses, dictionarize_formula, formula_mass
 atomic_masses=read_masses()
 
-
+# From Hara
 class liq_FeO (burnman.Mineral):
     def __init__(self):
         formula='FeO'
         formula = dictionarize_formula(formula)
         m = formula_mass(formula, atomic_masses)
-        rho_0 = 5000. #4632. # 4632 is extrapolated from Hara et al., 1988, similar to Ji et al., 1997 (4700)
+        rho_0 = 4634. # 5000. #4632. # 4632 is extrapolated from Hara et al., 1988a, b, (BaO and CaO solutions) similar to Ji et al., 1997 (4700)
         V_0 = m/rho_0
         self.params = {
             'name': 'liquid FeO',
@@ -32,14 +32,14 @@ class liq_FeO (burnman.Mineral):
             'equation_of_state': 'aa',
             'P_0': 1.e5, # 1 bar
             'T_0': 1650., # melting temperature for FeO
-            'S_0':  178.78, # JANAF for FeO
+            'S_0':  195.74, # 178.78 is JANAF for FeO
             'molar_mass': m, # mass
             'V_0': V_0,  # Fit to standard state data
             'E_0': -84840., # Fit to standard state data
-            'K_S': 90.e9, # Fit to standard state data
-            'Kprime_S': 4.45, # ?
+            'K_S': 75.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
+            'Kprime_S': 4.4, # ?
             'Kprime_prime_S': -0.040e-9, # ?
-            'grueneisen_0': 1.40, # ?
+            'grueneisen_0': 1.30, # controls alpha
             'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # ?
             'a': [0., 0.], # (goes into electronic term)
@@ -53,27 +53,110 @@ class liq_FeO (burnman.Mineral):
             'molar_mass': m}
         burnman.Mineral.__init__(self)
 
+# From density estimate from Bhattacharyya and Gaskell (1996)
+class liq_FeO (burnman.Mineral):
+    def __init__(self):
+        formula='FeO'
+        formula = dictionarize_formula(formula)
+        m = formula_mass(formula, atomic_masses)
+        rho_0 = 4800. # 5000. #4632. # 4632 is extrapolated from Hara et al., 1988a, b, (BaO and CaO solutions) similar to Ji et al., 1997 (4700)
+        V_0 = m/rho_0
+        self.params = {
+            'name': 'liquid FeO',
+            'formula': formula,
+            'equation_of_state': 'aa',
+            'P_0': 1.e5, # 1 bar
+            'T_0': 1650., # melting temperature for FeO
+            'S_0':  188., # 178.78 is JANAF for FeO
+            'molar_mass': m, # mass
+            'V_0': V_0,  # Fit to standard state data
+            'E_0': -84840., # Fit to standard state data
+            'K_S': 82.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
+            'Kprime_S': 4.4, # ?
+            'Kprime_prime_S': -0.040e-9, # ?
+            'grueneisen_0': 1.30, # controls alpha
+            'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
+            'grueneisen_n': -1.870, # ?
+            'a': [0., 0.], # (goes into electronic term)
+            'b': [0., 0.], # (goes into electronic term)
+            'Theta': [1747.3, 1.537], # ? (goes into potential term)
+            'theta': 2000., # ? (goes into potential term)
+            'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
+            'xi_0': 67., # ? (goes into potential term)
+            'F': [1., 1.],
+            'n': sum(formula.values()),
+            'molar_mass': m}
+        burnman.Mineral.__init__(self)
+'''
+# Density estimate from dTdP, sort-of agrees with Mori and Suzuki, 1968
+class liq_FeO (burnman.Mineral):
+    def __init__(self):
+        formula='FeO'
+        formula = dictionarize_formula(formula)
+        m = formula_mass(formula, atomic_masses)
+        rho_0 = 5018. # Coughlin-derived
+        V_0 = m/rho_0
+        self.params = {
+            'name': 'liquid FeO',
+            'formula': formula,
+            'equation_of_state': 'aa',
+            'P_0': 1.e5, # 1 bar
+            'T_0': 1650., # melting temperature for FeO
+            'S_0':  178.78, # 178.78 is JANAF for FeO
+            'molar_mass': m, # mass
+            'V_0': V_0,  # Fit to standard state data
+            'E_0': -84840., # Fit to standard state data
+            'K_S': 100.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
+            'Kprime_S': 4.4, # ?
+            'Kprime_prime_S': -0.040e-9, # ?
+            'grueneisen_0': 1.30, # controls alpha
+            'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
+            'grueneisen_n': -1.870, # ?
+            'a': [0., 0.], # (goes into electronic term)
+            'b': [0., 0.], # (goes into electronic term)
+            'Theta': [1747.3, 1.537], # ? (goes into potential term)
+            'theta': 2000., # ? (goes into potential term)
+            'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
+            'xi_0': 67., # ? (goes into potential term)
+            'F': [1., 1.],
+            'n': sum(formula.values()),
+            'molar_mass': m}
+        burnman.Mineral.__init__(self)
+'''
 # H_0 = 75015 # Barin
 
 from B1_wuestite import B1_wuestite
     
 liq = liq_FeO()
+
+
+liq.set_state(1.e5, 1673.)
+print liq.V*1.e6, liq.rho
+liq.set_state(1.e5, 1773.)
+print liq.V*1.e6, liq.rho
+liq.set_state(1.e5, 1873.)
+print liq.V*1.e6, liq.rho
+
+
 liq.set_state(1.e5, liq.params['T_0'])
 
 B1 = B1_wuestite()
 #B1 = burnman.minerals.SLB_2011.wuestite()
 B1.set_state(1.e5, liq.params['T_0'])
 
-dTdP = 70.
-Sfusion = 19.5
-print 'dT/dP melting (predicted vs observed, K/GPa):', (liq.V - B1.V)/(liq.S - B1.S)*1.e9, dTdP
-print 'dS:', (liq.S - B1.S), Sfusion, 'Coughlin et al., 1951, corrected'
-print 'dV:', (liq.V - B1.V), dTdP/1.e9*Sfusion, 'Coughlin et al., 1951, corrected'
+dTdP_Lindsley_1966 = 70.
+Sfusion_Coughlin_1951 = 19.5
+V_CL =  (B1.V + (dTdP_Lindsley_1966/1.e9*Sfusion_Coughlin_1951))
+print 'V, rho from Coughlin/Lindsley:', V_CL*1.e6, B1.params['molar_mass']/V_CL
+print 'dTdP from Coughlin/Hara:', -(B1.V - B1.params['molar_mass']/4634.)/Sfusion_Coughlin_1951*1.e9
+print 'S from Lindsley/Hara:', B1.S-(B1.V - B1.params['molar_mass']/4634.)/dTdP_Lindsley_1966*1.e9
 
+
+print 'dT/dP melting (model, K/GPa):', (liq.V - B1.V)/(liq.S - B1.S)*1.e9
 
 print 'Constraints are density of FeO liquid (extrapolated), entropy of liquid, corrected (Coughlin et al., 1951),'
 print 'Density of FeO solid (thermal expansion from Hazen and Jeanloz), entropy, corrected (Coughlin et al., 1951)'
-#exit()
+
 
 # Density data from Hara, Irie, Gaskell and Ogino, 1988
 temperatures_H = [1673., 1773., 1873.]
@@ -82,7 +165,7 @@ rhos_H = [4.624e3, 4.588e3, 4.548e3]
 
 formula = dictionarize_formula('FeO')
 m = formula_mass(formula, atomic_masses)
-V = 1.437 # 1.551e-5
+V = 1.551e-5
 alpha = 1./liq.params['V_0'] * (m/rhos_H[1] - m/rhos_H[0]) / (temperatures_H[1] - temperatures_H[0]) # ?
 Cp = 68.199 # Barin
 
@@ -207,7 +290,7 @@ if __name__ == "__main__":
     '''
     Now we plot the entropy and volume of the liquid phase along the melting curve
     '''
-    pressures = np.linspace(1.e5, 30.e9, 31)
+    pressures = np.linspace(1.e5, 100.e9, 26)
     Sfusion = np.empty_like(pressures)
     Vfusion = np.empty_like(pressures)
     Smelt = np.empty_like(pressures)
