@@ -570,17 +570,14 @@ class FullSubregularSolution (IdealSolution):
                 - Videal0*np.power((1.+bideal*(pressure)), -c)
 
         def _intVdP_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
-            if np.abs(pressure) < 1.:
-                pressure = 1.
             Vexcess0 = Vnonideal0 - Videal0
             Knonideal0 = Kideal0*np.power(Videal0/Vnonideal0, Kprime)
             bideal = Kprime/Kideal0
             bnonideal = Kprime/Knonideal0
             c = 1./Kprime
-            return -pressure*(Vnonideal0*np.power((1.+bnonideal*pressure), 1.-c) \
-                              / (bnonideal*(c - 1.)*pressure) \
-                              - Videal0*np.power((1.+bideal*pressure), 1.-c) \
-                              /(bideal*(c - 1.)*pressure))
+            return -(Knonideal0*Vnonideal0*np.power((1.+bnonideal*pressure), 1.-c) \
+                     - Kideal0*Videal0*np.power((1.+bideal*pressure), 1.-c)) \
+                     / (1 - Kprime)
         
         def _V_Pth_ideal(V0_ideal, P_0, T_0, T, f_Pth, m1, m2):
             # First, heres Pth (\int aK_T dT | V) for the ideal phase

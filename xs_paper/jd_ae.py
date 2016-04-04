@@ -100,7 +100,7 @@ class jadeite_aegirine_binary(burnman.SolidSolution):
 pyroxene = jadeite_aegirine_binary()
 
 
-def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1):
+def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1, Kp2):
     Kpj=4.6 # good fit to data
     Kpa=4.4 # good fit to data
 
@@ -116,7 +116,7 @@ def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1):
     aegirine.params['Kdprime_0'] = -Kpa/Ka
 
     pyroxene.volume_interaction = [[[V1, V2]]]
-    pyroxene.kprime_interaction = [[[Kp1, Kp1]]]
+    pyroxene.kprime_interaction = [[[Kp1, Kp2]]]
     burnman.SolidSolution.__init__(pyroxene)
     
     volumes = []
@@ -132,7 +132,7 @@ cP_obs = zip(*[composition, P_obs])
 
 guesses = [jadeite.params['V_0'], jadeite.params['K_0'], \
            jadeite.params['V_0'], jadeite.params['K_0'], \
-           0., 0., 7.] 
+           0., 0., 7., 7.] 
 
 popt, pcov = curve_fit(fit_ss_data, cP_obs, V_obs, guesses, Verr_obs)
 
