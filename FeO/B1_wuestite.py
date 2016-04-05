@@ -10,16 +10,6 @@ from burnman.processchemistry import read_masses, dictionarize_formula, formula_
 atomic_masses=read_masses()
 
 
-temperatures, volumes, compositions = np.loadtxt(fname='data/Hayakawa_CR_1972_wustite_TVx.dat', unpack=True)
-def volume(args, V_0, a, b):
-    X, T = args
-    return V_0 + X*a + T*b 
-
-from scipy.optimize import curve_fit
-
-popt, pcov = curve_fit(volume, [compositions, temperatures], volumes)
-
-
 class B1_wuestite (Mineral):
     def __init__(self):
         formula='FeO'
@@ -79,6 +69,15 @@ class B1_wuestite (Mineral):
 '''
 
 if __name__ == "__main__":
+    temperatures, volumes, compositions = np.loadtxt(fname='data/Hayakawa_CR_1972_wustite_TVx.dat', unpack=True)
+    def volume(args, V_0, a, b):
+        X, T = args
+        return V_0 + X*a + T*b 
+    
+    from scipy.optimize import curve_fit
+    
+    popt, pcov = curve_fit(volume, [compositions, temperatures], volumes)
+
     fper = B1_wuestite()
     fper_HP = minerals.HP_2011_ds62.fper()
     fper_SLB = minerals.SLB_2011.wuestite()

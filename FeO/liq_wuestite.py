@@ -54,7 +54,7 @@ class liq_wuestite (burnman.Mineral):
             'molar_mass': formula_mass(formula, atomic_masses)}
         burnman.Mineral.__init__(self)
 '''
-
+'''
 class liq_wuestite (burnman.Mineral):
     def __init__(self):
         formula='FeO'
@@ -75,6 +75,7 @@ class liq_wuestite (burnman.Mineral):
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula, atomic_masses)}
         burnman.Mineral.__init__(self)
+'''
 '''
 
 class liq_wuestite (burnman.Mineral):

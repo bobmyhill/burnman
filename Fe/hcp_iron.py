@@ -13,7 +13,7 @@ from scipy.constants import physical_constants
 r_B = physical_constants['Bohr radius'][0]
 V_B = np.power(r_B, 3.)
 
-print 'NB: also possibility of an anharmonic contribution'
+#print 'NB: also possibility of an anharmonic contribution'
 
 class hcp_iron (burnman.Mineral):
     def __init__(self):

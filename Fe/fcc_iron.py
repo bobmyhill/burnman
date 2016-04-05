@@ -17,7 +17,7 @@ print r_B
 print 47.e-30 / np.power(r_B, 3.) / 4.
 exit()
 '''
-print 'NB: also possibility of an anharmonic contribution'
+#print 'NB: also possibility of an anharmonic contribution'
 
 class fcc_iron (burnman.Mineral):
     def __init__(self):

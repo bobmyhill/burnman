@@ -21,18 +21,22 @@ atomic_masses=read_masses()
 
 
 from B1_wuestite import B1_wuestite
-from liq_wuestite import liq_wuestite
+from liq_wuestite_AA1994 import liq_FeO
 from fcc_iron import fcc_iron
 from hcp_iron import hcp_iron
-from liq_iron import liq_iron
+from liq_iron_AA1994 import liq_iron
 
 
 class Fe_FeO_liquid(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='Fe-FeO solution'
-        self.type='subregular'
-        self.endmembers = [[liq_iron(), '[Fe]'], [liq_wuestite(), 'Fe[O]']]
-        self.enthalpy_interaction = [[[00.e3, 30.e3]]]
+        self.type='full_subregular'
+        self.P_0=1.e5
+        self.T_0=1650.
+        self.n_atoms=1.
+        self.endmembers = [[liq_iron(), '[Fe]'], [liq_FeO(), 'Fe[O]']]
+        self.energy_interaction = [[[00.e3, 30.e3]]]
+        self.volume_interaction = [[[0., 0.]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 

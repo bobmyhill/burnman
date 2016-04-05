@@ -57,93 +57,93 @@ class liq_FeSi (burnman.Mineral):
 
 # H_0 = 75015 # Barin
 
-liq = liq_FeSi()
-
-liq.set_state(1.e5, liq.params['T_0'])
-
-formula = dictionarize_formula('FeSi')
-m = formula_mass(formula, atomic_masses)
-alpha = 1.5e-4 # Mizuno
-V_phi = 4310. # Williams et al., 2015
-VK_S = V_phi*V_phi*m # V_phi = sqrt(K_S/rho) = sqrt(K_S*V/m)
-Cp = 83.680 # Barin
-
-grueneisen_0 = VK_S*alpha/Cp
-print 'properties at Tm: modelled vs. experimental estimate'
-print 'gr', liq.gr, grueneisen_0
-print 'K_S', liq.K_S, VK_S/liq.params['V_0']
-print 'alpha', liq.alpha, alpha
-print 'C_p', liq.C_p, Cp
-print 'V_phi', np.sqrt(liq.K_S/liq.rho), V_phi
-
-# Williams
-mFe=formula_mass({'Fe': 1.}, atomic_masses)
-mNi=formula_mass({'Ni': 1.}, atomic_masses)
-mSi=formula_mass({'Si': 1.}, atomic_masses)
-
-Si_contents = np.array([0., 6., 10., 14., 20., 33.3])
-V_phi_1683 = np.array([3939., 4030., 4086., 4132., 4196., 4310.])
-mol_Si = np.empty_like(Si_contents)
-
-for i, wtSi in enumerate(Si_contents):
-    mass = wtSi/mSi + 5./mNi + (95.-wtSi)/mFe
-    mol_Si[i] = wtSi/mSi/mass
-
-plt.plot(mol_Si, V_phi_1683, marker='o')
-plt.show()
-
-
-# For volumes see also Dumay and Cramb (1995)
-V_Mizuno = lambda T: 0.0839305/(5051. - 0.773*(T - 1693.))
-
-temperatures = np.linspace(1683., 2273., 101)
-volumes = np.empty_like(temperatures)
-Vps = np.empty_like(temperatures)
-Cps = np.empty_like(temperatures)
-Cvs = np.empty_like(temperatures)
-Cvs_el = np.empty_like(temperatures)
-Cvs_kin = np.empty_like(temperatures)
-Cvs_pot = np.empty_like(temperatures)
-grs = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    liq.set_state(1.e5, T)
-    volumes[i] = liq.V
-    Vps[i] = np.sqrt(liq.K_S/liq.rho)
-    Cps[i] = liq.C_p
-    Cvs[i] = liq.C_v
-    Cvs_kin[i] = liq.method._C_v_kin(liq.V, T, liq.params)
-    Cvs_el[i] = liq.method._C_v_el(liq.V, T, liq.params)
-    Cvs_pot[i] = liq.method._C_v_pot(liq.V, T, liq.params)
-    grs[i] = liq.gr
-    
-plt.plot(temperatures, V_Mizuno(temperatures))
-plt.plot(temperatures, volumes, marker='o')
-plt.title('Volumes')
-plt.show()
-
-
-plt.title('Grueneisen')
-plt.plot(temperatures, grs, marker='o')
-plt.show()
-
-plt.title('Bulk sound velocities')
-fig1 = mpimg.imread('figures/Fe_Si_liquid_alloy_velocities.png')
-plt.imshow(fig1, extent=[1400., 2000., 3900., 4350.], aspect='auto')
-plt.plot(temperatures, Vps, marker='o')
-plt.show()
-
-plt.title('Heat capacities')
-plt.plot(temperatures, Cps, marker='o', label='Cp')
-plt.plot(temperatures, Cvs, marker='o', label='Cv')
-plt.plot(temperatures, Cvs_el, label='el')
-plt.plot(temperatures, Cvs_kin, label='kin')
-plt.plot(temperatures, Cvs_pot, label='pot')
-plt.legend(loc='upper left')
-plt.show()
-
-  
-
 if __name__ == "__main__":
+    liq = liq_FeSi()
+    
+    liq.set_state(1.e5, liq.params['T_0'])
+    
+    formula = dictionarize_formula('FeSi')
+    m = formula_mass(formula, atomic_masses)
+    alpha = 1.5e-4 # Mizuno
+    V_phi = 4310. # Williams et al., 2015
+    VK_S = V_phi*V_phi*m # V_phi = sqrt(K_S/rho) = sqrt(K_S*V/m)
+    Cp = 83.680 # Barin
+    
+    grueneisen_0 = VK_S*alpha/Cp
+    print 'properties at Tm: modelled vs. experimental estimate'
+    print 'gr', liq.gr, grueneisen_0
+    print 'K_S', liq.K_S, VK_S/liq.params['V_0']
+    print 'alpha', liq.alpha, alpha
+    print 'C_p', liq.C_p, Cp
+    print 'V_phi', np.sqrt(liq.K_S/liq.rho), V_phi
+    
+    # Williams
+    mFe=formula_mass({'Fe': 1.}, atomic_masses)
+    mNi=formula_mass({'Ni': 1.}, atomic_masses)
+    mSi=formula_mass({'Si': 1.}, atomic_masses)
+    
+    Si_contents = np.array([0., 6., 10., 14., 20., 33.3])
+    V_phi_1683 = np.array([3939., 4030., 4086., 4132., 4196., 4310.])
+    mol_Si = np.empty_like(Si_contents)
+    
+    for i, wtSi in enumerate(Si_contents):
+        mass = wtSi/mSi + 5./mNi + (95.-wtSi)/mFe
+        mol_Si[i] = wtSi/mSi/mass
+    
+    plt.plot(mol_Si, V_phi_1683, marker='o')
+    plt.show()
+    
+    
+    # For volumes see also Dumay and Cramb (1995)
+    V_Mizuno = lambda T: 0.0839305/(5051. - 0.773*(T - 1693.))
+    
+    temperatures = np.linspace(1683., 2273., 101)
+    volumes = np.empty_like(temperatures)
+    Vps = np.empty_like(temperatures)
+    Cps = np.empty_like(temperatures)
+    Cvs = np.empty_like(temperatures)
+    Cvs_el = np.empty_like(temperatures)
+    Cvs_kin = np.empty_like(temperatures)
+    Cvs_pot = np.empty_like(temperatures)
+    grs = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        liq.set_state(1.e5, T)
+        volumes[i] = liq.V
+        Vps[i] = np.sqrt(liq.K_S/liq.rho)
+        Cps[i] = liq.C_p
+        Cvs[i] = liq.C_v
+        Cvs_kin[i] = liq.method._C_v_kin(liq.V, T, liq.params)
+        Cvs_el[i] = liq.method._C_v_el(liq.V, T, liq.params)
+        Cvs_pot[i] = liq.method._C_v_pot(liq.V, T, liq.params)
+        grs[i] = liq.gr
+        
+    plt.plot(temperatures, V_Mizuno(temperatures))
+    plt.plot(temperatures, volumes, marker='o')
+    plt.title('Volumes')
+    plt.show()
+    
+    
+    plt.title('Grueneisen')
+    plt.plot(temperatures, grs, marker='o')
+    plt.show()
+    
+    plt.title('Bulk sound velocities')
+    fig1 = mpimg.imread('figures/Fe_Si_liquid_alloy_velocities.png')
+    plt.imshow(fig1, extent=[1400., 2000., 3900., 4350.], aspect='auto')
+    plt.plot(temperatures, Vps, marker='o')
+    plt.show()
+    
+    plt.title('Heat capacities')
+    plt.plot(temperatures, Cps, marker='o', label='Cp')
+    plt.plot(temperatures, Cvs, marker='o', label='Cv')
+    plt.plot(temperatures, Cvs_el, label='el')
+    plt.plot(temperatures, Cvs_kin, label='kin')
+    plt.plot(temperatures, Cvs_pot, label='pot')
+    plt.legend(loc='upper left')
+    plt.show()
+    
+    
+    
     from B20_FeSi import B20_FeSi
     
     B20 = B20_FeSi()
