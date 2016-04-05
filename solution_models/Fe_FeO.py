@@ -21,6 +21,9 @@ Fe_liq = liq_iron()
 FeO_B1 = B1_wuestite()
 FeO_liq = liq_FeO()
 
+
+
+
 # READ IN DATA
 eutectic_PT = []
 
@@ -339,22 +342,37 @@ T_FeO_melt = burnman.tools.equilibrium_temperature([FeO_B1, FeO_liq], [1., -1.],
 
 print molFeO2wtO(c), T_eutectic, T_Fe_melt, T_FeO_melt
 
-temperatures = np.linspace(T_eutectic, T_Fe_melt, 50)
+temperatures = np.linspace(T_eutectic, T_Fe_melt, 20)
 Fe_liquidus_compositions = np.empty_like(temperatures)
+c=0.01
 for i, T in enumerate(temperatures):
     print i, T
-    Fe_liquidus_compositions[i] = fsolve(mineral_fugacity, [0.01], args=(Fe_phase, liq, P, T))[0]
+    c = fsolve(mineral_fugacity, [c], args=(Fe_phase, liq, P, T))[0]
+    Fe_liquidus_compositions[i] = c 
 plt.plot(molFeO2wtO(Fe_liquidus_compositions), temperatures)
 
-temperatures = np.linspace(T_eutectic, T_FeO_melt, 50)
+temperatures = np.linspace(T_eutectic, T_FeO_melt, 20)
+c=0.99
 FeO_liquidus_compositions = np.empty_like(temperatures)
 for i, T in enumerate(temperatures):
     print i, T
-    FeO_liquidus_compositions[i] = fsolve(mineral_fugacity, [0.99], args=(FeO_B1, liq, P, T))[0]
-
+    c = fsolve(mineral_fugacity, [c], args=(FeO_B1, liq, P, T))[0]
+    FeO_liquidus_compositions[i] = c
 plt.plot(molFeO2wtO(FeO_liquidus_compositions), temperatures)
 plt.xlim(0., 23.)
 plt.xlabel('wt % FeO')
+
+# Seagle data
+lo_eutectic = np.loadtxt(fname='data/Seagle_2008_low_eutectic_bounds.dat', comments='%')
+hi_eutectic = np.loadtxt(fname='data/Seagle_2008_high_eutectic_bounds.dat', comments='%')
+lo_liquidus = np.loadtxt(fname='data/Seagle_2008_low_liquidus_bounds.dat', comments='%')
+hi_liquidus = np.loadtxt(fname='data/Seagle_2008_high_liquidus_bounds.dat', comments='%')
+
+for a in [lo_eutectic, hi_eutectic, lo_liquidus, hi_liquidus]:
+    a = a[a[:,0]>=45.0, :]
+    a = a[a[:,0]<=55.0, :]
+    plt.plot(a[:,3], a[:,2], marker='s', markersize=10, linestyle='None')
+
 
 plt.show()
 
