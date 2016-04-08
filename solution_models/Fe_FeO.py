@@ -127,6 +127,11 @@ for datum in solvus_PTcc:
 
     fitting_data.append([P, T, Ws[0], Ws[1], 1.])
 
+eutectic_PT = np.array(eutectic_PT).T
+eutectic_PTc = np.array(eutectic_PTc).T
+solvus_PTcc = np.array(solvus_PTcc).T
+
+
 # Ambient pressure values are from Kowalski and Spencer (1995)
 # Taken from Frost et al, 2010
 def Frost_interaction(P, T):
@@ -279,6 +284,7 @@ plt.show()
 
 
 # Plot eutectic temperatures and compositions
+'''
 def eutectic_liquid(cT, P, liq, Fe_phase, FeO_phase):
     c, T = cT
 
@@ -290,7 +296,7 @@ def eutectic_liquid(cT, P, liq, Fe_phase, FeO_phase):
     equations = [ Fe_phase.gibbs - liq.partial_gibbs[0],
                   FeO_phase.gibbs - liq.partial_gibbs[1]]
     return equations
-'''
+
 
 pressures = np.linspace(30.e9, 250.e9, 16)
 eutectic_compositions = np.empty_like(pressures)
@@ -302,10 +308,6 @@ for i, P in enumerate(pressures):
     c, T = fsolve(eutectic_liquid, [c, T], args=(P, liq, Fe_hcp, FeO_B1))
     eutectic_compositions[i] = c
     eutectic_temperatures[i] = T
-
-eutectic_PT = np.array(eutectic_PT).T
-eutectic_PTc = np.array(eutectic_PTc).T
-solvus_PTcc = np.array(solvus_PTcc).T
 
 plt.plot(pressures/1.e9, eutectic_compositions)
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[4], marker='o', linestyle='None', label='Model')
@@ -319,6 +321,7 @@ plt.legend(loc='lower right')
 plt.show()
 '''
 # Phase diagram at 50 GPa
+'''
 def mineral_fugacity(c, mineral, liquid, P, T):
     mineral.set_state(P, T)
     liq.set_composition([1. - c[0], c[0]])
@@ -379,8 +382,8 @@ for a in [lo_eutectic, hi_eutectic, lo_liquidus, hi_liquidus]:
 
 
 plt.show()
+'''
 
-exit()
 # Plot solvus
 def eqm_two_liquid(cc, P, T, model):
     c1, c2 = cc

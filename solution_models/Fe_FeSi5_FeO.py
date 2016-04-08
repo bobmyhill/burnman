@@ -48,7 +48,7 @@ class FeSiO_liquid(burnman.SolidSolution):
                            [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
-        self.energy_interaction = [[[0., 0.], [105.e3,118.e3]],
+        self.energy_interaction = [[[0.e3, 0.e3], [105.e3,118.e3]],
                                    [[105.e3,118.e3]]]
         
         self.volume_interaction = [[[0., 0.], [-1.4e-6,-1.2e-6]],
@@ -194,10 +194,10 @@ if pv_test==True:
         return bdg.partial_gibbs[1] - mu_FeSiO3
     
 
-    P = 100.e9
+    P = 25.e9
     XFeSiO3_bdg = 0.1
-    temperatures = np.linspace(2773., 4273., 4)
-    Xs_Fe5Si5_melt = np.linspace(0.002, 0.5, 21) 
+    temperatures = np.linspace(2773., 4273., 2)
+    Xs_Fe5Si5_melt = np.linspace(0.002, 0.5, 11) 
 
     for T in temperatures:
         X_Sis_wt = np.empty_like(Xs_Fe5Si5_melt)
