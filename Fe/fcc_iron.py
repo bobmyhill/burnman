@@ -49,16 +49,6 @@ if __name__ == "__main__":
     print fcc.gibbs, 'should be -55437. Correction:', fcc.gibbs + 55437.
     print fcc.S, 'should be 75.962. Correction:', fcc.S - 75.962
 
-    
-    bcc_M = burnman.minerals.Myhill_calibration_iron.bcc_iron()
-    fcc_M = burnman.minerals.Myhill_calibration_iron.fcc_iron()
-    temperatures = np.linspace(1200., 1600., 5)
-    for i, T in enumerate(temperatures):
-        bcc_M.set_state(1.e5, T)
-        fcc_M.set_state(1.e5, T)
-        fcc.set_state(1.e5, T)
-        #print T, fcc.C_p - fcc_M.C_p, fcc.C_p, fcc.S - fcc_M.S, fcc.S
-
 
     fig1 = mpimg.imread('data/Fe_Cp_Desai_1986.png')  # Uncomment these two lines if you want to overlay the plot on a screengrab from SLB2011
     plt.imshow(fig1, extent=[800., 2000.0, 20., 50.], aspect='auto')

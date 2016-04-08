@@ -477,12 +477,11 @@ class FullSubregularSolution (IdealSolution):
     Solution model implementing the subregular solution model formulation (Helffrich and Wood, 1989)
     """
 
-    def __init__(self, endmembers, P0, T0, n, energy_interaction=None, volume_interaction=None, kprime_interaction=None, thermal_pressure_interaction=None):
+    def __init__(self, endmembers, P0, T0, energy_interaction=None, volume_interaction=None, kprime_interaction=None, thermal_pressure_interaction=None):
         
         self.n_endmembers = len(endmembers)
         self.P_0 = P0
         self.T_0 = T0
-        self.n_atoms = n
 
         self.ideal_std = [[0. for i in xrange(self.n_endmembers)] for j in xrange(self.n_endmembers)]
         self.nonideal_std = [[0. for i in xrange(self.n_endmembers)] for j in xrange(self.n_endmembers)]

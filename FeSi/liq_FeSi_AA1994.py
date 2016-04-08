@@ -24,7 +24,7 @@ class liq_FeSi (burnman.Mineral):
         formula='FeSi'
         formula = dictionarize_formula(formula)
         m = formula_mass(formula, atomic_masses)
-        rho_0 = 5060.
+        rho_0 = 5120. # 5060. # Mizuno et al., accounting for a small difference in Tmelt (1683 vs 1693), see also very similar result by Dumay and Cramb (1995). Kawai et al get ~5090 at 1723 K (so at 1683 K could be 5120 kg/m^3)
         V_0 = m/rho_0
         D = 7766.
         Lambda = 1146.
@@ -34,33 +34,60 @@ class liq_FeSi (burnman.Mineral):
             'equation_of_state': 'aa',
             'P_0': 1.e5, # 1 bar
             'T_0': 1683., # melting temperature
-            'S_0': 183.619, # Barin
+            'S_0': 183.619, # Entropy at melting point, Barin
             'molar_mass': m, # mass
-            'V_0': V_0,  # Fit to standard state data
-            'E_0': -84840., # Fit to standard state data
-            'K_S': 94.e9, # Fit to standard state data
+            'V_0': V_0,  # See rho_0, above
+            'E_0': 68247., # Energy at melting point
+            'K_S': 95.e9, # Fit to Williams et al., 2015 (extrapolation)
             'Kprime_S': 4.661, # High? Williams et al., 2015
-            'Kprime_prime_S': -0.043e-9, # ?
-            'grueneisen_0': 2.80, # Fit to standard state data
+            'Kprime_prime_S': -0.046e-9, # To fit high pressure melting curve (Lord et al., 2010)
+            'grueneisen_0': 2.8, # To fit alpha (Mizuno et al.)
             'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # ?
             'a': [0., 0.], #[248.92*m, 289.48*m], # ? (goes into electronic term)
             'b': [0., 0.], #[0.04057*m, -0.11499*m], # ? (goes into electronic term)
-            'Theta': [1747.3, 1.537], # ? (goes into potential term)
-            'theta': 1000., # ? (goes into potential term)
+            'Theta': [1747., 1.537], # ? (goes into potential term), largely unimportant
+            'theta': 1000., # ? To fit C_p (goes into potential term)
             'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
-            'xi_0': 65., # ? (goes into potential term)
+            'xi_0': 64.5, # To fit C_p (goes into potential term) - tradeoff with theta
             'F': [D/rho_0, Lambda/rho_0],
             'n': sum(formula.values()),
             'molar_mass': m}
         burnman.Mineral.__init__(self)
 
-# H_0 = 75015 # Barin
 
 if __name__ == "__main__":
     liq = liq_FeSi()
     
+    from B20_FeSi import B20_FeSi
+    from B2_FeSi import B2_FeSi
+    
+    B20 = B20_FeSi()
+    B2 = B2_FeSi() # high pressure phase
+
+    
+    temperatures = np.linspace(500., 4000., 21)
+    Ss = np.empty_like(temperatures)
+    Ss2 = np.empty_like(temperatures)
+    for P in [10.e9, 50.e9, 100.e9, 200.e9]:
+        for i, T in enumerate(temperatures):
+            B2.set_state(P, T)
+            liq.set_state(P, T)
+            Ss[i] = B2.S
+            Ss2[i] = liq.S
+        plt.plot(temperatures, Ss2 - Ss, label=str(P/1.e9)+' GPa')
+    plt.legend(loc='upper right')
+    plt.show()
+    
+    
     liq.set_state(1.e5, liq.params['T_0'])
+    B20.set_state(1.e5, liq.params['T_0'])
+
+    print 'DeltaV at 1 bar:', liq.V - B20.V, B20.V, liq.V
+    print 'DeltaS at 1 bar:', liq.S - B20.S, B20.S, liq.S
+
+    #print liq.params['E_0'] - liq.gibbs + B20.gibbs, liq.gibbs - B20.gibbs
+    #exit()
     
     formula = dictionarize_formula('FeSi')
     m = formula_mass(formula, atomic_masses)
@@ -142,23 +169,36 @@ if __name__ == "__main__":
     plt.legend(loc='upper left')
     plt.show()
     
-    
-    
-    from B20_FeSi import B20_FeSi
-    
-    B20 = B20_FeSi()
 
-    pressures = np.linspace(1.e5, 40.e9, 101)
+    P_B20_B2, T_B20_B2 = burnman.tools.invariant_point([B20, B2], [1., -1.],
+                                                       [B2, liq], [1., -1.],
+                                                       [23.e9, 2000.])
+
+
+    temperatures = np.linspace(300., T_B20_B2, 21)
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        print T
+        pressures[i] = burnman.tools.equilibrium_pressure([B20, B2], [1.0, -1.0], T, 20.e9)
+    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
+      
+    pressures = np.linspace(1.e5, P_B20_B2, 21)
     temperatures = np.empty_like(pressures)
     for i, P in enumerate(pressures):
+        print P
         temperatures[i] = burnman.tools.equilibrium_temperature([B20, liq], [1.0, -1.0], P, 1800.)
-        #print liq.S - B20.S
+    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
 
+    pressures = np.linspace(P_B20_B2, 160.e9, 21)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        print P
+        temperatures[i] = burnman.tools.equilibrium_temperature([B2, liq], [1.0, -1.0], P, 2500.)
+    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
 
     
     fig1 = mpimg.imread('figures/FeSi_melting_curve_Lord_2010.png')
     plt.imshow(fig1, extent=[0., 160., 1600., 4200.], aspect='auto')
-    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
     plt.show()
     '''
     fcc.set_state(5.2e9, 1991.)
@@ -212,7 +252,7 @@ if __name__ == "__main__":
     '''
     Now we plot the entropy and volume of the liquid phase along the melting curve
     '''
-    pressures = np.linspace(1.e5, 30.e9, 31)
+    pressures = np.linspace(30.e9, 150.e9, 31)
     Sfusion = np.empty_like(pressures)
     Vfusion = np.empty_like(pressures)
     Smelt = np.empty_like(pressures)
@@ -229,23 +269,23 @@ if __name__ == "__main__":
     for i, P in enumerate(pressures):
         dP = 100. # Pa
 
-        T2 = burnman.tools.equilibrium_temperature([B20, liq], [1.0, -1.0], P+dP, 1800.)
-        T = burnman.tools.equilibrium_temperature([B20, liq], [1.0, -1.0], P, 1800.)
+        T2 = burnman.tools.equilibrium_temperature([B2, liq], [1.0, -1.0], P+dP, 1800.)
+        T = burnman.tools.equilibrium_temperature([B2, liq], [1.0, -1.0], P, 1800.)
         Tmelt_model[i] = T
         dTdP = (T2-T)/dP
         
-        aK_T = B20.alpha*B20.K_T
+        aK_T = B2.alpha*B2.K_T
         Sfusion[i] = burnman.constants.gas_constant*np.log(2.) / (1. - aK_T*dTdP)
         Vfusion[i] = Sfusion[i]*dTdP
         
-        Smelt[i] = B20.S + Sfusion[i]
-        Vmelt[i] = B20.V + Vfusion[i]
+        Smelt[i] = B2.S + Sfusion[i]
+        Vmelt[i] = B2.V + Vfusion[i]
 
         liq.set_state(P, T)
         Smelt_model[i] = liq.S
         Vmelt_model[i] = liq.V
     
-        print int(P/1.e9), T, Sfusion[i], Vfusion[i]*1.e6, aK_T/1.e9, B20.S, (B20.K_T - liq.K_T)/1.e9
+        print int(P/1.e9), T, Sfusion[i], Vfusion[i]*1.e6, aK_T/1.e9, B2.S, (B2.K_T - liq.K_T)/1.e9
     
 
 

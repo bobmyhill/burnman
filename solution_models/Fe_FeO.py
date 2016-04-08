@@ -92,7 +92,7 @@ eutectic_weighting = 5.
 # Fe (solid-liquid) and FeO (solid-liquid)
 # These will be the partial excess gibbs free energies of the liquid phase
 # Seagle et al. (2008) reported HCP iron above ~50 GPa
-
+'''
 for datum in eutectic_PTc:
     P, Perr, T, Terr, X_FeO, X_FeO_err = datum
 
@@ -117,7 +117,7 @@ for datum in eutectic_PTc:
     W_FeOFe = (RTlny_FeO/(X_Fe*X_Fe) + 2.*X_FeO*(RTlny_FeO/(X_Fe*X_Fe) + RTlny_Fe/(X_FeO*X_FeO)))/(1. + 4.*X_FeO)
     
     fitting_data.append([P, T, W_FeFeO, W_FeOFe, eutectic_weighting])
-
+'''
 # and now fit the solvus:
 # at a given pressure and temperature, two compositions have the same partial gibbs excesses
 # FCC IRON
@@ -156,6 +156,8 @@ pressures = np.array(pressures)
 plt.plot(pressures/1.e9, W_FeFeO, marker='o', linestyle='None', label='W_FeFeO')
 plt.plot(pressures/1.e9, W_FeOFe, marker='o', linestyle='None', label='W_FeOFe')
 plt.legend(loc='upper right')
+plt.xlim(-1, 100.)
+plt.ylim(-20.e3, 100.e3)
 plt.show()
 
 
@@ -233,22 +235,24 @@ for i, P in enumerate(pressures):
     sigmas.append(1./weighting[i])
 
 guesses = [105.e3, 118.e3, -1.403e-06, -1.2e-06, 7./3., 1.101]
+#guesses = [109.e3, 109.e3, -1.38e-6, -1.38e-6, 7./3., 1.101] # includes fitting of eutectic
+#guesses = [108.e3, 116.e3, -1.18e-6, -1.18e-6, 7./3., 1.101] 
 #guesses = [0., 0., 0., 0., 7./3., 1.]
-popt = guesses
-Ws = calculate_interaction_parameters(xdata, *popt)
 
 #guesses = [111.e3, 110.e3, -7.525e-07, -1.53e-06, 0.362, 1.104] # includes fitting of eutectic
 #guesses = [111.e3, 109.e3, -8.759e-07, -1.88e-06, 7./3., 1.101]
-#popt, pcov = curve_fit(calculate_interaction_parameters, xdata, ydata, guesses, sigmas)
-#print popt, pcov
+#guesses = [108.e3, 116.e3, -1.18e-06, 1.101]
 
-'''
+#popt, pcov = curve_fit(calculate_interaction_parameters, xdata, ydata, guesses, sigmas)
+#guesses = popt 
+#print 'Solution:', popt, pcov
+
+Ws = calculate_interaction_parameters(xdata, *guesses)
+
 plt.plot(pressures/1.e9, W_FeFeO, marker='x', linestyle='None', label='W_FeFeO')
 plt.plot(pressures/1.e9, W_FeOFe, marker='o', linestyle='None', label='W_FeOFe')
 
 
-popt = guesses
-#Ws = calculate_interaction_parameters(xdata, *popt)
 #plt.plot(np.array(zip(*xdata)[0][::2])/1.e9, Ws[::2], marker='o', linestyle='None', label='W_FeFeO, model')
 #plt.plot(np.array(zip(*xdata)[0][1::2])/1.e9, Ws[1::2], marker='o', linestyle='None', label='W_FeOFe, model')
 
@@ -261,7 +265,7 @@ for T in [2273., 3273.]:
         print 'Plotting', T, 'K ('+str(f)+')'
         flag = (pressures*0. + f)
         flag = flag.astype(int)
-        Ws = calculate_interaction_parameters(zip(*[pressures, temperatures, flag]), *popt)
+        Ws = calculate_interaction_parameters(zip(*[pressures, temperatures, flag]), *guesses)
         plt.plot(pressures/1.e9, Ws, label=str(T)+' K')
 
     W_FeFeO, W_FeOFe = Frost_interaction(pressures, T)
@@ -273,8 +277,8 @@ plt.xlim(-1., 250.)
 plt.ylim(-20000., 81000.)
 plt.show()
 
+
 # Plot eutectic temperatures and compositions
-'''
 def eutectic_liquid(cT, P, liq, Fe_phase, FeO_phase):
     c, T = cT
 

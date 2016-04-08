@@ -93,7 +93,7 @@ class SolidSolution(Mineral):
                         self.endmembers, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
                 elif self.type == 'full_subregular':
                     self.solution_model = FullSubregularSolution(
-                        self.endmembers, self.P_0, self.T_0, self.n_atoms,
+                        self.endmembers, self.P_0, self.T_0,
                         self.energy_interaction, self.volume_interaction,
                         self.kprime_interaction, self.thermal_pressure_interaction)
                 else:

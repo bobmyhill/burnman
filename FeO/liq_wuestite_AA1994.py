@@ -133,10 +133,24 @@ class liq_FeO (burnman.Mineral):
 if __name__ == "__main__":
     from B1_wuestite import B1_wuestite
 
-    #B1 = burnman.minerals.SLB_2011.wuestite()
+    #B1 = burnman.minerals.HP_2011_ds62.fper()
     B1 = B1_wuestite()    
     liq = liq_FeO()
 
+    pressures = np.linspace(1.e5, 360.e9, 21)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([B1, liq], [1.0, -1.0], P, 1800.)
+        print P/1.e9, temperatures[i]
+
+    fig1 = mpimg.imread('figures/FeO_melting_curve.png')
+    plt.imshow(fig1, extent=[0., 120., 1000., 6000.], aspect='auto')
+    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
+    #plt.xlim(0., 20.)
+    #plt.ylim(1500., 4000.)
+    plt.show()
+    #exit()
+    
     for P in [1.e9, 50.e9, 100.e9]:
         temperatures = np.linspace(100., 4000., 101)
         Ss = np.empty_like(temperatures)
@@ -208,22 +222,7 @@ if __name__ == "__main__":
     #print liq.params['E_0']
     #exit()
 
-    
-    pressures = np.linspace(1.e5, 360.e9, 11)
-    temperatures = np.empty_like(pressures)
-    for i, P in enumerate(pressures):
-        temperatures[i] = burnman.tools.equilibrium_temperature([B1, liq], [1.0, -1.0], P, 1800.)
-        print P/1.e9, temperatures[i]
 
-
-    
-    fig1 = mpimg.imread('figures/FeO_melting_curve.png')
-    plt.imshow(fig1, extent=[0., 120., 1000., 6000.], aspect='auto')
-    plt.plot(pressures/1.e9, temperatures, linewidth=4.)
-    #plt.xlim(0., 20.)
-    #plt.ylim(1500., 4000.)
-    plt.show()
-    #exit()
     
     temperatures = np.linspace(1650., 1900., 21)
     rhos = np.empty_like(temperatures)
