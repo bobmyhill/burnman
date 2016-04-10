@@ -12,6 +12,7 @@ from . import modified_tait as mt
 from . import hp 
 from . import cork
 from . import aa
+from . import aa2
 from .equation_of_state import EquationOfState
 
 
@@ -21,6 +22,8 @@ def create(method):
     a class EquationOfState, or an instance of EquationOfState.
     """
     if isinstance(method, str):
+        if method == "aamod":
+            return aa2.AAMOD()
         if method == "aa":
             return aa.AA()
         if method == "slbel2":

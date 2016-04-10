@@ -18,6 +18,7 @@ from .modified_tait import MT
 from .hp import HP_TMT
 from .cork import CORK
 from .aa import AA
+from .aa2 import AAMOD
 
 from .property_modifiers import calculate_property_modifications
 

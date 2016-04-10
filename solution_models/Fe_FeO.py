@@ -284,7 +284,7 @@ plt.show()
 
 
 # Plot eutectic temperatures and compositions
-'''
+
 def eutectic_liquid(cT, P, liq, Fe_phase, FeO_phase):
     c, T = cT
 
@@ -319,9 +319,9 @@ plt.plot(eutectic_PT[0]/1.e9, eutectic_PT[2], marker='o', linestyle='None', labe
 plt.plot(eutectic_PTc[0]/1.e9, eutectic_PTc[2], marker='o', linestyle='None', label='Model')
 plt.legend(loc='lower right')
 plt.show()
-'''
+
 # Phase diagram at 50 GPa
-'''
+
 def mineral_fugacity(c, mineral, liquid, P, T):
     mineral.set_state(P, T)
     liq.set_composition([1. - c[0], c[0]])
@@ -382,7 +382,7 @@ for a in [lo_eutectic, hi_eutectic, lo_liquidus, hi_liquidus]:
 
 
 plt.show()
-'''
+
 
 # Plot solvus
 def eqm_two_liquid(cc, P, T, model):

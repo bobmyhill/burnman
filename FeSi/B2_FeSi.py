@@ -17,7 +17,7 @@ class B2_FeSi (Mineral):
         Z = 1.
         V_0 = 2.*6.414e-6 # 21.74*1.e-30*burnman.constants.Avogadro/Z # Dobson et al., 2003
         self.params = {
-            'name': 'FeSi',
+            'name': 'B2 FeSi',
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -71746. ,

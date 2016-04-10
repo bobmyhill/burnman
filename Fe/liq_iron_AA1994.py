@@ -27,12 +27,10 @@ class liq_iron (burnman.Mineral):
         m = formula_mass(formula, atomic_masses)
         rho_0 = 7019.
         V_0 = m/rho_0
-        D = 7766.
-        Lambda = 1146.
         self.params = {
             'name': 'liquid iron',
             'formula': formula,
-            'equation_of_state': 'aa',
+            'equation_of_state': 'aamod',
             'P_0': 1.e5,
             'T_0': 1809.,
             'S_0': 99.823, # to fit
@@ -45,13 +43,10 @@ class liq_iron (burnman.Mineral):
             'grueneisen_0': 1.735,
             'grueneisen_prime': -0.130/m*1.e-6,
             'grueneisen_n': -1.870,
-            'a': [248.92*m, 289.48*m],
-            'b': [0.4057*m, -1.1499*m],
-            'Theta': [1747.3, 1.537],
-            'theta': 5000.,
-            'lmda': [302.07*m, -325.23*m, 30.45*m],
-            'xi_0': 282.67*m,
-            'F': [D/rho_0, Lambda/rho_0],
+            'T_el': 6000.,
+            'Cv_el': 2.8,
+            'theta': 6000.,
+            'xi_0': 282.67*m, # 15.786
             'n': sum(formula.values()),
             'molar_mass': m}
         burnman.Mineral.__init__(self)

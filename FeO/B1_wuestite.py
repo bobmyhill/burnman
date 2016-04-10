@@ -15,7 +15,7 @@ class B1_wuestite (Mineral):
         formula='FeO'
         formula = dictionarize_formula(formula)
         self.params = {
-            'name': 'Wuestite',
+            'name': 'B1 FeO',
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -275450. ,

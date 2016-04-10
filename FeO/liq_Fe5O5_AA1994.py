@@ -57,9 +57,9 @@ class liq_FeO (burnman.Mineral):
 '''
 
 # From density estimate from Bhattacharyya and Gaskell (1996)
-class liq_FeO (burnman.Mineral):
+class liq_Fe5O5 (burnman.Mineral):
     def __init__(self):
-        formula='FeO'
+        formula='Fe0.5O0.5'
         formula = dictionarize_formula(formula)
         m = formula_mass(formula, atomic_masses)
         rho_0 = 4800. # 5000. #4632. # 4632 is extrapolated from Hara et al., 1988a, b, (BaO and CaO solutions) similar to Ji et al., 1997 (4700)
@@ -67,23 +67,26 @@ class liq_FeO (burnman.Mineral):
         self.params = {
             'name': 'liquid FeO',
             'formula': formula,
-            'equation_of_state': 'aamod',
+            'equation_of_state': 'aa',
             'P_0': 1.e5, # 1 bar
             'T_0': 1650., # melting temperature for FeO
-            'S_0':  188., # 178.78 is JANAF for FeO
+            'S_0':  188./2., # 178.78 is JANAF for FeO
             'molar_mass': m, # mass
             'V_0': V_0,  # Fit to standard state data
-            'E_0': -131792.283, # Fit to standard state data
+            'E_0': -131792.283/2., # Fit to standard state data
             'K_S': 82.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
             'Kprime_S': 4.4, # ?
             'Kprime_prime_S': -0.025e-9, # ?
             'grueneisen_0': 1.30, # controls alpha
-            'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
+            'grueneisen_prime': -2.*0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # ?
-            'T_el': 3500., # Schrettle et al give 10 mJ/molK for O at low temperature, need to check what this implies for Cv_el/T_el
-            'Cv_el': 2.7,
-            'theta': 3500., # ? (goes into potential term)
-            'xi_0': 25., # ? (goes into potential term)
+            'a': [0., 0.], # (goes into electronic term)
+            'b': [0., 0.], # (goes into electronic term)
+            'Theta': [1747.3, 1.537], # ? (goes into potential term)
+            'theta': 2000., # ? (goes into potential term)
+            'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
+            'xi_0': 62./2., # ? (goes into potential term)
+            'F': [1., 1.],
             'n': sum(formula.values()),
             'molar_mass': m}
         burnman.Mineral.__init__(self)
@@ -134,28 +137,6 @@ if __name__ == "__main__":
     B1 = B1_wuestite()    
     liq = liq_FeO()
 
-
-    liq.set_state(1.e5, 1800.)
-    print liq.S, 'should be', liq.params['S_0']+(177.924-171.990)
-
-
-    # Find heat capacities
-    temperatures = np.linspace(1000., 15000., 101)
-    Cvs = np.empty_like(temperatures)
-    m = 0.055845
-    rhos = np.empty_like(temperatures)
-    densities = [5.e3,10.e3, 15.e3]
-    for rho in densities:
-        V = m/rho
-        for i, T in enumerate(temperatures):
-            Cvs[i] = liq.method.heat_capacity_v(0., T, V, liq.params)/burnman.constants.gas_constant
-            #Cvs[i] = liq.method._C_v_el(V, T, liq.params)/burnman.constants.gas_constant
-
-        plt.plot(temperatures, Cvs)
-
-    plt.ylim(0., 6.)
-    plt.show()
-    
     pressures = np.linspace(1.e5, 360.e9, 21)
     temperatures = np.empty_like(pressures)
     for i, P in enumerate(pressures):

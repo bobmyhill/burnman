@@ -8,8 +8,9 @@ import burnman
 from burnman import minerals
 
 ###############
-mw_test = False
-pv_test = True
+print_grid = False
+mw_test = True
+pv_test = False
 ###############
 
 
@@ -105,6 +106,23 @@ bdg = mg_fe_bridgmanite()
 #liq = FeSiO_liquid_Frost()
 liq = FeSiO_liquid()
 fper = ferropericlase()
+
+
+if print_grid==True:
+    temperatures = np.linspace(1000., 4000., 11)
+    Wsij = np.empty_like(temperatures)
+    Wsji = np.empty_like(temperatures)
+    for P in [1.e5, 100.e9, 200.e9]:
+        for i, T in enumerate(temperatures):
+            liq.set_composition([0.5, 0.4, 0.1]) # not important
+            liq.set_state(P, T)
+            Wsij[i] = liq.solution_model.Ws[0][2]
+            Wsji[i] = liq.solution_model.Ws[2][0]
+        plt.plot(temperatures, Wsij, linestyle='--', label=str(P/1.e9)+' GPa')
+        plt.plot(temperatures, Wsji, linestyle='--', label=str(P/1.e9)+' GPa')
+    plt.legend(loc='lower left')
+    plt.show()
+            
 
 if mw_test==True:
     Ozawa_data = np.loadtxt(fname='data/Ozawa_et_al_2008_fper_iron.dat', unpack=True)

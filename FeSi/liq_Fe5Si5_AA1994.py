@@ -26,31 +26,26 @@ class liq_Fe5Si5 (burnman.Mineral):
         m = formula_mass(formula, atomic_masses)
         rho_0 = 5120. # 5060. # Mizuno et al., accounting for a small difference in Tmelt (1683 vs 1693), see also very similar result by Dumay and Cramb (1995). Kawai et al get ~5090 at 1723 K (so at 1683 K could be 5120 kg/m^3)
         V_0 = m/rho_0
-        D = 7766.
-        Lambda = 1146.
         self.params = {
             'name': 'liquid FeSi',
             'formula': formula,
-            'equation_of_state': 'aa',
+            'equation_of_state': 'aamod',
             'P_0': 1.e5, # 1 bar
             'T_0': 1683., # melting temperature
             'S_0': 183.619/2., # Entropy at melting point, Barin
             'molar_mass': m, # mass
             'V_0': V_0,  # See rho_0, above
             'E_0': 68247./2., # Energy at melting point
-            'K_S': 95.e9, # Fit to Williams et al., 2015 (extrapolation)
-            'Kprime_S': 4.661, # High? Williams et al., 2015
-            'Kprime_prime_S': -0.046e-9, # To fit high pressure melting curve (Lord et al., 2010)
+            'K_S': 94.5e9, # Fit to Williams et al., 2015 (extrapolation)
+            'Kprime_S': 4.66, # High? Williams et al., 2015
+            'Kprime_prime_S': -0.035e-9, # To fit high pressure melting curve (Lord et al., 2010)
             'grueneisen_0': 2.8, # To fit alpha (Mizuno et al.)
             'grueneisen_prime': -2.*0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # ?
-            'a': [0., 0.], #[248.92*m, 289.48*m], # ? (goes into electronic term)
-            'b': [0., 0.], #[0.04057*m, -0.11499*m], # ? (goes into electronic term)
-            'Theta': [1747., 1.537], # ? (goes into electronic term)
-            'theta': 1000., # ? To fit C_p (goes into potential term)
-            'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
-            'xi_0': 64.5/2., # To fit C_p (goes into potential term) - tradeoff with theta
-            'F': [D/rho_0, Lambda/rho_0],
+            'T_el': 7000.,
+            'Cv_el': 2.7/2.,
+            'theta':  150., #2000., # ? To fit C_p (goes into potential term)
+            'xi_0': 200./2., 
             'n': sum(formula.values()),
             'molar_mass': m}
         burnman.Mineral.__init__(self)
@@ -80,7 +75,7 @@ if __name__ == "__main__":
             B2.set_state(P, T)
             liq.set_state(P, T)
             Ss[i] = B2.S
-            Ss2[i] = liq.S
+            Ss2[i] = 2.*liq.S
         plt.plot(temperatures, Ss2 - Ss, label=str(P/1.e9)+' GPa')
     plt.legend(loc='upper right')
     plt.show()

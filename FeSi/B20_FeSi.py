@@ -20,7 +20,7 @@ class B20_FeSi (Mineral):
         #a = 0.448663
         #V_0 = a*a*a*1.e-27*burnman.constants.Avogadro/Z # Acker
         self.params = {
-            'name': 'FeSi',
+            'name': 'B20 FeSi',
             'formula': formula,
             'equation_of_state': 'slbel3',
             'F_0': -88733. ,
