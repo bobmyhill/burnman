@@ -88,9 +88,10 @@ if __name__ == "__main__":
 
     fper.set_state(P, T)
     fper_HP.set_state(P, T)
-    print fper.S
-    print fper.alpha
-    #print fper.V
+    print fper.gibbs, fper_HP.gibbs
+    print fper.S, fper_HP.S
+    print fper.alpha, fper_HP.alpha
+    print fper.V, fper_HP.V
 
 
     fper.set_state(P, 1200)

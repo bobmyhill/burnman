@@ -74,7 +74,7 @@ class ferropericlase(SolidSolution):
         self.name='magnesiowustite/ferropericlase'
         self.type='symmetric'
         self.endmembers = [[periclase(), '[Mg]O'],[wuestite(), '[Fe]O']]
-        self.energy_interaction=[[13.e3]]
+        self.enthalpy_interaction=[[13.e3]]
 
         SolidSolution.__init__(self, molar_fractions)
 

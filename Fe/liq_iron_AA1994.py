@@ -39,7 +39,7 @@ class liq_iron (burnman.Mineral):
             'E_0': 72700.,
             'K_S': 109.7e9,
             'Kprime_S': 4.661,
-            'Kprime_prime_S': -0.043e-9,
+            'Kprime_prime_S': -4.661/109.7e9,
             'grueneisen_0': 1.735,
             'grueneisen_prime': -0.130/m*1.e-6,
             'grueneisen_n': -1.870,

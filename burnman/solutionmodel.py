@@ -267,14 +267,14 @@ class AsymmetricRegularSolution (IdealSolution):
         self.alpha = np.array(alphas)
 
         # Create 2D arrays of interaction parameters
-        self.Wh = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
 
         # setup excess enthalpy interaction matrix
         for i in range(self.n_endmembers):
             for j in range(i + 1, self.n_endmembers):
-                self.Wh[i][j] = 2. * enthalpy_interaction[
+                self.We[i][j] = 2. * enthalpy_interaction[
                     i][j - i - 1] / (self.alpha[i] + self.alpha[j])
 
         if entropy_interaction is not None:
@@ -311,7 +311,7 @@ class AsymmetricRegularSolution (IdealSolution):
         for l in range(self.n_endmembers):
             q = np.array([kd(i, l) - phi[i] for i in range(self.n_endmembers)])
 
-            Hint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Wh, q))
+            Hint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.We, q))
             Sint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Ws, q))
             Vint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Wv, q))
 
@@ -346,7 +346,7 @@ class AsymmetricRegularSolution (IdealSolution):
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         phi = self._phi(molar_fractions)
         H_excess = np.dot(self.alpha.T, molar_fractions) * np.dot(
-            phi.T, np.dot(self.Wh, phi))
+            phi.T, np.dot(self.We, phi))
         return H_excess + pressure * self.excess_volume(pressure, temperature, molar_fractions)
 
     def activity_coefficients(self, pressure, temperature, molar_fractions):
@@ -382,15 +382,15 @@ class SubregularSolution (IdealSolution):
         self.n_endmembers = len(endmembers)
 
         # Create 2D arrays of interaction parameters
-        self.Wh = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
 
         # setup excess enthalpy interaction matrix
         for i in range(self.n_endmembers):
             for j in range(i + 1, self.n_endmembers):
-                self.Wh[i][j] = enthalpy_interaction[i][j - i - 1][0]
-                self.Wh[j][i] = enthalpy_interaction[i][j - i - 1][1]
+                self.We[i][j] = enthalpy_interaction[i][j - i - 1][0]
+                self.We[j][i] = enthalpy_interaction[i][j - i - 1][1]
 
         if entropy_interaction is not None:
             for i in range(self.n_endmembers):
@@ -426,7 +426,7 @@ class SubregularSolution (IdealSolution):
 
     def _non_ideal_interactions(self, molar_fractions):
         # equation (6') of Helffrich and Wood, 1989
-        Hint = self._non_ideal_function(self.Wh, molar_fractions)
+        Hint = self._non_ideal_function(self.We, molar_fractions)
         Sint = self._non_ideal_function(self.Ws, molar_fractions)
         Vint = self._non_ideal_function(self.Wv, molar_fractions)
         return Hint, Sint, Vint
@@ -457,7 +457,7 @@ class SubregularSolution (IdealSolution):
 
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         H_excess = np.dot(
-            molar_fractions, self._non_ideal_function(self.Wh, molar_fractions))
+            molar_fractions, self._non_ideal_function(self.We, molar_fractions))
         return H_excess + pressure * self.excess_volume(pressure, temperature, molar_fractions)
 
     def activity_coefficients(self, pressure, temperature, molar_fractions):

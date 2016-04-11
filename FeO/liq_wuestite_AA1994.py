@@ -75,8 +75,8 @@ class liq_FeO (burnman.Mineral):
             'V_0': V_0,  # Fit to standard state data
             'E_0': -131792.283, # Fit to standard state data
             'K_S': 82.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
-            'Kprime_S': 4.4, # ?
-            'Kprime_prime_S': -0.025e-9, # ?
+            'Kprime_S': 4.9, # ?
+            'Kprime_prime_S': -4.9/82.e9, # ?
             'grueneisen_0': 1.30, # controls alpha
             'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # ?
@@ -101,26 +101,23 @@ class liq_FeO (burnman.Mineral):
         self.params = {
             'name': 'liquid FeO',
             'formula': formula,
-            'equation_of_state': 'aa',
+            'equation_of_state': 'aamod',
             'P_0': 1.e5, # 1 bar
             'T_0': 1650., # melting temperature for FeO
             'S_0':  178.78, # 178.78 is JANAF for FeO
             'molar_mass': m, # mass
             'V_0': V_0,  # Fit to standard state data
-            'E_0': -131792.283, # Fit to standard state data
+            'E_0': -147005., # Fit to standard state data
             'K_S': 95.e9, # Fit to standard state data, remember, gr = a*K_S*V/Cp
-            'Kprime_S': 4.3, # ?
-            'Kprime_prime_S': -0.040e-9, # ?
+            'Kprime_S': 4.66, # ?
+            'Kprime_prime_S': -0.035e-9, # ?
             'grueneisen_0': 1.30, # controls alpha
             'grueneisen_prime': -0.130/0.055845*1.e-6, # ?
             'grueneisen_n': -1.870, # Melting curve not sensitive to this guy
-            'a': [0., 0.], # (goes into electronic term)
-            'b': [0., 0.], # (goes into electronic term)
-            'Theta': [1747.3, 1.537], # ? (goes into potential term)
-            'theta': 2000., # ? (goes into potential term)
-            'lmda': [0., 0., 0.], # [302.07*m, -325.23*m, 30.45*m], # ? (goes into potential term)
-            'xi_0': 63., # ? (goes into potential term)
-            'F': [1., 1.],
+            'T_el': 3500., # Schrettle et al give 10 mJ/molK for O at low temperature, need to check what this implies for Cv_el/T_el
+            'Cv_el': 2.7,
+            'theta': 3500., # ? (goes into potential term)
+            'xi_0': 25., # ? (goes into potential term)
             'n': sum(formula.values()),
             'molar_mass': m}
         burnman.Mineral.__init__(self)
@@ -134,9 +131,15 @@ if __name__ == "__main__":
     B1 = B1_wuestite()    
     liq = liq_FeO()
 
-
+    
     liq.set_state(1.e5, 1800.)
     print liq.S, 'should be', liq.params['S_0']+(177.924-171.990)
+    
+    B1.set_state(1.e5, 1650.)
+    liq.set_state(1.e5, 1650.)
+    liq.params['E_0'] = liq.params['E_0'] - liq.gibbs + B1.gibbs
+    print liq.params['E_0']
+    
 
 
     # Find heat capacities
@@ -184,7 +187,6 @@ if __name__ == "__main__":
         #plt.plot(temperatures, Ss2, label=str(P/1.e9)+' GPa, B1')
     plt.legend(loc='lower right')
     plt.show()
-    exit()
     
     liq.set_state(1.e5, 1673.)
     print liq.V*1.e6, liq.rho
@@ -234,12 +236,6 @@ if __name__ == "__main__":
     print 'gr', liq.gr, grueneisen_0
     
     print 'V_phi', np.sqrt(liq.K_S/liq.rho), V_phi
-
-    #B1.set_state(1.e5, 1650.)
-    #liq.set_state(1.e5, 1650.)
-    #liq.params['E_0'] = liq.params['E_0'] - liq.gibbs + B1.gibbs
-    #print liq.params['E_0']
-    #exit()
 
 
     
@@ -368,12 +364,4 @@ if __name__ == "__main__":
     plt.plot(pressures/1.e9, Vmelt, marker='o', linestyle='None')
     plt.plot(pressures/1.e9, Vmelt_model)
     plt.show()
-    exit()
-
-    fig1 = mpimg.imread('data/Anzellini_2013_Fe_melting.png')  # Uncomment these two lines if you want to overlay the plot on a screengrab from SLB2011
-    plt.imshow(fig1, extent=[0., 230., 1200., 5200.], aspect='auto')
-    #plt.plot(pressures/1.e9, melting_temperature(pressures), marker='o', linestyle='None')
-    plt.plot(pressures/1.e9, Tmelt_model)
-    plt.show()
-
     

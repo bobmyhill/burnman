@@ -10,7 +10,7 @@ from burnman import minerals
 ###############
 print_grid = False
 mw_test = True
-pv_test = False
+pv_test = True
 ###############
 
 
@@ -39,6 +39,10 @@ FeSi_B20 = B20_FeSi()
 FeSi_B2 = B2_FeSi()
 Fe5Si5_liq = liq_Fe5Si5()
 
+from Fe_FeO import Fe_FeO_liquid
+Fe_FeO_liq = Fe_FeO_liquid()
+
+
 class FeSiO_liquid(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='Fe - Fe0.5Si0.5 - FeO solution'
@@ -49,19 +53,32 @@ class FeSiO_liquid(burnman.SolidSolution):
                            [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
-        self.energy_interaction = [[[0.e3, 0.e3], [105.e3,118.e3]],
-                                   [[105.e3,118.e3]]]
-        
-        self.volume_interaction = [[[0., 0.], [-1.4e-6,-1.2e-6]],
-                                   [[-1.4e-6,-1.2e-6]]]
+        # Parameters for Fe-Fe0.5Si0.5
+        E0=-40.e3
+        V0=0.
         ksi0=7./3.
-        ksi1=7./3.
-        self.kprime_interaction = [[[ksi0, ksi0], [ksi1, ksi1]],
-                                   [[ksi1, ksi1]]]
         zeta0=1.
-        zeta1=1.101
-        self.thermal_pressure_interaction = [[[zeta0, zeta0], [zeta1, zeta1]],
-                                   [[zeta1, zeta1]]]
+        
+        E_FeFeO = Fe_FeO_liq.energy_interaction[0][0][0]
+        E_FeOFe = Fe_FeO_liq.energy_interaction[0][0][1]
+        self.energy_interaction = [[[E0, E0], [E_FeFeO, E_FeOFe]],
+                                   [[E_FeFeO, E_FeOFe]]]
+
+
+        V_FeFeO = Fe_FeO_liq.volume_interaction[0][0][0]
+        V_FeOFe = Fe_FeO_liq.volume_interaction[0][0][1]
+        self.volume_interaction = [[[V0, V0], [V_FeFeO, V_FeOFe]],
+                                   [[V_FeFeO, V_FeOFe]]]
+ 
+        ksi_FeFeO = Fe_FeO_liq.kprime_interaction[0][0][0]
+        ksi_FeOFe = Fe_FeO_liq.kprime_interaction[0][0][1]
+        self.kprime_interaction = [[[ksi0, ksi0], [ksi_FeFeO, ksi_FeOFe]],
+                                   [[ksi_FeFeO, ksi_FeOFe]]]
+
+        zeta_FeFeO = Fe_FeO_liq.thermal_pressure_interaction[0][0][0]
+        zeta_FeOFe = Fe_FeO_liq.thermal_pressure_interaction[0][0][1]
+        self.thermal_pressure_interaction = [[[zeta0, zeta0], [zeta_FeFeO, zeta_FeOFe]],
+                                             [[zeta_FeFeO, zeta_FeOFe]]]
         
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -73,14 +90,14 @@ class FeSiO_liquid_Frost(burnman.SolidSolution):
                            [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
-        self.enthalpy_interaction = [[[0., 0.], [83307.,135943.]],
+        self.enthalpy_interaction = [[[-40.e3, -40.e3], [83307.,135943.]],
                                     [[83307.,135943.]]]
         
         self.entropy_interaction = [[[0., 0.], [8.978, 31.122]],
                                    [[8.978, 31.122]]]
 
         self.volume_interaction = [[[0., 0.], [-0.9e-6,-0.059e-6]],
-                                   [[-0.9e-6,-0.059e-6]]]
+                                   [[-0.9e-6,-0.59e-6]]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -153,8 +170,8 @@ if mw_test==True:
     '''
     
     XFeO_mw = 0.2
-    temperatures = np.linspace(2900., 3300., 3)
-    pressures = np.linspace(20.e9, 140.e9, 11)
+    temperatures = np.linspace(3000., 4500., 4)
+    pressures = np.linspace(15.e9, 140.e9, 15)
     for T in temperatures:
         lnKd = np.empty_like(pressures)
         guess=0.01
@@ -164,6 +181,10 @@ if mw_test==True:
             lnKd[i] = np.log(XFeO_melt/XFeO_mw)
             print P/1.e9, T, lnKd[i]
         plt.plot(pressures, lnKd, label=str(T)+'K')
+
+        np.savetxt(fname='output_data/lnD_melt_mw_'+str(T)+'_K.dat',
+                   X=zip(*[pressures/1.e9, lnKd]),
+                   header='Pressure (GPa) lnD (XFeO_melt/XFeO_mw)')
     
     plt.title('FeO partitioning between periclase and metallic melt')
     plt.xlabel('Pressure (GPa)')
@@ -212,39 +233,52 @@ if pv_test==True:
         return bdg.partial_gibbs[1] - mu_FeSiO3
     
 
-    P = 25.e9
-    XFeSiO3_bdg = 0.1
+    pressures = [25.e9, 100.e9]
     temperatures = np.linspace(2773., 4273., 2)
-    Xs_Fe5Si5_melt = np.linspace(0.002, 0.5, 11) 
+    XFeSiO3_bdg = 0.2
 
-    for T in temperatures:
-        X_Sis_wt = np.empty_like(Xs_Fe5Si5_melt)
-        X_Os_wt = np.empty_like(Xs_Fe5Si5_melt)
-        guess = 0.01
-        for i, XFe5Si5_melt in enumerate(Xs_Fe5Si5_melt):
-            XFeO_melt = fsolve(melt_bdg_eqm, [guess], args=(P, T, XFeSiO3_bdg, XFe5Si5_melt))[0]
-            print T, XFe5Si5_melt, XFeO_melt 
-            guess = XFeO_melt
-            # Convert molar melt compositions (components) into wt % (elemental)
-            mol_O = XFeO_melt
-            mol_Si = 0.5 * XFe5Si5_melt
-            mol_Fe = (1. - XFeO_melt - XFe5Si5_melt) + XFeO_melt + 0.5 * XFe5Si5_melt
+    invXs = np.linspace(2., 500., 11)
+    Xs = np.linspace(0.002, 0.5, 11)
+    
+    Xs_Fe5Si5_melt = np.unique(np.sort(np.concatenate((1./invXs, Xs))))
 
-            wt_O = mol_O*15.9994
-            wt_Si = mol_Si*28.0855
-            wt_Fe = mol_Fe*55.845
+    
+    
+    for P in pressures:
+        for T in temperatures:
+            X_Sis_wt = np.empty_like(Xs_Fe5Si5_melt)
+            X_Os_wt = np.empty_like(Xs_Fe5Si5_melt)
+            guess = 0.01
+            for i, XFe5Si5_melt in enumerate(Xs_Fe5Si5_melt):
+                XFeO_melt = fsolve(melt_bdg_eqm, [guess], args=(P, T, XFeSiO3_bdg, XFe5Si5_melt))[0]
 
-            wt_total = (wt_O + wt_Si + wt_Fe)/100.
+                guess = XFeO_melt
+                # Convert molar melt compositions (components) into wt % (elemental)
+                mol_O = XFeO_melt
+                mol_Si = 0.5 * XFe5Si5_melt
+                mol_Fe = (1. - XFeO_melt - XFe5Si5_melt) + XFeO_melt + 0.5 * XFe5Si5_melt
+    
+                wt_O = mol_O*15.9994
+                wt_Si = mol_Si*28.0855
+                wt_Fe = mol_Fe*55.845
+    
+                wt_total = (wt_O + wt_Si + wt_Fe)/100.
+                
+                X_Sis_wt[i] = wt_Si/wt_total
+                X_Os_wt[i] = wt_O/wt_total
+                
+                print P/1.e9, T, X_Sis_wt[i], X_Os_wt[i]
+        
+            plt.plot(X_Os_wt, X_Sis_wt, label=str(P/1.e9)+' GPa, '+str(T)+'K')
             
-            X_Sis_wt[i] = wt_Si/wt_total
-            X_Os_wt[i] = wt_O/wt_total
-    
-        plt.plot(X_Os_wt, X_Sis_wt, label=str(T)+'K')
-    
+            np.savetxt(fname='output_data/metal_Mg'+str(1.-XFeSiO3_bdg)+'Fe'+str(XFeSiO3_bdg)+'SiO3_equilibrium_'+str(P/1.e9)+'_GPa_'+str(T)+'_K.dat',
+                       X=zip(*[X_Os_wt, X_Sis_wt]),
+                       header='O (wt %) Si (wt %)')
+        
     plt.title('Metallic melt in equilibrium with '+\
               'Mg'+str(1.-XFeSiO3_bdg)+\
               'Fe'+str(XFeSiO3_bdg)+\
-              'SiO3 at '+str(P/1.e9)+' GPa')
+              'SiO3')
     plt.xlabel('XO (wt %)')
     plt.ylabel('XSi (wt %)')
     plt.xlim(0.0, 10.0)

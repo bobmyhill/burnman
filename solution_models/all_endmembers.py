@@ -46,7 +46,14 @@ hcp = hcp_iron()
 wus = B1_wuestite()
 liq = Fe_FeO_liquid()
 
-
+'''
+fper=burnman.minerals.SLB_2011.ferropericlase()
+fper.set_composition([1.0, 0.])
+fper.set_state(1.e5, 300.)
+print np.sqrt(fper.K_S/fper.rho)
+print fper.K_T/1.e9
+exit()
+'''
 
 def eqm_XT(args, P, Fe_phase, FeO_phase, liq_phase):
     X_FeO, T = args
