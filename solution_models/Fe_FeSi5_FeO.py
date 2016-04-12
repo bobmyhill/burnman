@@ -39,8 +39,9 @@ FeSi_B20 = B20_FeSi()
 FeSi_B2 = B2_FeSi()
 Fe5Si5_liq = liq_Fe5Si5()
 
-from Fe_FeO import Fe_FeO_liquid
+from Fe_FeO import Fe_FeO_liquid_simple, Fe_FeO_liquid
 Fe_FeO_liq = Fe_FeO_liquid()
+Fe_FeO_liq_simple = Fe_FeO_liquid_simple()
 
 
 class FeSiO_liquid(burnman.SolidSolution):
@@ -96,8 +97,39 @@ class FeSiO_liquid_Frost(burnman.SolidSolution):
         self.entropy_interaction = [[[0., 0.], [8.978, 31.122]],
                                    [[8.978, 31.122]]]
 
-        self.volume_interaction = [[[0., 0.], [-0.9e-6,-0.059e-6]],
+        self.volume_interaction = [[[0., 0.], [-0.9e-6,-0.59e-6]],
                                    [[-0.9e-6,-0.59e-6]]]
+
+
+        burnman.SolidSolution.__init__(self, molar_fractions)
+
+class FeSiO_liquid_simple(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='Fe - Fe0.5Si0.5 - FeO solution'
+        self.type='simple_subregular'
+        self.endmembers = [[Fe_liq,     '[Fe]0.5[Fe]0.5'],
+                           [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
+                           [FeO_liq,    'Fe[O]0.5[O]0.5']]
+
+        E0 = Fe_FeO_liq_simple.energy_interaction[0][0][0]
+        E1 = Fe_FeO_liq_simple.energy_interaction[0][0][1]
+        self.energy_interaction = [[[-40.e3, -40.e3], [E0, E1]],
+                                    [[E0, E1]]]
+        
+        S0 = Fe_FeO_liq_simple.entropy_interaction[0][0][0]
+        S1 = Fe_FeO_liq_simple.entropy_interaction[0][0][1]
+        self.entropy_interaction = [[[0., 0.], [S0, S1]],
+                                   [[S0, S1]]]
+
+        V0 = Fe_FeO_liq_simple.volume_interaction[0][0][0]
+        V1 = Fe_FeO_liq_simple.volume_interaction[0][0][1]
+        self.volume_interaction = [[[0., 0.], [V0, V1]],
+                                   [[V0, V1]]]
+        
+        kxs = ksi_FeFeO = Fe_FeO_liq_simple.modulus_interaction[0][0][0]
+        self.modulus_interaction = [[[kxs, kxs], [kxs, kxs]],
+                                    [[kxs, kxs]]]
+
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 
@@ -110,19 +142,91 @@ class ferropericlase(burnman.SolidSolution):
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 
+
+en_HP = burnman.minerals.HP_2011_ds62.en()
+en = burnman.minerals.SLB_2011.enstatite()
+mpv = burnman.minerals.SLB_2011.mg_bridgmanite()
+
+en_HP.set_state(1.e5, 300.)
+en.set_state(1.e5, 300.)
+mpv.set_state(1.e5, 300.)
+
+SLBsubHP = en.gibbs - en_HP.gibbs
+mpv.params['F_0'] = mpv.params['F_0'] - 0.5*(SLBsubHP)
+print 0.5*(SLBsubHP)
+
+fs_HP = burnman.minerals.HP_2011_ds62.fs()
+fs = burnman.minerals.SLB_2011.ferrosilite()
+
+
+fpv = burnman.minerals.SLB_2011.fe_bridgmanite()
+
+fs_HP.set_state(1.e5, 300.)
+fs.set_state(1.e5, 300.)
+fpv.set_state(1.e5, 300.)
+
+SLBsubHP = fs.gibbs - fs_HP.gibbs
+fpv.params['F_0'] = fpv.params['F_0'] - 0.5*(SLBsubHP)
+print 0.5*(SLBsubHP)
+
+
+#liq = FeSiO_liquid_Frost()
+#liq = FeSiO_liquid()
+liq = FeSiO_liquid_simple()
+fper = ferropericlase()
+
+import json
+print '\subsection{Solid endmember parameters}'
+
+minerals=[Fe_hcp, Fe_fcc, FeO_B1, FeSi_B20, FeSi_B2]
+for mineral in minerals:
+    print '\subsubsection{'+mineral.name+'}'
+    print '\\begin{lstlisting}'
+    print json.dumps(mineral.params, indent=2)
+    print '\end{lstlisting}'
+    print ''
+print ''
+print '\subsection{Liquid endmember parameters}'
+
+minerals=[Fe_liq, FeO_liq, Fe5Si5_liq]
+for mineral in minerals:
+    print '\subsubsection{'+mineral.name+'}'
+    print '\\begin{lstlisting}'
+    print json.dumps(mineral.params, indent=2)
+    print '\end{lstlisting}'
+    print ''
+
+
+print '\subsection{Solution model parameters}'
+print '\\begin{lstlisting}'
+print 'energy_interaction =', liq.energy_interaction
+print 'entropy_interaction =', liq.entropy_interaction
+print 'volume_interaction =', liq.volume_interaction
+print 'modulus_interaction =', liq.modulus_interaction
+print '\end{lstlisting}'
+
+
+exit()
+# if b1=2 and a1=1, bsuba=1
+# a2 = b2 - bsuba
+
+
+
+#mpv = burnman.minerals.HHPH_2013.mpv()
+#fpv = burnman.minerals.HHPH_2013.fpv()
+
+
+        
 class mg_fe_bridgmanite(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='ferropericlase'
-        self.endmembers = [[burnman.minerals.HHPH_2013.mpv(), '[Mg]SiO3'],[burnman.minerals.HHPH_2013.fpv(), '[Fe]SiO3']]
+        self.endmembers = [[mpv, '[Mg]SiO3'],[fpv, '[Fe]SiO3']]
         self.type='symmetric'
         self.enthalpy_interaction=[[0.e3]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
 bdg = mg_fe_bridgmanite()
 
-#liq = FeSiO_liquid_Frost()
-liq = FeSiO_liquid()
-fper = ferropericlase()
 
 
 if print_grid==True:
@@ -234,8 +338,8 @@ if pv_test==True:
     
 
     pressures = [25.e9, 100.e9]
-    temperatures = np.linspace(2773., 4273., 2)
-    XFeSiO3_bdg = 0.2
+    temperatures = np.linspace(2773., 4273., 4)
+    XFeSiO3_bdg = 0.1
 
     invXs = np.linspace(2., 500., 11)
     Xs = np.linspace(0.002, 0.5, 11)

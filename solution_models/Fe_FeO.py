@@ -9,7 +9,7 @@ from burnman import minerals
 
 if __name__ == "__main__":
     read_data=True
-    fit_data=False
+    fit_data=True
     plot_interaction=True
     plot_eutectic=True
     plot_isobaric_diagram=True
@@ -45,10 +45,17 @@ class Fe_FeO_liquid(burnman.SolidSolution):
         self.T_0=1650.
         self.n_atoms=1.
         self.endmembers = [[liq_iron(), '[Fe]'], [liq_FeO(), 'Fe[O]']]
-        self.energy_interaction = [[[84.e3, 137.e3]]] # [[[105.e3, 118.e3]]], [[[45.e3, 53.e3]]] # 
-        self.volume_interaction = [[[-1.39e-06, -0.96e-06]]] #[[[-1.403e-6, -1.2e-6]]] [[[-1.85e-06,  -1.7e-06]]] #
-        self.kprime_interaction = [[[7./3., 7./3.]]]
-        self.thermal_pressure_interaction = [[[1.063, 1.139]]] # [[[1.101, 1.101]]] [[[1., 1.]]] #
+        self.energy_interaction = [[[83.6e3, 136.2e3]]]
+        # [[[60.e3, 101.e3]]]        # [[[84.e3, 137.e3]]]
+        # [[[105.e3, 118.e3]]]     # [[[45.e3, 53.e3]]] # 
+        self.volume_interaction = [[[-1.33e-06, -0.93e-06]]]
+        # [[[-1.61e-06, -1.27e-06]]] # [[[-1.39e-06, -0.96e-06]]]
+        # [[[-1.403e-6, -1.2e-6]]] # [[[-1.85e-06,  -1.7e-06]]] #
+        self.kprime_interaction = [[[0.1, 0.1]]]
+        # [[[1.01, 1.01]]]           # [[[7./3., 7./3.]]]
+        self.thermal_pressure_interaction = [[[1.064, 1.139]]]
+        # [[[1.024, 1.079]]]         # [[[1.063, 1.139]]]
+        # [[[1.101, 1.101]]]       # [[[1., 1.]]] #
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 class Fe_FeO_liquid_Frost(burnman.SolidSolution):
@@ -65,10 +72,31 @@ class Fe_FeO_liquid_Frost(burnman.SolidSolution):
         self.volume_interaction = [[[-0.9e-6,-0.59e-6]]]
 
         burnman.SolidSolution.__init__(self, molar_fractions)
-        
-liq = Fe_FeO_liquid()
-#liq = Fe_FeO_liquid_Frost()
 
+
+class Fe_FeO_liquid_simple(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name='Fe - Fe0.5Si0.5 - FeO solution'
+        self.type='simple_subregular'
+        self.endmembers = [[Fe_liq,     '[Fe]'],
+                           [FeO_liq,    'Fe[O]']]
+
+        self.energy_interaction = [[[83307.,135943.]]]
+        
+        self.entropy_interaction = [[[8.978, 31.122]]]
+
+        self.volume_interaction = [[[-1.11e-6,-0.55e-6]]]
+
+        kxs = 100.e9
+        self.modulus_interaction = [[[kxs, kxs]]]
+        
+        burnman.SolidSolution.__init__(self, molar_fractions)
+        
+#liq = Fe_FeO_liquid()
+#liq = Fe_FeO_liquid_Frost()
+liq = Fe_FeO_liquid_simple()
+
+    
 
 if read_data==True:
     # READ IN DATA
@@ -167,8 +195,8 @@ if read_data==True:
         W_FeOFe = (RTlny_FeO/(X_Fe*X_Fe) + 2.*X_FeO*(RTlny_FeO/(X_Fe*X_Fe) + RTlny_Fe/(X_FeO*X_FeO)))/(1. + 4.*X_FeO)
         
         fitting_data.append([P, T, W_FeFeO, W_FeOFe, eutectic_weighting])
+    
     '''
-
 
     # and now fit the solvus:
     # at a given pressure and temperature, two compositions have the same partial gibbs excesses
@@ -200,11 +228,11 @@ if read_data==True:
     P = 1.e5
     T = 1800.
     W0, W1 = Frost_interaction(P, T)
-    fitting_data.append([P, T, W0, W1, 1.])
+    fitting_data.append([P, T, W0, W1, 10.])
     P = 1.e5
     T = 2200.
     W0, W1 = Frost_interaction(P, T)
-    fitting_data.append([P, T, W0, W1, 1.])
+    fitting_data.append([P, T, W0, W1, 10.])
     
     pressures, temperatures, W_FeFeO, W_FeOFe, weighting = zip(*fitting_data)
     pressures = np.array(pressures)
@@ -233,15 +261,10 @@ if read_data==True:
 if fit_data==True:
 
     def find_interaction_parameters(xdata, E0, E1, V0, V1):
-        ksi=7./3.
-        zeta0 = 1.
-        zeta1 = 1.
-        print E0, E1, V0, V1, ksi, zeta0, zeta1
+        print E0, E1, V0, V1
         # initialise properties
         liq.energy_interaction = [[[E0, E1]]]
         liq.volume_interaction = [[[V0, V1]]]
-        liq.kprime_interaction = [[[ksi, ksi]]]
-        liq.thermal_pressure_interaction = [[[zeta0, zeta1]]]
         burnman.SolidSolution.__init__(liq)
         return calculate_interaction_parameters(xdata)
 

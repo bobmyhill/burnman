@@ -39,8 +39,7 @@ awk '$1!="#" {print $1, $2}' output_data/eutectic_TX.dat | sample1d -I1 | psxy -
 
 awk '$1!="%" {print $2, $3, $2-2, $2, $2, $2+2, $3-$4, $3, $3, $3+$4}' data/Fe_FeO_eutectic.dat | psxy -J -R -O -K -Sc0.3c -EXY0 -Gred >> ${base}.ps
 awk '$1!="%" {print $1, $3, $1-$2, $1, $1, $1+$2, $3-$4, $3, $3, $3+$4}' data/Fe_FeO_eutectic_temperature.dat | psxy -J -R -O -K -Sc0.3c -EXY0 -Gred >> ${base}.ps
-
-
+awk '$1!="#" {print $1, $3, $1-$2, $1, $1, $1+$2, $3-$4, $3, $3, $3+$4}' data/Boehler_1993_Fe_FeO_eutectic.dat | psxy -J -R -O -K -Sc0.3c -EXY0 -Gblue >> ${base}.ps
 awk '$1!="%" {print $1, $2, $2-$3, $2, $2, $2+$3}' data/Ozawa_et_al_2011_Fe_FeO_phase_stability.dat | psxy -J -R -O -Ss0.3c -EY0 -Gblack >> ${base}.ps
 
 

@@ -27,7 +27,7 @@ class liq_Fe5Si5 (burnman.Mineral):
         rho_0 = 5120. # 5060. # Mizuno et al., accounting for a small difference in Tmelt (1683 vs 1693), see also very similar result by Dumay and Cramb (1995). Kawai et al get ~5090 at 1723 K (so at 1683 K could be 5120 kg/m^3)
         V_0 = m/rho_0
         self.params = {
-            'name': 'liquid FeSi',
+            'name': 'liquid Fe0.5Si0.5',
             'formula': formula,
             'equation_of_state': 'aamod',
             'P_0': 1.e5, # 1 bar

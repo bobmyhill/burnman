@@ -37,20 +37,30 @@ base='pv_melt_equilibrium'
 
 psbasemap -JX6/6 -R0/10/0/10 -Y4c -B2f0.5:"O (wt %)":/2f0.5:"Si (wt %)":SWen -K -P > ${base}.ps
 
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_25.0_GPa_2773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_25.0_GPa_4273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+echo "1 9 Mg@-0.9@-Fe@-01@-SiO@-3@- at 25 GPa" | pstext -J -R -O -K -F+jLM >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_2773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_3273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_3773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_4273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
 
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_25.0_GPa_2773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "2773"}' | pstext -J -R -O -K >> ${base}.ps
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_25.0_GPa_4273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "4273"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_2773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "2773"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_3273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "3273"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_3773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "3773"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_25.0_GPa_4273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "4273"}' | pstext -J -R -O -K >> ${base}.ps
 
 
 psbasemap -JX6/6 -X8 -R0/10/0/10 -B2f0.5:"O (wt %)":/2f0.5:"Si (wt %)":SWen -K -O >> ${base}.ps
 
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_100.0_GPa_2773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_100.0_GPa_4273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+echo "1 9 Mg@-0.9@-Fe@-01@-SiO@-3@- at 100 GPa" | pstext -J -R -O -K -F+jLM >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_2773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_3273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_3773.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_4273.0_K.dat -T1 -I0.01 | psxy -J -R -O -K -W0.5,black >> ${base}.ps
 
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_100.0_GPa_2773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "2773"}' | pstext -J -R -O -K >> ${base}.ps
-sample1d output_data/metal_Mg0.8Fe0.2SiO3_equilibrium_100.0_GPa_4273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "4273"}' | pstext -J -R -O >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_2773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "2773"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_3273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "3273"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_3773.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2, "3773"}' | pstext -J -R -O -K >> ${base}.ps
+sample1d output_data/metal_Mg0.9Fe0.1SiO3_equilibrium_100.0_GPa_4273.0_K.dat -T1 -I0.01 | awk 'NR==500 {print $1+1, $2-1, "4273"}' | pstext -J -R -O >> ${base}.ps
 
 
 #awk '$1!="%" {print $2, $3, $2-2, $2, $2, $2+2, $3-$4, $3, $3, $3+$4}' data/Fe_FeO_eutectic.dat | psxy -J -R -O -K -Sc0.3c -EXY0 -Gred >> ${base}.ps

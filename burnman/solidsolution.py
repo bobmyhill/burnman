@@ -96,6 +96,11 @@ class SolidSolution(Mineral):
                         self.endmembers, self.P_0, self.T_0,
                         self.energy_interaction, self.volume_interaction,
                         self.kprime_interaction, self.thermal_pressure_interaction)
+                elif self.type == 'simple_subregular':
+                    self.solution_model = SimpleSubregularSolution(
+                        self.endmembers, self.energy_interaction,
+                        self.volume_interaction, self.modulus_interaction,
+                        self.entropy_interaction)
                 else:
                     raise Exception(
                         "Solution model type " + self.params['type'] + "not recognised.")
