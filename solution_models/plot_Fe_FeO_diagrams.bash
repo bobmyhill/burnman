@@ -29,6 +29,23 @@ rm ${base}.epsi
 
 open -a Skim.app ${base}.pdf &
 
+# Fe-FeO solvus
+base='Fe_FeO_eutectic_composition'
+
+psbasemap -JX12/8 -R0/330/0/50 -Y4c -B50f10:"Pressure (GPa)":/10f2:"FeO (mol %)":SWen -K -P > ${base}.ps
+
+
+awk '$1!="%" {print $2, $5, $2-5, $2, $2, $2+5, $5-$6, $5, $5, $5+$6}' data/Fe_FeO_eutectic.dat | psxy -J -R -O -K -Sc0.3c -EXY0 -Gred >> ${base}.ps
+awk '$1!="#" {print $1, $3*100}' output_data/eutectic_TX.dat | sample1d -I1  | sample1d -I1 | psxy -J -R -O -W0.5,black >> ${base}.ps
+
+ps2epsi ${base}.ps
+epstopdf ${base}.epsi
+
+rm ${base}.ps
+rm ${base}.epsi
+
+open -a Skim.app ${base}.pdf &
+
 
 # Fe-FeO eutectic
 base='Fe_FeO_eutectic'

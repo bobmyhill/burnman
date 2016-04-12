@@ -8,9 +8,11 @@ import burnman
 from burnman import minerals
 
 ###############
+print_latex = False
 print_grid = False
-mw_test = True
-pv_test = True
+melting_curves=True
+mw_test = False
+pv_test = False
 ###############
 
 
@@ -175,41 +177,6 @@ print 0.5*(SLBsubHP)
 liq = FeSiO_liquid_simple()
 fper = ferropericlase()
 
-import json
-print '\subsection{Solid endmember parameters}'
-
-minerals=[Fe_hcp, Fe_fcc, FeO_B1, FeSi_B20, FeSi_B2]
-for mineral in minerals:
-    print '\subsubsection{'+mineral.name+'}'
-    print '\\begin{lstlisting}'
-    print json.dumps(mineral.params, indent=2)
-    print '\end{lstlisting}'
-    print ''
-print ''
-print '\subsection{Liquid endmember parameters}'
-
-minerals=[Fe_liq, FeO_liq, Fe5Si5_liq]
-for mineral in minerals:
-    print '\subsubsection{'+mineral.name+'}'
-    print '\\begin{lstlisting}'
-    print json.dumps(mineral.params, indent=2)
-    print '\end{lstlisting}'
-    print ''
-
-
-print '\subsection{Solution model parameters}'
-print '\\begin{lstlisting}'
-print 'energy_interaction =', liq.energy_interaction
-print 'entropy_interaction =', liq.entropy_interaction
-print 'volume_interaction =', liq.volume_interaction
-print 'modulus_interaction =', liq.modulus_interaction
-print '\end{lstlisting}'
-
-
-exit()
-# if b1=2 and a1=1, bsuba=1
-# a2 = b2 - bsuba
-
 
 
 #mpv = burnman.minerals.HHPH_2013.mpv()
@@ -227,6 +194,37 @@ class mg_fe_bridgmanite(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions)
 bdg = mg_fe_bridgmanite()
 
+if print_latex==True:
+    import json
+    print '\subsection{Solid endmember parameters}'
+    
+    minerals=[Fe_hcp, Fe_fcc, FeO_B1, FeSi_B20, FeSi_B2]
+    for mineral in minerals:
+        print '\subsubsection{'+mineral.name+'}'
+        print '\\begin{lstlisting}'
+        print json.dumps(mineral.params, indent=2)
+        print '\end{lstlisting}'
+        print ''
+        
+    print ''
+    print '\subsection{Liquid endmember parameters}'
+        
+    minerals=[Fe_liq, FeO_liq, Fe5Si5_liq]
+    for mineral in minerals:
+        print '\subsubsection{'+mineral.name+'}'
+        print '\\begin{lstlisting}'
+        print json.dumps(mineral.params, indent=2)
+        print '\end{lstlisting}'
+        print ''
+    
+    print ''
+    print '\subsection{Solution model parameters}'
+    print '\\begin{lstlisting}'
+    print 'energy_interaction =', liq.energy_interaction
+    print 'entropy_interaction =', liq.entropy_interaction
+    print 'volume_interaction =', liq.volume_interaction
+    print 'modulus_interaction =', liq.modulus_interaction
+    print '\end{lstlisting}'
 
 
 if print_grid==True:
@@ -244,7 +242,130 @@ if print_grid==True:
     plt.legend(loc='lower left')
     plt.show()
             
+if melting_curves==True:
+    # Fe
+    Fe_bcc = minerals.HP_2011_ds62.iron()
+    
+    # Metastable Fe_fcc <-> Fe_hcp at 1 bar is ca. 500 K
+    # Fe_bcc <-> Fe_hcp at 300 K is at ca. 12 GPa
+    print burnman.tools.equilibrium_temperature([Fe_fcc, Fe_hcp], [1.0, -1.0], 1.e5)
+    print burnman.tools.equilibrium_pressure([Fe_bcc, Fe_hcp], [1.0, -1.0], 298.15)/1.e9
 
+
+
+
+    fig1 = mpimg.imread('data/Anzellini_2013_Fe_melting.png')  # Uncomment these two lines if you want to overlay the plot on a screengrab from SLB2011
+    plt.imshow(fig1, extent=[0., 230., 1200., 5200.], aspect='auto')
+    
+    
+    
+    # Find triple points
+    P_inv, T_inv = burnman.tools.invariant_point([Fe_fcc, Fe_hcp], [1.0, -1.0],\
+                                                 [Fe_bcc, Fe_hcp], [1.0, -1.0],\
+                                                 [10.e9, 800.])
+    P_inv2, T_inv2 = burnman.tools.invariant_point([Fe_fcc, Fe_hcp], [1.0, -1.0],\
+                                                   [Fe_liq, Fe_hcp], [1.0, -1.0],\
+                                                   [100.e9, 3000.])
+
+    
+    temperatures = np.linspace(298.15, T_inv, 11)
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = burnman.tools.equilibrium_pressure([Fe_bcc, Fe_hcp], [1.0, -1.0], T, 10.e9)
+    plt.plot(pressures/1.e9, temperatures)
+    
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/bcc_hcp_equilibrium.dat')
+
+    pressures = np.linspace(1.e5, P_inv, 11)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([Fe_bcc, Fe_fcc], [1.0, -1.0], P, 1000.)
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/bcc_fcc_equilibrium.dat')
+
+    temperatures = np.linspace(T_inv, T_inv2, 11)
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = burnman.tools.equilibrium_pressure([Fe_fcc, Fe_hcp], [1.0, -1.0], T, 100.e9)
+    
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/fcc_hcp_equilibrium.dat')
+    
+    pressures = np.linspace(5.2e9, P_inv2, 11)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([Fe_fcc, Fe_liq], [1.0, -1.0], P, 1000.)
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/fcc_liq_equilibrium.dat')
+
+    pressures = np.linspace(P_inv2, 350.e9, 11)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([Fe_hcp, Fe_liq], [1.0, -1.0], P, 3000.) 
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/hcp_liq_equilibrium.dat')
+
+    plt.ylim(300., 7000.)
+    plt.xlim(0., 350.)
+    plt.xlabel("Pressure (GPa)")
+    plt.ylabel("Temperature (K)")
+    plt.show()
+
+    # FeO
+    pressures = np.linspace(1.e5, 250.e9, 101)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([FeO_B1, FeO_liq], [1.0, -1.0], P, 3000.) 
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/FeO_B1_liq_equilibrium.dat')
+    plt.ylim(300., 7000.)
+    plt.xlim(0., 350.)
+    plt.xlabel("Pressure (GPa)")
+    plt.ylabel("Temperature (K)")
+    plt.show()
+
+    # FeSi
+    # Find triple point
+    P_inv, T_inv = burnman.tools.invariant_point([FeSi_B20, FeSi_B2], [1.0, -1.0],\
+                                                 [FeSi_B20, Fe5Si5_liq], [1.0, -2.0],\
+                                                 [30.e9, 2500.])
+    pressures = np.linspace(1.e5, P_inv, 31)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([FeSi_B20, Fe5Si5_liq],
+                                                                [1.0, -2.0], P, 3000.) 
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/FeSi_B20_liq_equilibrium.dat')
+
+    pressures = np.linspace(P_inv, 150.e9, 101)
+    temperatures = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        temperatures[i] = burnman.tools.equilibrium_temperature([FeSi_B2, Fe5Si5_liq],
+                                                                [1.0, -2.0], P, 3000.) 
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/FeSi_B2_liq_equilibrium.dat')
+
+
+    temperatures = np.linspace(300., T_inv, 21)
+    pressures = np.empty_like(temperatures)
+    for i, T in enumerate(temperatures):
+        pressures[i] = burnman.tools.equilibrium_pressure([FeSi_B2, FeSi_B20], [1.0, -1.0], T, 30.e9)
+    
+    plt.plot(pressures/1.e9, temperatures)
+
+    np.savetxt(header='Pressures (GPa) Temperatures (K)', X=zip(*[pressures/1.e9, temperatures]), fname='output_data/FeSi_B20_B2_equilibrium.dat')
+
+    plt.show()
+    
+    
+    
 if mw_test==True:
     Ozawa_data = np.loadtxt(fname='data/Ozawa_et_al_2008_fper_iron.dat', unpack=True)
     expt, P, T, t, O_wtmelt, O_wtmelt_err, O_molmelt, O_molmelt_err, XFeO, XFeO_err = Ozawa_data
