@@ -10,7 +10,7 @@ from burnman import minerals
 ###############
 print_latex = False
 print_grid = False
-melting_curves=False
+melting_curves= False
 mw_test = False
 pv_test = True
 ###############
@@ -53,7 +53,7 @@ class FeSiO_liquid(burnman.SolidSolution):
         self.P_0=1.e5
         self.T_0=1650.
         self.endmembers = [[Fe_liq,     '[Fe]0.5[Fe]0.5'],
-                           [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
+                           [Fe5Si5_liq, '[Fe0.5Si0.5]0.5[Fe0.5Si0.5]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
         # Parameters for Fe-Fe0.5Si0.5
@@ -90,7 +90,7 @@ class FeSiO_liquid_Frost(burnman.SolidSolution):
         self.name='Fe - Fe0.5Si0.5 - FeO solution'
         self.type='subregular'
         self.endmembers = [[Fe_liq,     '[Fe]0.5[Fe]0.5'],
-                           [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
+                           [Fe5Si5_liq, '[Fe0.5Si0.5]0.5[Fe0.5Si0.5]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
         self.enthalpy_interaction = [[[-40.e3, -40.e3], [83307.,135943.]],
@@ -110,7 +110,7 @@ class FeSiO_liquid_simple(burnman.SolidSolution):
         self.name='Fe - Fe0.5Si0.5 - FeO solution'
         self.type='simple_subregular'
         self.endmembers = [[Fe_liq,     '[Fe]0.5[Fe]0.5'],
-                           [Fe5Si5_liq, '[Fe]0.5[Si]0.5'],
+                           [Fe5Si5_liq, '[Fe0.5Si0.5]0.5[Fe0.5Si0.5]0.5'],
                            [FeO_liq,    'Fe[O]0.5[O]0.5']]
 
         E0 = Fe_FeO_liq_simple.energy_interaction[0][0][0]

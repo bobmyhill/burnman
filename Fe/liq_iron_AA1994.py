@@ -47,8 +47,7 @@ class liq_iron (burnman.Mineral):
             'Cv_el': 2.8,
             'theta': 6000.,
             'xi_0': 282.67*m, # 15.786
-            'n': sum(formula.values()),
-            'molar_mass': m}
+            'n': sum(formula.values())}
         burnman.Mineral.__init__(self)
 
 
