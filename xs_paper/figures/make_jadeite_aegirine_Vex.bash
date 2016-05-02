@@ -10,9 +10,9 @@ awk '{print $1, $2, $3}' data/jadeite_aegirine_Vex.dat | psxy -J -R -O -K >> ${b
 awk '{print $1, $2, $3}' data/jadeite_aegirine_Vex_obs.dat | psxy -J -R -O -K -Sc0.1c >> ${base}.ps
 
 echo "24 -0.19 298.15 K" | pstext -J -R -O -K -F+jRM >> ${base}.ps
-echo "24 -0.08 Jd@-50@-Aeg@-50@-" | pstext -J -R -O -K -F+jRM+fgrey >> ${base}.ps
-echo "24 -0.11 Jd@-35@-Aeg@-65@-" | pstext -J -R -O -K -F+jRM >> ${base}.ps
-echo "24 -0.03 Jd@-74@-Aeg@-26@-" | pstext -J -R -O -F+jRM >> ${base}.ps
+echo "24 -0.10 Jd@-50@-Aeg@-50@-" | pstext -J -R -O -K -F+jRM+fgrey >> ${base}.ps
+echo "24 -0.07 Jd@-35@-Aeg@-65@-" | pstext -J -R -O -K -F+jRM >> ${base}.ps
+echo "24 -0.04 Jd@-74@-Aeg@-26@-" | pstext -J -R -O -F+jRM >> ${base}.ps
 
 
 ps2epsi ${base}.ps

@@ -1,0 +1,9 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.2.1
+B	500f100:Temperature (K):/1f0.5:Excess entropy (J/K/mol):SWen
+J	X
+JX	X6/8
+R	0/2000/15/25
+X	8c
+L	14
+END
