@@ -267,14 +267,14 @@ class AsymmetricRegularSolution (IdealSolution):
         self.alpha = np.array(alphas)
 
         # Create 2D arrays of interaction parameters
-        self.Wh = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
 
         # setup excess enthalpy interaction matrix
         for i in range(self.n_endmembers):
             for j in range(i + 1, self.n_endmembers):
-                self.Wh[i][j] = 2. * enthalpy_interaction[
+                self.We[i][j] = 2. * enthalpy_interaction[
                     i][j - i - 1] / (self.alpha[i] + self.alpha[j])
 
         if entropy_interaction is not None:
@@ -311,7 +311,7 @@ class AsymmetricRegularSolution (IdealSolution):
         for l in range(self.n_endmembers):
             q = np.array([kd(i, l) - phi[i] for i in range(self.n_endmembers)])
 
-            Hint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Wh, q))
+            Hint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.We, q))
             Sint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Ws, q))
             Vint[l] = 0. - self.alpha[l] * np.dot(q, np.dot(self.Wv, q))
 
@@ -346,7 +346,7 @@ class AsymmetricRegularSolution (IdealSolution):
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         phi = self._phi(molar_fractions)
         H_excess = np.dot(self.alpha.T, molar_fractions) * np.dot(
-            phi.T, np.dot(self.Wh, phi))
+            phi.T, np.dot(self.We, phi))
         return H_excess + pressure * self.excess_volume(pressure, temperature, molar_fractions)
 
     def activity_coefficients(self, pressure, temperature, molar_fractions):
@@ -382,15 +382,15 @@ class SubregularSolution (IdealSolution):
         self.n_endmembers = len(endmembers)
 
         # Create 2D arrays of interaction parameters
-        self.Wh = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         self.Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
 
         # setup excess enthalpy interaction matrix
         for i in range(self.n_endmembers):
             for j in range(i + 1, self.n_endmembers):
-                self.Wh[i][j] = enthalpy_interaction[i][j - i - 1][0]
-                self.Wh[j][i] = enthalpy_interaction[i][j - i - 1][1]
+                self.We[i][j] = enthalpy_interaction[i][j - i - 1][0]
+                self.We[j][i] = enthalpy_interaction[i][j - i - 1][1]
 
         if entropy_interaction is not None:
             for i in range(self.n_endmembers):
@@ -426,7 +426,7 @@ class SubregularSolution (IdealSolution):
 
     def _non_ideal_interactions(self, molar_fractions):
         # equation (6') of Helffrich and Wood, 1989
-        Hint = self._non_ideal_function(self.Wh, molar_fractions)
+        Hint = self._non_ideal_function(self.We, molar_fractions)
         Sint = self._non_ideal_function(self.Ws, molar_fractions)
         Vint = self._non_ideal_function(self.Wv, molar_fractions)
         return Hint, Sint, Vint
@@ -457,7 +457,7 @@ class SubregularSolution (IdealSolution):
 
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         H_excess = np.dot(
-            molar_fractions, self._non_ideal_function(self.Wh, molar_fractions))
+            molar_fractions, self._non_ideal_function(self.We, molar_fractions))
         return H_excess + pressure * self.excess_volume(pressure, temperature, molar_fractions)
 
     def activity_coefficients(self, pressure, temperature, molar_fractions):
@@ -477,12 +477,203 @@ class FullSubregularSolution (IdealSolution):
     Solution model implementing the subregular solution model formulation (Helffrich and Wood, 1989)
     """
 
-    def __init__(self, endmembers, P0, T0, n, energy_interaction=None, volume_interaction=None, kprime_interaction=None, thermal_pressure_interaction=None):
-        
+    def __init__(self, endmembers, energy_interaction=None, volume_interaction=None, modulus_interaction=None, entropy_interaction=None, theta_interaction=None):
+
         self.n_endmembers = len(endmembers)
-        self.P_0 = P0
-        self.T_0 = T0
-        self.n_atoms = n
+
+        self.std_excesses = [[0. for i in xrange(self.n_endmembers)] for j in xrange(self.n_endmembers)]
+        
+        # Create 2D arrays of interaction parameters
+        self.We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        self.Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        
+        We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        Ws = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
+        Wk = np.ones(shape=(self.n_endmembers, self.n_endmembers))*1.e11 
+        Wt = np.ones(shape=(self.n_endmembers, self.n_endmembers))*1.e10 # very large number
+
+        # setup excess enthalpy interaction matrix
+        if energy_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    We[i][j] = energy_interaction[i][j - i - 1][0]
+                    We[j][i] = energy_interaction[i][j - i - 1][1]
+
+        
+        if entropy_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    Ws[i][j] = entropy_interaction[i][j - i - 1][0]
+                    Ws[j][i] = entropy_interaction[i][j - i - 1][1]
+        
+        if volume_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    Wv[i][j] = volume_interaction[i][j - i - 1][0]
+                    Wv[j][i] = volume_interaction[i][j - i - 1][1]
+
+        if modulus_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    Wk[i][j] = modulus_interaction[i][j - i - 1][0]
+                    Wk[j][i] = modulus_interaction[i][j - i - 1][1]
+                    
+        if theta_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    Wt[i][j] = theta_interaction[i][j - i - 1][0]
+                    Wt[j][i] = theta_interaction[i][j - i - 1][1]
+
+
+        # Nonideal properties
+        for i in range(self.n_endmembers):
+            for j in range(self.n_endmembers):
+                if i != j:
+                    self.std_excesses[i][j] = {
+                        'E_xs': We[i][j],
+                        'S_xs': Ws[i][j],
+                        'V_xs': Wv[i][j],
+                        'K_xs': Wk[i][j],
+                        'theta_xs': Wt[i][j]}
+        
+        # initialize ideal solution model
+        IdealSolution.__init__(self, endmembers)
+
+    def set_state(self, pressure, temperature, endmembers):
+                    
+        for i in range(self.n_endmembers):
+            for j in range(self.n_endmembers):
+                if i != j:
+        
+                    # Make the further assumption that the form of the excess volume curve is temperature independent
+                    E0 = self.std_excesses[i][j]['E_xs']
+                    S0 = self.std_excesses[i][j]['S_xs'] 
+                    V0 = self.std_excesses[i][j]['V_xs'] 
+                    K0 = self.std_excesses[i][j]['K_xs']
+                    theta = self.std_excesses[i][j]['theta_xs']
+
+                    # Calculate contributions to the gibbs free energy
+                    # 1. The isothermal path along T0 from P0 to infinite pressure
+                    # 2. The isothermal path at high temperature to P
+
+                    # Equivalent in this model to a single integral from the pressure at T
+                    # where V = V0 to the pressure of interest.
+
+                    # V excess at 1 bar and T (see Fortes et al., 2008; equation 4)
+                    P0 = 0.
+                    VT = V0*(1. - (theta/temperature )/(np.exp(theta/temperature) - 1.))
+
+                    '''
+                    # Try a simple exponential function
+                    self.Wv[i][j] = VT*np.exp(-pressure/K0)
+
+                    intVdP= V0*K0*(1. - VT/V0*np.exp(-pressure/K0))
+
+                    dT = 1.
+                    VT1 = V0*(1. - (theta/(temperature+dT) )/(np.exp(theta/(temperature+dT)) - 1.))
+                    intVdP1= V0*K0*(1. - VT1/V0*np.exp(-pressure/K0))
+                    
+                    '''
+                    Kprime = 0.5
+
+                    # Pressure where Vexcess=Vexcess0 at T
+                    # [V0*K0*np.power(1. + 4./K0*(pressure-PTV0), 3./4.)/(4. - 1.)]_P-^P+
+                    PTV0 = P0-(np.power(VT/V0, -Kprime) - 1.)/Kprime*K0
+                    self.Wv[i][j] = V0*np.power(1. + Kprime/K0*(pressure-PTV0), -1./Kprime)
+                    intVdP = V0*K0*(1. - np.power(1. + Kprime/K0*(pressure - PTV0), (Kprime - 1.)/Kprime))/(1. - Kprime)
+
+                    dT = 1.                            
+                    VT1 = V0*(1. - (theta/(temperature+dT) )/(np.exp(theta/(temperature+dT)) - 1.))
+                    PTV01 = P0-(np.power(VT1/V0, -Kprime) - 1.)/Kprime*K0
+                    intVdP1 = V0*K0*(1. - np.power(1. + Kprime/K0*(pressure - PTV01), (Kprime - 1.)/Kprime))/(1. - Kprime)
+                    
+                
+                    
+                    self.Ws[i][j] = S0 + (intVdP - intVdP1)/dT
+                
+                    # Gibbs excess
+                    intTdS = temperature*self.Ws[i][j]
+
+                    GPT = E0 - intTdS + intVdP
+                
+                    self.We[i][j] = GPT - pressure*self.Wv[i][j] + temperature*self.Ws[i][j]
+
+    
+    def _non_ideal_function(self, W, molar_fractions):
+        # equation (6') of Helffrich and Wood, 1989
+        n = len(molar_fractions)
+        RTlny = np.zeros(n)
+        for l in range(n):
+            val = 0.
+            for i in range(n):
+                if i != l:
+                    val += 0.5 * molar_fractions[i] * (W[l][i] * (1 - molar_fractions[l] + molar_fractions[i] + 2. * molar_fractions[l] * (molar_fractions[l] - molar_fractions[i] - 1)) + W[
+                                                       i][l] * (1. - molar_fractions[l] - molar_fractions[i] - 2. * molar_fractions[l] * (molar_fractions[l] - molar_fractions[i] - 1)))
+                    for j in range(i + 1, n):
+                        if j != l:
+                            val += molar_fractions[i] * molar_fractions[j] * (
+                                W[i][j] * (molar_fractions[i] - molar_fractions[j] - 0.5) + W[j][i] * (molar_fractions[j] - molar_fractions[i] - 0.5))
+            RTlny[l] = val
+        return RTlny
+
+    def _non_ideal_interactions(self, molar_fractions):
+        # equation (6') of Helffrich and Wood, 1989
+        Eint = self._non_ideal_function(self.We, molar_fractions)
+        Sint = self._non_ideal_function(self.Ws, molar_fractions)
+        Vint = self._non_ideal_function(self.Wv, molar_fractions)
+        return Eint, Sint, Vint
+
+    def _non_ideal_excess_partial_gibbs(self, pressure, temperature, molar_fractions):
+        Eint, Sint, Vint = self._non_ideal_interactions(molar_fractions)
+        return Eint - temperature * Sint + pressure * Vint
+
+    def excess_partial_gibbs_free_energies(self, pressure, temperature, molar_fractions):
+        ideal_gibbs = IdealSolution._ideal_excess_partial_gibbs(
+            self, temperature, molar_fractions)
+        non_ideal_gibbs = self._non_ideal_excess_partial_gibbs(
+            pressure, temperature, molar_fractions)
+        return ideal_gibbs + non_ideal_gibbs
+
+    def excess_volume(self, pressure, temperature, molar_fractions):
+        V_excess = np.dot(
+            molar_fractions, self._non_ideal_function(self.Wv, molar_fractions))
+        return V_excess
+
+    def excess_entropy(self, pressure, temperature, molar_fractions):
+        S_conf = -constants.gas_constant * \
+            np.dot(IdealSolution._log_ideal_activities(
+                self, molar_fractions), molar_fractions)
+        S_excess = np.dot(
+            molar_fractions, self._non_ideal_function(self.Ws, molar_fractions))
+        return S_conf + S_excess
+
+    def excess_enthalpy(self, pressure, temperature, molar_fractions):
+        E_excess = np.dot(
+            molar_fractions, self._non_ideal_function(self.We, molar_fractions))
+        return E_excess + pressure * self.excess_volume(pressure, temperature, molar_fractions)
+
+    def activity_coefficients(self, pressure, temperature, molar_fractions):
+        if temperature > 1.e-10:
+            return np.exp(self._non_ideal_excess_partial_gibbs(pressure, temperature, molar_fractions) / (constants.gas_constant * temperature))
+        else:
+            raise Exception("Activity coefficients not defined at 0 K.")
+
+    def activities(self, pressure, temperature, molar_fractions):
+        return IdealSolution.activities(self, pressure, temperature, molar_fractions) * self.activity_coefficients(pressure, temperature, molar_fractions)
+
+
+
+class SimpleSubregularSolution (IdealSolution):
+
+    """
+    Solution model implementing the subregular solution model formulation (Helffrich and Wood, 1989)
+    """
+
+    def __init__(self, endmembers, energy_interaction=None, volume_interaction=None, modulus_interaction=None, entropy_interaction=None):
+
+        self.n_endmembers = len(endmembers)
 
         self.ideal_std = [[0. for i in xrange(self.n_endmembers)] for j in xrange(self.n_endmembers)]
         self.nonideal_std = [[0. for i in xrange(self.n_endmembers)] for j in xrange(self.n_endmembers)]
@@ -494,8 +685,7 @@ class FullSubregularSolution (IdealSolution):
         
         We = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
         Wv = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
-        Wkprime = 7.*np.ones(shape=(self.n_endmembers, self.n_endmembers))
-        Wp = np.ones(shape=(self.n_endmembers, self.n_endmembers))
+        Wk = np.zeros(shape=(self.n_endmembers, self.n_endmembers))
 
         # setup excess enthalpy interaction matrix
         if energy_interaction is not None:
@@ -503,6 +693,13 @@ class FullSubregularSolution (IdealSolution):
                 for j in range(i + 1, self.n_endmembers):
                     We[i][j] = energy_interaction[i][j - i - 1][0]
                     We[j][i] = energy_interaction[i][j - i - 1][1]
+
+        
+        if entropy_interaction is not None:
+            for i in range(self.n_endmembers):
+                for j in range(i + 1, self.n_endmembers):
+                    self.Ws[i][j] = entropy_interaction[i][j - i - 1][0]
+                    self.Ws[j][i] = entropy_interaction[i][j - i - 1][1]
         
         if volume_interaction is not None:
             for i in range(self.n_endmembers):
@@ -510,152 +707,49 @@ class FullSubregularSolution (IdealSolution):
                     Wv[i][j] = volume_interaction[i][j - i - 1][0]
                     Wv[j][i] = volume_interaction[i][j - i - 1][1]
 
-        if kprime_interaction is not None:
+        if modulus_interaction is not None:
             for i in range(self.n_endmembers):
                 for j in range(i + 1, self.n_endmembers):
-                    Wkprime[i][j] = kprime_interaction[i][j - i - 1][0]
-                    Wkprime[j][i] = kprime_interaction[i][j - i - 1][1]
+                    Wk[i][j] = modulus_interaction[i][j - i - 1][0]
+                    Wk[j][i] = modulus_interaction[i][j - i - 1][1]
 
-        if thermal_pressure_interaction is not None:
-            for i in range(self.n_endmembers):
-                for j in range(i + 1, self.n_endmembers):
-                    Wp[i][j] = thermal_pressure_interaction[i][j - i - 1][0]
-                    Wp[j][i] = thermal_pressure_interaction[i][j - i - 1][1]
-
-        # Find standard properties
-        for i in range(self.n_endmembers):
-            endmembers[i][0].set_state(self.P_0, self.T_0)
-            
-        # Ideal properties
-        for i in range(self.n_endmembers):
-            for j in range(i + 1, self.n_endmembers):
-                V0 = 0.5*(endmembers[i][0].V + endmembers[j][0].V)
-                K0 = 2.0*V0/(endmembers[i][0].V/endmembers[i][0].K_T \
-                             + endmembers[j][0].V/endmembers[j][0].K_T)
-                # Fill dictionary
-                self.ideal_std[i][j]= {
-                    'V_0': V0,
-                    'K_0': K0 }
-                self.ideal_std[j][i] = self.ideal_std[i][j]
 
         # Nonideal properties
         for i in range(self.n_endmembers):
             for j in range(self.n_endmembers):
                 if i != j:
-                    V0 = self.ideal_std[i][j]['V_0']
-                    V0ni = V0 + Wv[i][j]/4.
-                    Kprime = Wkprime[i][j]
                     self.nonideal_std[i][j] = {
-                        'energy_xs': We[i][j],
-                        'V_0': V0ni,
-                        'Kprime_xs': Kprime,
-                        'f_Pth': Wp[i][j] }
+                        'E_xs': We[i][j],
+                        'V_xs': Wv[i][j],
+                        'K_xs': Wk[i][j]}
         
         # initialize ideal solution model
         IdealSolution.__init__(self, endmembers)
 
     def set_state(self, pressure, temperature, endmembers):
-        def _findPideal(P, V, T0, m1, m2):
-            V_m1 = m1.method.volume(P[0], T0, m1.params)
-            V_m2 = m2.method.volume(P[0], T0, m2.params)
-            return V - 0.5*(V_m1 + V_m2)
-    
-        def _volume_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
-            Vexcess0 = Vnonideal0 - Videal0
-            Knonideal0 = Kideal0*np.power(Videal0/Vnonideal0, Kprime)
-            bideal = Kprime/Kideal0
-            bnonideal = Kprime/Knonideal0
-            c = 1./Kprime
-            return Vnonideal0*np.power((1.+bnonideal*pressure), -c) \
-                - Videal0*np.power((1.+bideal*(pressure)), -c)
-
-        def _intVdP_excess(Vnonideal0, Videal0, Kideal0, Kprime, pressure):
-            if np.abs(pressure) < 1.:
-                pressure = 1.
-            Vexcess0 = Vnonideal0 - Videal0
-            Knonideal0 = Kideal0*np.power(Videal0/Vnonideal0, Kprime)
-            bideal = Kprime/Kideal0
-            bnonideal = Kprime/Knonideal0
-            c = 1./Kprime
-            return -pressure*(Vnonideal0*np.power((1.+bnonideal*pressure), 1.-c) \
-                              / (bnonideal*(c - 1.)*pressure) \
-                              - Videal0*np.power((1.+bideal*pressure), 1.-c) \
-                              /(bideal*(c - 1.)*pressure))
-        
-        def _V_Pth_ideal(V0_ideal, P_0, T_0, T, f_Pth, m1, m2):
-            # First, heres Pth (\int aK_T dT | V) for the ideal phase
-            # when V=V0 and T=T1 
-            P_V0ideal_T = fsolve(_findPideal, [P_0 + 5.e6*(T - T_0)], args=(V0_ideal, T, m1, m2))[0]
-            Pth_V0ideal_T =  P_V0ideal_T - P_0
-            
-            # Make the assumption that Pth(V0, T)_nonideal = Pth(V0, T)_ideal*f_Pth 
-            Pth_V0nonideal_T = Pth_V0ideal_T*f_Pth
-            V_V0nonideal_ideal = 0.5*(m1.method.volume(P_0 + Pth_V0nonideal_T, T, m1.params) \
-                                      + m2.method.volume(P_0 + Pth_V0nonideal_T, T, m2.params))
-            return Pth_V0nonideal_T, V_V0nonideal_ideal
                     
         for i in range(self.n_endmembers):
             for j in range(self.n_endmembers):
                 if i != j:
-                    # Properties at pressure
-                    Pth_V0nonideal_T, V_V0nonideal_ideal = _V_Pth_ideal(self.ideal_std[i][j]['V_0'],
-                                                                        self.P_0, self.T_0, temperature,
-                                                                        self.nonideal_std[i][j]['f_Pth'],
-                                                                        endmembers[i][0], endmembers[j][0])
-                    
-                    
-                
+        
                     # Make the further assumption that the form of the excess volume curve is temperature independent
-                    self.Wv[i][j] = 4.*_volume_excess(self.nonideal_std[i][j]['V_0'],
-                                                      V_V0nonideal_ideal,
-                                                      self.ideal_std[i][j]['K_0'],
-                                                      self.nonideal_std[i][j]['Kprime_xs'],
-                                                      pressure - Pth_V0nonideal_T - self.P_0)
-
+                    E0 = self.nonideal_std[i][j]['E_xs']
+                    V0 = self.nonideal_std[i][j]['V_xs'] 
+                    K0 = self.nonideal_std[i][j]['K_xs']
+                    self.Wv[i][j] = V0*np.power(1. + 4./K0*pressure, -1./4.)
+                
                     # Calculate contributions to the gibbs free energy
                     # 1. The isothermal path along T0 from P0 to infinite pressure 
-                    Gxs_T0 = -4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
-                                              self.ideal_std[i][j]['V_0'],
-                                              self.ideal_std[i][j]['K_0'],
-                                              self.nonideal_std[i][j]['Kprime_xs']
-                                              , 0.)
-                    # 2. The isobaric path at infinite pressure from T0 to T has no excess contribution
-                    # 3. The isothermal path from infinite pressure down to P, T
-                    Gxs_T = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
-                                           V_V0nonideal_ideal,
-                                           self.ideal_std[i][j]['K_0'],
-                                           self.nonideal_std[i][j]['Kprime_xs'],
-                                           pressure - Pth_V0nonideal_T - self.P_0)
+                    intVdP = V0*K0*(1. - np.power(1. + 4./K0*pressure, 3./4.))/(1. - 4.)
 
-                    # gibbs at (P_0, T_0+1)
-                    Pth_V0nonideal_T01, V_V0nonideal_ideal01 = _V_Pth_ideal(self.ideal_std[i][j]['V_0'],
-                                                                            self.P_0, self.T_0, self.T_0+1.,
-                                                                            self.nonideal_std[i][j]['f_Pth'],
-                                                                            endmembers[i][0], endmembers[j][0])
-                    Gxs_T01 = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
-                                             V_V0nonideal_ideal01,
-                                             self.ideal_std[i][j]['K_0'],
-                                             self.nonideal_std[i][j]['Kprime_xs'],
-                                             - Pth_V0nonideal_T01)
                     
-                    # gibbs at (P, T+1)
-                    Pth_V0nonideal_T1, V_V0nonideal_ideal1 = _V_Pth_ideal(self.ideal_std[i][j]['V_0'],
-                                                                          self.P_0, self.T_0, temperature+1.,
-                                                                          self.nonideal_std[i][j]['f_Pth'],
-                                                                          endmembers[i][0], endmembers[j][0])
-                    Gxs_T1 = 4.*_intVdP_excess(self.nonideal_std[i][j]['V_0'],
-                                            V_V0nonideal_ideal1,
-                                            self.ideal_std[i][j]['K_0'], 
-                                            self.nonideal_std[i][j]['Kprime_xs'],
-                                            pressure - Pth_V0nonideal_T1 - self.P_0)
+                    # Gibbs excess
+                    intTdS = temperature*self.Ws[i][j]
 
-                    Gxs0 = self.nonideal_std[i][j]['energy_xs'] \
-                           + (self.T_0*(Gxs_T01 - Gxs_T0) - self.P_0*(self.nonideal_std[i][j]['V_0'] - self.ideal_std[i][j]['V_0']))
-                    Gxs = 0. + Gxs_T0 + Gxs_T
-                                        
-                    self.Ws[i][j] = Gxs_T - Gxs_T1
-                    self.We[i][j] = Gxs + temperature*self.Ws[i][j] - pressure*self.Wv[i][j]
-                    
+                    GPT = E0 - intTdS + intVdP
+                
+                    self.We[i][j] = GPT - pressure*self.Wv[i][j] + temperature*self.Ws[i][j]
+
     
     def _non_ideal_function(self, W, molar_fractions):
         # equation (6') of Helffrich and Wood, 1989

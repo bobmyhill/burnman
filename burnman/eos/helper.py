@@ -13,6 +13,8 @@ from . import modified_tait as mt
 from . import hp
 from . import cork
 from . import vinet
+from . import dks_solid as dks_s
+from . import dks_liquid as dks_l
 from .equation_of_state import EquationOfState
 
 
@@ -44,6 +46,10 @@ def create(method):
             return hp.HP_TMT()
         elif method == "cork":
             return cork.CORK()
+        elif method == "dks_l":
+            return dks_l.DKS_L()
+        elif method == "dks_s":
+            return dks_s.DKS_S()
         else:
             raise Exception("unsupported material method " + method)
     elif isinstance(method, EquationOfState):

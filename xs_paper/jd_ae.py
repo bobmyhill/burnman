@@ -87,20 +87,20 @@ class jadeite_aegirine_binary(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='Jadeite-aegirine binary'
         self.type='full_subregular'
-        self.n_atoms = 10.
-        self.T_0 = 298.15
-        self.P_0 = 1.e5
         self.endmembers = [[jadeite,  'Na[Al]Si2O6'],
                            [aegirine, 'Na[Fe]Si2O6']]
         self.energy_interaction = [[[0., 0.]]]
-        self.volume_interaction = [[[0. , 0. ]]]
-        self.kprime_interaction = [[[7., 7.]]]
+        self.volume_interaction = [[[1.e-8 ,1.e-8 ]]]
+        self.modulus_interaction = [[[100.e9, 100.e9]]]
+        self.entropy_interaction = [[[0., 0.]]]
+        self.theta_interaction = [[[1.e5, 1.e5]]]
         burnman.SolidSolution.__init__(self, molar_fractions)
 
 pyroxene = jadeite_aegirine_binary()
 
 
-def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1):
+def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, K1):
+    print Vj, Kj, Va, Ka, V1, V2, K1
     Kpj=4.6 # good fit to data
     Kpa=4.4 # good fit to data
 
@@ -116,7 +116,7 @@ def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1):
     aegirine.params['Kdprime_0'] = -Kpa/Ka
 
     pyroxene.volume_interaction = [[[V1, V2]]]
-    pyroxene.kprime_interaction = [[[Kp1, Kp1]]]
+    pyroxene.modulus_interaction = [[[K1, K1]]]
     burnman.SolidSolution.__init__(pyroxene)
     
     volumes = []
@@ -124,7 +124,10 @@ def fit_ss_data(data, Vj, Kj, Va, Ka, V1, V2, Kp1):
         c, P = datum
         pyroxene.set_composition([1.-c, c])
         pyroxene.set_state(P, 298.15)
-        volumes.append(pyroxene.V)
+        if K1 < 0.:
+            volumes.append(0.)
+        else:
+            volumes.append(pyroxene.V)
 
     return volumes
 
@@ -132,7 +135,7 @@ cP_obs = zip(*[composition, P_obs])
 
 guesses = [jadeite.params['V_0'], jadeite.params['K_0'], \
            jadeite.params['V_0'], jadeite.params['K_0'], \
-           0., 0., 7.] 
+           -1.e-8, -1.e-8, 20.e9] 
 
 popt, pcov = curve_fit(fit_ss_data, cP_obs, V_obs, guesses, Verr_obs)
 

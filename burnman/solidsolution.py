@@ -73,10 +73,10 @@ class SolidSolution(Mineral):
                 
                 if hasattr(self, 'energy_interaction') == False:
                     self.energy_interaction = None
-                if hasattr(self, 'kprime_interaction') == False:
-                    self.kprime_interaction = None
-                if hasattr(self, 'thermal_pressure_interaction') == False:
-                    self.thermal_pressure_interaction = None
+                if hasattr(self, 'modulus_interaction') == False:
+                    self.modulus_interaction = None
+                if hasattr(self, 'theta_interaction') == False:
+                    self.theta_interaction = None
 
                 if self.type == 'symmetric':
                     self.solution_model = SymmetricRegularSolution(
@@ -93,9 +93,15 @@ class SolidSolution(Mineral):
                         self.endmembers, self.enthalpy_interaction, self.volume_interaction, self.entropy_interaction)
                 elif self.type == 'full_subregular':
                     self.solution_model = FullSubregularSolution(
-                        self.endmembers, self.P_0, self.T_0, self.n_atoms,
+                        self.endmembers, 
                         self.energy_interaction, self.volume_interaction,
-                        self.kprime_interaction, self.thermal_pressure_interaction)
+                        self.modulus_interaction, self.entropy_interaction,
+                        self.theta_interaction)
+                elif self.type == 'simple_subregular':
+                    self.solution_model = SimpleSubregularSolution(
+                        self.endmembers, self.energy_interaction,
+                        self.volume_interaction, self.modulus_interaction,
+                        self.entropy_interaction)
                 else:
                     raise Exception(
                         "Solution model type " + self.params['type'] + "not recognised.")

@@ -1,0 +1,16 @@
+Pressure (GPa)  Temperature (C)   errT          Solid phases
+0.00001         1895.0            20            fo            (Davis and England, 1964 via BA1914)
+0.55            1917.5            20            fo            (Davis and England, 1964)
+1.8             1980              20            fo            (Davis and England, 1964)
+2.5             2030              20            fo            (Davis and England, 1964)
+3.05            2030              20            fo            (Davis and England, 1964)    
+3.95            2092.5            20            fo            (Davis and England, 1964)
+4.65            2117.5            20            fo            (Davis and England, 1964)    
+9.7             2250              20            fo            
+10.6            2260              20            fo_periclase
+11.8            2255              20            fo_periclase              
+12.8            2270              20            fo_periclase
+13.9            2275              20            fo_periclase
+13.9            2290              20            fo_periclase    
+14.9            2305              20            fo_periclase
+16.5            2300              20            fo_anhB
