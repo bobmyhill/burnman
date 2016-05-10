@@ -1,8 +1,12 @@
+from __future__ import absolute_import
 import unittest
 
+
 class BurnManTest(unittest.TestCase):
-    def assertFloatEqual(self,a,b):
-        self.assertAlmostEqual(a,b,delta=max(1e-16,max(abs(a),abs(b))*1e-5))
+
+    def assertFloatEqual(self, a, b):
+        self.assertAlmostEqual(
+            a, b, delta=max(1e-16, max(abs(a), abs(b)) * 1e-5))
 
     def assertArraysAlmostEqual(self, a, b):
         self.assertEqual(len(a), len(b))
@@ -11,6 +15,7 @@ class BurnManTest(unittest.TestCase):
 
 
 class Huh(BurnManTest):
+
     def test(self):
         self.assertFloatEqual(5200.01, 5200.015)
 
@@ -19,5 +24,3 @@ class Huh(BurnManTest):
 
 if __name__ == '__main__':
     unittest.main()
-
-        

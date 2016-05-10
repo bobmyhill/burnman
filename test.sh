@@ -6,25 +6,36 @@ fulldir=`pwd`
 which numdiff >/dev/null
 if [ $? -eq 0 ]
 then
-  diffcmd="numdiff -r 1e-5 -s ' \t\n[],' -a 1e-5"
+  diffcmd="numdiff -r 1e-5 -s ' \t\n[],'"
 else
   diffcmd="diff"
   echo "WARNING: numdiff not found, please install! Falling back to diff."
 fi
 
+if [ -z $PYTHON ]
+then
+  PYTHON=python
+fi
+
+$PYTHON --version
+
 function testit {
 t=$1
 fulldir=$2
 #echo "*** testing $t ..."
-(python <<EOF
+($PYTHON <<EOF
 import matplotlib as m
 m.use('Template')
 VERBOSE=1
 RUNNING_TESTS=1
-execfile('$t')
+with open('$t') as f:
+    CODE = compile(f.read(), '$t', 'exec')
+    exec(CODE)
 EOF
-) >$t.tmp 2>&1
+) >$t.tmp 2>$t.tmp.error
 ret=$?
+cat $t.tmp.error >>$t.tmp
+rm -f $t.tmp.error
 if [ "$ret" -ne 0 ]
 then
   echo "!  $t ... FAIL";
@@ -32,13 +43,16 @@ then
 else
 
   sedthing="s#$fulldir#BURNMAN#g"
-  sed -i'' -e $sedthing $t.tmp #remove the absolute path from warnings
-  sed -i'' -e "s/.py:[0-9]*:/.py:/g" $t.tmp #remove line numbers
-  sed -i'' -e '/UserWarning: findfont: Could not match/d' $t.tmp #remove font warning crap
-  sed -i'' -e '/UserWarning: findfont: Font family/d' $t.tmp #remove font warning crap
-  sed -i'' -e '/tight_layout : falling back to Agg renderer/d' $t.tmp #remove font warning crap
-  sed -i'' -e '/cannot be converted with the encoding. Glyph may be wrong/d' $t.tmp #remove font warning crap
-  sed -i'' -e '/time old .* time new/d' $t.tmp #remove timing from tests/debye.py
+  sed -i.bak -e $sedthing $t.tmp #remove the absolute path from warnings
+  sed -i.bak -e "s/.py:[0-9]*:/.py:/g" $t.tmp #remove line numbers
+  sed -i.bak -e 's/<stdin>:[0-9]*: //g' $t.tmp #remove line numbers
+  sed -i.bak -e '/UserWarning: findfont: Could not match/d' $t.tmp #remove font warning crap
+  sed -i.bak -e '/UserWarning: findfont: Font family/d' $t.tmp #remove font warning crap
+  sed -i.bak -e '/tight_layout : falling back to Agg renderer/d' $t.tmp #remove font warning crap
+  sed -i.bak -e '/cannot be converted with the encoding. Glyph may be wrong/d' $t.tmp #remove font warning crap
+  sed -i.bak -e '/time old .* time new/d' $t.tmp #remove timing from tests/debye.py
+
+  rm -f $t.tmp.bak
 
   (eval $diffcmd $t.tmp $fulldir/misc/ref/$t.out >/dev/null && rm $t.tmp && echo "  $t ... ok"
   ) || {
@@ -56,21 +70,23 @@ fi
 echo "*** running test suite..."
 
 # check for tabs in code:
-for f in `find . -name \*.py`
+for f in `find . -name \*.py | grep -v ipython/`
 do
+    
     grep $'\t' -q $f && \
 	echo "ERROR: tabs found in '$f':" && \
 	grep -n $'\t' $f && exit 0
 done
 
+
 cd tests
-python tests.py || (echo "ERROR: unittests failed"; exit 1) || exit 0
+$PYTHON tests.py || (echo "ERROR: unittests failed"; exit 1) || exit 0
 cd ..
 
 
 cd misc
 echo "gen_doc..."
-python gen_doc.py >/dev/null || exit 0
+$PYTHON gen_doc.py >/dev/null || exit 0
 
 cd benchmarks
 for test in `ls *.py`
@@ -99,19 +115,39 @@ cd ..
 
 echo "checking misc/ ..."
 cd misc
-for test in `ls paper*.py`
+for test in `ls *.py`
 do
-    [ $test == "paper_opt_pv_old.py" ] && echo "  *** skipping $test !" && continue
+    [ $test == "gen_doc.py" ] && echo "  *** skipping $test !" && continue
+    [ $test == "__init__.py" ] && echo "  *** skipping $test !" && continue
+    [ $test == "table.py" ] && echo "  *** skipping $test !" && continue
+    [ $test == "helper_solid_solution.py" ] && echo "  *** skipping $test !" && continue
 
     testit $test $fulldir
 done
-
 testit table.py $fulldir
 cd ..
 
+echo "checking contrib/CHRU2014 ..."
+cd contrib/CHRU2014
+for test in `ls *.py`
+do
+[ $test == "__init__.py" ] && echo "  *** skipping $test !" && continue
+
+testit $test $fulldir
+done
+cd ../..
+
+
+echo "checking contrib/tutorial/ ..."
+cd contrib/tutorial/
+for test in `ls step*.py`
+do
+testit $test $fulldir
+done
+cd ../..
+
+
 echo "   done"
-
-
 
 echo ""
 echo "*** tests done"
