@@ -12,13 +12,13 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-# 373.946C (647.096 K)	217.7 atm (22.06 MPa)
+# 373.946C (647.096 K) 217.7 atm (22.06 MPa)
 Pc_H2O = 22.065417e6 # Pa
 Tc_H2O = 647.14
 rhoc_H2O = find_rho(Pc_H2O, Tc_H2O, ci_H2O)
 rhoc_H2O = 322./0.018 # two different densities at this pressure, fsolve finds the wrong one...
 
-# 31.04C (304.19 K)	72.8 atm (7,380 kPa)
+# 31.04C (304.19 K) 72.8 atm (7,380 kPa)
 Pc_CO2 = 7380e3 # Pa
 Tc_CO2 = 304.13 # K
 rhoc_CO2 = find_rho(Pc_CO2, Tc_CO2, ci_CO2)

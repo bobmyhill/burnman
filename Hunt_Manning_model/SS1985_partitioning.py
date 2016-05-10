@@ -10,11 +10,12 @@ import matplotlib.image as mpimg
 # Liquid model
 from models import *
 from SS1985_functions import *
-from H2O_eos import lnfH2O
+from SP1994_eos import lnfH2O
 
 # Benchmarks for the solid solution class
 import burnman
 from burnman.minerals import SLB_2011
+from burnman.minerals import DKS_2013_liquids
 from burnman import tools
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
@@ -45,24 +46,29 @@ fo=SLB_2011.forsterite()
 wad=SLB_2011.mg_wadsleyite()
 rw=SLB_2011.mg_ringwoodite()
 
-liquid=MgO_SiO2_liquid()
-liquid.set_composition([2./3., 1./3.])
+liquid=DKS_2013_liquids.Mg2SiO4_liquid()
 
-Tmelt_fo = fsolve(delta_gibbs, 2000., args=(pressure_fo, fo, liquid, 1./3., 1.))[0]
+Pmelt = 13.e9
+Tmelt = 2290. + 273.15
+fo.set_state(Pmelt, Tmelt)
+liquid.set_state(Pmelt, Tmelt)
+liquid.params['a'][0][0] += fo.gibbs - liquid.gibbs
+
+
+Tmelt_fo = tools.equilibrium_temperature([fo, liquid], [1., -1.], pressure_fo)
 print Tmelt_fo
 
-print liquid.S, liquid.S*3. - fo.S
+print liquid.S, liquid.S - fo.S
 
-Tmelt_wad = fsolve(delta_gibbs, 2000., args=(pressure_wad, wad, liquid, 1./3., 1.))[0]
+Tmelt_wad = tools.equilibrium_temperature([wad, liquid], [1., -1.], pressure_wad)
 print Tmelt_wad
 
-print liquid.S, liquid.S*3. - wad.S
+print liquid.S, liquid.S - wad.S
 
-Tmelt_rw = fsolve(delta_gibbs, 2000., args=(pressure_rw, rw, liquid, 1./3., 1.))[0]
-print Tmelt_wad
+Tmelt_rw = tools.equilibrium_temperature([rw, liquid], [1., -1.], pressure_rw)
+print Tmelt_rw
 
-print liquid.S, liquid.S*3. - rw.S
-
+print liquid.S, liquid.S - rw.S
 
 # First, find the compositions of melts
 fn0=0.
@@ -86,21 +92,21 @@ compositionsinf_rw=np.empty_like(temperatures_rw)
 
 
 for i, T in enumerate(temperatures_fo):
-    compositions0_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, K0, fn0, fn0, fo, liquid, 1./3., 1.))
-    compositionsinf_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, Kinf, fn0, fn0, fo, liquid, 1./3., 1.))
-    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, K, Wsh(pressure_fo), Whs(pressure_fo), fo, liquid, 1./3., 1.))
-    compositions_fo_2[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo_2, r, K, Wsh(pressure_fo_2), Whs(pressure_fo_2), fo, liquid, 1./3., 1.))
+    compositions0_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, K0, fn0, fn0, fo, liquid, 1./3., 1./3.))
+    compositionsinf_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, Kinf, fn0, fn0, fo, liquid, 1./3., 1./3.))
+    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo, r, K, Wsh(pressure_fo), Whs(pressure_fo), fo, liquid, 1./3., 1./3.))
+    compositions_fo_2[i]=fsolve(solve_composition, 0.001, args=(T, pressure_fo_2, r, K, Wsh(pressure_fo_2), Whs(pressure_fo_2), fo, liquid, 1./3., 1./3.))
 
 for i, T in enumerate(temperatures_wad):
-    compositions0_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, K0, fn0, fn0, wad, liquid, 1./3., 1.))
-    compositionsinf_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, Kinf, fn0, fn0, wad, liquid, 1./3., 1.))
-    compositions_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1.))
+    compositions0_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, K0, fn0, fn0, wad, liquid, 1./3., 1./3.))
+    compositionsinf_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, Kinf, fn0, fn0, wad, liquid, 1./3., 1./3.))
+    compositions_wad[i]=fsolve(solve_composition, 0.001, args=(T, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1./3.))
 
 for i, T in enumerate(temperatures_rw):
-    compositions0_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, K0, fn0, fn0, rw, liquid, 1./3., 1.))
-    compositionsinf_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, Kinf, fn0, fn0, rw, liquid, 1./3., 1.))
-    compositions_rw_2[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw_2, r, K, Wsh(pressure_rw_2), Whs(pressure_rw_2), rw, liquid, 1./3., 1.))
-    compositions_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1.))
+    compositions0_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, K0, fn0, fn0, rw, liquid, 1./3., 1./3.))
+    compositionsinf_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, Kinf, fn0, fn0, rw, liquid, 1./3., 1./3.))
+    compositions_rw_2[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw_2, r, K, Wsh(pressure_rw_2), Whs(pressure_rw_2), rw, liquid, 1./3., 1./3.))
+    compositions_rw[i]=fsolve(solve_composition, 0.001, args=(T, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1./3.))
 
 
 plt.plot( compositions_fo, temperatures_fo, linewidth=1, label='fo, '+str(pressure_fo/1.e9)+' GPa')
@@ -151,11 +157,11 @@ smyth_adjusted_mol = np.empty_like(smyth[0])
 demouchy_adjusted_mol = np.empty_like(demouchy[0])
 ohtani_adjusted_mol = np.empty_like(ohtani[0])
 for i, temperature in enumerate(smyth[0]):
-    smyth_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_fo, r, K, Wsh(pressure_fo), Whs(pressure_fo), fo, liquid, 1./3., 1.))[0]
+    smyth_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_fo, r, K, Wsh(pressure_fo), Whs(pressure_fo), fo, liquid, 1./3., 1./3.))[0]
 for i, temperature in enumerate(demouchy[0]):
-    demouchy_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1.))[0]
+    demouchy_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_wad, r, K, Wsh(pressure_wad), Whs(pressure_wad), wad, liquid, 1./3., 1./3.))[0]
 for i, temperature in enumerate(ohtani[0]):
-    ohtani_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1.))[0]
+    ohtani_adjusted_mol[i] = fsolve(solve_composition, 0.001, args=(temperature, pressure_rw, r, K, Wsh(pressure_rw), Whs(pressure_rw), rw, liquid, 1./3., 1./3.))[0]
 
 
 smyth_adjusted_wt = np.empty_like(smyth[0])
@@ -232,7 +238,7 @@ plt.legend(loc='upper right')
 deltaH_foP = 150.e3 
 deltaV_fo = 10.0e-6 
 n_fo = 1.
-c1673_fo = 0.020 # wt fraction at 1400 C if pure water
+c1673_fo = 0.024 # wt fraction at 1400 C if pure water
 print (c1673_fo/wtH2O)/((c1673_fo/wtH2O) + ((1.-c1673_fo)/wtfo))
 deltaH_fo = deltaH_foP - deltaV_fo*pressure_fo
 A_fo = c1673_fo \
@@ -246,10 +252,10 @@ A_fo = c1673_fo \
 #deltaV_fo = 10.e-6
 
 
-deltaH_wadP = 160.e3 
+deltaH_wadP = 165.e3 
 deltaV_wad = 10.0e-6
 n_wad = 1.
-c1000 = 0.044 # mole fraction at 1000 K
+c1000 = 0.050 # mole fraction at 1000 K
 c1000_wad = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_wad = deltaH_wadP - deltaV_wad*pressure_wad
 A_wad = c1000_wad \
@@ -257,10 +263,10 @@ A_wad = c1000_wad \
            * np.exp(-(deltaH_wad + pressure_wad*deltaV_wad) \
                          / (constants.gas_constant*1000.)))
 
-deltaH_rwP = 203.e3 
+deltaH_rwP = 200.e3 
 deltaV_rw = 10.0e-6
 n_rw = 1.
-c1000 = 0.058 # mole fraction at 1000 K
+c1000 = 0.09 # mole fraction at 1000 K
 c1000_rw = (c1000*wtH2O)/((c1000*wtH2O) + ((1.-c1000)*wtfo))
 deltaH_rw = deltaH_rwP - deltaV_rw*pressure_rw
 A_rw = c1000_rw \
@@ -329,7 +335,7 @@ plt.plot( compositions_rw_solid_2, temperatures_rw, linewidth=1, label='Ringwood
 
 
 plt.ylim(1000.,3000.)
-plt.xlim(0.,0.1)
+#plt.xlim(0.,0.1)
 plt.ylabel("Temperature (K)")
 plt.xlabel("X")
 plt.legend(loc='upper right')
@@ -344,7 +350,7 @@ Dwadmelt_410 = np.empty_like(temperatures_Dwadfo_410)
 Dfomelt_410 = np.empty_like(temperatures_Dwadfo_410)
 Dwadfo_410 = np.empty_like(temperatures_Dwadfo_410)
 for i, temperature in enumerate(temperatures_Dwadfo_410):
-    c=fsolve(solve_composition, 0.001, args=(temperature, pressure_410, r, K, Wsh(pressure_410), Whs(pressure_410), wad, liquid, 1./3., 1.))[0] # melt composition
+    c=fsolve(solve_composition, 0.001, args=(temperature, pressure_410, r, K, Wsh(pressure_410), Whs(pressure_410), wad, liquid, 1./3., 1./3.))[0] # melt composition
 
     melt_weight_percent= (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
 
@@ -379,7 +385,7 @@ Dwadmelt_520 = np.empty_like(temperatures_Drwwad_520)
 Drwmelt_520 = np.empty_like(temperatures_Drwwad_520)
 Drwwad_520 = np.empty_like(temperatures_Drwwad_520)
 for i, temperature in enumerate(temperatures_Drwwad_520):
-    c=fsolve(solve_composition, 0.001, args=(temperature, pressure_520, r, K, Wsh(pressure_520), Whs(pressure_520), wad, liquid, 1./3., 1.))[0] # melt composition
+    c=fsolve(solve_composition, 0.001, args=(temperature, pressure_520, r, K, Wsh(pressure_520), Whs(pressure_520), wad, liquid, 1./3., 1./3.))[0] # melt composition
 
     melt_weight_percent= (c*wtH2O)/((c*wtH2O) + ((1.-c)*wtfo))
 
@@ -414,7 +420,7 @@ demouchy_pressure = np.array([[14.e9, 14.e9, 15.e9, 16.e9, 17.e9, 18.e9],
                   [2.4, 2.68, 2.24, 2.60, 2.43, 1.24]])
 weight_percents = np.empty_like(demouchy_pressure[0])
 for i, pressure in enumerate(demouchy_pressure[0]):
-    c = fsolve(solve_composition, 0.001, args=(temperature, pressure, r, K, Wsh(pressure), Whs(pressure), wad, liquid, 1./3., 1.))[0]
+    c = fsolve(solve_composition, 0.001, args=(temperature, pressure, r, K, Wsh(pressure), Whs(pressure), wad, liquid, 1./3., 1./3.))[0]
     a_H2O = activities(c, r, K(temperature))[1]
     f_H2O = np.exp(lnfH2O(pressure, temperature))
     weight_percents[i] = 100.*A_wad*np.power(a_H2O*f_H2O, n_wad)*np.exp(-(deltaH_wad + pressure*deltaV_wad)/(constants.gas_constant*temperature))

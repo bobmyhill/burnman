@@ -17,6 +17,8 @@ from . import modified_tait as mt
 from . import hp
 from . import cork
 from . import vinet
+from . import dks_liquid
+from . import dks_solid
 from .equation_of_state import EquationOfState
 
 

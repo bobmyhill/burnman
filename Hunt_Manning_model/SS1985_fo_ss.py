@@ -14,6 +14,7 @@ from SS1985_functions import *
 # Benchmarks for the solid solution class
 import burnman
 from burnman.minerals import SLB_2011
+from burnman.minerals import DKS_2013_liquids
 from burnman import tools
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
@@ -27,6 +28,7 @@ K0 = lambda T: 0.00000000001
 K1 = lambda T:1 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 G = lambda T: 0. - 80.*(T-1300.)
 =======
 G = lambda T: 0. - 75.*(T-1420.)
@@ -34,18 +36,27 @@ G = lambda T: 0. - 75.*(T-1420.)
 =======
 G = lambda T: 0. - 75.*(T-1200.)
 >>>>>>> 98717ac... first draft higher entropy
+=======
+G = lambda T: 0. - 75.*(T-1420.)
+>>>>>>> 9b5f54c... Post merge
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
 
 pressure = 13.e9
 anhydrous_phase=SLB_2011.forsterite()
-liquid=MgO_SiO2_liquid()
-liquid.set_composition([2./3., 1./3.])
+liquid=DKS_2013_liquids.Mg2SiO4_liquid()
 
-Tmelt = fsolve(delta_gibbs, 2000., args=(pressure, anhydrous_phase, liquid, 1./3., 1.))[0]
+
+Tmelt = 2290. + 273.15
+anhydrous_phase.set_state(pressure, Tmelt)
+liquid.set_state(pressure, Tmelt)
+liquid.params['a'][0][0] += anhydrous_phase.gibbs - liquid.gibbs
+
+#liquid.set_composition([2./3., 1./3.])
+
+Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], pressure)
 print Tmelt
-
 
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
@@ -72,11 +83,22 @@ compositionsinf=np.empty_like(temperatures)
 compositions=np.empty_like(temperatures)
 
 for i, T in enumerate(temperatures):
+<<<<<<< HEAD
     compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1.))
     compositions[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1.))
 
+=======
+    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1./3.))
+
+temperatures_eqm=np.linspace(1273.15,2573.15, 27) 
+for i, T in enumerate(temperatures_eqm):
+    print T-273.15, fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1./3.))
+>>>>>>> 9b5f54c... Post merge
 
 plt.plot( compositions, temperatures, linewidth=1, label='fo')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
@@ -139,11 +161,18 @@ plt.show()
 
 ####################
 # a-X relationships (1 cation basis)
+<<<<<<< HEAD
 compositions = np.linspace(0., 0.6, 101)
 activities = np.empty_like(temperatures)
 for i, composition in enumerate(compositions):
     temperature = spline_PW1993(composition)+273.15
     activities[i] =  np.exp( delta_gibbs([temperature], pressure, anhydrous_phase, liquid, 1./3., 1.) / (constants.gas_constant*temperature))
+=======
+activities = np.empty_like(compositions_fo)
+for i, composition in enumerate(compositions_fo):
+    temperature = temperatures[i]
+    activities[i] =  np.exp( delta_gibbs([temperature], pressure, anhydrous_phase, liquid, 1./3., 1./3.) / (constants.gas_constant*temperature))
+>>>>>>> 9b5f54c... Post merge
 
    
 plt.plot(compositions, activities)

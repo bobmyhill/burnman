@@ -21,7 +21,7 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
         self.endmembers = [[DKS_2013_liquids.SiO2_liquid(), '[Mg]O'], 
                            [DKS_2013_liquids.MgO_liquid(), '[Si]O2']]
 
-        self.enthalpy_interaction = [[[0., 0.]]]
+        self.energy_interaction = [[[0., 0.]]]
         self.volume_interaction   = [[[0., 0.]]]
         self.entropy_interaction  = [[[0., 0.]]]
                         
@@ -152,7 +152,7 @@ observed_gibbs_excesses = np.array(zip(*gibbs_excess_data)[3])
 
 
 def fit_parameters(data, H0, H1, S0, S1, V0, V1):
-    liquid.enthalpy_interaction = [[[H0, H1]]]
+    liquid.energy_interaction = [[[H0, H1]]]
     liquid.entropy_interaction  = [[[S0, S1]]] 
     liquid.volume_interaction   = [[[V0, V1]]]  
 
@@ -214,7 +214,7 @@ plt.show()
 
 
 
-print 'enthalpy interaction:', liquid.enthalpy_interaction
+print 'enthalpy interaction:', liquid.energy_interaction
 print 'entropy interaction:', liquid.entropy_interaction
 print 'volume interaction:', liquid.volume_interaction 
 
