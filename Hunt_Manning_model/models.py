@@ -25,7 +25,7 @@ class MgO_SiO2_liquid(burnman.SolidSolution):
         #S1=48.
         Pref=14.e9
         Tref=2185+273.15 + 20.
-        self.enthalpy_interaction = [[[H0-Pref*V0 + Tref*S0, H1-Pref*V1 + Tref*S1]]]
+        self.energy_interaction = [[[H0-Pref*V0 + Tref*S0, H1-Pref*V1 + Tref*S1]]]
         self.volume_interaction   = [[[V0, V1]]]
         self.entropy_interaction  = [[[S0, S1]]]               
         burnman.SolidSolution.__init__(self, molar_fractions)

@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import inspect
 from . import slb
+from . import mie_grueneisen as mg
 from . import mie_grueneisen_debye as mgd
 from . import birch_murnaghan as bm
 from . import birch_murnaghan_4th as bm4
@@ -13,6 +14,8 @@ from . import modified_tait as mt
 from . import hp
 from . import cork
 from . import vinet
+from . import dks_liquid
+from . import dks_solid
 from .equation_of_state import EquationOfState
 
 
