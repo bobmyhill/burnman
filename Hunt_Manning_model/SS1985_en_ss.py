@@ -20,29 +20,43 @@ from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
 
 
-# 13 GPa, fo
-r=4./3. # Oxygens available for bonding (one cation basis)
+# 13 GPa, en
+r=3./2. # Oxygens available for bonding (one cation basis)
 n_cations = 1.
 Kinf = lambda T: 100000000000.
 K0 = lambda T: 0.00000000001
 K1 = lambda T: 1
-G = lambda T: 0. - 120.*(T-1750.)
+G = lambda T: 0. - 190.*(T-1700.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
 Whs = lambda T: 00000.
 
 pressure = 13.e9
 anhydrous_phase=SLB_2011.hp_clinoenstatite()
+oen=SLB_2011.enstatite()
 liquid=DKS_2013_liquids.MgSiO3_liquid()
 
 
-Tmelt = 2300. + 273.15
+Tmelt = 2240. + 273.15
 anhydrous_phase.set_state(pressure, Tmelt)
 liquid.set_state(pressure, Tmelt)
 liquid.params['a'][0][0] += (anhydrous_phase.gibbs)/2. - liquid.gibbs
 
 Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -2.0], pressure)
 print Tmelt
+'''
+pressures = np.linspace(1.e5, 20.e9, 101)
+temperatures = np.empty_like(pressures)
+temperatures_oen = np.empty_like(pressures)
+
+for i, P in enumerate(pressures):
+    temperatures_oen[i] = tools.equilibrium_temperature([oen, liquid], [1.0, -2.0], P)
+    temperatures[i] = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -2.0], P)
+
+plt.plot(pressures/1.e9, temperatures-273.15)
+plt.plot(pressures/1.e9, temperatures_oen-273.15)
+plt.show()
+'''
 
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
@@ -71,12 +85,22 @@ compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 compositions_en=np.empty_like(temperatures)
 
-for i, T in enumerate(temperatures):
-    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
-    compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
-    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
-    compositions_en[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./4., 1./2.))
+guess0=0.99
+guess1=0.99
+guess_en=0.99
+guess_inf=0.99
 
+for i, T in enumerate(temperatures):
+    print(T)
+    guess0=fsolve(solve_composition, guess0, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
+    guess1=fsolve(solve_composition, guess1, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
+    guess_inf=fsolve(solve_composition, guess_inf, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./4., 1./2.))
+    guess_en=fsolve(solve_composition, guess_en, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./4., 1./2.))
+
+    compositions0[i] = guess0
+    compositions1[i] = guess1
+    compositionsinf[i] = guess_inf
+    compositions_en[i] = guess_en
 
 plt.plot( compositions_en, temperatures, linewidth=1, label='hen')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')

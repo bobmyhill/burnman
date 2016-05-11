@@ -13,7 +13,9 @@ from SS1985_functions import *
 
 # Benchmarks for the solid solution class
 import burnman
-from burnman.minerals import DKS_2013_liquids_tweaked
+from burnman.minerals import SLB_2011
+from burnman.minerals import DKS_2013_liquids
+#from burnman.minerals import DKS_2013_liquids_tweaked
 from burnman import tools
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
@@ -21,12 +23,13 @@ from burnman.chemicalpotentials import *
 
 
 # 13 GPa, stv
-n_cations=1. # number of cations
 r=2. # Oxygens available for bonding
+n_cations=1. # number of cations
 K0 = lambda T: 0.00000000001
 K1 = lambda T: 1.
 Kinf = lambda T: 100000000000.
 
+#G = lambda T: 0. - 250.*(T-2000.)
 G = lambda T: 0. - 100.*(T-1200.)
 K = lambda T: np.exp(-(G(T))/(R*T))
 Wsh = lambda T: 00000.
@@ -34,12 +37,18 @@ Whs = lambda T: 00000.
 
 
 pressure = 13.e9
-anhydrous_phase=DKS_2013_liquids_tweaked.stishovite()
-liquid=MgO_SiO2_liquid()
-liquid.set_composition([0., 1.])
+anhydrous_phase=SLB_2011.stishovite()
+liquid=DKS_2013_liquids_tweaked.SiO2_liquid()
 
-Tmelt = fsolve(delta_gibbs, 2000., args=(pressure, anhydrous_phase, liquid, 1., 1.))[0]
-print Tmelt
+Tmelt = 2700. + 273.15
+anhydrous_phase.set_state(pressure, Tmelt)
+liquid.set_state(pressure, Tmelt)
+liquid.params['a'][0][0] += anhydrous_phase.gibbs - liquid.gibbs
+
+Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], pressure)
+print 'Entropy of melting at', Tmelt, 'K:', liquid.S - anhydrous_phase.S
+
+
 
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
@@ -65,13 +74,23 @@ compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 compositions_stv=np.empty_like(temperatures)
 
+guess0=0.99
+guess1=0.99
+guess_stv=0.99
+guess_inf=0.99
 for i, T in enumerate(temperatures):
-    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositions_stv[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
+    print(T)
+    guess0=fsolve(solve_composition, guess0, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    guess1=fsolve(solve_composition, guess1, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    guess_inf=fsolve(solve_composition, guess_inf, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    guess_stv=fsolve(solve_composition, guess_stv, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
 
 
+    compositions0[i] = guess0
+    compositions1[i] = guess1
+    compositionsinf[i] = guess_inf
+    compositions_stv[i] = guess_stv
+    
 plt.plot( compositions_stv, temperatures, linewidth=1, label='stv')
 plt.plot( compositions0, temperatures, linewidth=1, label='K=0')
 plt.plot( compositions1, temperatures, linewidth=1, label='K=1')

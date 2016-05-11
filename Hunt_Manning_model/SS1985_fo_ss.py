@@ -45,7 +45,17 @@ liquid.params['a'][0][0] += anhydrous_phase.gibbs - liquid.gibbs
 
 Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], pressure)
 print Tmelt
+'''
+pressures = np.linspace(1.e5, 20.e9, 101)
+temperatures = np.empty_like(pressures)
 
+for i, P in enumerate(pressures):
+    temperatures[i] = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], P)
+
+plt.plot(pressures/1.e9, temperatures-273.15)
+plt.show()
+exit()
+'''
 compositions=np.linspace(0.0001, 0.99, 101)
 Gex=np.empty_like(compositions)
 Gex_2=np.empty_like(compositions)
@@ -70,12 +80,23 @@ compositions1=np.empty_like(temperatures)
 compositionsinf=np.empty_like(temperatures)
 compositions_fo=np.empty_like(temperatures)
 
+guess0=0.99
+guess1=0.99
+guess_fo=0.99
+guess_inf=0.99
 for i, T in enumerate(temperatures):
-    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
-    compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
-    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
-    compositions_fo[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1./3.))
+    print(T)
+    guess0=fsolve(solve_composition, guess0, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    guess1=fsolve(solve_composition, guess1, args=(T, pressure, r, K1, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    guess_inf=fsolve(solve_composition, guess_inf, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1./3., 1./3.))
+    guess_fo=fsolve(solve_composition, guess_fo, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1./3.))
 
+    
+    compositions0[i] = guess0
+    compositions1[i] = guess1
+    compositionsinf[i] = guess_inf
+    compositions_fo[i] = guess_fo
+    
 temperatures_eqm=np.linspace(1273.15,2573.15, 27) 
 for i, T in enumerate(temperatures_eqm):
     print T-273.15, fsolve(solve_composition, 0.001, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1./3., 1./3.))

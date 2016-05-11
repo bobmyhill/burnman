@@ -16,6 +16,7 @@ from SS1985_functions import *
 # Benchmarks for the solid solution class
 import burnman
 from burnman.minerals import SLB_2011
+from burnman.minerals import DKS_2013_liquids
 from burnman import tools
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
@@ -43,13 +44,18 @@ Whs = lambda T: 0.
 
 pressure = 13.e9
 anhydrous_phase=SLB_2011.periclase()
-liquid=MgO_SiO2_liquid()
-liquid.set_composition([1., 0.])
+liquid=DKS_2013_liquids.MgO_liquid()
 
-Tmelt = fsolve(delta_gibbs, 3000., args=(1.e9, anhydrous_phase, liquid, 1., 1.))[0]
-print '0 GPa:', Tmelt
+Tmelt = 4180.
+anhydrous_phase.set_state(pressure, Tmelt)
+liquid.set_state(pressure, Tmelt)
+liquid.params['a'][0][0] += anhydrous_phase.gibbs - liquid.gibbs
 
-Tmelt = fsolve(delta_gibbs, 3000., args=(pressure, anhydrous_phase, liquid, 1., 1.))[0]
+
+#Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], 1.e9, 300.)
+#print '1 GPa:', Tmelt
+
+Tmelt = tools.equilibrium_temperature([anhydrous_phase, liquid], [1.0, -1.0], pressure, 3900.)
 print '13 GPa:', Tmelt
 print liquid.S - anhydrous_phase.S
 
@@ -112,17 +118,29 @@ compositions_per=np.empty_like(temperatures_per)
 temperatures_br=np.linspace(600., T_per_br, 101)
 compositions_br=np.empty_like(temperatures_br)
 
+guess0 = 0.999
+guess1 = 0.999
+guess_inf = 0.999
 for i, T in enumerate(temperatures):
-    compositions0[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositions1[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, K, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
-    compositionsinf[i]=fsolve(solve_composition, 0.001, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    print(T)
+    guess0=fsolve(solve_composition, guess0, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    guess1=fsolve(solve_composition, guess1, args=(T, pressure, r, K, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+    guess_inf=fsolve(solve_composition, guess_inf, args=(T, pressure, r, Kinf, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
+
+    compositions0[i] = guess0
+    compositions1[i] = guess1
+    compositionsinf[i] = guess_inf
     
+guess_per = 0.99
 for i, T in enumerate(temperatures_per):
-    compositions_per[i]=fsolve(solve_composition, 0.99, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
-
+    guess_per=fsolve(solve_composition, guess_per, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
+    compositions_per[i] = guess_per
+    
+guess_br =0.99
 for i, T in enumerate(temperatures_br):
-    compositions_br[i]=fsolve(solve_composition_br, 0.99, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
-
+    guess_br=fsolve(solve_composition_br, guess_br, args=(T, r, K, Wsh(T), Whs(T))) # only good at 13 GPa
+    compositions_br[i] = guess_br
+    
 print 'PERICLASE EQM'
 temperatures_eqm=np.linspace(1273.15,4173.15, 30) 
 for i, T in enumerate(temperatures_eqm):
