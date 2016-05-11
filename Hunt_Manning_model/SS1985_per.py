@@ -120,7 +120,7 @@ compositions_br=np.empty_like(temperatures_br)
 
 guess0 = 0.999
 guess1 = 0.999
-guess_inf = 0.999
+guess_inf = 0.9
 for i, T in enumerate(temperatures):
     print(T)
     guess0=fsolve(solve_composition, guess0, args=(T, pressure, r, K0, fn0, fn0, anhydrous_phase, liquid, 1., 1.))
@@ -130,7 +130,7 @@ for i, T in enumerate(temperatures):
     compositions0[i] = guess0
     compositions1[i] = guess1
     compositionsinf[i] = guess_inf
-    
+
 guess_per = 0.99
 for i, T in enumerate(temperatures_per):
     guess_per=fsolve(solve_composition, guess_per, args=(T, pressure, r, K, Wsh(T), Whs(T), anhydrous_phase, liquid, 1., 1.))
