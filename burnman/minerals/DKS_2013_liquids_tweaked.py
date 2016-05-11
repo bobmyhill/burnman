@@ -96,7 +96,7 @@ class SiO2_liquid(Mineral):
             'el_V_0': 1e-06
             }
         Fxs=-9 + 1617.47564545 # kJ/mol
-        Sxs=16.5e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
+        Sxs=12.55e-3 # kJ/mol, difference is due to different stv model (SLB vs FPMD)
         Kxs=800000.
         Pxs=-160000.
         #Fxs=1617.47564545 # 1617.47564545 # kJ/mol
