@@ -24,8 +24,10 @@ alm = minerals.SLB_2011.almandine()
 gr = minerals.SLB_2011.grossular()
 rw = minerals.SLB_2011.mg_fe_ringwoodite()
     
-# Governing equation
+# Governing equations
 # Fe + Fe3Fe2Si3O12 -> 3.Fe2SiO4
+# 3.Mg2SiO4 + 2.Fe3Al2Si3O12 -> 3.Fe2SiO4 + 2.Mg3Al2Si3O12 
+
 
 # If we know the composition of FeS melt and ringwoodite, we
 # can calculate the activity of skiagite.
@@ -76,3 +78,4 @@ print(gt.molar_mass)
 composition = burnman.processchemistry.component_to_atom_fractions({'Na2O': 0.5, 'CaO': 2.5, 'FeO': 18.4, 'MgO': 32.6, 'Al2O3': 2.0, 'SiO2': 44.0}, 'weight')
 print(composition)
 
+assemblage = burnman.Composite([sulfide_melt, gt, rw])
