@@ -71,6 +71,10 @@ def potential_amounts(comp_vector, stoichiometric_matrix, new_constraints=None):
     
     sol = opt.minimize(objective, guessed_amounts, args=(b, A), method='SLSQP', constraints=cons)
     potential_endmember_amounts = sol.x
+
+    potential_endmember_amounts = [0.001, 0.001870090069154239, 0.00192387337718946301, 0.0016297273514845703, 0.001, 0.016061107616759072, 0.054531846787244181, 0.023940157742506271]
+    #potential_endmember_amounts = [0.0001, 0.0023740603178714218, 0.00041466995135582837, 0.0024306800412884047, 0.0001, 0.010748114513179606, 0.085855872203977515, 0.011079771156893162]
+    
     resid = np.dot(A,potential_endmember_amounts) - b
     
     ctol=1.e-12 # compositional tolerance.
@@ -119,7 +123,7 @@ def assemble_compositional_tensors ( composition, minerals, constraints ):
     for i,e in enumerate(elements):
         for j,f in enumerate(formulae):
             stoichiometric_matrix[i,j] = ( f[e]  if e in f else 0.0 )
-    
+
     # Check that the bulk composition can be described by a linear set of the endmembers
     comp_vector = np.array([composition[element] for element in elements])
 
@@ -130,8 +134,9 @@ def assemble_compositional_tensors ( composition, minerals, constraints ):
             c1 = cvector_to_mineral_mbr_fractions(constraint[2], indices, endmembers_per_phase)
             if (any(c[0]) == 1. and sum(c[0]) == 1.) and all(c1[0]) == 1.:
                 compositional_constraints.append([c[0].index(1.), constraint[3]])
-            
+
     potential_endmember_amounts, check_composition = potential_amounts(comp_vector, stoichiometric_matrix)
+    
     if check_composition == False:
         raise Exception("Bulk composition is well outside the compositional range of the chosen minerals. Exiting.")
     else:

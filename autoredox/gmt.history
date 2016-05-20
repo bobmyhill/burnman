@@ -1,0 +1,8 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.2.1
+B	0.1f0.05:S@-core@- (atomic fraction):/2000f500:S in mantle (ppm):SWen
+J	X
+JX	X12/8
+R	0/0.5/0/10000
+L	6
+END
