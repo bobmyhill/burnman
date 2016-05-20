@@ -15,6 +15,7 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 
 import burnman
 from burnman import minerals
+<<<<<<< HEAD
 from burnman.equilibriumassemblage import *
 
 from scipy.optimize import fsolve, minimize
@@ -53,6 +54,19 @@ for pair in mineral_pairs:
     m1.params['F_0'] = m1.params['F_0'] + (m2.gibbs - m1.gibbs)
 
 
+=======
+
+
+from SLB_andradite import andradite
+andr = andradite()
+py = minerals.SLB_2011.pyrope()
+alm = minerals.SLB_2011.almandine()
+gr = minerals.SLB_2011.grossular()
+rw = minerals.SLB_2011.mg_fe_ringwoodite()
+    
+# Governing equation
+# Fe + Fe3Fe2Si3O12 -> 3.Fe2SiO4
+>>>>>>> a71113246a0376b7bd0ef7e213b80b765c5c8823
 
 # If we know the composition of FeS melt and ringwoodite, we
 # can calculate the activity of skiagite.
@@ -78,12 +92,21 @@ class garnet(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name = 'garnet'
         self.type = 'symmetric'
+<<<<<<< HEAD
         self.endmembers = [[py, '[Mg]3[Al][Al]Si3O12'],
                            [alm, '[Fe]3[Al][Al]Si3O12'],
                            [gr, '[Ca]3[Al][Al]Si3O12'],
                            [andr, '[Ca]3[Fe][Fe]Si3O12'],
                            [mg_maj, '[Mg]3[Mg][Si]Si3O12'],
                            [jd_maj, '[Na2/3Al1/3]3[Al][Si]Si3O12']]
+=======
+        self.endmembers = [[minerals.SLB_2011.pyrope(), '[Mg]3[Al][Al]Si3O12'],
+                           [minerals.SLB_2011.almandine(), '[Fe]3[Al][Al]Si3O12'],
+                           [minerals.SLB_2011.grossular(), '[Ca]3[Al][Al]Si3O12'],
+                           [andradite(), '[Ca]3[Fe][Fe]Si3O12'],
+                           [minerals.SLB_2011.mg_majorite(), '[Mg]3[Mg][Si]Si3O12'],
+                           [minerals.SLB_2011.jd_majorite(), '[Na2/3Al1/3]3[Al][Si]Si3O12']]
+>>>>>>> a71113246a0376b7bd0ef7e213b80b765c5c8823
 
         
         self.energy_interaction = [[0.0, 30.e3, 0.0, 21.20278e3, 0.0],
@@ -96,6 +119,7 @@ class garnet(burnman.SolidSolution):
 
 gt = garnet()
 
+<<<<<<< HEAD
 class mg_fe_ringwoodite(burnman.SolidSolution):
 
     def __init__(self, molar_fractions=None):
@@ -109,10 +133,13 @@ class mg_fe_ringwoodite(burnman.SolidSolution):
 
 rw = mg_fe_ringwoodite()
         
+=======
+>>>>>>> a71113246a0376b7bd0ef7e213b80b765c5c8823
 gt.set_composition([1.0, 0., 0., 0., 0., 0.])
 gt.set_state(1.e9, 300.)
 print(gt.molar_mass)
 
+<<<<<<< HEAD
 
 # Fe-S model from Waldner and Pelton, 2005
 '''
@@ -356,3 +383,8 @@ assemblage = burnman.Composite([Fe_liq, gt, rw])
 constraints = [['P', 20.e9], ['T', 2000.]]
 sol = gibbs_minimizer(composition, assemblage, constraints)
 print(sol, gt.molar_fractions, rw.molar_fractions, gt.formula)
+=======
+composition = burnman.processchemistry.component_to_atom_fractions({'Na2O': 0.5, 'CaO': 2.5, 'FeO': 18.4, 'MgO': 32.6, 'Al2O3': 2.0, 'SiO2': 44.0}, 'weight')
+print(composition)
+
+>>>>>>> a71113246a0376b7bd0ef7e213b80b765c5c8823
