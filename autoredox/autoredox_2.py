@@ -207,7 +207,6 @@ for i, X_S in enumerate(X_Ss):
     constraints = [['P', P], ['T', T]]
     sol = gibbs_minimizer(c, assemblage, constraints)
     #print(sol, gt.molar_fractions, rw.molar_fractions, gt.formula)
-    
     # Fe3+/sum(Fe) = (2.*andr)/(3.*alm + 2.*andr)
     ferric_fraction[i] = 2.*gt.molar_fractions[3]/(3.*gt.molar_fractions[1] + 2.*gt.molar_fractions[3])
     majorite_fraction[i] = gt.molar_fractions[4]
@@ -225,10 +224,30 @@ for i, X_S in enumerate(X_Ss):
     sulphur = {'S': sulphur_amount}
     S_ppm[i] = burnman.processchemistry.formula_mass(sulphur, burnman.processchemistry.read_masses())/burnman.processchemistry.formula_mass(bulk, burnman.processchemistry.read_masses())*1000000.
     print(S_ppm[i])
+
+    # Calculate velocities
+    p_gt = sol['c'][1]/(sol['c'][1] + sol['c'][6])
+    assemblage = burnman.Composite([gt, rw])
+    assemblage.set_fractions([p_gt, 1. - p_gt])
+    assemblage.set_state(P, T)
+    p1 = assemblage.p_wave_velocity
+    rho1 = assemblage.rho
+
+    sum_gt = n_py + n_alm + n_gr + n_maj
+    gt_ps = np.array([n_py, n_alm, n_gr, 0., n_maj])/sum_gt
+    sum_rw = n_mrw + n_frw
+    rw_ps = np.array([n_mrw, n_frw])/sum_rw
+    gt.set_composition(gt_ps)
+    rw.set_composition(rw_ps)
+    assemblage.set_fractions([sum_gt, sum_rw])
+    assemblage.set_state(P, T)
+    p2 = assemblage.p_wave_velocity
+    rho2 = assemblage.rho
+    print(p1, p2, rho1, rho2)
     
 plt.plot(X_Ss, ferric_fraction)
 plt.plot(X_Ss, majorite_fraction)
-plt.plot(X_Ss, wt_percent_S)
+plt.plot(X_Ss, S_ppm)
 plt.xlabel('S (atom fraction in core)')
 plt.ylabel('Fe3+/sumFe (garnet)')
 plt.show()
