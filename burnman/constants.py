@@ -37,3 +37,8 @@ G = scipy.constants.G
 Dirac constant (hbar, Planck constant / 2*pi) in J s^-1
 """
 Dirac = 1.054571726e-34
+
+"""
+1 cm^-1 in J/mol
+"""
+invcm = 11.9627

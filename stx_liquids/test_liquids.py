@@ -36,7 +36,7 @@ volumes=np.linspace(9e-6, 30e-6, 101)
 entropies=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        entropies[i]=SiO2_liq.method._electronic_excitation_entropy(temperature, volume, SiO2_liq.params)
+        entropies[i]=SiO2_liq.method._S_el(temperature, volume, SiO2_liq.params)
     plt.plot(volumes*1e6, entropies/3./constants.gas_constant, linewidth=2, label=str(temperature)+'K')
 
 plt.legend(loc='upper right')
@@ -90,12 +90,12 @@ volumes=np.linspace(7e-6, 18e-6, 101)
 entropies=np.empty_like(volumes)
 for temperature in temperatures:
     for i, volume in enumerate(volumes):
-        entropies[i]=SiO2_liq.method._electronic_excitation_entropy(temperature, volume, MgO_liq.params)
+        entropies[i]=SiO2_liq.method._S_el(temperature, volume, MgO_liq.params)
     plt.plot(volumes*1e6, entropies/2./constants.gas_constant, linewidth=2, label=str(temperature)+'K')
 
 temperature = 10000. # K
 for i, volume in enumerate(volumes):
-    entropies[i]=SiO2_liq.method._electronic_excitation_entropy(temperature, volume, MgO_liq.params)
+    entropies[i]=SiO2_liq.method._S_el(temperature, volume, MgO_liq.params)
 plt.plot(volumes*1e6, entropies/2./constants.gas_constant, linewidth=2, label=str(temperature)+'K')
 
     

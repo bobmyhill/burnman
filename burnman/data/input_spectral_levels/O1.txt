@@ -1,0 +1,6 @@
+# Configuration  J  	 Level (cm-1)  Leading percentage	  	  	  	 
+2s22p4-3P  	 2  	 0.000        100
+-  	  	 1  	 158.265      100 
+-  	  	 0  	 226.977      100	  	 
+2s22p4-1D  	 2  	 15867.862    100
+2s22p4-1S  	 0  	 33792.583    100

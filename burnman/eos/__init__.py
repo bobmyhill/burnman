@@ -20,6 +20,9 @@ from .hp import HP_TMT
 from .cork import CORK
 from .vinet import Vinet
 from .birch_murnaghan_4th import BM4
+from .dks_solid import DKS_S
+from .dks_liquid import DKS_L
+from .rs_liquid import RS_L
 
 from .property_modifiers import calculate_property_modifications
 

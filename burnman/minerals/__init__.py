@@ -26,6 +26,7 @@ from . import SLB_2005
 
 # de Koker and Stixrude
 from . import DKS_2013_liquids
+from . import RS_2014_liquids
 from . import DKS_2013_solids
 from . import DKS_2008_fo
 
