@@ -16,50 +16,71 @@ atomic_masses=read_masses()
 # energy_states should provide the energies and degeneracies of each electronic level in a variety of elements
 
     
-class DKS_L(eos.EquationOfState):
+class RS_L(eos.EquationOfState):
     """
     Base class for the finite strain liquid equation of state detailed
     in :cite:`deKoker2013` (supplementary materials).
     """
+
     ##########################################################
     # IDEAL GAS CONTRIBUTIONS (TRANSLATIONAL AND ELECTRONIC) #
     ##########################################################
 
-    def _ln_partition_function(self, mass, temperature):
-        return 3./2.*np.log(temperature) \
-            + 3./2.*np.log(mass*constants.Boltzmann \
-                           /(2*np.pi*constants.Dirac*constants.Dirac)) \
-            
-    def _F_ig(self, temperature, volume, params): # F_ig, eq. S6
-        # ideal gas
-        # see also eq. 16.72 of Callen., 1985; p. 373
-        V = volume/constants.Avogadro
-        figoverRT=0.
-        for element, N in params['formula'].iteritems(): # N is a.p.f.u
-            if N > 1.e-5:
-                mass = atomic_masses[element]/constants.Avogadro
-                figoverRT += -N*(np.log(V) + self._ln_partition_function(mass, temperature) \
-                                     + 1.) + N*np.log(N)
-        return constants.gas_constant*temperature*figoverRT
-            
+    
+    # Partition function
+    # (see de Koker and Stixrude, 2010, which is an erratum to their 2009 paper).
+    def _q_elec(self, temperature, volume, element): # converted units to J/mol
+        level_degeneracy_energy = [(float(level[1])*2. + 1., float(level[2])*constants.invcm)
+                                   for level in [line.rstrip('\n').split()
+                                                 for line in open(path.dirname(__file__)+'/../data/input_spectral_levels/'+element+'1.txt')]
+                                   if level[0]!='#']
+        
+        beta = 1./(constants.gas_constant*temperature)
+        q_elec = np.sum([degeneracy*np.exp(-beta*energy)
+                         for degeneracy, energy in level_degeneracy_energy])
+        return q_elec
 
-    def _S_ig(self, temperature, volume, params): # F_ig, eq. S6
-        # ideal gas
-        V = volume/constants.Avogadro
-        entropy_sum=0.
-        for element, N in params['formula'].iteritems(): # N is a.p.f.u
-            if N > 1.e-5:
-                mass = atomic_masses[element]/constants.Avogadro
-                entropy_sum -= -N*(np.log(V) + self._ln_partition_function(mass, temperature) \
-                                     + 5./2.) + N*np.log(N)
-        return constants.gas_constant*entropy_sum
+    def _dq_elecdT(self, temperature, volume, element):
+        level_degeneracy_energy = [(float(level[1])*2. + 1., float(level[2])*constants.invcm)
+                                   for level in [line.rstrip('\n').split()
+                                                 for line in open(path.dirname(__file__)+'/../data/input_spectral_levels/'+element+'1.txt')]
+                                   if level[0]!='#']
+        
+        beta = 1./(constants.gas_constant*temperature)
+        return np.sum([-degeneracy*energy*np.exp(-beta*energy)/constants.gas_constant
+                       for degeneracy, energy in level_degeneracy_energy])
 
-    def _C_v_ig(self, temperature, volume, params): # F_ig, eq. S6
-        # ideal gas
-        n_atoms=0
-        for element, N in params['formula'].iteritems():
-            n_atoms += N
-        return 1.5*constants.gas_constant*n_atoms
+    
+    def _partition_function(self, temperature, volume, element): # converted units to J/mol
+        mass = atomic_masses[element]
+        beta = 1./(constants.gas_constant*temperature)
+        lmbda = np.sqrt(2.*np.pi*constants.Dirac*constants.Dirac*constants.Avogadro*constants.Avogadro*beta/mass)
+        q_trans = volume/(lmbda*lmbda*lmbda)
+        q_elec = self._q_elec(temperature, volume, element)
+        
+        return q_trans*q_elec
+
+    
+    def _F_ig(self, temperature, volume, params): # converted units to J/mol
+        n_atoms = np.sum([N for element, N in params['formula'].iteritems()])
+        return -(constants.gas_constant * temperature
+                 * np.sum([N*np.log(np.exp(1)
+                                    * self._partition_function(temperature, volume, element)
+                                    / (N*constants.Avogadro)) for element, N in params['formula'].iteritems()])) # WARNING: V = volume/n_atoms?
+    
+    def _S_ig(self, temperature, volume, params):
+        return (-self._F_ig(temperature, volume, params)/temperature
+                + constants.gas_constant
+                * np.sum([N *
+                          (3./2.
+                           - self._dq_elecdT(temperature, volume, element)
+                           / self._q_elec(temperature, volume, element)/temperature)
+                          for element, N in params['formula'].iteritems()]))
+
+    def _C_v_ig(self, temperature, volume, params): # numerical for now
+        S0 = self._S_ig(temperature - 0.5, volume, params)
+        S1 = self._S_ig(temperature + 0.5, volume, params)
+        return temperature*(S1 - S0)
 
     def _P_ig(self, temperature, volume, params): # PV = nRT
         n_atoms=0
@@ -78,7 +99,6 @@ class DKS_L(eos.EquationOfState):
         for element, N in params['formula'].iteritems():
             n_atoms += N
         return n_atoms*constants.gas_constant / volume
-
 
     ############################
     # ELECTRONIC CONTRIBUTIONS #
@@ -318,11 +338,7 @@ class DKS_L(eos.EquationOfState):
         return -temperature*C_voverT
 
 
-    ##########################
-    # MAGNETIC CONTRIBUTIONS #
-    ##########################
-    # (as found in Ramo and Stixrude, 2014)
-    
+    # Magnetic contribution (as found in Ramo and Stixrude, 2014)
     def _spin(self, temperature, volume, params):
         S_a = 0.
         S_b = 0.
@@ -393,7 +409,7 @@ class DKS_L(eos.EquationOfState):
         S_a, S_b, numerator, numerator_2, n_atoms = self._spin(temperature, volume, params)
         S = S_a*temperature + S_b
         return n_atoms * constants.gas_constant * temperature * 4.*S_a*(S_a*temperature + 2.*S_b + 1.)/np.power(2.*S + 1., 2.)
-    
+        
     
     def _aK_T(self, temperature, volume, params):
         aK_T =  (self._alphaK_T_ig(temperature, volume, params)
@@ -413,7 +429,7 @@ class DKS_L(eos.EquationOfState):
     def volume(self, pressure, temperature, params):
         p_residual = lambda x: pressure - self.pressure(temperature, x, params)
         tol = 0.0001
-        sol = opt.fsolve(p_residual, 0.8e-6, xtol=1e-12, full_output=True)
+        sol = opt.fsolve(p_residual, params['V_0']/2., xtol=1e-12, full_output=True)
         if sol[2] != 1:
             raise ValueError('Cannot find volume, likely outside of the range of validity for EOS')
         else:

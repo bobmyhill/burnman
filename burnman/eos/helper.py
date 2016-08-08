@@ -17,8 +17,9 @@ from . import modified_tait as mt
 from . import hp
 from . import cork
 from . import vinet
-from . import dks_liquid
 from . import dks_solid
+from . import dks_liquid
+from . import rs_liquid
 from .equation_of_state import EquationOfState
 
 
@@ -40,10 +41,12 @@ def create(method):
             return mgd.MGD3()
         elif method == "slb3":
             return slb.SLB3()
-        elif method == "dks_l":
-            return dks_liquid.DKS_L()
         elif method == "dks_s":
             return dks_solid.DKS_S()
+        elif method == "dks_l":
+            return dks_liquid.DKS_L()
+        elif method == "rs_l":
+            return rs_liquid.RS_L()
         elif method == "bm2":
             return bm.BM2()
         elif method == "bm3":

@@ -24,7 +24,7 @@ class SiO2_liquid(Mineral):
     def __init__(self):
         self.params = {
             'name': 'SiO2_liquid',
-            'formula': {'Mg': 0 , 'Si': 1.0 , 'O': 2.0 },
+            'formula': {'Si': 1.0 , 'O': 2.0 },
             'equation_of_state': 'dks_l',
             'V_0': 2.78e-05 ,
             'T_0': 3000.0 ,
@@ -200,7 +200,7 @@ class MgO_liquid(Mineral):
     def __init__(self):
         self.params = {
             'name': 'MgO_liquid',
-            'formula': {'Mg': 1.0 , 'Si': 0 , 'O': 1.0 },
+            'formula': {'Mg': 1.0 , 'O': 1.0 },
             'equation_of_state': 'dks_l',
             'V_0': 1.646e-05 ,
             'T_0': 3000.0 ,
