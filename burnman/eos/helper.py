@@ -31,6 +31,8 @@ def create(method):
     if isinstance(method, str):
         if method == "slb2":
             return slb.SLB2()
+        elif method == "mg":
+            return mg.MG()
         elif method == "vinet":
             return vinet.Vinet()
         elif method == "mg":
