@@ -26,7 +26,7 @@ else:
 fa_liq = RS_2014_liquids.Fe2SiO4_liquid()
 
 # Plot data (1)
-data = np.loadtxt(fname='fa_melting_Ohtani_1979.dat')
+data = np.loadtxt(fname='data/fa_melting_Ohtani_1979.dat')
 Ohtani_data = [[], [], [], []]
 for datum in data:
     #print datum
@@ -41,7 +41,7 @@ for i, assemblage in enumerate(Ohtani_data):
     plt.errorbar(P/1.e9, T, yerr=Terr, marker='o', markersize=6, linestyle='None', label=assemblages[i])
 
 # Plot data (2)
-data = np.loadtxt(fname='frw_melting_Kato_2016.dat')
+data = np.loadtxt(fname='data/frw_melting_Kato_2016.dat')
 Kato_data = [[], []]
 for datum in data:
     #print datum
@@ -166,7 +166,7 @@ plt.plot(Pr/1.e9, temperatures, linestyle='-.', label='frw -> wus + stv')
 
 plt.xlabel('P (GPa)')
 plt.ylabel('T (K)')
-plt.xlim(0., 10.)
+plt.xlim(0., 20.)
 plt.ylim(1600., 2200.)
 plt.legend(loc='lower right')
 plt.show()
@@ -268,13 +268,13 @@ if test==True:
     fig1 = mpimg.imread('figures/Fe2SiO4_liquid_PVT.png')
     plt.imshow(fig1, extent=[3.5, 7.5, 0., 200], aspect='auto')
 
-    for T in [3000., 4000., 6000., 5000., 2000., 1000.]:
+    for T in [3000., 4000., 6000.]: #, 5000., 2000., 1000.]:
         for i, P in enumerate(pressures):
             fa_liq.set_state(P, T)
 
             #print(P, T, fa_liq.rho)
             rhos[i] = fa_liq.rho
-            plt.plot(rhos/1.e3, pressures/1.e9, label=str(T)+' K')
+        plt.plot(rhos/1.e3, pressures/1.e9, label=str(T)+' K')
 
     plt.legend(loc='upper left')
     plt.show()
