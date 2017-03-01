@@ -12,9 +12,10 @@ from os import rename
 
 
 import numpy as np
+import scipy.optimize as opt
 from scipy.interpolate import interp2d 
 
-from .material import Material, material_property
+from .mineral import Mineral, material_property
 from . import eos
 from .tools import bracket
 from .tools import copy_documentation
@@ -33,7 +34,7 @@ def _read_1D_sesame(filename):
             
         return np.array(values)
 
-def _read_2D_sesame(filename, factor, densities, temperatures):
+def _read_2D_sesame(filename, factor, densities, temperatures, kind):
     '''
     Returns an interp2d function
     '''
@@ -47,11 +48,11 @@ def _read_2D_sesame(filename, factor, densities, temperatures):
             values.append([])
         else:
             values[-1].extend([float(i) for i in line])
-    return interp2d(densities, temperatures, np.array(values)*factor, kind='cubic')
+    return interp2d(densities, temperatures, np.array(values)*factor, kind=kind)
 
-class SesameMaterial(Material):
+class SesameMineral(Mineral):
     """
-    This is the base class for a sesame material. States of the material
+    This is the base class for a sesame mineral. States of the material
     can only be queried after setting the pressure and temperature
     using set_state(). 
 
@@ -67,40 +68,46 @@ class SesameMaterial(Material):
     from the grids created from the input files. They are all returned in 
     SI units on a molar basis, even though the files are not in these units.
 
-    This class is available as ``burnman.SesameMaterial``.
+    This class is available as ``burnman.SesameMineral``.
     """
-    def __init__(self, directory, formula):
+    def __init__(self, directory, formula, interp_method='quintic'):
         formula = dictionarize_formula(formula)
+        molar_mass = formula_mass(formula, atomic_masses)
         self.params = {'name': directory,
                        'formula': formula,
                        'n': sum(formula.values()),
-                       'molar_mass': formula_mass(formula, atomic_masses)}
-        self._property_interpolators = self._read_sesame(directory)
-        Material.__init__(self)
+                       'molar_mass': molar_mass}
+        self._property_interpolators = self._read_sesame(directory, molar_mass, interp_method)
+        Mineral.__init__(self)
+        
+        class SesameMethod(object):
+            """
+            Dummy class because Mineral.set_state() needs a method
+            """
+            pass
+        self.method = SesameMethod()
 
-    def _read_sesame(self, directory, molar_mass):
-        temperatures = read_1D(directory+'/T') # K
-        densities = read_1D(directory+'/R')*1.e3 # Mg/m^3
-        f_energy = read_2D(directory+'/E', molar_mass*1.e6, densities, temperatures) # MJ/kg
-        f_helmholtz_energy = read_2D(directory+'/A', molar_mass*1.e6, densities, temperatures) # MJ/kg
-        f_pressure = read_2D(directory+'/P', 1.e9, densities, temperatures)
+    def _read_sesame(self, directory, molar_mass, kind):
+        temperatures = _read_1D_sesame(directory+'/T') # K
+        densities = _read_1D_sesame(directory+'/R')*1.e3 # Mg/m^3
+        f_energy = _read_2D_sesame(directory+'/E', molar_mass*1.e6, densities, temperatures, kind) # MJ/kg
+        f_helmholtz_energy = _read_2D_sesame(directory+'/A', molar_mass*1.e6, densities, temperatures, kind) # MJ/kg
+        f_pressure = _read_2D_sesame(directory+'/P', 1.e9, densities, temperatures, kind)
         
         property_interpolators = {'E': f_energy,
                                   'A': f_helmholtz_energy,
                                   'P': f_pressure}
         
         return property_interpolators
-    
-    @copy_documentation(Material.set_state)
+
     def set_state(self, pressure, temperature):
-        Material.set_state(self, pressure, temperature)
-        self.density = self._density
+        Mineral.set_state(self, pressure, temperature)
+        #self.density = self._density
         
     """
     Properties by linear interpolation of Perple_X output
     """
     @material_property
-    @copy_documentation(Material.molar_mass)
     def molar_mass(self):
         if 'molar_mass' in self.params:
             return self.params['molar_mass']
@@ -109,8 +116,7 @@ class SesameMaterial(Material):
                 "No molar_mass parameter for mineral " + self.to_string + ".")
 
     @material_property
-    @copy_documentation(Material.density)
-    def _density(self):
+    def density(self):
 
         _delta_pressure = lambda rho: (self.pressure -
                                        self._property_interpolators['P']([rho],
@@ -127,56 +133,46 @@ class SesameMaterial(Material):
 
     
     @material_property
-    @copy_documentation(Material.molar_volume)
     def molar_volume(self):
         return self.molar_mass/self.density
 
     @material_property
-    @copy_documentation(Material.internal_energy)
     def internal_energy(self):
         return self._property_interpolators['E']([self.density], [self.temperature])[0]
 
     @material_property
-    @copy_documentation(Material.molar_helmholtz)
     def molar_helmholtz(self):
         return self._property_interpolators['A']([self.density], [self.temperature])[0]
 
     @material_property
-    @copy_documentation(Material.molar_enthalpy)
     def molar_enthalpy(self):
-        return self.internal_energy + self.pressure*self.volume
+        return self.internal_energy + self.pressure*self.molar_volume
     
     @material_property
-    @copy_documentation(Material.molar_gibbs)
     def molar_gibbs(self):
-        return self.molar_helmholtz + self.pressure*self.volume
+        return self.molar_helmholtz + self.pressure*self.molar_volume
 
     @material_property
-    @copy_documentation(Material.isothermal_bulk_modulus)
     def isothermal_bulk_modulus(self):
         return self.density * \
             self._property_interpolators['P']([self.density], [self.temperature], dx=1)[0]
 
     @material_property
-    @copy_documentation(Material.isothermal_compressibility)
     def isothermal_compressibility(self):
         return 1. / self.isothermal_bulk_modulus
 
     @material_property
-    @copy_documentation(Material.molar_entropy)
     def molar_entropy(self):
         return -self._property_interpolators['A']([self.density], [self.temperature], dy=1)[0]
 
     @material_property
-    @copy_documentation(Material.heat_capacity_v)
     def heat_capacity_v(self):
         return -self.temperature * \
             self._property_interpolators['A']([self.density], [self.temperature], dy=2)[0]
     
     @material_property
-    @copy_documentation(Material.thermal_expansivity)
     def thermal_expansivity(self):
-        return self.isothermal_bulk_modulus * \
+        return self.isothermal_compressibility * \
             self._property_interpolators['P']([self.density], [self.temperature], dy=1)[0]
 
     '''
@@ -184,46 +180,38 @@ class SesameMaterial(Material):
     '''
 
     @material_property
-    @copy_documentation(Material.heat_capacity_p)
     def heat_capacity_p(self):
         return self.heat_capacity_v + self.molar_volume * self.temperature \
             * self.thermal_expansivity * self.thermal_expansivity \
             * self.isothermal_bulk_modulus
 
     @material_property
-    @copy_documentation(Material.adiabatic_bulk_modulus)
     def adiabatic_bulk_modulus(self):
         return self.isothermal_bulk_modulus * self.heat_capacity_v / self.heat_capacity_p
     
     @material_property
-    @copy_documentation(Material.adiabatic_compressibility)
     def adiabatic_compressibility(self):
         return 1. / self.adiabatic_bulk_modulus
 
     @material_property
-    @copy_documentation(Material.grueneisen_parameter)
     def grueneisen_parameter(self):
         return ( self.thermal_expansivity *
                  self.isothermal_bulk_modulus  /
                  (self.heat_capacity_v * self.density) )
 
     @material_property
-    @copy_documentation(Material.bulk_sound_velocity)
     def bulk_sound_velocity(self):
         return np.sqrt( self.isothermal_bulk_modulus  /
                         self.density )
     
     @material_property
-    @copy_documentation(Material.shear_modulus)
     def shear_modulus(self):
         raise NotImplementedError("sesame model has no implementation of shear modulus")
     
     @material_property
-    @copy_documentation(Material.p_wave_velocity)
     def p_wave_velocity(self):
         raise NotImplementedError("sesame model has no implementation of p wave velocity")
         
     @material_property
-    @copy_documentation(Material.shear_wave_velocity)
     def shear_wave_velocity(self):
         raise NotImplementedError("sesame model has no implementation of s wave velocity")
