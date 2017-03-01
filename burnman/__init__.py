@@ -183,6 +183,7 @@ from .version import version as __version__
 
 # Classes and associated functions for representing rocks and minerals:
 from .classes.material import Material, material_property
+from .classes.sesame import SesameMaterial
 from .classes.perplex import PerplexMaterial
 from .classes.mineral import Mineral
 from .classes.combinedmineral import CombinedMineral

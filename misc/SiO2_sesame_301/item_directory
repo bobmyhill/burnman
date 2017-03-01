@@ -1,0 +1,7 @@
+nt                              INTEGER                                1       1                                      78                                number_of_temperatures                                          
+nr                              INTEGER                                1       1                                     111                                number_of_densities                                             
+T                               VREAL                                 78       1T                                      0K                               temperature (1..nt)                                             
+R                               VREAL                                111       1R                                      0Mg/m**3                         density (1..nr)                                                 
+P                               VREAL                                111      78P                                      0GPa                             pressure(R,T)                                                   
+E                               VREAL                                111      78E                                      0MJ/kg                           energy  (R,T)                                                   
+A                               VREAL                                111      78A                                      0MJ/kg                           free_energy (R,T)                                               
