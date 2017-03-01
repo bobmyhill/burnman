@@ -61,9 +61,9 @@ from .version import version as __version__
 
 # classes for representing rocks and minerals:
 from .mineral import Mineral
+from .sesame import SesameMineral
 from .material import Material
 from .perplex import PerplexMaterial
-from .sesame import SesameMaterial
 from .composite import Composite
 from .solutionmodel import SolutionModel
 from .solidsolution import SolidSolution
