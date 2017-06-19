@@ -412,7 +412,7 @@ class Mg2Fe2O5 (Mineral):
 class MgFeFe2O5(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name='(Mg,Fe)2Fe2O5'
-        self.type='symmetric'
+        self.solution_type='symmetric'
         self.endmembers = [[Mg2Fe2O5(), '[Mg]2Fe2O5'],
                            [Fe4O5(), '[Fe]2Fe2O5']]
         self.energy_interaction=[[0.0e3]]

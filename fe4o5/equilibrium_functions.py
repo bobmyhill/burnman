@@ -16,7 +16,7 @@ def eqm_with_wus(comp, P, T, wus, mineral):
     wus.set_state(P,T)
     mineral.set_state(P, T)
     mu_mineral=chemical_potentials([wus],[mineral.params['formula']])[0]
-    return  mu_mineral-mineral.gibbs(P,T)
+    return  mu_mineral-mineral.gibbs
 
 def wus_eqm_c_P(arg, T, wus, min1, min2):
     XMgO=0.0

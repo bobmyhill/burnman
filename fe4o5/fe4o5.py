@@ -18,7 +18,7 @@ from mineral_models_new import *
 from slb_models_new import *
 from equilibrium_functions import *
 
-iron=fcc_iron()
+iron=minerals.Myhill_calibration_iron.fcc_iron()
 fper=minerals.HP_2011_ds62.fper()
 wus=ferropericlase()
 fe4o5=Fe4O5()
@@ -135,10 +135,11 @@ def wus_iron_frw_stv_eqm(arg, T):
     wus.set_state(P,T)
     frw.set_state(P,T)
     stv.set_state(P,T)
+    iron.set_state(P,T)
     mu_iron=chemical_potentials([wus],[dictionarize_formula('Fe')])[0]
     mu_FeO=chemical_potentials([wus],[dictionarize_formula('FeO')])[0]
     mu_FeO_2=chemical_potentials([frw, stv],[dictionarize_formula('FeO')])[0]
-    return [mu_iron-iron.calcgibbs(P,T), mu_FeO - mu_FeO_2]
+    return [mu_iron-iron.gibbs, mu_FeO - mu_FeO_2]
 
 def hem_mt_fe4o5_rhenium_univariant(T):
     return optimize.fsolve(eqm_pressure, 10.e9, args=(T[0], [mt, Re, fe4o5, ReO2], [8., 1., -6., -1.]))[0] \

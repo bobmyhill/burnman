@@ -40,3 +40,5 @@ from . import HHPH_2013
 from . import KMFBZ_2017
 # Other
 from . import other
+from . import Metal_Metal_oxides
+from . import Myhill_calibration_iron

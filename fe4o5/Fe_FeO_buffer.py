@@ -12,7 +12,7 @@ temperatures = np.linspace(1000+273.15, 1600+273.15, 7)
 pressures = np.linspace(1.e5, 10.e9 + 1.e5, 21)
 iron=fcc_iron()
 wus=ferropericlase()
-O2=minerals.HP_2011_fluids.O2()
+O2=burnman.minerals.HP_2011_fluids.O2()
 
 f = open('fcc_iron_wus_PTlogfO2.dat', 'w')
 for T in temperatures:
