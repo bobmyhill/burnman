@@ -43,7 +43,8 @@ EOF
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
-rm ${base}.ps ${base}.epsi
+rm ${base}.ps 
+mv ${base}.epsi ${base}.eps
 
 convert -density 600 ${base}.pdf ${base}.jpg
 evince ${base}.pdf

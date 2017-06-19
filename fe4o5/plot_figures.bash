@@ -63,7 +63,8 @@ echo "1100 19.5 Fe@-4@-O@-5@-+ReO@-2@-" | gmt pstext -F+jLT -J -R -O >> ${base}.
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
-rm ${base}.ps ${base}.epsi
+rm ${base}.ps 
+mv ${base}.epsi ${base}.eps
 
 convert -density 600 ${base}.pdf ${base}.jpg
 evince ${base}.pdf
@@ -96,7 +97,8 @@ gmt psbasemap -J -R -O -B4f2:"Pressure (GPa)":/4f2:"log@-10@-(@%6%f@%4%O@-2@-)":
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
-rm ${base}.ps ${base}.epsi
+rm ${base}.ps 
+mv ${base}.epsi ${base}.eps
 
 convert -density 600 ${base}.pdf ${base}.jpg
 evince ${base}.pdf
@@ -137,7 +139,8 @@ gmt psbasemap -J -R -O -B2f1:"Pressure (GPa)":/2f1:"log@-10@-(@%6%f@%4%O@-2@-)":
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
-rm ${base}.ps ${base}.epsi
+rm ${base}.ps 
+mv ${base}.epsi ${base}.eps
 
 convert -density 600 ${base}.pdf ${base}.jpg
 evince ${base}.pdf
@@ -160,7 +163,8 @@ EOF
 
 ps2epsi ${base}.ps
 epstopdf ${base}.epsi
-rm ${base}.ps ${base}.epsi
+rm ${base}.ps 
+mv ${base}.epsi ${base}.eps
 
 convert -density 600 ${base}.pdf ${base}.jpg
 evince ${base}.pdf
