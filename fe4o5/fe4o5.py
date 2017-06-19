@@ -27,10 +27,23 @@ mt=minerals.HP_2011_ds62.mt()
 hem=minerals.HP_2011_ds62.hem()
 high_mt=high_mt()
 
+print 'Standard state Gibbs free energy (kJ/mol):'
+P = 1.e5
+T = 298.15
+fe4o5.set_state(P, T)
+print '{0:.3e} {1:.3e}'.format(fe4o5.gibbs/1.e3, (fe4o5.params['H_0'] - T*fe4o5.params['S_0'])/1.e3)
+print ''
 
-print 1473.15, optimize.fsolve(wus_eqm_c_P, [0.16, 1.e9], args=(1473.15, wus, fe5o6, fe4o5))[1]/1.e9
-print 2000.00, optimize.fsolve(wus_eqm_c_P, [0.16, 1.e9], args=(2000.00, wus, fe5o6, fe4o5))[1]/1.e9
+print 'Gibbs free energy of Fe4O5:'
+for (P, T) in ((1.e5, 1373.15), (15.e9, 1373.15)):
+    fe4o5.set_state(P, T)
+    print '{0:.2f} GPa, {1:.2f} K: {2:.3f} kJ/mol'.format(P/1.e9, T, fe4o5.gibbs/1.e3)
+print ''
 
+print 'Equilibrium pressure of wus + Fe4O5 -> Fe5O6:'
+for T in (1473.15, 2000.):
+    print '{0:.2f} K: {1:.2f} GPa'.format(T, optimize.fsolve(wus_eqm_c_P, [0.16, 1.e9], args=(T, wus, fe5o6, fe4o5))[1]/1.e9)
+print ''
 
 
 fa=minerals.HP_2011_ds62.fa()
@@ -62,6 +75,8 @@ EMRD=[hen, mag, mrw, diam]
 
 O2=minerals.HP_2011_fluids.O2()
 
+print 'Volume calculations:'
+
 P=11.5e9
 T=1366.
 V=345.753 # Angstroms^3
@@ -73,7 +88,7 @@ A3_to_m3=1e-30
 V=V*A3_to_m3*Nb/Z
 
 fe4o5.set_state(P,T)
-print 'Woodland Fe4O5 (HT)', fe4o5.V, V
+print 'Woodland Fe4O5 (HT) at {0:.2f} GPa, {1:.2f} K: {2:.2e} {3:.2e}'.format(P/1.e9, T,  fe4o5.V, V)
 
 P=15.e9
 T=2000.
@@ -81,29 +96,29 @@ V=2.8729*9.713*14.974 # Angstroms^3
 V=V*A3_to_m3*Nb/Z
 
 fe5o6.set_state(P,T)
-print  'Lavina Fe5O6 (HT)', fe5o6.V, V
+print  'Lavina Fe5O6 (HT) at {0:.2f} GPa, {1:.2f} K: {2:.2e} {3:.2e}'.format(P/1.e9, T, fe5o6.V, V)
 
 P=11.4e9
 T=300.
 V=414. # Angstroms^3
 V=V*A3_to_m3*Nb/Z
 fe5o6.set_state(P,T)
-print fe5o6.V, V
+print  'Lavina Fe5O6 (HT) at {0:.2f} GPa, {1:.2f} K: {2:.2e} {3:.2e}'.format(P/1.e9, T, fe5o6.V, V)
 
 P=1.e5
 T=300.
 V=440.6 # Angstroms^3
 V=V*A3_to_m3*Nb/Z
 fe5o6.set_state(P,T)
-print fe5o6.V, V
+print  'Lavina Fe5O6 (HT) at {0:.2f} GPa, {1:.2f} K: {2:.2e} {3:.2e}'.format(P/1.e9, T, fe5o6.V, V)
 
 P=20.e9
 T=300.
 V=400.4 # Angstroms^3
 V=V*A3_to_m3*Nb/Z
 fe5o6.set_state(P,T)
-print fe5o6.V, V
-
+print  'Lavina Fe5O6 (HT) at {0:.2f} GPa, {1:.2f} K: {2:.2e} {3:.2e}'.format(P/1.e9, T, fe5o6.V, V)
+print ''
 '''
 P=9.5e9
 T=1473.15
@@ -207,12 +222,15 @@ reaction_lines=[[fe4o5_hem_temperatures, hem_re_pressures, '-Wthin,black'],
 
 f = open('TP-pseudosection.dat', 'w')
 for temperatures, pressures, marker in reaction_lines:
-    plt.plot(temperatures, pressures)
+    plt.plot(temperatures, pressures/1.e9)
     f.write('>> '+marker+'\n')
     for i, T in enumerate(temperatures):
         f.write(str(T-273.15)+' '+str(pressures[i]/1.e9)+'\n')
 f.close()
 
+plt.xlabel('Temperature (K)')
+plt.ylabel('Pressure (GPa)')
+plt.show()
 print 'TP-pseudosection.dat (over)written'
 
 
