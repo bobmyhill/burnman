@@ -26,7 +26,8 @@ class bcc_iron (Mineral):
             'magnetic_moment': [2.22, 0.0] ,
             'magnetic_structural_parameter': 0.4 }
         Mineral.__init__(self)
-        
+'''
+
 class fcc_iron (Mineral):
     def __init__(self):
         formula='Fe1.0'
@@ -49,7 +50,7 @@ class fcc_iron (Mineral):
             'magnetic_moment': [2.1, 0.0] ,
             'magnetic_structural_parameter': 0.28 }
         Mineral.__init__(self)
-'''
+
 
 hen=burnman.minerals.HHPH_2013.hen()
 hfs=burnman.minerals.HHPH_2013.hfs()
