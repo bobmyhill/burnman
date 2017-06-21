@@ -46,6 +46,22 @@ for T in (1473.15, 2000.):
 print ''
 
 
+# Compare heat capacities
+temperatures = np.linspace(300., 1500., 101)
+pressures = np.ones_like(temperatures) * 1.e5
+Cp_Fe4O5 = fe4o5.evaluate(['heat_capacity_p'], pressures, temperatures)[0]
+Cp_fper = fper.evaluate(['heat_capacity_p'], pressures, temperatures)[0]
+Cp_mt = mt.evaluate(['heat_capacity_p'], pressures, temperatures)[0]
+Cp_hem = hem.evaluate(['heat_capacity_p'], pressures, temperatures)[0]
+
+plt.plot(temperatures, Cp_Fe4O5, label='Fe$_4$O$_5$')
+plt.plot(temperatures, Cp_fper + Cp_mt, label='fper + mt')
+plt.plot(temperatures, 2.*Cp_fper + Cp_hem, label='2 fper + hem')
+plt.xlabel('Temperature (K)')
+plt.ylabel('Heat capacity ($C_P$; J/K/mol)')
+plt.legend(loc='lower right')
+plt.show()
+
 fa=minerals.HP_2011_ds62.fa()
 frw=minerals.HP_2011_ds62.frw()
 
