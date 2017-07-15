@@ -1,0 +1,8 @@
+# GMT 5 Session common arguments shelf
+BEGIN GMT 5.1.2
+B	200:Temperature (K):/0.05:Volume (kJ/kbar):SWen
+J	X
+JX	X15/15
+R	0/1800/3.9/4.2
+L	3
+END

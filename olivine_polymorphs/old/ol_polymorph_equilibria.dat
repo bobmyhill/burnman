@@ -1,0 +1,19 @@
+% Expt	Assembly	Pressure (GPa)	Temperature (degC)	Time (hrs)	Capsule	Phases	olivine	+err 	wadsleyite +err		ringwoodite	+err Code	
+PC1   	0.5inch	    2	    1400	24	graphite	olivine	    -	-	-	-	-	-	-
+V189	10/5	    13	    1400	26	2*Al2O3	olivine/AnB	    -	-	-	-	-	-	-
+V191	10/5	    14.5	1400	23	2*Al2O3	wadsleyite	    -	-	-	-	-	-	-
+V192	10/5	    9	    1400	24	2*Al2O3	olivine	        -	-	-	-	-	-	-
+V200	18/11	    6	    1400	100	2*Al2O3	olivine	        -	-	-	-	-	-	-
+V208	18/11	    11	    1400	50	2*Al2O3	olivine/ring	0.252	0.006	-	-	0.54	0.005	F2
+V209	10/5	    14	    1400	50	2*Al2O3	olivine/wad/AnB	0.115	0.003	0.184	0.003	-	-	G
+V212	10/5	    16	    1400	75	2*Al2O3	wad/ring	    -	-	0.169	0.001	0.249	0.003	F2
+V217	10/5	    14	    1400	26	2*Al2O3	olivine/ring	-	-	-	-	-	-	-
+V220	10/5	    14	    1400	24	2*Al2O3	olivine/wad	    -	-	0.245	0.003	0.341	0.01	E2
+V220	10/5	    14	    1400	24	2*Al2O3	olivine/wad 	0.077	0.01	0.126	0.01	-	-	G
+V223	10/5	    13.2	1400	24	2*Al2O3	olivine/wad/ring	-	-	0.286	0.003	0.391	0.003	E2
+V227	10/5	    13	    1400	24	2*Al2O3	olivine/wad/ring	-	-	0.28	0.002	0.387	0.002	D2
+V227	10/5	    13	    1400	24	2*Al2O3	olivine/wad/ring	0.15	0.002	0.25	0.003	-	-	F 
+V229	10/5	    12.8	1400	29	2*Al2O3	olivine/wad/ring	0.206	0.003	0.333	0.008	-	-	D2
+V229	10/5	    12.8	1400	29	2*Al2O3	olivine/wad/ring	0.192	0.005	0.324	0.001	-	-	F 
+V252	10/5	    12.4	1400	24	2*Al2O3	olivine	-	-	-	-	-	-	-
+V254	10/5	    12.5	1400	29	2*Al2O3	olivine/wad/ring	0.188	0.005	0.304	0.004	0.411	0.003	E2
