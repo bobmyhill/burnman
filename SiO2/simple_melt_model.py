@@ -56,17 +56,26 @@ liq.set_state(100.e9, 2000.)
 #tools.check_eos_consistency(liq, verbose=False)
 
 fig = plt.figure()
-ax_V = fig.add_subplot(1, 2, 1)
-ax_C = fig.add_subplot(1, 2, 2)
+ax_V = fig.add_subplot(3, 1, 1)
+ax_C = fig.add_subplot(3, 1, 2)
+ax_Kp = fig.add_subplot(3, 1, 3)
 for (pressures, T) in [(np.linspace(1.e5, 10.e9, 101), 2000.),
                        (np.linspace(1.e9, 20.e9, 101), 3000.),
                        (np.linspace(2.e9, 40.e9, 101), 4000.)]:
                 
     temperatures = [T] * len(pressures)
-    volumes, C_p = liq.evaluate(['V', 'heat_capacity_p'], pressures, temperatures)
+    volumes, C_p, K_T = liq.evaluate(['V', 'heat_capacity_p', 'isothermal_bulk_modulus'], pressures, temperatures)
     ax_V.plot(pressures/1.e9, volumes*1.e6, label='{0:.0f} K'.format(T))
     ax_C.plot(pressures/1.e9, C_p, label='{0:.0f} K'.format(T))
+    ax_Kp.plot(pressures/1.e9, np.gradient(K_T, pressures), label='{0:.0f} K'.format(T))
 
+ax_V.set_xlabel('P (GPa)')
+ax_C.set_xlabel('P (GPa)')
+ax_Kp.set_xlabel('P (GPa)')
+ax_V.set_ylabel('Volume')
+ax_C.set_ylabel('$C_p$')
+ax_Kp.set_ylabel('K\'')
 ax_V.legend(loc='upper right')
 ax_C.legend(loc='upper right')
+ax_Kp.legend(loc='upper right')
 plt.show()
