@@ -24,6 +24,7 @@ from .morse_potential import Morse
 from .reciprocal_kprime import RKprime
 from .dks_liquid import DKS_L
 from .dks_solid import DKS_S
+from .simple_melt import SimpleMelt
 from .property_modifiers import calculate_property_modifications
 
 from .helper import create

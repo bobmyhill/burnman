@@ -17,6 +17,7 @@ from . import cork
 from . import vinet
 from . import morse_potential
 from . import reciprocal_kprime
+from . import simple_melt
 from .equation_of_state import EquationOfState
 
 
@@ -56,6 +57,8 @@ def create(method):
             return dks_liquid.DKS_L()
         elif method == "dks_s":
             return dks_solid.DKS_S()
+        elif method == "simple_melt":
+            return simple_melt.SimpleMelt()
         else:
             raise Exception("unsupported material method " + method)
     elif isinstance(method, EquationOfState):
