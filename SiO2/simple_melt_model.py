@@ -107,6 +107,7 @@ SiO2_liq_B = burnman.Mineral(params={'equation_of_state': 'boza',
                                      'Kprime_0': 15.8,
                                      'dKdT': 0.,
                                      'd2KdT2': 0.,
+                                     'dKprimedT': 0.,
                                      'alpha': np.array([-0.3611e-7, 843.1e-7, 0.0, 0.0, 0.0])})
     
 crst_B = burnman.Mineral(params={'equation_of_state': 'boza',
@@ -125,8 +126,71 @@ crst_B = burnman.Mineral(params={'equation_of_state': 'boza',
                                  'Kprime_0': 6.0,
                                  'dKdT': 0.,
                                  'd2KdT2': 0.,
+                                 'dKprimedT': 0.,
                                  'alpha': np.array([0.040248e-7, 243.616e-7,
                                                     27.5739e-3, 0.0, 0.0])})
+
+qtz_B = burnman.Mineral(params={'equation_of_state': 'boza',
+                                'n': 3.,
+                                'formula': {'Si': 1., 'O': 2.},
+                                'molar_mass': 0.06008,
+                                 'P_0': 1.e5,
+                                 'T_0': 298.,
+                                 'H_0': -908.6268e3,
+                                 'S_0': 44.207,
+                                 'C_p': np.array([80.012, 0., -35.4668e5,
+                                                  -240.276, 4.9157e8, 0.,
+                                                  0., 0.]),
+
+                                
+                                 'V_0': 22.875e-6,
+                                 'K_0': 51.495e9,
+                                 'Kprime_0': 5.3,
+                                 'dKdT': -135.3e5,
+                                 'd2KdT2': 0.,
+                                 'dKprimedT': 0.,
+                                 'alpha': np.array([0.34694e-7, 206.036e-7,
+                                                    0.1307e-3, -1.6376, 0.0])})
+
+coe_B = burnman.Mineral(params={'equation_of_state': 'boza',
+                                'n': 3.,
+                                'formula': {'Si': 1., 'O': 2.},
+                                'molar_mass': 0.06008,
+                                 'P_0': 1.e5,
+                                 'T_0': 298.,
+                                 'H_0': -906.900e3,
+                                 'S_0': 40.5,
+                                 'C_p': np.array([78., 0., -31.e5,
+                                                  0., 5.858e8, 0.,
+                                                  0., -0.6689e4]),
+                                 'V_0': 20.64e-6,
+                                 'K_0': 92.879e9,
+                                 'Kprime_0': 8.4,
+                                 'dKdT': -91.e5,
+                                 'd2KdT2': 0.,
+                                 'dKprimedT': 0.,
+                                 'alpha': np.array([0.05e-7, 54.3e-7,
+                                                    0., 0.0, 0.0])})
+
+stv_B = burnman.Mineral(params={'equation_of_state': 'boza',
+                                'n': 3.,
+                                'formula': {'Si': 1., 'O': 2.},
+                                'molar_mass': 0.06008,
+                                 'P_0': 1.e5,
+                                 'T_0': 298.,
+                                 'H_0': -874.865e3,
+                                 'S_0': 27.809,
+                                 'C_p': np.array([59.945, -13.967e-3, -220.34e5,
+                                                  1109.7, 44.972e8, 9.1326e-6,
+                                                  -1.3264e-9, 0.]),
+                                 'V_0': 14.e-6,
+                                 'K_0': 255.e9,
+                                 'Kprime_0': 6.59,
+                                 'dKdT': -345.e5,
+                                 'd2KdT2': 0.,
+                                 'dKprimedT': 0.,
+                                 'alpha': np.array([0.05904e-7, 167.77e-7,
+                                                    2.2872e-3, -2.1518, 237.0245])})
 
 
 temperatures = np.linspace(1700., 2300., 101)
@@ -154,9 +218,22 @@ ax_C.plot(temperatures, crst_B.evaluate(['heat_capacity_p'], pressures, temperat
 ax_C.plot(temperatures, crst.evaluate(['heat_capacity_p'], pressures, temperatures)[0]) 
 plt.show()
 
+crst = crst_B
+coe = coe_B
+qtz = qtz_B
+stv = stv_B
+liq = SiO2_liq_B
 
 
+pressures = np.linspace(1.e5, 15.e9, 101)
+temperatures = np.array([2000.]*len(pressures))
 
+for m in [crst, qtz, coe, stv, liq]:
+    plt.plot(pressures/1.e9, m.evaluate(['gibbs'], pressures, temperatures)[0])
+plt.show()
+
+
+'''
 P_0 = 1.e5
 T_0 = 1999.
 crst.set_state(P_0, T_0)
@@ -186,7 +263,7 @@ liq = burnman.Mineral(params={'equation_of_state': 'simple_melt',
                               'S_0': S_0,
                               'lambda_0': 5.,
                               'lambda_inf': 4.})
-
+'''
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
@@ -214,17 +291,29 @@ for (m1, m2, P_guess, T_guess) in [(crst, qtz, 0.4e9, 1990.),
     ax.plot(pressures/1.e9, temperatures-273.15, label='{0}-{1}'.format(m1.name, m2.name))
     
 
-for (m, pressures, T_guess) in [(crst, np.linspace(1.e5, inv[0][0], 101), 1990.),
-                                (qtz, np.linspace(inv[0][0], inv[1][0], 101), 1990.),
-                                (coe, np.linspace(inv[1][0], inv[2][0], 101), 1990.),
-                                (stv, np.linspace(inv[2][0], 80.e9, 101), 1990.)]:
+for (m, pressures, T_guess) in [(crst, np.linspace(1.e5, inv[0][0], 101), inv[0][1]),
+                                (qtz, np.linspace(inv[0][0], inv[1][0], 101), inv[1][1]),
+                                (coe, np.linspace(inv[1][0], inv[2][0], 101), inv[2][1]),
+                                (stv, np.linspace(inv[2][0], 80.e9, 101), inv[2][1])]:
     temperatures = np.zeros_like(pressures)
     for i, P in enumerate(pressures):
         temperatures[i] = tools.equilibrium_temperature([liq, m], [1., -1.],
                                                         P, temperature_initial_guess = T_guess)
 
     ax.plot(pressures/1.e9, temperatures-273.15, label='{0}-liq'.format(m.name))
-    
+
+
+
+
+PTs = [[1.e5, 2000.93408591],
+       [1.e9, 2191.60813947],
+       [2.e9, 2382.27861806],
+       [5.e9, 2757.18107273],
+       [10.e9, 3316.26545404],
+       [20.e9, 4027.25345035],
+       [25.e9, 4340.73094649]]
+
+ax.scatter(np.array(zip(*PTs)[0])/1.e9, np.array(zip(*PTs)[1])-273.15)
 ax.set_xlabel('Pressure (GPa)')
 ax.set_ylabel('Temperature ($^{\circ}$C)')
 ax.legend(loc='upper left')

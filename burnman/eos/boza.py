@@ -27,7 +27,7 @@ class BOZA(eos.EquationOfState):
               (temperature - params['T_0'])*params['dKdT'] +
               np.power(temperature - params['T_0'], 2.)*params['d2KdT2'] )
         Kprime = ( params['Kprime_0'] +
-                   params['dKdT'] * (temperature - params['T_0']) *
+                   params['dKprimedT'] * (temperature - params['T_0']) *
                    np.log(temperature/params['T_0']) )
         return {'V_0': V, 'K_0': K, 'Kprime_0': Kprime, 'P_0': params['P_0']}
     
