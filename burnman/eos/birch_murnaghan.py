@@ -51,7 +51,18 @@ def volume(pressure, params):
             'Cannot find a volume, perhaps you are outside of the range of validity for the equation of state?')
     return opt.brentq(func, sol[0], sol[1])
 
-
+def intPdV(x, params):
+    x2 = x*x
+    x4 = x2*x2
+    x6 = x4*x2
+    x8 = x4*x4
+    
+    xi1 = 3.*(4. - params['Kprime_0'])/4.
+    
+    return (-9./2. * params['V_0'] * params['K_0'] *
+            ((xi1 + 1.)*(x4/4. - x2/2. + 1./4.) -
+             xi1*(x6/6. - x4/4. + 1./12.)))
+    
 def shear_modulus_second_order(volume, params):
     """
     Get the birch murnaghan shear modulus at a reference temperature, for a
@@ -129,18 +140,8 @@ class BirchMurnaghanBase(eos.EquationOfState):
         Returns the internal energy :math:`\mathcal{E}` of the mineral. :math:`[J/mol]`
         """
         x = np.power(volume/params['V_0'], -1./3.)
-        x2 = x*x
-        x4 = x2*x2
-        x6 = x4*x2
-        x8 = x4*x4
-
-        xi1 = 3.*(4. - params['Kprime_0'])/4.
         
-        intPdV = (-9./2. * params['V_0'] * params['K_0'] *
-                  ((xi1 + 1.)*(x4/4. - x2/2. + 1./4.) -
-                   xi1*(x6/6. - x4/4. + 1./12.)))
-        
-        return - intPdV + params['E_0']
+        return - intPdV(x, params) + params['E_0']
     
     def gibbs_free_energy(self, pressure, temperature, volume, params):
         """

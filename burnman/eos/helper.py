@@ -18,6 +18,7 @@ from . import vinet
 from . import morse_potential
 from . import reciprocal_kprime
 from . import simple_melt
+from . import boza
 from .equation_of_state import EquationOfState
 
 
@@ -59,6 +60,8 @@ def create(method):
             return dks_solid.DKS_S()
         elif method == "simple_melt":
             return simple_melt.SimpleMelt()
+        elif method == "boza":
+            return boza.BOZA()
         else:
             raise Exception("unsupported material method " + method)
     elif isinstance(method, EquationOfState):

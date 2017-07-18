@@ -90,104 +90,70 @@ def gibbs_free_energy(pressure, temperature, params):
              _intVdP(pressure, temperature, params) )
 
 
-class SiO2_liq():
-    params={'P_0': 1.e5,
-            'T_0': 298.,
-            'H_0': -911.7462e3,
-            'S_0': 33.887,
-            'C_p': np.array([88.455, -3.00137e-3, -48.527e5,
-                             -114.33, 7.2829e8, 0.71332e-6,
-                             0.0059239e-9, 0.]),
-            'V_0': 27.872e-6,
-            'K_0': 5.e9,
-            'Kprime_0': 15.8,
-            'dKdT': 0.,
-            'd2KdT2': 0.,
-            'alpha': np.array([-0.3611e-7, 843.1e-7, 0.0, 0.0, 0.0])}
     
-class crst_B():
-    params={'P_0': 1.e5,
-            'T_0': 298.,
-            'H_0': -906.3772e3,
-            'S_0': 46.029,
-            'C_p': np.array([83.514, 0., -24.5536e5,
-                             -374.693, 2.8007e8, 0.,
-                             0., 0.]),
-            'V_0': 25.739e-6,
-            'K_0': 20.696e9,
-            'Kprime_0': 6.0,
-            'dKdT': 0.,
-            'd2KdT2': 0.,
-            'alpha': np.array([0.040248e-7, 243.616e-7, 27.5739e-3, 0.0, 0.0])}
-class coe_B():
-    params={'P_0': 1.e5,
-            'T_0': 298.,
-            'H_0': -906.3772e3,
-            'S_0': 46.029,
-            'C_p': np.array([83.514, 0., -24.5536e5,
-                             -374.693, 2.8007e8, 0.,
-                             0., 0.]),
-            'V_0': 25.739e-6,
-            'K_0': 20.696e9,
-            'Kprime_0': 6.0,
-            'dKdT': 0.,
-            'd2KdT2': 0.,
-            'alpha': np.array([0.040248e-7, 243.616e-7, 27.5739e-3, 0.0, 0.0])}
-class stv_B():
-    params={'P_0': 1.e5,
-            'T_0': 298.,
-            'H_0': -906.3772e3,
-            'S_0': 46.029,
-            'C_p': np.array([83.514, 0., -24.5536e5,
-                             -374.693, 2.8007e8, 0.,
-                             0., 0.]),
-            'V_0': 25.739e-6,
-            'K_0': 20.696e9,
-            'Kprime_0': 6.0,
-            'dKdT': 0.,
-            'd2KdT2': 0.,
-            'alpha': np.array([0.040248e-7, 243.616e-7, 27.5739e-3, 0.0, 0.0])}
+SiO2_liq_B = burnman.Mineral(params={'equation_of_state': 'boza',
+                                     'n': 3.,
+                                     'formula': {'Si': 1., 'O': 2.},
+                                     'molar_mass': 0.06008,
+                                     'P_0': 1.e5,
+                                     'T_0': 298.,
+                                     'H_0': -911.7462e3,
+                                     'S_0': 33.887,
+                                     'C_p': np.array([88.455, -3.00137e-3, -48.527e5,
+                                                      -114.33, 7.2829e8, 0.71332e-6,
+                                                      0.0059239e-9, 0.]),
+                                     'V_0': 27.872e-6,
+                                     'K_0': 5.e9,
+                                     'Kprime_0': 15.8,
+                                     'dKdT': 0.,
+                                     'd2KdT2': 0.,
+                                     'alpha': np.array([-0.3611e-7, 843.1e-7, 0.0, 0.0, 0.0])})
+    
+crst_B = burnman.Mineral(params={'equation_of_state': 'boza',
+                                'n': 3.,
+                                'formula': {'Si': 1., 'O': 2.},
+                                'molar_mass': 0.06008,
+                                 'P_0': 1.e5,
+                                 'T_0': 298.,
+                                 'H_0': -906.3772e3,
+                                 'S_0': 46.029,
+                                 'C_p': np.array([83.514, 0., -24.5536e5,
+                                                  -374.693, 2.8007e8, 0.,
+                                                  0., 0.]),
+                                 'V_0': 25.739e-6,
+                                 'K_0': 20.696e9,
+                                 'Kprime_0': 6.0,
+                                 'dKdT': 0.,
+                                 'd2KdT2': 0.,
+                                 'alpha': np.array([0.040248e-7, 243.616e-7,
+                                                    27.5739e-3, 0.0, 0.0])})
 
 
-temperatures = np.linspace(300., 2300., 101)
+temperatures = np.linspace(1700., 2300., 101)
+pressures = [1.e5] * len(temperatures)
+
 fig = plt.figure()
 ax_V = fig.add_subplot(4, 1, 1)
 ax_G = fig.add_subplot(4, 1, 2)
 ax_S = fig.add_subplot(4, 1, 3)
 ax_C = fig.add_subplot(4, 1, 4)
-ax_V.plot(temperatures, [volume(1.e5, T, SiO2_liq.params) for T in temperatures])
-ax_V.plot(temperatures, [volume(1.e5, T, crst_B.params) for T in temperatures])
-ax_V.plot(temperatures, crst.evaluate(['V'], [1.e5]*len(temperatures), temperatures)[0]) 
-ax_G.plot(temperatures, [gibbs_free_energy(1.e5, T, SiO2_liq.params) - gibbs_free_energy(1.e5, T, crst_B.params) for T in temperatures])
-ax_S.plot(temperatures, -np.gradient(np.array([gibbs_free_energy(1.e5, T, SiO2_liq.params) -
-                                               gibbs_free_energy(1.e5, T, crst_B.params)
-                                               for T in temperatures]),
-                                     temperatures))
-ax_C.plot(temperatures, [C_p_ref(T, SiO2_liq.params['C_p']) for T in temperatures])
-ax_C.plot(temperatures, [C_p_ref(T, crst_B.params['C_p']) for T in temperatures])
+ax_V.plot(temperatures, SiO2_liq_B.evaluate(['V'], pressures, temperatures)[0])
+ax_V.plot(temperatures, crst_B.evaluate(['V'], pressures, temperatures)[0])
+ax_V.plot(temperatures, crst.evaluate(['V'], pressures, temperatures)[0])
 
-ax_C.plot(temperatures, crst.evaluate(['heat_capacity_p'], [1.e5]*len(temperatures), temperatures)[0]) 
+
+ax_G.plot(temperatures, (SiO2_liq_B.evaluate(['gibbs'], pressures, temperatures)[0] -
+                         crst_B.evaluate(['gibbs'], pressures, temperatures)[0]))
+
+ax_S.plot(temperatures, (SiO2_liq_B.evaluate(['S'], pressures, temperatures)[0] -
+                         crst_B.evaluate(['S'], pressures, temperatures)[0]))
+
+
+ax_C.plot(temperatures, SiO2_liq_B.evaluate(['heat_capacity_p'], pressures, temperatures)[0]) 
+ax_C.plot(temperatures, crst_B.evaluate(['heat_capacity_p'], pressures, temperatures)[0]) 
+ax_C.plot(temperatures, crst.evaluate(['heat_capacity_p'], pressures, temperatures)[0]) 
 plt.show()
 
-for T in [298.15, 2000.]:
-    pressures = np.linspace(1.e5, 25.e9, 1001)
-    temperatures = [T] * len(pressures)
-    volumes = np.array([volume(pressure, temperature, SiO2_liq.params) for (pressure, temperature) in zip(*[pressures, temperatures])])
-
-    Ks = -volumes*np.gradient(pressures, volumes, edge_order=2)
-    Kprimes = np.gradient(Ks, pressures, edge_order=2)
-    
-    plt.plot(pressures/1.e9, volumes)
-plt.show()
-exit()
-
-c_Cp_SiO2 = np.array([88.455, -3.00137e-3, -48.527e5, -114.33, 7.2829e8, 0.71332e-6, 0.0059239e-9])
-#c_Cp_SiO2 = np.array([88.455, -3.00137e-3, -48.527e5, -114.33, 7.2829e8, 0.35e-6,  0.0]) # rough removal of anharmonic Cp
-
-temperatures = np.linspace(298., 6000., 3001)
-plt.plot(temperatures, C_p(temperatures, c_Cp_SiO2))
-plt.show()
-exit()
 
 
 
