@@ -143,8 +143,10 @@ class BOZA(eos.EquationOfState):
         """
         
         dT = 1.
-        G0 = self.gibbs_free_energy(pressure, temperature - 0.5*dT, volume, params)
-        G1 = self.gibbs_free_energy(pressure, temperature + 0.5*dT, volume, params)
+        V0 = self.volume(pressure, temperature - 0.5*dT, params)
+        V1 = self.volume(pressure, temperature + 0.5*dT, params)
+        G0 = self.gibbs_free_energy(pressure, temperature - 0.5*dT, V0, params)
+        G1 = self.gibbs_free_energy(pressure, temperature + 0.5*dT, V1, params)
         return -(G1 - G0)/dT
 
     def enthalpy(self, pressure, temperature, volume, params):
@@ -163,8 +165,10 @@ class BOZA(eos.EquationOfState):
         """
         
         dT = 1.
-        S0 = self.entropy(pressure, temperature - 0.5*dT, volume, params)
-        S1 = self.entropy(pressure, temperature + 0.5*dT, volume, params)
+        V0 = self.volume(pressure, temperature - 0.5*dT, params)
+        V1 = self.volume(pressure, temperature + 0.5*dT, params)
+        S0 = self.entropy(pressure, temperature - 0.5*dT, V0, params)
+        S1 = self.entropy(pressure, temperature + 0.5*dT, V1, params)
         return temperature*(S1 - S0)/dT
 
     def validate_parameters(self, params):

@@ -56,16 +56,16 @@ class SimpleMelt(eos.EquationOfState):
 
 
     def _temperature_principal_isentrope(self, volume, params):
-        lmda = params['q_0']/np.log(params['gamma_0']/params['gamma_inf'])
-        intgammaoverVdV = ( params['gamma_inf'] / lmda *
+        lmda = params['q_0']/np.log(params['grueneisen_0']/params['grueneisen_inf'])
+        intgrueneisenoverVdV = ( params['grueneisen_inf'] / lmda *
                             (expi(params['q_0']/lmda * np.power(volume/params['V_0'], lmda)) -
                              expi(params['q_0']/lmda)) )
-        return params['T_0']*np.exp(-intgammaoverVdV)
+        return params['T_0']*np.exp(-intgrueneisenoverVdV)
     
 
     def _grueneisen_parameter(self, volume, params):
-        lmda = params['q_0']/np.log(params['gamma_0']/params['gamma_inf'])
-        return params['gamma_0'] * np.exp(params['q_0']/lmda * (np.power(volume/params['V_0'], lmda) - 1.)) # eq 101
+        lmda = params['q_0']/np.log(params['grueneisen_0']/params['grueneisen_inf'])
+        return params['grueneisen_0'] * np.exp(params['q_0']/lmda * (np.power(volume/params['V_0'], lmda) - 1.)) # eq 101
 
     def _thermal_pressure(self, temperature, volume, params):
         T0 = self._temperature_principal_isentrope(volume, params)
@@ -240,27 +240,28 @@ class SimpleMelt(eos.EquationOfState):
 
         # Now check all the required keys for the
         # thermal part of the EoS are in the dictionary
-        expected_keys = ['molar_mass', 'n', 'gamma_0', 'gamma_inf',
-                         'q_0', 'C_v', 'F_0', 'T_0', 'S_0',
-                         'lambda_0', 'lambda_inf']
+        expected_keys = ['molar_mass', 'n', 'grueneisen_0', 'grueneisen_inf',
+                         'q_0', 'C_v', 'F_0', 'T_0', 'S_0']
         for k in expected_keys:
             if k not in params:
                 raise KeyError('params object missing parameter : ' + k)
 
         # Finally, check that the values are reasonable.
-        '''
         if params['T_0'] < 0.:
             warnings.warn('Unusual value for T_0', stacklevel=2)
         if params['molar_mass'] < 0.001 or params['molar_mass'] > 10.:
             warnings.warn('Unusual value for molar_mass', stacklevel=2)
         if params['n'] < 1. or params['n'] > 1000.:
             warnings.warn('Unusual value for n', stacklevel=2)
-        if params['Debye_0'] < 1. or params['Debye_0'] > 10000.:
-            warnings.warn('Unusual value for Debye_0', stacklevel=2)
         if params['grueneisen_0'] < -0.005 or params['grueneisen_0'] > 10.:
             warnings.warn('Unusual value for grueneisen_0', stacklevel=2)
+        if params['grueneisen_inf'] < -0.005 or params['grueneisen_inf'] > 10.:
+            warnings.warn('Unusual value for grueneisen_inf', stacklevel=2)
         if params['q_0'] < -10. or params['q_0'] > 10.:
             warnings.warn('Unusual value for q_0', stacklevel=2)
-        if params['eta_s_0'] < -10. or params['eta_s_0'] > 10.:
-            warnings.warn('Unusual value for eta_s_0', stacklevel=2)
-        '''
+            
+        if np.abs(params['q_0']/np.abs(params['q_0']) -
+                  (params['grueneisen_0'] - params['grueneisen_inf']) /
+                  np.abs(params['grueneisen_0'] - params['grueneisen_inf'])) > 1.e-12:
+            raise Exception('q_0 should have the same sign as '
+                            'grueneisen_0 - grueneisen_inf')
