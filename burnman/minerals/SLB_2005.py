@@ -112,6 +112,27 @@ class fe_perovskite(Mineral):
             'eta_s_0': 2.1}
 
         Mineral.__init__(self)
+        
+class al_perovskite(Mineral):
+    
+    def __init__(self):
+        self.params = {
+            'equation_of_state': 'slb3',
+            'V_0': 25.49e-6,
+            'K_0': 228.0e9,
+            'Kprime_0': 4.1,
+            'G_0': 160.0e9,
+            'Gprime_0': 1.7,
+            'molar_mass': 0.10196,
+            'n': 5,
+            'Debye_0': 1021.,
+            'grueneisen_0': 1.48,
+            'q_0': 1.4,
+            'eta_s_0': 3.0}
+        
+        Mineral.__init__(self)
+
 
 mg_bridgmanite = mg_perovskite
 fe_bridgmanite = fe_perovskite
+al_bridgmanite = al_perovskite
