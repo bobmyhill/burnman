@@ -1,0 +1,9 @@
+#DONE# Dependent endmembers - Same logic as in Diener, but with F(V, T) instead of G(P, T)
+#DONE# Pyroxene text - Describe, emphasize non-ideality, good approximation with only one variable (pressure)
+Garnet - Compare bulk moduli, volumes to Du study, write up.
+Bridgmanite - K', look at Vanpeteghem results to 10 GPa for pure MgSiO3, excess volume in MgSi--AlAl?
+#NOT A GOOD IDEA# Melts - Fort + Moore processing ... find DP that fits volume, then look at the bulk modulus misfit.
+
+
+Discussion:
+How important is the effect?
