@@ -40,13 +40,17 @@ def meshgrid2(*arrs):
                 arr2 = arr2.repeat(sz, axis=j)
         ans.append(arr2)
     return tuple(ans)
-   
-m1_params = {'V_0': 11.e-5,
-             'K_0': 170.e9}
-m2_params = {'V_0': 12.e-5,
-             'K_0': 165.e9}
-m3_params = {'V_0': 13.e-5,
-             'K_0': 160.e9}
+
+# Periclase
+m1_params = {'name':'MgO',
+             'V_0': 11.24e-6,
+             'K_0': 160.2e9}
+m2_params = {'name': 'FeO (HS)',
+             'V_0': 12.26e-6,
+             'K_0': 160.0e9}
+m3_params = {'name': 'FeO (LS)',
+             'V_0': 11.24e-6 - 0.309e-6,
+             'K_0': 160.2e9 + 25.144e9}
 
 for params in [m1_params, m2_params, m3_params]:
     params['equation_of_state'] = 'bm3'
@@ -68,7 +72,7 @@ for i, p1 in enumerate(np.linspace(0., 1., 31)):
 compositions = np.array(compositions)
 
 
-cluster_size = 3
+cluster_size = 2
 g = meshgrid2(*[range(cluster_size)]*len(compositions[0]))
 cluster_compositions = [list(cluster) for cluster in np.vstack(map(np.ravel, g)).T
                         if np.sum(cluster) == cluster_size]
@@ -108,7 +112,7 @@ def _deltaP(volume, pressure, temperature, composition, endmembers):
     return pressure - composition.dot(Pi)
 
 
-pressure = 1.e5
+pressure = 100.e9
 temperature = 300.
 
 endmembers = [m1, m2, m3]
@@ -116,6 +120,9 @@ for e in endmembers:
     e.set_state(pressure, temperature)
 
 endmember_volumes = np.array([m1.V, m2.V, m3.V])
+endmember_names = np.array([m1.name, m2.name, m3.name])
+print(endmember_names)
+print(endmember_volumes)
     
 ideal_volumes = compositions.dot(endmember_volumes)
 
@@ -123,7 +130,7 @@ ideal_volumes = compositions.dot(endmember_volumes)
 cluster_helmholtz = []
 for n_atoms in cluster_compositions:
     composition = np.array(map(float, n_atoms))/cluster_size
-    brentq(_deltaP, 10.e-5, 13.2e-5, args=(pressure, temperature, composition, endmembers))
+    brentq(_deltaP, 6.e-6, 15.e-6, args=(pressure, temperature, composition, endmembers))
     endmember_F = np.array([m1.helmholtz, m2.helmholtz, m3.helmholtz])
     cluster_helmholtz.append(endmember_F.dot(composition))
     
@@ -134,7 +141,7 @@ cluster_helmholtz = np.array(cluster_probabilities).T.dot(np.array(cluster_helmh
 volumes = []
 helmholtz = []
 for composition in compositions:
-    volumes.append(brentq(_deltaP, 10.e-5, 13.2e-5, args=(pressure, temperature, composition, endmembers))) 
+    volumes.append(brentq(_deltaP, 6.e-6, 15.e-6, args=(pressure, temperature, composition, endmembers))) 
     endmember_F = np.array([m1.helmholtz, m2.helmholtz, m3.helmholtz])
     helmholtz.append(endmember_F.dot(composition))
     
