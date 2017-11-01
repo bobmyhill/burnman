@@ -79,7 +79,7 @@ def pretty_print_values(popt, pcov, params):
         nd = p_expnt - np.floor(np.log10(np.abs(c_rnd)))
         print ('{0:s}: ({1:{4}{5}f} +/- {2:{4}{5}f}) x {3:.0e}'.format(p, p_rnd/scale, c_rnd/scale, scale, 0, (nd)/10.))
 
-def pretty_print_table(table, use_tabs=False):
+def pretty_print_table(table, use_tabs=False, latex=False):
     """
     Takes a 2d table and prints it in a nice text based format. If
     use_tabs=True then only \t is used as a separator. This is useful for
@@ -90,6 +90,16 @@ def pretty_print_table(table, use_tabs=False):
     if use_tabs:
         for r in table:
             print("\t".join(r).replace("_", "\_"))
+        return
+    if latex:
+        for i, r in enumerate(table):
+            if i == len(table) - 1:
+                print(" & ".join(r).replace("_0", "$_0$").replace("dprime", "''").replace("prime", "'"))
+            else:
+                print(" & ".join(r).replace("_0", "$_0$").replace("dprime", "''").replace("prime", "'") + ' \\\\')
+            if i == 0:
+                print('\\hline')
+                
         return
 
     def col_width(table, colidx):

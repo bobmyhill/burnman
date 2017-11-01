@@ -105,7 +105,7 @@ class Fe4O5 (Mineral):
        formula='Fe4.0O5.0'
        formula = dictionarize_formula(formula)
        self.params = {
-            'name': 'Fe4O5',
+            'name': 'Fe$_4$O$_5$',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -1342000.0 ,
@@ -129,7 +129,7 @@ class Fe5O6 (Mineral):
        formula='Fe5.0O6.0'
        formula = dictionarize_formula(formula)
        self.params = {
-            'name': 'Fe5O6',
+            'name': 'Fe$_5$O$_6$',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -1592000. , # stable at 9.5 GPa.
@@ -147,7 +147,7 @@ class Fe5O6 (Mineral):
 
 class periclase (Mineral):
     def __init__(self):
-       formula='Mg1.0O1.0'
+       formula='MgO'
        formula = dictionarize_formula(formula)
        self.params = {
             'name': 'periclase',
@@ -172,13 +172,13 @@ class wustite (Mineral): # similar to Holland and Powell, ds62, from wustite_mod
         formula='Fe1.0O1.0'
         formula = dictionarize_formula(formula)
         self.params = {
-            'name': 'fper',
+            'name': 'FeO',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -265453.0 ,
             'S_0': 58.0 ,
             'V_0': 1.2239e-05 , # From Simons (1980)
-            'Cp': [42.63803582, 0.008971021, -260780.8155, 196.5978421], # By linear extrapolation from Fe0.9254O and hematite/3..
+            'Cp': [42.6380, 0.00897102, -260780.8, 196.6], # By linear extrapolation from Fe0.9254O and hematite/3..
             'a_0': 3.22e-05 ,
             'K_0': 1.52e+11 ,
             'Kprime_0': 4.9 ,
@@ -193,7 +193,7 @@ class defect_wustite (Mineral): # starting guess is hem/3. from wustite_model_20
         formula='Fe2/3O'
         formula = dictionarize_formula(formula)
         self.params = {
-            'name': 'defect wustite',
+            'name': 'Fe$_{2/3}$O',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -255168. ,
@@ -246,6 +246,7 @@ class MgFe3O5 (Mineral): # for SLB
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula)}
 '''
+'''
 #1680 is -3.7
 #1685 is -8.5
 #1688 is -11.6
@@ -256,7 +257,7 @@ class MgFe3O5 (Mineral):
        formula='Mg1.0Fe3.0O5.0'
        formula = dictionarize_formula(formula)
        self.params = {
-            'name': 'MgFe3O5',
+            'name': 'MgFe$_3$O$_5$',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -1675500.0 ,
@@ -270,7 +271,7 @@ class MgFe3O5 (Mineral):
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula)}
        Mineral.__init__(self)
-
+'''
 # Best fit for ol and wad (but pressure dependence within minerals ill-fitting
 '''
 class MgFe3O5 (Mineral):
@@ -389,7 +390,7 @@ class Mg2Fe2O5 (Mineral):
        formula='Mg2.0Fe2.0O5.0'
        formula = dictionarize_formula(formula)
        self.params = {
-            'name': 'Mg2Fe2O5',
+            'name': 'Mg$_2$Fe$_2$O$_5$',
             'formula': formula,
             'equation_of_state': 'hp_tmt',
             'H_0': -2008000., # synthesis at 15GPa, 1550C, with transition 1 GPa lower  

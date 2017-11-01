@@ -1,0 +1,153 @@
+%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This is a general template file for the LaTeX package SVJour3
+% for Springer journals.          Springer Heidelberg 2010/09/16
+%
+% Copy it to a new file with a new name and use it as the basis
+% for your article. Delete % signs as needed.
+%
+% This template includes a few options for different layouts and
+% content for various journals. Please consult a previous issue of
+% your journal as needed.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% First comes an example EPS file -- just ignore it and
+% proceed on the \documentclass line
+% your LaTeX will extract the file if required
+\begin{filecontents*}{example.eps}
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 19 19 221 221
+%%CreationDate: Mon Sep 29 1997
+%%Creator: programmed by hand (JK)
+%%EndComments
+gsave
+newpath
+  20 20 moveto
+  20 220 lineto
+  220 220 lineto
+  220 20 lineto
+closepath
+2 setlinewidth
+gsave
+  .4 setgray fill
+grestore
+stroke
+grestore
+\end{filecontents*}
+%
+\RequirePackage{fix-cm}
+%
+%\documentclass{svjour3}                     % onecolumn (standard format)
+%\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+\documentclass[smallextended]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
+%
+\smartqed  % flush right qed marks, e.g. at end of proof
+%
+\usepackage{graphicx}
+%
+% \usepackage{mathptmx}      % use Times fonts if available on your TeX system
+%
+% insert here the call for the packages your document requires
+\usepackage{amssymb}
+\usepackage{rotating}
+\usepackage{natbib}
+% etc.
+%
+% please place your own definitions here and don't use \def but
+% \newcommand{}{}
+%
+% Insert the name of "your journal" with
+\journalname{Contributions to Mineralogy and Petrology}
+%
+\begin{document}
+
+\title{Correction to: On the P-T-$f$O$_2$ stability of Fe$_4$O$_5$, Fe$_5$O$_6$ and Fe$_4$O$_5$-rich solid solutions}
+
+\titlerunning{Correction to Contrib Mineral Petrol (2016) 171:51}        % if too long for running head
+
+\author{Robert Myhill \and Dickson O. Ojwang \and Luca Ziberna
+  \and Daniel J. Frost \and Tiziana Boffa Ballaran \and Nobuyoshi Miyajima}
+
+\institute{R. Myhill \at
+              School of Earth Sciences, University of Bristol \\ \email{bob.myhill@bristol.ac.uk}
+              \and
+              D. Ojwang \at
+              Inorganic and Structural Chemistry, Department of Materials and Environmental Chemistry, Arrhenius Laboratory, Stockholm University, SE-10691, Stockholm, Sweden
+              \and
+              L. Ziberna \and D. J. Frost \and T. Boffa Ballaran \and N. Mijajima \at 
+              Bayerisches Geoinstitut, Universität Bayreuth, D-95440 Bayreuth, Germany}
+
+\date{Received: date / Accepted: date}
+% The correct dates will be entered by the editor
+
+\maketitle
+
+\begin{abstract}
+  Correction to: Contrib Mineral Petrol (2016) 171:51 DOI 10.1007/s00410-016-1258-4
+\end{abstract}
+
+There were regrettably a few typos that appeared in the published version of \cite{Myhill2016}. Equation 8 should have read:
+
+\begin{equation}
+  K_D = \frac{x_{\textrm{Fe}}^{\textrm{ol}}x_{\textrm{Mg}}^{\textrm{ox}}}{x_{\textrm{Mg}}^{\textrm{ol}}x_{\textrm{Fe}}^{\textrm{ox}}}
+\end{equation}
+
+There were also a number of sign errors introduced during revision and type-setting of Table 3 and Supplementary Table 1. The correct values which we used in all of our calculations are given in Tables \ref{tab:properties_a} and \ref{tab:properties_b}. All values are reported in SI units.
+
+
+\begin{table}[ht!]
+  \centering
+  \begin{tabular}{llllll}
+    Name & Fe$_4$O$_5$ & Fe$_5$O$_6$ & FeO & Fe$_{2/3}$O & Mg$_2$Fe$_2$O$_5$ \\
+\hline
+H$_0$ [J/mol] & -1.342e+06 & -1.592e+06 & -2.65453e+05 & -2.55168e+05 & -2.008e+06 \\
+S$_0$ [J/K/mol] & 2.3e+02 & 3.e+02 & 5.8e+01 & 3.8501e+01 & 1.55e+02 \\
+V$_0$ [m$^3$/mol] & 5.376e-05 & 6.633e-05 & 1.2239e-05 & 1.10701e-05 & 5.305e-05 \\
+K$_0$ [Pa] & 1.857e+11 & 1.73e+11 & 1.52e+11 & 1.52e+11 & 1.7e+11 \\
+K$'_0$ & 4.e+00 & 4.e+00 & 4.9e+00 & 4.9e+00 & 4.e+00 \\
+a$_0$ [1/K] & 2.38e-05 & 1.435e-05 & 3.22e-05 & 2.79e-05 & 2.38e-05 \\
+Cp (a) [J/K/mol] & 306.9 & 351.3 & 42.638 & 54.6333 & 284.9 \\
+Cp (b) [J/K$^2$/mol] & 0.001075 & 0.009355 & 0.00897102 & 0.0 & 0.000724 \\
+Cp (c) [JK/mol] & -3140400.0 & -4354600.0 & -260780.8 & -752400.0 & -3328800.0 \\
+Cp (d) [J/K$^{0.5}$/mol] & -1470.5 & -1285.3 & 196.6 & -219.2 & -1256.0
+  \end{tabular}
+  \caption{Thermodynamic table for the iron-bearing oxides using the \cite{HP2011} modified Tait equation of state. The Cp parameters represent a polynomial for the heat capacity at 1 bar: Cp $= a + bT + cT^{-2}+dT^{-0.5}$.}
+    \label{tab:properties_a}
+\end{table}
+
+\begin{table}[ht!]
+  \centering
+  \begin{tabular}{lllll}
+Name & Mo & MoO$_2$ & Re & ReO$_2$ \\
+\hline
+H$_0$ [J/mol] & 0 & -5.915e+05 & 0 & -4.4514e+05 \\
+S$_0$ [J/K/mol] & 2.859e+01 & 5.0016e+01 & 3.653e+01 & 4.782e+01 \\
+V$_0$ [m$^3$/mol] & 9.391e-06 & 1.9799e-05 & 8.862e-06 & 1.8779e-05 \\
+K$_0$ [Pa] & 2.608e+11 & 1.8e+11 & 3.6e+11 & 1.8e+11 \\
+K$'_0$ & 4.46e+00 & 4.05e+00 & 4.05e+00 & 4.05e+00 \\
+a$_0$ [1/K] & 1.44e-05 & 4.4e-05 & 1.9e-05 & 4.4e-05 \\
+Cp (a) [J/K/mol] & 33.9 & 56.1 & 23.7 & 76.89 \\
+Cp (b) [J/K$^2$/mol] & 0.006276 & 0.02559 & 0.005448 & 0.00993 \\
+Cp (c) [JK/mol]  & 38859.7 & -17.6 & 68.0 & -1207130.0 \\
+Cp (d) [J/K$^{0.5}$/mol] & -12.0 & 18.9 & 0.0 & -208.0
+  \end{tabular}
+  \caption{Thermodynamic table for the metal-metal oxides using the \cite{HP2011} modified Tait equation of state. The Cp parameters represent a polynomial for the heat capacity at 1 bar: Cp $= a + bT + cT^{-2}+dT^{-0.5}$.}
+    \label{tab:properties_b}
+    \end{table}
+
+
+
+
+\begin{acknowledgements}
+  R.M. is extremely grateful to Alan Woodland for finding the errors in the original article. 
+\end{acknowledgements}
+
+% BibTeX users please use one of
+\bibliographystyle{spbasic}      % basic style, author-year citations
+%\bibliographystyle{spmpsci}      % mathematics and physical sciences
+%\bibliographystyle{spphys}       % APS-like style for physics
+\bibliography{references}   % name your BibTeX data base
+
+\end{document}
