@@ -62,6 +62,7 @@ class CombinedMineral(Mineral):
             is used for minerals. Note that set_method() below will
             not change self.method"""
             pass
+        self.params['equation_of_state'] = 'combined'
         self.method = MadeMemberMethod()
 
 

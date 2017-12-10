@@ -148,8 +148,9 @@ class SolidSolution(Mineral):
 
         # Equation of state
         for i in range(self.n_endmembers):
-            self.endmembers[i][0].set_method(
-                self.endmembers[i][0].params['equation_of_state'])
+            if self.endmembers[i][0].params['equation_of_state'] is not "combined":
+                self.endmembers[i][0].set_method(
+                    self.endmembers[i][0].params['equation_of_state'])
 
         # Molar fractions
         if molar_fractions is not None:

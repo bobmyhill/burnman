@@ -287,21 +287,21 @@ class IdealSolution (SolutionModel):
         return constants.gas_constant * temperature * self._log_ideal_activities(molar_fractions)
 
     def _log_ideal_activities(self, molar_fractions):
-        site_occupancies = np.dot(molar_fractions, self.endmember_occupancies)
+        fs = np.array([max(f, 1.e-16) for f in molar_fractions])
+        site_occupancies = np.dot(fs, self.endmember_occupancies)
         lna = np.empty(shape=(self.n_endmembers))
 
         for e in range(self.n_endmembers):
             lna[e] = 0.0
             for occ in range(self.n_occupancies):
-                if self.endmember_occupancies[e][occ] > 1e-10 and site_occupancies[occ] > 1e-10:
-                    lna[e] = lna[e] + self.endmember_occupancies[e][occ] * \
-                        self.site_multiplicities[
-                            occ] * np.log(site_occupancies[occ])
+                lna[e] = lna[e] + self.endmember_occupancies[e][occ] * \
+                         self.site_multiplicities[
+                             occ] * np.log(site_occupancies[occ])
 
+                    
             normalisation_constant = self.endmember_configurational_entropies[
                 e] / constants.gas_constant
-            lna[e] = lna[e] + self.endmember_configurational_entropies[
-                e] / constants.gas_constant
+            lna[e] = lna[e] + normalisation_constant
         return lna
 
 
