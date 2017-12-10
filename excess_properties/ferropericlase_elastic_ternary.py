@@ -52,6 +52,12 @@ m3_params = {'name': 'FeO (LS)',
              'V_0': 11.24e-6 - 0.309e-6,
              'K_0': 160.2e9 + 25.144e9}
 
+
+pressure = 30.e9
+temperature = 300.
+cluster_size = 1
+
+
 P_0 = 1.e5
 T_0 = 300.
 for params in [m1_params, m2_params, m3_params]:
@@ -84,7 +90,6 @@ for i, p1 in enumerate(np.linspace(0., 1., 31)):
 compositions = np.array(compositions)
 
 
-cluster_size = 2
 g = meshgrid2(*[range(cluster_size)]*len(compositions[0]))
 cluster_compositions = [list(cluster) for cluster in np.vstack(map(np.ravel, g)).T
                         if np.sum(cluster) == cluster_size]
@@ -133,8 +138,6 @@ cluster_helmholtz = np.array(cluster_probabilities).T.dot(np.array(cluster_helmh
 
 
 
-pressure = 100.e9
-temperature = 300.
 for e in endmembers:
     e.set_state(pressure, temperature)
 endmember_volumes = np.array([m1.V, m2.V, m3.V])
@@ -170,6 +173,13 @@ energy_approx = ( np.array([np.sum(x*K0s /
                             for i, x in enumerate(compositions)]) )
 
 
+
+print('Pressure: {0:.1f} GPa, Temperature {1:.1f} K, cluster size: {2}'.format(pressure/1.e9, temperature, cluster_size))
+print('W_ijs:')
+for i in range(0,3):
+    mask = [idx for idx, c in enumerate(compositions.T[i]) if c<0.00001]
+    print(4.*max((helmholtz - cluster_helmholtz - ideal_helmholtz)[mask]))
+    
 grid_color='100'
 
 plt.plot([0., 0.5, 1., 0.], [0., 1., 0., 0.], color='black')
