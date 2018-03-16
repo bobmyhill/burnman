@@ -135,7 +135,7 @@ class Mineral(Material):
     """
     @material_property
     @copy_documentation(Material.molar_gibbs)
-    def molar_gibbs(self):
+    def gibbs(self):
         return self.method.gibbs_free_energy(self.pressure, self.temperature, self.molar_volume, self.params) \
             + self._property_modifiers['G']
 
@@ -145,13 +145,13 @@ class Mineral(Material):
 
     @material_property
     @copy_documentation(Material.molar_volume)
-    def molar_volume(self):
+    def volume(self):
         return self._molar_volume_unmodified \
             + self._property_modifiers['dGdP']
 
     @material_property
     @copy_documentation(Material.molar_entropy)
-    def molar_entropy(self):
+    def entropy(self):
         return self.method.entropy(self.pressure, self.temperature, self.molar_volume, self.params) \
             - self._property_modifiers['dGdT']
 
@@ -203,7 +203,7 @@ class Mineral(Material):
 
     @material_property
     @copy_documentation(Material.molar_mass)
-    def molar_mass(self):
+    def mass(self):
         if 'molar_mass' in self.params:
             return self.params['molar_mass']
         else:
@@ -222,12 +222,12 @@ class Mineral(Material):
 
     @material_property
     @copy_documentation(Material.molar_helmholtz)
-    def molar_helmholtz(self):
+    def helmholtz(self):
         return self.molar_gibbs - self.pressure * self.molar_volume
 
     @material_property
     @copy_documentation(Material.molar_enthalpy)
-    def molar_enthalpy(self):
+    def enthalpy(self):
         return self.molar_gibbs + self.temperature * self.molar_entropy
 
     @material_property

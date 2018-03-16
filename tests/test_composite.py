@@ -195,26 +195,24 @@ class composite(BurnManTest):
         self.assertFloatEqual(S3, 0.4 * molar_entropy1 + 0.6 * molar_entropy2)
 
     def test_summing_bigger(self):
-        min1 = minerals.SLB_2005.periclase()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            c = burnman.Composite([min1, min1], [0.8, 0.4])
-            assert len(w) == 1
+        min1 = minerals.SLB_2011.periclase()
+        c = burnman.Composite([min1, min1], [0.8, 0.4])
         c.set_method("slb3")
         c.set_state(5e9, 1000)
         (m, f) = c.unroll()
-        self.assertArraysAlmostEqual(f, [2. / 3., 1. / 3.])
+        self.assertArraysAlmostEqual(f/sum(f), [2. / 3., 1. / 3.])
+        self.assertFloatEqual(sum(f), 1.2)
+        self.assertFloatEqual(c.gibbs, 1.2*c.molar_gibbs)
 
     def test_summing_smaller(self):
-        min1 = minerals.SLB_2005.periclase()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            c = burnman.Composite([min1, min1], [0.4, 0.2])
-            assert len(w) == 1
+        min1 = minerals.SLB_2011.periclase()
+        c = burnman.Composite([min1, min1], [0.4, 0.2])
         c.set_method("slb3")
         c.set_state(5e9, 1000)
         (m, f) = c.unroll()
-        self.assertArraysAlmostEqual(f, [2. / 3., 1. / 3.])
+        self.assertArraysAlmostEqual(f/sum(f), [2. / 3., 1. / 3.])
+        self.assertFloatEqual(sum(f), 0.6)
+        self.assertFloatEqual(c.gibbs, 0.6*c.molar_gibbs)
 
     def test_summing_slightly_negative(self):
         min1 = minerals.SLB_2005.periclase()
@@ -244,13 +242,13 @@ class composite(BurnManTest):
         G3 = rock.shear_modulus
         self.assertFloatEqual(115.155, G3 / 1.e9)
 
-    def test_mass_to_molar_fractions(self):
+    def test_mass_to_molar_amounts(self):
         pv = burnman.minerals.HP_2011_ds62.mpv()
         en = burnman.minerals.HP_2011_ds62.en()
         c = burnman.Composite([pv, en], [0.5, 0.5], 'mass')
         self.assertArraysAlmostEqual(c.molar_fractions, [2. / 3., 1. / 3.])
 
-    def test_mass_to_molar_fractions_2(self):
+    def test_mass_to_molar_amounts_2(self):
         min1 = minerals.SLB_2005.periclase()
         mass_fractions = [0.8, 0.2]
         c = burnman.Composite(

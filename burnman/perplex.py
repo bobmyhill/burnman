@@ -195,24 +195,24 @@ class PerplexMaterial(Material):
                                                                                                                                  self.bounds[1][0],
                                                                                                                                  self.bounds[1][1]))
         Material.set_state(self, pressure, temperature)
-        
+    
     """
     Properties by linear interpolation of Perple_X output
     """
 
     @material_property
     @copy_documentation(Material.molar_volume)
-    def molar_volume(self):
+    def volume(self):
         return self._property_interpolators['V'](self.pressure, self.temperature)[0]
 
     @material_property
     @copy_documentation(Material.molar_enthalpy)
-    def molar_enthalpy(self):
+    def enthalpy(self):
         return self._property_interpolators['H'](self.pressure, self.temperature)[0]
     
     @material_property
     @copy_documentation(Material.molar_entropy)
-    def molar_entropy(self):
+    def entropy(self):
         return self._property_interpolators['S'](self.pressure, self.temperature)[0]
 
     @material_property
@@ -226,7 +226,7 @@ class PerplexMaterial(Material):
         return self._property_interpolators['K_S'](self.pressure, self.temperature)[0]
         
     @material_property
-    @copy_documentation(Material.heat_capacity_p)
+    @copy_documentation(Material.molar_heat_capacity_p)
     def heat_capacity_p(self):
         return self._property_interpolators['C_p'](self.pressure, self.temperature)[0]
     
@@ -263,12 +263,12 @@ class PerplexMaterial(Material):
 
     @material_property
     @copy_documentation(Material.molar_gibbs)
-    def molar_gibbs(self):
+    def gibbs(self):
         return self.molar_enthalpy - self.temperature*self.molar_entropy
 
     @material_property
     @copy_documentation(Material.molar_mass)
-    def molar_mass(self):
+    def mass(self):
         if 'molar_mass' in self.params:
             return self.params['molar_mass']
         else:
@@ -281,13 +281,13 @@ class PerplexMaterial(Material):
         return self._property_interpolators['rho'](self.pressure, self.temperature)[0]
 
     @material_property
-    @copy_documentation(Material.internal_energy)
+    @copy_documentation(Material.molar_internal_energy)
     def internal_energy(self):
         return self.molar_gibbs - self.pressure * self.molar_volume + self.temperature * self.molar_entropy
 
     @material_property
     @copy_documentation(Material.molar_helmholtz)
-    def molar_helmholtz(self):
+    def helmholtz(self):
         return self.molar_gibbs - self.pressure * self.molar_volume
 
     @material_property
@@ -301,7 +301,7 @@ class PerplexMaterial(Material):
         return 1. / self.adiabatic_bulk_modulus
     
     @material_property
-    @copy_documentation(Material.heat_capacity_v)
+    @copy_documentation(Material.molar_heat_capacity_v)
     def heat_capacity_v(self):
         return self.heat_capacity_p - self.molar_volume * self.temperature \
             * self.thermal_expansivity * self.thermal_expansivity \

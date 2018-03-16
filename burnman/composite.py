@@ -49,7 +49,8 @@ class Composite(Material):
 
     def __init__(self, phases, fractions=None, fraction_type='molar'):
         """
-        Create a composite using a list of phases and their fractions (adding to 1.0).
+        Create a composite using a list of phases and their fractions
+        Fractions does not need to sum to 1
 
         Parameters
         ----------
@@ -69,7 +70,7 @@ class Composite(Material):
         if fractions is not None:
             self.set_fractions(fractions, fraction_type)
         else:
-            self.molar_fractions = None
+            self.molar_amounts = None
 
         self.set_averaging_scheme('VoigtReussHill')
 
@@ -95,24 +96,18 @@ class Composite(Material):
         for f in fractions:
             assert (f >= -1e-12)
 
-        if abs(total - 1.0) > 1e-12:
-            warnings.warn(
-                "Warning: list of fractions does not add up to one but %g. Normalizing." % total)
-            corrected_fractions = [fr / total for fr in fractions]
-            fractions = corrected_fractions
-
         if fraction_type == 'molar':
-            molar_fractions = fractions
+            molar_amounts = fractions
         elif fraction_type == 'mass':
-            molar_fractions = self._mass_to_molar_fractions(
-                self.phases, fractions)
+            molar_amounts = self._masses_to_moles(self.phases, fractions)
         else:
             raise Exception(
                 "Fraction type not recognised. Please use 'molar' or mass")
 
         # Set minimum value of a molar fraction at 0.0 (rather than -1.e-12)
-        self.molar_fractions = [max(0.0, fraction)
-                                for fraction in molar_fractions]
+        self.molar_amounts = np.array([max(0.0, fraction)
+                                         for fraction in molar_amounts])
+        self.moles = np.sum(self.molar_amounts)
 
     def set_method(self, method):
         """
@@ -148,16 +143,16 @@ class Composite(Material):
     def debug_print(self, indent=""):
         print("%sComposite:" % indent)
         indent += "  "
-        if self.molar_fractions is None:
+        if self.molar_amounts is None:
             for i, phase in enumerate(self.phases):
                 phase.debug_print(indent + "  ")
         else:
             for i, phase in enumerate(self.phases):
-                print("%s%g of" % (indent, self.molar_fractions[i]))
+                print("%s%g of" % (indent, self.molar_amounts[i]))
                 phase.debug_print(indent + "  ")
 
     def unroll(self):
-        if self.molar_fractions is None:
+        if self.molar_amounts is None:
             raise Exception(
                 "Unroll only works if the composite has defined fractions.")
         phases = []
@@ -165,7 +160,7 @@ class Composite(Material):
         for i, phase in enumerate(self.phases):
             p_mineral, p_fraction = phase.unroll()
             check_pairs(p_mineral, p_fraction)
-            fractions.extend([f * self.molar_fractions[i] for f in p_fraction])
+            fractions.extend([f * self.molar_amounts[i] for f in p_fraction])
             phases.extend(p_mineral)
         return phases, fractions
 
@@ -182,45 +177,45 @@ class Composite(Material):
         Aliased with self.energy
         """
         U = sum(phase.internal_energy * molar_fraction for (
-                phase, molar_fraction) in zip(self.phases, self.molar_fractions))
+                phase, molar_fraction) in zip(self.phases, self.molar_amounts))
         return U
 
     @material_property
-    def molar_gibbs(self):
+    def gibbs(self):
         """
         Returns Gibbs free energy of the composite [J]
         Aliased with self.gibbs
         """
         G = sum(phase.molar_gibbs * molar_fraction for (phase, molar_fraction)
-                in zip(self.phases, self.molar_fractions))
+                in zip(self.phases, self.molar_amounts))
         return G
 
     @material_property
-    def molar_helmholtz(self):
+    def helmholtz(self):
         """
         Returns Helmholtz free energy of the mineral [J]
         Aliased with self.helmholtz
         """
         F = sum(phase.molar_helmholtz * molar_fraction for (
-                phase, molar_fraction) in zip(self.phases, self.molar_fractions))
+                phase, molar_fraction) in zip(self.phases, self.molar_amounts))
         return F
 
     @material_property
-    def molar_volume(self):
+    def volume(self):
         """
-        Returns molar volume of the composite [m^3/mol]
+        Returns volume of the composite [m^3]
         Aliased with self.V
         """
         volumes = np.array(
-            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         return np.sum(volumes)
 
     @material_property
-    def molar_mass(self):
+    def mass(self):
         """
-        Returns molar mass of the composite [kg/mol]
+        Returns mass of the composite [kg]
         """
-        return sum([phase.molar_mass * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+        return sum([phase.molar_mass * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
 
     @material_property
     def density(self):
@@ -230,27 +225,27 @@ class Composite(Material):
         """
         densities = np.array([phase.density for phase in self.phases])
         volumes = np.array(
-            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         return self.averaging_scheme.average_density(volumes, densities)
 
     @material_property
-    def molar_entropy(self):
+    def entropy(self):
         """
         Returns enthalpy of the mineral [J]
         Aliased with self.S
         """
         S = sum(phase.molar_entropy * molar_fraction for (
-                phase, molar_fraction) in zip(self.phases, self.molar_fractions))
+                phase, molar_fraction) in zip(self.phases, self.molar_amounts))
         return S
 
     @material_property
-    def molar_enthalpy(self):
+    def enthalpy(self):
         """
         Returns enthalpy of the mineral [J]
         Aliased with self.H
         """
         H = sum(phase.molar_enthalpy * molar_fraction for (
-                phase, molar_fraction) in zip(self.phases, self.molar_fractions))
+                phase, molar_fraction) in zip(self.phases, self.molar_amounts))
         return H
 
     @material_property
@@ -260,7 +255,7 @@ class Composite(Material):
         Aliased with self.K_T
         """
         V_frac = np.array([phase.molar_volume * molar_fraction for (
-                           phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+                           phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         K_ph = np.array(
             [phase.isothermal_bulk_modulus for phase in self.phases])
         G_ph = np.array([phase.shear_modulus for phase in self.phases])
@@ -274,7 +269,7 @@ class Composite(Material):
         Aliased with self.K_S
         """
         V_frac = np.array([phase.molar_volume * molar_fraction for (
-                           phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+                           phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         K_ph = np.array(
             [phase.adiabatic_bulk_modulus for phase in self.phases])
         G_ph = np.array([phase.shear_modulus for phase in self.phases])
@@ -304,7 +299,7 @@ class Composite(Material):
         Aliased with self.G
         """
         V_frac = np.array([phase.molar_volume * molar_fraction for (
-                           phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+                           phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         K_ph = np.array(
             [phase.adiabatic_bulk_modulus for phase in self.phases])
         G_ph = np.array([phase.shear_modulus for phase in self.phases])
@@ -351,47 +346,45 @@ class Composite(Material):
         Aliased with self.alpha
         """
         volumes = np.array(
-            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_fractions)])
+            [phase.molar_volume * molar_fraction for (phase, molar_fraction) in zip(self.phases, self.molar_amounts)])
         alphas = np.array([phase.thermal_expansivity for phase in self.phases])
         return self.averaging_scheme.average_thermal_expansivity(volumes, alphas)
 
     @material_property
     def heat_capacity_v(self):
         """
-        Returns heat capacity at constant volume of the composite [J/K/mol]
+        Returns heat capacity at constant volume of the composite [J/K]
         Aliased with self.C_v
         """
         c_v = np.array([phase.heat_capacity_v for phase in self.phases])
-        return self.averaging_scheme.average_heat_capacity_v(self.molar_fractions, c_v)
+        return self.averaging_scheme.average_heat_capacity_v(self.molar_amounts, c_v)
 
     @material_property
     def heat_capacity_p(self):
         """
-        Returns heat capacity at constant pressure of the composite [J/K/mol]
+        Returns heat capacity at constant pressure of the composite [J/K]
         Aliased with self.C_p
         """
         c_p = np.array([phase.heat_capacity_p for phase in self.phases])
-        return self.averaging_scheme.average_heat_capacity_p(self.molar_fractions, c_p)
+        return self.averaging_scheme.average_heat_capacity_p(self.molar_amounts, c_p)
 
-    def _mass_to_molar_fractions(self, phases, mass_fractions):
+    def _masses_to_moles(self, phases, masses):
         """
-        Converts a set of mass fractions for phases into a set of molar fractions.
+        Converts a set of masses for phases into a set of molar amounts
 
         Parameters
         ----------
         phases : list of :class:`burnman.Material`
-        The list of phases for which fractions should be converted.
+        The list of phases for which masses should be converted.
 
-        mass_fractions : list of floats
-        The list of mass fractions of the input phases.
+        masses : list of floats
+        The list of masses of the input phases.
 
         Returns
         -------
-        molar_fractions : list of floats
-        The list of molar fractions corresponding to the input molar fractions
+        molar_amounts : list of floats
+        The list of molar amounts corresponding to the input masses
         """
-        total_moles = sum(
-            mass_fraction / phase.molar_mass for mass_fraction, phase in zip(mass_fractions, phases))
-        molar_fractions = [mass_fraction / (phase.molar_mass * total_moles)
-                           for mass_fraction, phase in zip(mass_fractions, phases)]
-        return molar_fractions
+        molar_amounts = np.array([mass / phase.molar_mass
+                                  for mass, phase in zip(masses, phases)])
+        return molar_amounts

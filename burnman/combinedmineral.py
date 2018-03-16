@@ -63,32 +63,32 @@ class CombinedMineral(Mineral):
         Mineral.set_state(self, pressure, temperature)
 
     @material_property
-    def molar_gibbs(self):
+    def gibbs(self):
         """
         Returns Gibbs free energy of the solid solution [J]
         Aliased with self.gibbs
         """
-        return self.mixture.molar_gibbs + self._property_modifiers['G']
+        return self.mixture.gibbs + self._property_modifiers['G']
 
     @material_property
     def _molar_volume_unmodified(self):
         return self.mixture.molar_volume
 
     @material_property
-    def molar_volume(self):
+    def volume(self):
         """
         Returns molar volume of the solid solution [m^3/mol]
         Aliased with self.V
         """
-        return self.mixture.molar_volume + self._property_modifiers['dGdP']
+        return self.mixture.volume + self._property_modifiers['dGdP']
 
     @material_property
-    def molar_entropy(self):
+    def entropy(self):
         """
         Returns entropy of the solid solution [J]
         Aliased with self.S
         """
-        return self.mixture.molar_entropy - self._property_modifiers['dGdT']
+        return self.mixture.entropy - self._property_modifiers['dGdT']
 
     @material_property
     def isothermal_bulk_modulus(self):
@@ -116,7 +116,7 @@ class CombinedMineral(Mineral):
         Aliased with self.alpha
         """
         return ((self.mixture.thermal_expansivity * self._molar_volume_unmodified)
-                + self._property_modifiers['d2GdPdT']) / self.molar_volume
+                + self._property_modifiers['d2GdPdT']) / self.volume
     
     @material_property
     def heat_capacity_p(self):
@@ -134,11 +134,11 @@ class CombinedMineral(Mineral):
     """
 
     @material_property
-    def molar_mass(self):
+    def mass(self):
         """
         Returns molar mass of the solid solution [kg/mol]
         """
-        return self.mixture.molar_mass
+        return self.mixture.mass
     
     @material_property
     def formula(self):
@@ -153,7 +153,7 @@ class CombinedMineral(Mineral):
         Returns density of the solid solution [kg/m^3]
         Aliased with self.rho
         """
-        return self.molar_mass / self.molar_volume
+        return self.mass / self.volume
 
     @material_property
     def internal_energy(self):
@@ -161,24 +161,24 @@ class CombinedMineral(Mineral):
         Returns internal energy of the mineral [J]
         Aliased with self.energy
         """
-        return self.molar_gibbs - self.pressure * self.molar_volume + self.temperature * self.molar_entropy
+        return self.gibbs - self.pressure * self.volume + self.temperature * self.entropy
     
     @material_property
-    def molar_helmholtz(self):
+    def helmholtz(self):
         """
         Returns Helmholtz free energy of the solid solution [J]
         Aliased with self.helmholtz
         """
-        return self.molar_gibbs - self.pressure * self.molar_volume
+        return self.gibbs - self.pressure * self.volume
 
 
     @material_property
-    def molar_enthalpy(self):
+    def enthalpy(self):
         """
         Returns enthalpy of the solid solution [J]
         Aliased with self.H
         """
-        return self.molar_gibbs + self.temperature * self.molar_entropy
+        return self.gibbs + self.temperature * self.entropy
 
 
     @material_property
@@ -243,7 +243,7 @@ class CombinedMineral(Mineral):
             return 0.
         else:
             return self.thermal_expansivity * self.isothermal_bulk_modulus \
-                * self.molar_volume / self.heat_capacity_v
+                * self.volume / self.heat_capacity_v
 
     @material_property
     def heat_capacity_v(self):
@@ -251,7 +251,7 @@ class CombinedMineral(Mineral):
         Returns heat capacity at constant volume of the solid solution [J/K/mol]
         Aliased with self.C_v
         """
-        return self.heat_capacity_p - self.molar_volume * self.temperature \
+        return self.heat_capacity_p - self.volume * self.temperature \
             * self.thermal_expansivity * self.thermal_expansivity \
             * self.isothermal_bulk_modulus
 
