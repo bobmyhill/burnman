@@ -73,12 +73,12 @@ class RockSwitcher(BurnManTest):
         rock = tripple([self.min_other(), self.min_lm, self.min_um])
 
         pressures = [10e9, 25e9, 35e9]
-        molar_volumes = []
+        volumes = []
         for p in pressures:
             rock.set_state(p, 300)
-            molar_volumes.append(rock.molar_volume)
+            volumes.append(rock.volume)
 
-        self.assertArraysAlmostEqual(molar_volumes, [1.062933864e-05, 2.2478565706e-05, 3.62424836698e-05])
+        self.assertArraysAlmostEqual(volumes, [1.062933864e-05, 2.2478565706e-05, 3.62424836698e-05])
 
     def test_composite(self):
         c1 = burnman.Composite([self.min_other(), self.min_lm], [0.4, 0.6])

@@ -50,32 +50,32 @@ class HelperRockSwitcher(Material):
         return self.current_rock.internal_energy
 
     @material_property
-    def molar_gibbs(self):
-        return self.current_rock.molar_gibbs
+    def gibbs(self):
+        return self.current_rock.gibbs
 
     @material_property
-    def molar_helmholtz(self):
-        return self.current_rock.molar_helmholtz
+    def helmholtz(self):
+        return self.current_rock.helmholtz
 
     @material_property
-    def molar_mass(self):
-        return self.current_rock.molar_mass
+    def mass(self):
+        return self.current_rock.mass
 
     @material_property
-    def molar_volume(self):
-        return self.current_rock.molar_volume
+    def volume(self):
+        return self.current_rock.volume
 
     @material_property
     def density(self):
         return self.current_rock.density
 
     @material_property
-    def molar_entropy(self):
-        return self.current_rock.molar_entropy
+    def entropy(self):
+        return self.current_rock.entropy
 
     @material_property
-    def molar_enthalpy(self):
-        return self.current_rock.molar_enthalpy
+    def enthalpy(self):
+        return self.current_rock.enthalpy
 
     @material_property
     def isothermal_bulk_modulus(self):
@@ -181,8 +181,8 @@ class HelperSpinTransition(Composite):
 
     def set_state(self, pressure, temperature):
         if (pressure >= self.transition_pressure):
-            Composite.set_fractions(self, [1.0, 0.0])
+            Composite.set_amounts(self, [1.0, 0.0])
         else:
-            Composite.set_fractions(self, [0.0, 1.0])
+            Composite.set_amounts(self, [0.0, 1.0])
 
         Composite.set_state(self, pressure, temperature)

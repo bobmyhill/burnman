@@ -134,7 +134,7 @@ class Mineral(Material):
     as it allows us to more easily apply corrections to the free energy
     """
     @material_property
-    @copy_documentation(Material.molar_gibbs)
+    @copy_documentation(Material.gibbs)
     def molar_gibbs(self):
         return self.method.gibbs_free_energy(self.pressure, self.temperature, self.molar_volume, self.params) \
             + self._property_modifiers['G']
@@ -144,13 +144,13 @@ class Mineral(Material):
         return self.method.volume(self.pressure, self.temperature, self.params)
 
     @material_property
-    @copy_documentation(Material.molar_volume)
+    @copy_documentation(Material.volume)
     def molar_volume(self):
         return self._molar_volume_unmodified \
             + self._property_modifiers['dGdP']
 
     @material_property
-    @copy_documentation(Material.molar_entropy)
+    @copy_documentation(Material.entropy)
     def molar_entropy(self):
         return self.method.entropy(self.pressure, self.temperature, self.molar_volume, self.params) \
             - self._property_modifiers['dGdT']
@@ -202,7 +202,7 @@ class Mineral(Material):
     """
 
     @material_property
-    @copy_documentation(Material.molar_mass)
+    @copy_documentation(Material.mass)
     def molar_mass(self):
         if 'molar_mass' in self.params:
             return self.params['molar_mass']
@@ -221,12 +221,12 @@ class Mineral(Material):
         return self.molar_gibbs - self.pressure * self.molar_volume + self.temperature * self.molar_entropy
 
     @material_property
-    @copy_documentation(Material.molar_helmholtz)
+    @copy_documentation(Material.helmholtz)
     def molar_helmholtz(self):
         return self.molar_gibbs - self.pressure * self.molar_volume
 
     @material_property
-    @copy_documentation(Material.molar_enthalpy)
+    @copy_documentation(Material.enthalpy)
     def molar_enthalpy(self):
         return self.molar_gibbs + self.temperature * self.molar_entropy
 
@@ -268,10 +268,46 @@ class Mineral(Material):
     @copy_documentation(Material.grueneisen_parameter)
     def grueneisen_parameter(self):
         return self.method.grueneisen_parameter(self.pressure, self.temperature, self.molar_volume, self.params)
-    
+
     @material_property
     @copy_documentation(Material.heat_capacity_v)
     def heat_capacity_v(self):
         return self.heat_capacity_p - self.molar_volume * self.temperature \
             * self.thermal_expansivity * self.thermal_expansivity \
             * self.isothermal_bulk_modulus
+
+    
+    """
+    Aliases for molar properties
+    """
+    
+    @property
+    def gibbs(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_gibbs
+
+    @property
+    def helmholtz(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_helmholtz
+
+    @property
+    def mass(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_mass
+    
+    @property
+    def volume(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_volume
+    
+    @property
+    def entropy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_entropy
+    
+    @property
+    def enthalpy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_enthalpy
+    

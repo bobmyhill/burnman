@@ -201,17 +201,17 @@ class PerplexMaterial(Material):
     """
 
     @material_property
-    @copy_documentation(Material.molar_volume)
+    @copy_documentation(Material.volume)
     def molar_volume(self):
         return self._property_interpolators['V'](self.pressure, self.temperature)[0]
 
     @material_property
-    @copy_documentation(Material.molar_enthalpy)
+    @copy_documentation(Material.enthalpy)
     def molar_enthalpy(self):
         return self._property_interpolators['H'](self.pressure, self.temperature)[0]
     
     @material_property
-    @copy_documentation(Material.molar_entropy)
+    @copy_documentation(Material.entropy)
     def molar_entropy(self):
         return self._property_interpolators['S'](self.pressure, self.temperature)[0]
 
@@ -262,12 +262,12 @@ class PerplexMaterial(Material):
     """
 
     @material_property
-    @copy_documentation(Material.molar_gibbs)
+    @copy_documentation(Material.gibbs)
     def molar_gibbs(self):
         return self.molar_enthalpy - self.temperature*self.molar_entropy
 
     @material_property
-    @copy_documentation(Material.molar_mass)
+    @copy_documentation(Material.mass)
     def molar_mass(self):
         if 'molar_mass' in self.params:
             return self.params['molar_mass']
@@ -286,7 +286,7 @@ class PerplexMaterial(Material):
         return self.molar_gibbs - self.pressure * self.molar_volume + self.temperature * self.molar_entropy
 
     @material_property
-    @copy_documentation(Material.molar_helmholtz)
+    @copy_documentation(Material.helmholtz)
     def molar_helmholtz(self):
         return self.molar_gibbs - self.pressure * self.molar_volume
 
@@ -314,4 +314,39 @@ class PerplexMaterial(Material):
                  self.molar_volume *
                  self.adiabatic_bulk_modulus /
                  self.heat_capacity_p )
+    
+
+    """
+    Aliases for molar properties
+    """
+    
+    @property
+    def gibbs(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_gibbs
+
+    @property
+    def helmholtz(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_helmholtz
+
+    @property
+    def mass(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_mass
+    
+    @property
+    def volume(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_volume
+    
+    @property
+    def entropy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_entropy
+    
+    @property
+    def enthalpy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_enthalpy
     

@@ -33,9 +33,9 @@ class spin_transition(BurnManTest):
     def test_no_set_state(self):
         m = minerals.Murakami_etal_2012.fe_periclase()
         m.set_state(5e9, 300)
-        self.assertArraysAlmostEqual(m.molar_fractions, [0.0, 1.0])
+        self.assertArraysAlmostEqual(m.molar_amounts, [0.0, 1.0])
         m.set_state(70e9, 300)
-        self.assertArraysAlmostEqual(m.molar_fractions, [1.0, 0.0])
+        self.assertArraysAlmostEqual(m.molar_amounts, [1.0, 0.0])
 
 if __name__ == '__main__':
     unittest.main()

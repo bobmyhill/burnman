@@ -50,12 +50,12 @@ class composite(BurnManTest):
                 burnman.Material.__init__(self)
 
             def unroll(self):
-                fractions = [0.3, 0.7]
+                amounts = [0.3, 0.7]
                 mins = [
                     minerals.Murakami_etal_2012.fe_periclase(), minerals.SLB_2005.periclase()]
                 if (self.temperature > 500):
-                    fractions = [0.1, 0.9]
-                return (mins, fractions)
+                    amounts = [0.1, 0.9]
+                return (mins, amounts)
 
         c = mycomposite()
         c.set_state(5e9, 300)
@@ -79,10 +79,10 @@ class composite(BurnManTest):
             def unroll(self):
                 if (self.temperature > 500):
                     return ([minerals.Murakami_etal_2012.fe_periclase()], [1.0])
-                fractions = [0.3, 0.7]
+                amounts = [0.3, 0.7]
                 mins = [
                     minerals.Murakami_etal_2012.fe_periclase(), minerals.SLB_2005.periclase()]
-                return (mins, fractions)
+                return (mins, amounts)
 
         c = mycomposite()
         c.set_state(5e9, 1000)
@@ -146,9 +146,9 @@ class composite(BurnManTest):
         # Gibbs
         gibbs1 = mineral1.molar_gibbs
         gibbs2 = mineral2.molar_gibbs
-        G1 = rock1.molar_gibbs
-        G2 = rock2.molar_gibbs
-        G3 = rock3.molar_gibbs
+        G1 = rock1.gibbs
+        G2 = rock2.gibbs
+        G3 = rock3.gibbs
         self.assertFloatEqual(G1, gibbs1)
         self.assertFloatEqual(G2, gibbs2)
         self.assertFloatEqual(G3, 0.4 * gibbs1 + 0.6 * gibbs2)
@@ -156,9 +156,9 @@ class composite(BurnManTest):
         # Helmholtz
         helmholtz1 = mineral1.molar_helmholtz
         helmholtz2 = mineral2.molar_helmholtz
-        F1 = rock1.molar_helmholtz
-        F2 = rock2.molar_helmholtz
-        F3 = rock3.molar_helmholtz
+        F1 = rock1.helmholtz
+        F2 = rock2.helmholtz
+        F3 = rock3.helmholtz
         self.assertFloatEqual(F1, helmholtz1)
         self.assertFloatEqual(F2, helmholtz2)
         self.assertFloatEqual(F3, 0.4 * helmholtz1 + 0.6 * helmholtz2)
@@ -166,9 +166,9 @@ class composite(BurnManTest):
         # Enthalpy
         enthalpy1 = mineral1.molar_enthalpy
         enthalpy2 = mineral2.molar_enthalpy
-        H1 = rock1.molar_enthalpy
-        H2 = rock2.molar_enthalpy
-        H3 = rock3.molar_enthalpy
+        H1 = rock1.enthalpy
+        H2 = rock2.enthalpy
+        H3 = rock3.enthalpy
         self.assertFloatEqual(H1, enthalpy1)
         self.assertFloatEqual(H2, enthalpy2)
         self.assertFloatEqual(H3, 0.4 * enthalpy1 + 0.6 * enthalpy2)
@@ -187,34 +187,28 @@ class composite(BurnManTest):
         # Entropy
         molar_entropy1 = mineral1.molar_entropy
         molar_entropy2 = mineral2.molar_entropy
-        S1 = rock1.molar_entropy
-        S2 = rock2.molar_entropy
-        S3 = rock3.molar_entropy
+        S1 = rock1.entropy
+        S2 = rock2.entropy
+        S3 = rock3.entropy
         self.assertFloatEqual(S1, molar_entropy1)
         self.assertFloatEqual(S2, molar_entropy2)
         self.assertFloatEqual(S3, 0.4 * molar_entropy1 + 0.6 * molar_entropy2)
 
     def test_summing_bigger(self):
         min1 = minerals.SLB_2005.periclase()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            c = burnman.Composite([min1, min1], [0.8, 0.4])
-            assert len(w) == 1
+        c = burnman.Composite([min1, min1], [0.8, 0.4])
         c.set_method("slb3")
         c.set_state(5e9, 1000)
-        (m, f) = c.unroll()
-        self.assertArraysAlmostEqual(f, [2. / 3., 1. / 3.])
+        (m, a) = c.unroll()
+        self.assertArraysAlmostEqual(a/sum(a), [2. / 3., 1. / 3.])
 
     def test_summing_smaller(self):
         min1 = minerals.SLB_2005.periclase()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            c = burnman.Composite([min1, min1], [0.4, 0.2])
-            assert len(w) == 1
+        c = burnman.Composite([min1, min1], [0.4, 0.2])
         c.set_method("slb3")
         c.set_state(5e9, 1000)
-        (m, f) = c.unroll()
-        self.assertArraysAlmostEqual(f, [2. / 3., 1. / 3.])
+        (m,a) = c.unroll()
+        self.assertArraysAlmostEqual(a/sum(a), [2. / 3., 1. / 3.])
 
     def test_summing_slightly_negative(self):
         min1 = minerals.SLB_2005.periclase()
@@ -244,18 +238,18 @@ class composite(BurnManTest):
         G3 = rock.shear_modulus
         self.assertFloatEqual(115.155, G3 / 1.e9)
 
-    def test_mass_to_molar_fractions(self):
+    def test_mass_to_molar_amounts(self):
         pv = burnman.minerals.HP_2011_ds62.mpv()
         en = burnman.minerals.HP_2011_ds62.en()
         c = burnman.Composite([pv, en], [0.5, 0.5], 'mass')
-        self.assertArraysAlmostEqual(c.molar_fractions, [2. / 3., 1. / 3.])
+        self.assertArraysAlmostEqual(c.molar_amounts/sum(c.molar_amounts), [2. / 3., 1. / 3.])
 
-    def test_mass_to_molar_fractions_2(self):
+    def test_mass_to_molar_amounts_2(self):
         min1 = minerals.SLB_2005.periclase()
-        mass_fractions = [0.8, 0.2]
+        mass_amounts = [0.8, 0.2]
         c = burnman.Composite(
-            [min1, min1], mass_fractions, fraction_type='mass')
-        self.assertArraysAlmostEqual(c.molar_fractions, mass_fractions)
+            [min1, min1], mass_amounts, amount_type='mass')
+        self.assertArraysAlmostEqual(c.molar_amounts/sum(c.molar_amounts), mass_amounts)
 
     def test_velocities_from_rock(self):
 
@@ -286,8 +280,8 @@ class composite(BurnManTest):
         rock1 = burnman.Composite([min1, min1], [0.5, 0.5])
         rock1.set_state(min1.params['P_0'], min1.params['T_0'])
 
-        self.assertFloatEqual(rock1.molar_volume, min1.params['V_0'])
-        self.assertFloatEqual(rock1.molar_mass, min1.params['molar_mass'])
+        self.assertFloatEqual(rock1.volume, min1.params['V_0'])
+        self.assertFloatEqual(rock1.mass, min1.params['molar_mass'])
         self.assertFloatEqual(
             rock1.isothermal_bulk_modulus, min1.params['K_0'])
         self.assertFloatEqual(

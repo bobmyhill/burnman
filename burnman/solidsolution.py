@@ -432,3 +432,40 @@ class SolidSolution(Mineral):
         Aliased with self.C_p
         """
         return sum([self.endmembers[i][0].heat_capacity_p * self.molar_fractions[i] for i in range(self.n_endmembers)])
+
+  
+    """
+    Aliases for molar properties
+    """
+    
+    @property
+    def gibbs(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_gibbs
+
+    @property
+    def helmholtz(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_helmholtz
+
+    @property
+    def mass(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_mass
+    
+    @property
+    def volume(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_volume
+    
+    @property
+    def entropy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_entropy
+    
+    @property
+    def enthalpy(self):
+        """Alias for :func:`~burnman.mineral.Mineral.molar_gibbs`"""
+        return self.molar_enthalpy
+    
+   

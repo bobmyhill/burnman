@@ -239,7 +239,7 @@ class Material(object):
     @material_property
     def internal_energy(self):
         """
-        Returns the internal energy of the mineral.
+        Returns the internal energy of the material.
 
         Notes
         -----
@@ -255,9 +255,9 @@ class Material(object):
             "need to implement internal_energy() in derived class!")
 
     @material_property
-    def molar_gibbs(self):
+    def gibbs(self):
         """
-        Returns the Gibbs free energy of the mineral.
+        Returns the Gibbs free energy of the material.
 
         Notes
         -----
@@ -266,16 +266,16 @@ class Material(object):
 
         Returns
         -------
-        molar_gibbs : float
+        gibbs : float
             Gibbs free energy in [J].
         """
         raise NotImplementedError(
-            "need to implement molar_gibbs() in derived class!")
+            "need to implement gibbs() in derived class!")
 
     @material_property
-    def molar_helmholtz(self):
+    def helmholtz(self):
         """
-        Returns the Helmholtz free energy of the mineral.
+        Returns the Helmholtz free energy of the material.
 
         Notes
         -----
@@ -284,16 +284,16 @@ class Material(object):
 
         Returns
         -------
-        molar_helmholtz : float
+        helmholtz : float
             Helmholtz free energy in [J].
         """
         raise NotImplementedError(
-            "need to implement molar_helmholtz() in derived class!")
+            "need to implement helmholtz() in derived class!")
 
     @material_property
-    def molar_mass(self):
+    def mass(self):
         """
-        Returns molar mass of the mineral.
+        Returns mass of the material.
 
         Notes
         -----
@@ -301,16 +301,16 @@ class Material(object):
 
         Returns
         -------
-        molar_mass : float
-            Molar mass in [kg/mol].
+        mass : float
+            mass in [kg].
         """
         raise NotImplementedError(
-            "need to implement molar_mass() in derived class!")
+            "need to implement mass() in derived class!")
 
     @material_property
-    def molar_volume(self):
+    def volume(self):
         """
-        Returns molar volume of the mineral.
+        Returns molar volume of the material.
 
         Notes
         -----
@@ -319,11 +319,11 @@ class Material(object):
 
         Returns
         -------
-        molar_volume : float
-            Molar volume in [m^3/mol].
+        volume : float
+            volume in [m^3].
         """
         raise NotImplementedError(
-            "need to implement molar_volume() in derived class!")
+            "need to implement volume() in derived class!")
 
     @material_property
     def density(self):
@@ -344,9 +344,9 @@ class Material(object):
             "need to implement density() in derived class!")
 
     @material_property
-    def molar_entropy(self):
+    def entropy(self):
         """
-        Returns entropy of the mineral.
+        Returns entropy of the material.
 
         Notes
         -----
@@ -356,15 +356,15 @@ class Material(object):
         Returns
         -------
         entropy : float
-            Entropy in [J].
+            Entropy in [J/K].
         """
         raise NotImplementedError(
-            "need to implement molar_entropy() in derived class!")
+            "need to implement entropy() in derived class!")
 
     @material_property
-    def molar_enthalpy(self):
+    def enthalpy(self):
         """
-        Returns enthalpy of the mineral.
+        Returns enthalpy of the material.
 
         Notes
         -----
@@ -377,7 +377,7 @@ class Material(object):
             Enthalpy in [J].
         """
         raise NotImplementedError(
-            "need to implement molar_enthalpy() in derived class!")
+            "need to implement enthalpy() in derived class!")
 
     @material_property
     def isothermal_bulk_modulus(self):
@@ -400,7 +400,7 @@ class Material(object):
     @material_property
     def adiabatic_bulk_modulus(self):
         """
-        Returns the adiabatic bulk modulus of the mineral.
+        Returns the adiabatic bulk modulus of the material.
 
         Notes
         -----
@@ -418,7 +418,7 @@ class Material(object):
     @material_property
     def isothermal_compressibility(self):
         """
-        Returns isothermal compressibility of the mineral (or inverse isothermal bulk modulus).
+        Returns isothermal compressibility of the material (or inverse isothermal bulk modulus).
 
         Notes
         -----
@@ -436,7 +436,7 @@ class Material(object):
     @material_property
     def adiabatic_compressibility(self):
         """
-        Returns adiabatic compressibility of the mineral (or inverse adiabatic bulk modulus).
+        Returns adiabatic compressibility of the material (or inverse adiabatic bulk modulus).
 
 
         Notes
@@ -455,7 +455,7 @@ class Material(object):
     @material_property
     def shear_modulus(self):
         """
-        Returns shear modulus of the mineral.
+        Returns shear modulus of the material.
 
         Notes
         -----
@@ -473,7 +473,7 @@ class Material(object):
     @material_property
     def p_wave_velocity(self):
         """
-        Returns P wave speed of the mineral.
+        Returns P wave speed of the material.
 
         Notes
         -----
@@ -491,7 +491,7 @@ class Material(object):
     @material_property
     def bulk_sound_velocity(self):
         """
-        Returns bulk sound speed of the mineral.
+        Returns bulk sound speed of the material.
 
         Notes
         -----
@@ -509,7 +509,7 @@ class Material(object):
     @material_property
     def shear_wave_velocity(self):
         """
-        Returns shear wave speed of the mineral.
+        Returns shear wave speed of the material.
 
         Notes
         -----
@@ -527,7 +527,7 @@ class Material(object):
     @material_property
     def grueneisen_parameter(self):
         """
-        Returns the grueneisen parameter of the mineral.
+        Returns the grueneisen parameter of the material.
 
         Notes
         -----
@@ -545,7 +545,7 @@ class Material(object):
     @material_property
     def thermal_expansivity(self):
         """
-        Returns thermal expansion coefficient of the mineral.
+        Returns thermal expansion coefficient of the material.
 
         Notes
         -----
@@ -563,7 +563,7 @@ class Material(object):
     @material_property
     def heat_capacity_v(self):
         """
-        Returns heat capacity at constant volume of the mineral.
+        Returns heat capacity at constant volume of the material.
 
         Notes
         -----
@@ -581,7 +581,7 @@ class Material(object):
     @material_property
     def heat_capacity_p(self):
         """
-        Returns heat capacity at constant pressure of the mineral.
+        Returns heat capacity at constant pressure of the material.
 
         Notes
         -----
@@ -614,19 +614,9 @@ class Material(object):
         return self.internal_energy
 
     @property
-    def helmholtz(self):
-        """Alias for :func:`~burnman.material.Material.molar_helmholtz`"""
-        return self.molar_helmholtz
-
-    @property
-    def gibbs(self):
-        """Alias for :func:`~burnman.material.Material.molar_gibbs`"""
-        return self.molar_gibbs
-
-    @property
     def V(self):
-        """Alias for :func:`~burnman.material.Material.molar_volume`"""
-        return self.molar_volume
+        """Alias for :func:`~burnman.material.Material.volume`"""
+        return self.volume
 
     @property
     def rho(self):
@@ -635,13 +625,13 @@ class Material(object):
 
     @property
     def S(self):
-        """Alias for :func:`~burnman.material.Material.molar_entropy`"""
-        return self.molar_entropy
+        """Alias for :func:`~burnman.material.Material.entropy`"""
+        return self.entropy
 
     @property
     def H(self):
-        """Alias for :func:`~burnman.material.Material.molar_enthalpy`"""
-        return self.molar_enthalpy
+        """Alias for :func:`~burnman.material.Material.enthalpy`"""
+        return self.enthalpy
 
     @property
     def K_T(self):

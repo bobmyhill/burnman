@@ -87,7 +87,7 @@ class AveragingScheme(object):
            Density :math:`\\rho`. :math:`[kg/m^3]`
         """
         total_mass = np.sum(np.array(densities) * np.array(volumes))
-        total_vol = np.sum(np.array(volumes))  # should sum to one
+        total_vol = np.sum(np.array(volumes))  # doesn't necessarily sum to one
         density = total_mass / total_vol
         return density
 
@@ -98,7 +98,7 @@ class AveragingScheme(object):
         total_vol = np.sum(np.array(volumes))
         return np.sum(np.array(alphas) * np.array(volumes)) / total_vol
 
-    def average_heat_capacity_v(self, fractions, c_v):
+    def average_heat_capacity_v(self, amounts, c_v):
         # TODO: double-check that the formula we use is appropriate here.
         """
         Averages the heat capacities at constant volume :math:`C_V` by molar fractions
@@ -107,8 +107,8 @@ class AveragingScheme(object):
         Parameters
         ----------
 
-        fractions : list of floats
-            List of molar fractions of each phase in the composite (should sum to 1.0).
+        amounts : list of floats
+            List of molar amounts of each phase in the composite 
         c_v : list of floats
             List of heat capacities at constant volume :math:`C_V` of each phase in the composite. :math:`[J/K/mol]`
 
@@ -116,19 +116,19 @@ class AveragingScheme(object):
         -------
 
         c_v : float
-          heat capacity at constant volume of the composite :math:`C_V`. :math:`[J/K/mol]`
+          heat capacity at constant volume of the composite :math:`C_V`. :math:`[J/K]`
         """
-        return np.sum(np.array(fractions) * np.array(c_v))
+        return np.sum(np.array(amounts) * np.array(c_v))
 
-    def average_heat_capacity_p(self, fractions, c_p):
+    def average_heat_capacity_p(self, amounts, c_p):
         # TODO: double-check that the formula we use is correct.
         """
-        Averages the heat capacities at constant pressure :math:`C_P` by molar fractions.
+        Averages the heat capacities at constant pressure :math:`C_P` by molar amounts.
 
         Parameters
         ----------
-        fractions : list of floats
-            List of molar fractions of each phase in the composite (should sum to 1.0).
+        amounts : list of floats
+            List of molar amounts of each phase in the composite.
         c_p : list of floats
             List of heat capacities at constant pressure :math:`C_P` of each phase in the composite. :math:`[J/K/mol]`
 
@@ -137,7 +137,7 @@ class AveragingScheme(object):
         c_p : float
           heat capacity at constant pressure :math:`C_P` of the composite. :math:`[J/K/mol]`
         """
-        return np.sum(np.array(fractions) * np.array(c_p))
+        return np.sum(np.array(amounts) * np.array(c_p))
 
 
 class VoigtReussHill(AveragingScheme):
