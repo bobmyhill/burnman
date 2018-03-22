@@ -45,8 +45,8 @@ def _non_ideal_interactions_fct(phi, molar_fractions, n_endmembers, alpha, W):
     q = np.eye(n_endmembers) - phi*np.ones((n_endmembers, n_endmembers))
     # The following are equivalent to
     # np.einsum('i, ij, jk, ik->i', -self.alphas, q, self.Wx, q)
-    Wint = -alpha * (q.dot(W)*q).sum(-1)
 
+    Wint = -alpha * (q.dot(W)*q).sum(-1)
     return Wint
 
 def logish(x, eps=1.e-5):
@@ -396,6 +396,10 @@ class IdealSolution (SolutionModel):
 
     def _ideal_entropy_hessian(self, temperature, molar_fractions):
         hessian = -constants.gas_constant * self._log_ideal_activity_derivatives(molar_fractions)
+        return hessian
+
+    def _ideal_hessian(self, temperature, molar_fractions):
+        hessian = constants.gas_constant * temperature * self._log_ideal_activity_derivatives(molar_fractions)
         return hessian
 
     def _log_ideal_activities(self, molar_fractions):
