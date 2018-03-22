@@ -397,6 +397,10 @@ class IdealSolution (SolutionModel):
         hessian = -constants.gas_constant * self._log_ideal_activity_derivatives(molar_fractions)
         return hessian
 
+    def _ideal_hessian(self, temperature, molar_fractions):
+        hessian = constants.gas_constant * temperature * self._log_ideal_activity_derivatives(molar_fractions)
+        return hessian
+
     def _log_ideal_activities(self, molar_fractions):
         site_occupancies = np.dot(molar_fractions, self.endmember_occupancies)
         lna = (self.endmember_occupancies * self.site_multiplicities *
