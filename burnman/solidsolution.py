@@ -85,6 +85,12 @@ class SolidSolution(Mineral):
         if hasattr(self, 'endmembers') == False:
             raise Exception(
                 "'endmembers' attribute missing from solid solution")
+
+        try:
+            self.endmember_formulae = [mbr[0].params['formula'] for mbr in self.endmembers]
+        except:
+            raise Warning('formulae not found for all endmembers in solid solution.'
+                          'This will make many calculations impossible.')
         
         try:
             self.endmember_formulae = [mbr[0].params['formula'] for mbr in self.endmembers]
