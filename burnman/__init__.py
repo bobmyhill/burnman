@@ -208,4 +208,3 @@ from . import nonlinear_fitting
 from . import nonlinear_solvers
 from . import eos_fitting
 from .partitioning import calculate_nakajima_fp_pv_partition_coefficient
-from .equilibrate import equilibrate

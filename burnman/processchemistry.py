@@ -97,6 +97,45 @@ def convert_formula(formula, to_type='mass', normalize=False):
         f = {element: n/s for (element, n) in f.items()}
 
     return f
+
+def calculate_potential_phase_amounts(bulk_composition, phase_formulae, constraint_matrix=None):
+    """
+    Takes a bulk composition and list of phase formulae, 
+    and attempts to calculate a set of proportions of phases using least squares
+    Constraints is an optional matrix describing the allowed limits of each phase
+
+    The bulk_composition and phase_formulae can be in moles or masses, but they must
+    be consistent.
+    """
+    if constraint_matrix == None:
+        constraint_matrix = np.eye(len(phase_formulae))
+    elements = list(set(bulk_composition.keys()))
+    bulk_composition_vector = np.array([bulk_composition[e] for e in elements])
+
+    #Populate the stoichiometric matrix
+    def f(i,j):
+        e = elements[i]
+        if e in phase_formulae[j]:
+            return nsimplify(phase_formulae[j][e])
+        else:
+            return 0
+
+    
+    def simplify_matrix(arr):
+        def f(i,j):
+            return nsimplify(arr[i][j])
+        return Matrix( len(arr), len(arr[0]), f )
+    
+    stoichiometric_matrix = Matrix( len(elements), len(phase_formulae), f )
+    stoic_nullspace = np.array([v.T[:] for v in stoichiometric_matrix.nullspace()])
+    phase_amounts = nnls(stoichiometric_matrix*simplify_matrix(constraint_matrix),
+                         bulk_composition_vector)
+    
+    eps = 1.e-12
+    if  phase_amounts[1] > eps :
+        raise Exception( "Composition cannot be represented by the given minerals." )
+    
+    return phase_amounts[0]
     
 def dictionarize_site_formula(formula):
     """
