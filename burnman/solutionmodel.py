@@ -45,7 +45,6 @@ def _non_ideal_interactions_fct(phi, molar_fractions, n_endmembers, alpha, W):
     q = np.eye(n_endmembers) - phi*np.ones((n_endmembers, n_endmembers))
     # The following are equivalent to
     # np.einsum('i, ij, jk, ik->i', -self.alphas, q, self.Wx, q)
-
     Wint = -alpha * (q.dot(W)*q).sum(-1)
     return Wint
 
