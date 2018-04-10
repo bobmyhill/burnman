@@ -67,6 +67,9 @@ class Composite(Material):
         assert(len(phases) > 0)
         self.phases = phases
 
+        if not hasattr(self, 'n_moles'):
+            self.n_moles = 1.
+
         if fractions is not None:
             self.set_fractions(fractions, fraction_type)
         else:
@@ -193,6 +196,14 @@ class Composite(Material):
         return the name of the composite
         """
         return "{0}: {1}".format(self.__class__.__name__, self.name)
+
+    @material_property
+    def formula(self):
+        """
+        Returns bulk formula of the assemblage
+        """
+        return sum_formulae([self.phases[i].formula for i in range(len(self.phases))],
+                            np.array(self.molar_fractions)*self.n_moles)
 
     @material_property
     def molar_internal_energy(self):

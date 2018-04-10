@@ -59,7 +59,7 @@ def dictionarize_formula(formula):
     return f
 
 def sum_formulae(formulae, amounts=None):
-    if amounts == None:
+    if amounts is None:
         amounts = [1. for formula in formulae]
     else:
         assert (len(formulae) == len(amounts))
@@ -245,7 +245,6 @@ def process_solution_chemistry(solution_model):
             elements = re.findall('[A-Z][^A-Z]*', site_occupancy)
 
             for element in elements:
-
                 # Find the element and proportion on the site
                 element_split = re.split('([0-9][^A-Z]*)', element)
                 element_on_site = element_split[0]

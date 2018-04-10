@@ -206,4 +206,5 @@ from . import tools
 from . import nonlinear_fitting
 from . import nonlinear_solvers
 from . import eos_fitting
+from .equilibrate import equilibrate
 from .partitioning import calculate_partition_coefficient, calculate_phase_percents

@@ -197,7 +197,7 @@ class SolidSolution(Mineral):
         """
         Returns chemical formula of the solid solution
         """
-        return sum_formulae([self.endmembers[i][0].params['formula'] for i in range(self.n_endmembers)],
+        return sum_formulae([self.endmembers[i][0].formula for i in range(self.n_endmembers)],
                             self.molar_fractions)
     
     @material_property
