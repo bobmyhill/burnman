@@ -60,6 +60,11 @@ class Mineral(Material):
         if 'name' in self.params:
             self.name = self.params['name']
 
+        try:
+            self.formula = self.params['formula']
+        except:
+            pass
+
     def set_method(self, equation_of_state):
         """
         Set the equation of state to be used for this mineral.

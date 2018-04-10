@@ -70,6 +70,9 @@ class Composite(Material):
         assert(len(phases) > 0)
         self.phases = phases
 
+        if not hasattr(self, 'n_moles'):
+            self.n_moles = 1.
+
         if fractions is not None:
             self.set_fractions(fractions, fraction_type)
         else:

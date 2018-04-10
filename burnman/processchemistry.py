@@ -229,7 +229,6 @@ def process_solution_chemistry(solution_model):
             elements = re.findall('[A-Z][^A-Z]*', site_occupancy)
 
             for element in elements:
-
                 # Find the element and proportion on the site
                 element_split = re.split('([0-9][^A-Z]*)', element)
                 element_on_site = element_split[0]
