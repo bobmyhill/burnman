@@ -108,6 +108,108 @@ def calculate_constraints(assemblage, indices):
         pidx += n
     return constraint_vector, constraint_matrix, raw_constraint_matrix
 
+
+def func_min_cdist(x, guess_proportions, baseline_endmember_amounts, reaction_vectors, indices):
+    endmember_amounts = baseline_endmember_amounts + reaction_vectors.dot(x)
+    diffs = np.zeros(len(endmember_amounts))
+    i=0
+    for phase_idx, mbr_indices in enumerate(indices):
+        n_mbrs = len(mbr_indices)
+        if n_mbrs > 1:
+            phase_amounts = endmember_amounts[i:i+n_mbrs]
+            
+            if sum(phase_amounts) > np.finfo(float).eps:
+                diffs[i:i+n_mbrs] = phase_amounts/np.sum(phase_amounts) - guess_proportions[i:i+n_mbrs]
+        i+=n_mbrs
+    
+    return np.sum(diffs*diffs)
+
+def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm): 
+    # We use the nullspace to find the vector 
+    # that minimizes the change in composition of the phases.
+    # The molar proportions of the phases do not matter.
+
+    A = prm.stoichiometric_matrix[:,:] 
+    b = prm.bulk_composition_vector
+    
+    # Check if the problem involves equality constraints
+    # If it does, add the constraints to A, and a zero to b.
+    reduced_nullspace = prm.stoic_nullspace[:,:] # matrix_copy
+    for (code, constraint) in equality_constraints:
+        if code == 'X':
+            c_vector = parameter_constraints_to_endmember_constraint_vector(constraint, prm.indices)
+            A = A.col_join(c_vector.T)
+            b = np.append(b, np.array([0.]))
+            vals = sorted([(i, v) for i, v in enumerate(reduced_nullspace * c_vector)], key=lambda x: np.abs(x[1]))
+            row_indices, values = zip(*vals)
+            a = Matrix(values[:-1])/values[-1]
+            reduced_nullspace = reduced_nullspace[[row_indices[:-1]]] - np.outer(a, reduced_nullspace[[row_indices[-1]]])
+
+    # Convert stoichiometric matrix from endmember to the reduced site formalism using the raw constraint matrix R.
+    # This allows us to use nonnegative least squares.
+
+    # x' = R.x, x' > 0
+    # therefore Rinv.x' = x
+    # We want to solve A.x = b
+    # This is equivalent to A.Rinv.x' = b, for which nnls is appropriate
+    R = simplify_matrix(prm.raw_constraint_matrix)
+    Rinv = (R.H * R) ** -1 * R.H # the left inverse of R
+
+    A = A*Rinv
+    baseline_proportions = nnls(A, b)
+    eps = 1.e-12
+    if  baseline_proportions[1] > eps :
+        raise Exception( "Composition cannot be represented by the given minerals.")
+    # Now we can move within the nullspace (still subject to the non-negativity
+    # constraints) to minimize the difference between the preferred and guessed
+    # solution compositions
+    # A(x + N^T.v) = b
+    # A(Rinv.x' + N^T.v) = b
+    # ARinv(x' + R.N^T.v) = b
+
+    baseline_proportions = np.abs(baseline_proportions[0])
+    if len(reduced_nullspace) != 0:
+        reaction_vectors = reduced_nullspace.T
+        num = np.eye((prm.raw_constraint_matrix.shape[1]))
+        denom = np.eye((prm.raw_constraint_matrix.shape[1]))
+        guess_proportions = np.ones((denom.shape[1]))
+        i=0
+        for phase_idx, mbr_indices in enumerate(prm.indices):
+            n_mbrs = len(mbr_indices)
+            denom[i:i+n_mbrs] = np.einsum('ij->j', denom[i:i+n_mbrs])
+            if n_mbrs > 1:
+                guess = assemblage.phases[phase_idx].guess[mbr_indices]
+                guess_proportions[i:i+n_mbrs] = guess/np.sum(guess)
+            i+=n_mbrs
+        equality_matrix = num - np.einsum('ij, i->ij', denom, guess_proportions)
+        
+        # convert back to simple endmembers
+        baseline_endmember_amounts = Rinv.dot(baseline_proportions)
+
+        cons_fun = lambda x:  R.dot(baseline_endmember_amounts + reaction_vectors.dot(x)) # >= 0
+        cons = ({'type': 'ineq', 'fun': cons_fun})
+
+        sol = minimize(func_min_cdist, [0.]*reaction_vectors.shape[1],
+                       args=(guess_proportions, baseline_endmember_amounts,
+                             reaction_vectors, prm.indices),
+                       method='COBYLA', constraints=cons)
+
+        #assert(sol.status==1)
+        assert(cons_fun(sol.x) > -1.e-12)
+        
+        # add the reaction vector
+        baseline_endmember_amounts += reaction_vectors.dot(sol.x)
+    else:
+        baseline_endmember_amounts = Rinv.dot(baseline_proportions)
+
+    # Get compositional residuals
+    res = prm.stoichiometric_matrix.dot(baseline_endmember_amounts) - prm.bulk_composition_vector
+    if any(res > 1.e-9):
+        print('Residuals:\n{0}'.format(res))
+        raise Exception( "Baseline assemblage refinement failed." )
+    return baseline_endmember_amounts
+
+'''
 def func_min_cdist(x, equality_matrix, baseline_endmember_amounts, reaction_vectors):
     diffs =  equality_matrix.dot(baseline_endmember_amounts + reaction_vectors.dot(x))
     return np.sum(diffs*diffs)
@@ -197,43 +299,7 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
         print('Residuals:\n{0}'.format(res))
         raise Exception( "Baseline assemblage refinement failed." )
     return baseline_endmember_amounts
-
-def calculate_baseline_endmember_amounts_2(assemblage, prm):
-    n_phases = len(prm.indices)
-    A = np.zeros((prm.stoichiometric_matrix.shape[0], n_phases))
-    i=0
-    for phase_idx, mbr_indices in enumerate(prm.indices):
-        n_mbrs = len(mbr_indices)
-        if n_mbrs == 1:
-            A[phase_idx,:] = prm.stoichiometric_matrix[i,:] 
-        else:
-            guessed_proportions = assemblage.phases[phase_idx].guess[mbr_indices]
-            guessed_proportions = Matrix(guessed_proportions/sum(guessed_proportions))
-            A[:,phase_idx] = prm.stoichiometric_matrix[:,i:i+n_mbrs].dot(guessed_proportions)
-        i += n_mbrs
-
-    b = prm.bulk_composition_vector
-    phase_proportions = nnls(A, b)[0]
-
-    baseline_endmember_amounts = np.zeros((prm.stoichiometric_matrix.shape[1]))
-    i=0
-    for phase_idx, mbr_indices in enumerate(prm.indices):
-        n_mbrs = len(mbr_indices)
-        if n_mbrs == 1:
-            baseline_endmember_amounts[i] = phase_proportions[phase_idx]
-        else:
-            guessed_proportions = assemblage.phases[phase_idx].guess[mbr_indices]
-            guessed_proportions = np.array(guessed_proportions/sum(guessed_proportions))
-            baseline_endmember_amounts[i:i+n_mbrs] = guessed_proportions*phase_proportions[phase_idx]
-        i += n_mbrs
-    
-    res = prm.stoichiometric_matrix.dot(baseline_endmember_amounts) - prm.bulk_composition_vector
-    if any(res > 1.e-9):
-        print('Residuals:\n{0}'.format(res))
-        raise Exception( "Baseline assemblage refinement failed." )
-    
-    return baseline_endmember_amounts
-    
+'''
 
 def get_parameters_from_state_and_endmember_amounts(state, assemblage, prm):
     parameters = np.zeros(len(prm.baseline_endmember_amounts) + 2)
@@ -700,7 +766,15 @@ def equilibrate(composition, assemblage, equality_constraints,
     n_c1 = len(equality_constraint_lists[1])
 
     proportion_indices = phase_proportion_parameter_indices(prm.indices)
-    
+
+    for i in range(2):
+        if equality_constraint_lists[i][0][0] == 'P':
+            initial_state[0] = equality_constraint_lists[i][0][1]
+        elif equality_constraint_lists[i][0][0] == 'T':
+            initial_state[1] = equality_constraint_lists[i][0][1]
+        elif equality_constraint_lists[i][0][0] == 'PT_ellipse':
+            initial_state = equality_constraint_lists[i][0][1][1]
+            
     prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
                                                                           [equality_constraint_lists[0][0],
                                                                            equality_constraint_lists[1][0]],
@@ -719,21 +793,13 @@ def equilibrate(composition, assemblage, equality_constraints,
                 if n_c1 > 1:
                     string += ' {0}/{1}'.format(i_c1+1, n_c1)
                 print(string+':')
-            # modify initial state if necessary
+                
             equality_constraints = [equality_constraint_lists[0][i_c0], equality_constraint_lists[1][i_c1]]
-            for i in range(2):
-                if equality_constraints[i][0] == 'P':
-                    initial_state[0] = equality_constraints[i][1]
-                elif equality_constraints[i][0] == 'T':
-                    initial_state[1] = equality_constraints[i][1]
-                elif equality_constraints[i][0] == 'PT_ellipse':
-                    initial_state = equality_constraints[i][1][1]
     
             # Set the initial proportions and compositions of the phases in the assemblage:
             set_compositions_and_state_from_parameters(prm.initial_parameters, assemblage,
                                                        prm.indices, prm.endmembers_per_phase)
-            
-            
+
             sol = damped_newton_solve(F = lambda x: F(x, assemblage, equality_constraints, prm),
                                       J = lambda x: jacobian(x, assemblage, equality_constraints, prm),
                                       lambda_bounds = lambda dx, x: lambda_bounds(dx, x, prm.indices),
@@ -742,7 +808,6 @@ def equilibrate(composition, assemblage, equality_constraints,
                                       tol=tol,
                                       store_iterates=store_iterates, max_iterations=max_iterations)
 
-                
             if verbose:
                 print(sol.text)
                 
@@ -771,7 +836,6 @@ def equilibrate(composition, assemblage, equality_constraints,
                         dF = F(s.x, assemblage, cs, prm)
                         luJ = lu_factor(s.J)
                         new_parameters = s.x + lu_solve(luJ, -dF) # next guess based on a Newton step
-                    
                         c = prm.constraint_matrix.dot(new_parameters) + prm.constraint_vector
                         if all(c <= 0.):
                             prm.initial_parameters = new_parameters
@@ -794,22 +858,3 @@ def equilibrate(composition, assemblage, equality_constraints,
     if len(sol_list) == 1:
         sol_list = sol_list[0]
     return sol_list, prm
-
-
-
-'''
-    p = parameters_to_endmember_amounts(sol.x, prm.indices)
-    denom = np.empty_like(prm.raw_constraint_matrix[:,:])
-    proportions = np.ones((prm.raw_constraint_matrix.shape[0]))
-    i=0
-    for phase_idx, mbr_indices in enumerate(prm.indices):
-        n_mbrs = len(mbr_indices)
-        denom[i:i+n_mbrs] = np.einsum('ij->j', prm.raw_constraint_matrix[i:i+n_mbrs])
-        if n_mbrs > 1:
-            guess = np.array(assemblage.phases[phase_idx].molar_fractions)[mbr_indices]
-            proportions[i:i+n_mbrs] = guess/np.sum(guess)
-        i+=n_mbrs
-    equality_matrix = prm.raw_constraint_matrix - np.einsum('ij, i->ij', denom, proportions)
-    baseline_endmember_amounts = np.linalg.lstsq(prm.raw_constraint_matrix, p)[0]
-    print(func_min_cdist([0.], equality_matrix, baseline_endmember_amounts, np.array([0.]), prm))
-'''    
