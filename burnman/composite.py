@@ -11,6 +11,7 @@ from .material import Material, material_property
 from .mineral import Mineral
 from . import averaging_schemes
 from . import chemicalpotentials
+from .processchemistry import sum_formulae
 from .solidsolution import SolidSolution
 
 

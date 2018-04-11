@@ -32,81 +32,74 @@ import burnman
 from burnman.minerals import HP_2011_ds62, SLB_2011
 from burnman import equilibrate
 
-'''
-sillimanite = HP_2011_ds62.sill()
-andalusite = HP_2011_ds62.andalusite()
-kyanite = HP_2011_ds62.ky()
+aluminosilicates = False
+gt_solvus = False
+lower_mantle = True
+upper_mantle = False
+olivine_polymorphs = True
 
-composition = sillimanite.formula
-assemblage = burnman.Composite([sillimanite, andalusite, kyanite])
-equality_constraints = [('phase_proportion', (kyanite, np.array([0.0]))), ('phase_proportion', (sillimanite, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-P, T = sols[0][0].x[0:2]
-print(P/1e9, T)
+if aluminosilicates:
+    sillimanite = HP_2011_ds62.sill()
+    andalusite = HP_2011_ds62.andalusite()
+    kyanite = HP_2011_ds62.ky()
+    
+    composition = sillimanite.formula
+    assemblage = burnman.Composite([sillimanite, andalusite, kyanite])
+    equality_constraints = [('phase_proportion', (kyanite, np.array([0.0]))), ('phase_proportion', (sillimanite, np.array([0.0])))]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    P, T = sol.x[0:2]
+    print('invariant point found at {0} GPa, {1} K'.format(P/1e9, T))
+    
+    temperatures = np.linspace(500., 1500., 21)
+    assemblage = burnman.Composite([sillimanite, andalusite])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (sillimanite, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    plt.plot(Ts, Ps/1.e9)
+    
+    assemblage = burnman.Composite([sillimanite, kyanite])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (sillimanite, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    plt.plot(Ts, Ps/1.e9)
+    
+    assemblage = burnman.Composite([andalusite, kyanite])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (andalusite, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    plt.plot(Ts, Ps/1.e9)
+    
+    plt.show()
 
-temperatures = np.linspace(500., 1500., 21)
-assemblage = burnman.Composite([sillimanite, andalusite])
-equality_constraints = [('T', temperatures), ('phase_proportion', (sillimanite, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-Ps = np.array([sol[0].x[0] for sol in sols if sol[0].success])
-Ts = np.array([sol[0].x[1] for sol in sols if sol[0].success])
-plt.plot(Ts, Ps/1.e9)
+if gt_solvus:
+    gt1 = SLB_2011.garnet()
+    gt2 = SLB_2011.garnet()
+    
+    gt1.guess = np.array([0.99, 0.00, 0.01, 0.0, 0.00])
+    gt2.guess = np.array([0.01, 0.00, 0.99, 0.0, 0.00])
+    
+    
+    temperatures = np.linspace(200., 600., 21)
+    pressure = 1.e5
+    
+    composition = {'Mg': 1.5, 'Ca': 1.5, 'Al': 2., 'Si': 3.0, 'O':12.0}
+    
+    
+    
+    assemblage = burnman.Composite([gt1, gt2])
+    equality_constraints = [('P', pressure), ('T', temperatures)]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    x1s = np.array([sol.x[3] for sol in sols if sol.success])
+    x2s = np.array([sol.x[6] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    plt.plot(x1s, Ts)
+    plt.plot(x2s, Ts)
+    plt.show()
+    
 
-assemblage = burnman.Composite([sillimanite, kyanite])
-equality_constraints = [('T', temperatures), ('phase_proportion', (sillimanite, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-Ps = np.array([sol[0].x[0] for sol in sols if sol[0].success])
-Ts = np.array([sol[0].x[1] for sol in sols if sol[0].success])
-plt.plot(Ts, Ps/1.e9)
-
-assemblage = burnman.Composite([andalusite, kyanite])
-equality_constraints = [('T', temperatures), ('phase_proportion', (andalusite, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-Ps = np.array([sol[0].x[0] for sol in sols if sol[0].success])
-Ts = np.array([sol[0].x[1] for sol in sols if sol[0].success])
-plt.plot(Ts, Ps/1.e9)
-
-plt.show()
-'''
-
-
-gt1 = SLB_2011.garnet()
-gt2 = SLB_2011.garnet()
-
-gt1.guess = np.array([0.99, 0.00, 0.01, 0.0, 0.00])
-gt2.guess = np.array([0.01, 0.00, 0.99, 0.0, 0.00])
-
-
-temperatures = np.linspace(200., 600., 21)
-pressures = np.array([1.e5])
-
-composition = {'Mg': 1.5, 'Ca': 1.5, 'Al': 2., 'Si': 3.0, 'O':12.0}
-
-'''
-assemblage = burnman.Composite([gt1, gt2])
-equality_constraints = [('P', pressures), ('phase_proportion', (gt2, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-print(sols[0][0])
-x1s = np.array([sol.x[3] for sol in sols[0] if sol.success])
-x2s = np.array([sol.x[6] for sol in sols[0] if sol.success])
-Ts = np.array([sol.x[1] for sol in sols[0] if sol.success])
-plt.plot(x1s, Ts)
-plt.plot(x2s, Ts)
-plt.show()
-'''
-
-'''
-assemblage = burnman.Composite([gt1, gt2])
-equality_constraints = [('P', pressures), ('T', temperatures)]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-x1s = np.array([sol.x[3] for sol in sols[0] if sol.success])
-x2s = np.array([sol.x[6] for sol in sols[0] if sol.success])
-Ts = np.array([sol.x[1] for sol in sols[0] if sol.success])
-plt.plot(x1s, Ts)
-plt.plot(x2s, Ts)
-plt.show()
-
-'''
 
     
 gt = SLB_2011.garnet()
@@ -130,127 +123,136 @@ bdg.guess = np.array([0.86, 0.1, 0.04]) #
 ppv.guess = np.array([0.86, 0.1, 0.01]) # bdg-in works if guess[2] = 0.
 per.guess = np.array([0.9, 0.1])
 
-
-pressures = np.array([25.e9])
-temperatures = np.array([1600.])
-
-composition = {'Fe': 0.2, 'Mg': 2.0, 'Si': 1.9, 'Ca': 0.2, 'Al': 0.4, 'O':6.8}
-assemblage = burnman.Composite([bdg, per, cpv])
-equality_constraints = [('P', pressures), ('T', temperatures)]
-sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-
-S = np.array([assemblage.molar_entropy*assemblage.n_moles])
-
-assemblage = burnman.Composite([bdg, per, ppv, cpv])
-equality_constraints = [('S', S), ('phase_proportion', (bdg, np.array([0.])))]
-sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-bdg_in = assemblage.pressure # this isn't true!!! it's actually bdg_in
-
-
-equality_constraints = [('S', S), ('phase_proportion', (ppv, np.array([0.])))]
-sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-ppv_in = assemblage.pressure
-
-
-pressures = np.linspace(ppv_in, bdg_in, 21)
-equality_constraints = [('P', pressures), ('S', S)]
-sols1, prm1 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-
-
-p1 = np.array([sol[0].x for sol in sols1 if sol[0].success]).T
-
-assemblage = burnman.Composite([bdg, per, cpv])
-pressures = np.linspace(25.e9, ppv_in, 21)
-equality_constraints = [('P', pressures), ('S', S)]
-sols2, prm2 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-
-p2 = np.array([sol[0].x for sol in sols2 if sol[0].success]).T
-
-assemblage = burnman.Composite([ppv, per, cpv])
-pressures = np.linspace(bdg_in, 140.e9, 21)
-equality_constraints = [('P', pressures), ('S', S)]
-sols3, prm3 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-
-p3 = np.array([sol[0].x for sol in sols3 if sol[0].success]).T
-
-
-
-fig = plt.figure()
-ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
-phases = [bdg, per, cpv, ppv]
-colors = ['red', 'green', 'blue', 'orange']
-for p, prm in [(p1, prm1), (p2, prm2), (p3, prm3)]:
+if lower_mantle:
+    P0 = 25.e9
+    T0 = 1600.
     
-    pressures, temperatures = p[[0, 1],:]
-    ax[0].plot(pressures/1.e9, temperatures, color='black')
+    composition = {'Fe': 0.2, 'Mg': 2.0, 'Si': 1.9, 'Ca': 0.2, 'Al': 0.4, 'O':6.8}
+    assemblage = burnman.Composite([bdg, per, cpv])
+    equality_constraints = [('P', P0), ('T', T0)]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
     
-    for i, phase in enumerate(phases):
-        try:
-            idx = prm.parameter_names.index('x({0})'.format(phase.name))
-            x_phase = p[idx,:]
-            ax[i+1].plot(pressures/1.e9, x_phase, color=colors[i])
-            ax[i+1].set_ylim(0,2)
-            ax[i+1].set_xlim(0,140)
-        except:
-            pass
+    S = np.array([assemblage.molar_entropy*assemblage.n_moles])
+    
+    
+    assemblage = burnman.Composite([bdg, per, ppv, cpv])
+    equality_constraints = [('S', S), ('phase_proportion', (bdg, np.array([0.])))]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    bdg_in = assemblage.pressure
+    
+    
+    equality_constraints = [('S', S), ('phase_proportion', (ppv, np.array([0.])))]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    ppv_in = assemblage.pressure
+    
+    
+    pressures = np.linspace(ppv_in, bdg_in, 21)
+    equality_constraints = [('P', pressures), ('S', S)]
+    sols1, prm1 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    
+    p1 = np.array([sol.x for sol in sols1 if sol.success]).T
+    
+    assemblage = burnman.Composite([bdg, per, cpv])
+    pressures = np.linspace(25.e9, ppv_in, 21)
+    equality_constraints = [('P', pressures), ('S', S)]
+    sols2, prm2 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    
+    p2 = np.array([sol.x for sol in sols2 if sol.success]).T
+    
+    assemblage = burnman.Composite([ppv, per, cpv])
+    pressures = np.linspace(bdg_in, 140.e9, 21)
+    equality_constraints = [('P', pressures), ('S', S)]
+    sols3, prm3 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    
+    p3 = np.array([sol.x for sol in sols3 if sol.success]).T
+    
+    
+    
+    fig = plt.figure()
+    ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
+    phases = [bdg, per, cpv, ppv]
+    colors = ['red', 'green', 'blue', 'orange']
+    for p, prm in [(p1, prm1), (p2, prm2), (p3, prm3)]:
+        
+        pressures, temperatures = p[[0, 1],:]
+        ax[0].plot(pressures/1.e9, temperatures, color='black')
+        
+        for i, phase in enumerate(phases):
+            try:
+                idx = prm.parameter_names.index('x({0})'.format(phase.name))
+                x_phase = p[idx,:]
+                ax[i+1].plot(pressures/1.e9, x_phase, color=colors[i])
+                ax[i+1].set_ylim(0,2)
+                ax[i+1].set_xlim(0,140)
+            except:
+                pass
 
+    plt.show()
 
-plt.show()
-exit()
+if upper_mantle:
+    temperatures = np.linspace(800., 1500., 8)
+    pressures = np.linspace(1.e9, 14.e9, 11)
+    
+    composition = {'Fe': 0.2, 'Mg': 2.0, 'Si': 1.9, 'Ca': 0.2, 'Al': 0.4, 'O':6.8}
+    assemblage = burnman.Composite([ol, opx, gt])
+    #equality_constraints = [('phase_proportion', (opx, np.array([0.0]))), ('T', temperatures)]
+    equality_constraints = [('P', pressures), ('T', temperatures)]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    
 
-temperatures = np.linspace(800., 1500., 8)
-pressures = np.linspace(1.e9, 14.e9, 11)
-
-'''
-composition = {'Fe': 0.2, 'Mg': 2.0, 'Si': 1.9, 'Ca': 0.2, 'Al': 0.4, 'O':6.8}
-assemblage = burnman.Composite([ol, opx, gt])
-#equality_constraints = [('phase_proportion', (opx, np.array([0.0]))), ('T', temperatures)]
-equality_constraints = [('P', pressures), ('T', temperatures)]
-sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-'''
-
-
-
-composition = {'Fe': 0.2, 'Mg': 1.8, 'Si': 1.0, 'O':4.0}
-assemblage = burnman.Composite([ol, wad])
-equality_constraints = [('T', temperatures), ('phase_proportion', (wad, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-
-equality_constraints = [('T', temperatures), ('phase_proportion', (wad, np.array([1.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-
-
-assemblage = burnman.Composite([wad, rw])
-equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([1.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-
-
-assemblage = burnman.Composite([rw, bdg, per])
-equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([0.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([1.0])))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-pressures = np.array([sol[0].x[0] for sol in sols])
-plt.plot(temperatures, pressures/1.e9)
-
-plt.show()
+if olivine_polymorphs:
+    temperatures = np.linspace(573., 1773., 8)
+    pressures = np.linspace(1.e9, 14.e9, 11)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    
+    
+    composition = {'Fe': 0.2, 'Mg': 1.8, 'Si': 1.0, 'O':4.0}
+    assemblage = burnman.Composite([ol, wad])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (wad, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    equality_constraints = [('T', temperatures), ('phase_proportion', (wad, np.array([1.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    
+    
+    assemblage = burnman.Composite([wad, rw])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([1.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    
+    
+    assemblage = burnman.Composite([rw, bdg, per])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([0.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    equality_constraints = [('T', temperatures), ('phase_proportion', (rw, np.array([1.0])))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    Ps = np.array([sol.x[0] for sol in sols if sol.success])
+    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    ax.plot(Ts, Ps/1.e9)
+    
+    plt.show()
 
 
 '''

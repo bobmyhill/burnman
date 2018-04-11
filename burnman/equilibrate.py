@@ -647,24 +647,31 @@ def equilibrate(composition, assemblage, equality_constraints,
         if equality_constraints[i][0] == 'phase_proportion':
             phase=equality_constraints[i][1][0]
             proportion=equality_constraints[i][1][1]
+            if isinstance(proportion, float):
+                proportion = np.array([proportion])
             if not isinstance(proportion, np.ndarray):
                 raise Exception('The constraint proportion in equality {0} should be '
-                                'a numpy array'.format(i+1))
+                                'a float or numpy array'.format(i+1))
             equality_constraint_lists.append(phase_proportion_constraint(phase, assemblage,
                                                                          prm.indices, proportion))
         elif equality_constraints[i][0] == 'phase_composition':
             phase=equality_constraints[i][1][0]
             constraint=equality_constraints[i][1][1]
-            if not isinstance(constraint[-1], np.ndarray):
+            if isinstance(constraint[3], float):
+                constraint = (constraint[0], constraint[1], constraint[2], np.array([constraint[3]]))
+            if not isinstance(constraint[3], np.ndarray):
                 raise Exception('The last constraint parameter in equality {0} should be '
-                                'a numpy array'.format(i+1))
+                                'a float or numpy array'.format(i+1))
             
             equality_constraint_lists.append(phase_composition_constraint(phase, assemblage,
                                                                           prm.indices, constraint))
         elif equality_constraints[i][0] == 'X':
+            constraint=equality_constraints[i][1][1]
+            if isinstance(constraint[-1], float):
+                constraint = (constraint[0], np.array([constraint[-1]]))
             if not isinstance(constraint[-1], np.ndarray):
                 raise Exception('The last constraint parameter in equality {0} should be '
-                                'a numpy array'.format(i+1))
+                                'a float or numpy array'.format(i+1))
             equality_constraint_lists.append([[equality_constraints[i][0],
                                                [equality_constraints[i][0][0], p]]
                                               for p in equality_constraints[i][0][1]])
@@ -674,9 +681,11 @@ def equilibrate(composition, assemblage, equality_constraints,
               equality_constraints[i][0] == 'PT_ellipse' or
               equality_constraints[i][0] == 'S' or
               equality_constraints[i][0] == 'V'):
+            if isinstance(equality_constraints[i][1], float):
+                equality_constraints[i] = (equality_constraints[i][0], np.array([equality_constraints[i][1]]))
             if not isinstance(equality_constraints[i][1], np.ndarray):
                 raise Exception('The last parameter in equality {0} should be '
-                                'a numpy array'.format(i+1))
+                                'a float or numpy array'.format(i+1))
             equality_constraint_lists.append([[equality_constraints[i][0], p]
                                               for p in equality_constraints[i][1]])
         else:
@@ -704,7 +713,12 @@ def equilibrate(composition, assemblage, equality_constraints,
         new_c0 = True
         for i_c1 in range(n_c1):
             if verbose:
-                print('Processing solution: {0}/{1}, {2}/{3}'.format(i_c0+1, n_c0, i_c1+1, n_c1))
+                string = 'Processing solution'
+                if n_c0 > 1:
+                    string += ' {0}/{1}'.format(i_c0+1, n_c0)
+                if n_c1 > 1:
+                    string += ' {0}/{1}'.format(i_c1+1, n_c1)
+                print(string+':')
             # modify initial state if necessary
             equality_constraints = [equality_constraint_lists[0][i_c0], equality_constraint_lists[1][i_c1]]
             for i in range(2):
@@ -714,17 +728,6 @@ def equilibrate(composition, assemblage, equality_constraints,
                     initial_state[1] = equality_constraints[i][1]
                 elif equality_constraints[i][0] == 'PT_ellipse':
                     initial_state = equality_constraints[i][1][1]
-    
-                # Use the null space to find the compositions that
-                # minimize the difference between the starting compositions and solution.
-
-            if equality_constraints[1][0] == 'X' or (new_c0 and equality_constraints[0][0] == 'X'):
-                prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
-                                                                                      equality_constraints,
-                                                                                      prm)
-    
-                # Find the parameters from the endmember amounts
-                prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
     
             # Set the initial proportions and compositions of the phases in the assemblage:
             set_compositions_and_state_from_parameters(prm.initial_parameters, assemblage,
@@ -762,8 +765,9 @@ def equilibrate(composition, assemblage, equality_constraints,
                 if next_ecs[1] != 0:
                     prev_sol.append(sol_list[next_ecs[0]][next_ecs[1] - 1])
 
+                updated_params = False
                 for s in prev_sol:
-                    if s.success:
+                    if s.success and not updated_params:
                         dF = F(s.x, assemblage, cs, prm)
                         luJ = lu_factor(s.J)
                         new_parameters = s.x + lu_solve(luJ, -dF) # next guess based on a Newton step
@@ -771,14 +775,24 @@ def equilibrate(composition, assemblage, equality_constraints,
                         c = prm.constraint_matrix.dot(new_parameters) + prm.constraint_vector
                         if all(c <= 0.):
                             prm.initial_parameters = new_parameters
+                            updated_params = True
                         else:
                             exhausted_phases = [assemblage.phases[phase_idx].name
                                                 for phase_idx, v in
                                                 enumerate(new_parameters[proportion_indices]) if v<0.]
-                            if len(exhausted_phases) > 0:
+                            if len(exhausted_phases) > 0 and verbose:
                                 print('A phase might be exhausted before the next step: {0}'.format(exhausted_phases))
+                if not updated_params:
+                    prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
+                                                                                          cs,
+                                                                                          prm)
+                    prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
 
-                    
+    # Finally, make dimensions of sol_list equal the input dimensions 
+    if len(sol_list[0]) == 1:
+        sol_list = list(zip(*sol_list)[0])
+    if len(sol_list) == 1:
+        sol_list = sol_list[0]
     return sol_list, prm
 
 
