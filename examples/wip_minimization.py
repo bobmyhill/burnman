@@ -95,6 +95,7 @@ plt.plot(x2s, Ts)
 plt.show()
 '''
 
+'''
 assemblage = burnman.Composite([gt1, gt2])
 equality_constraints = [('P', pressures), ('T', temperatures)]
 sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
@@ -105,6 +106,7 @@ plt.plot(x1s, Ts)
 plt.plot(x2s, Ts)
 plt.show()
 
+'''
 
     
 gt = SLB_2011.garnet()
@@ -112,34 +114,89 @@ ol = SLB_2011.mg_fe_olivine()
 wad = SLB_2011.mg_fe_wadsleyite()
 rw = SLB_2011.mg_fe_ringwoodite()
 bdg = SLB_2011.mg_fe_bridgmanite()
+ppv = SLB_2011.post_perovskite()
 per = SLB_2011.ferropericlase()
 opx = SLB_2011.orthopyroxene()
 stv = SLB_2011.stishovite()
 coe = SLB_2011.coesite()
+cpv = SLB_2011.ca_perovskite()
 
 ol.guess = np.array([0.93, 0.07])
 wad.guess = np.array([0.91, 0.09])
 rw.guess = np.array([0.93, 0.07])
 opx.guess = np.array([0.68, 0.08, 0.15, 0.09])
 gt.guess = np.array([0.42, 0.12, 0.46, 0.0, 0.00])
-bdg.guess = np.array([0.9, 0.1, 0.0])
+bdg.guess = np.array([0.86, 0.1, 0.04]) # 
+ppv.guess = np.array([0.86, 0.1, 0.01]) # bdg-in works if guess[2] = 0.
 per.guess = np.array([0.9, 0.1])
 
 
-P = 2.e9
-T = 1200.
+pressures = np.array([25.e9])
+temperatures = np.array([1600.])
+
+composition = {'Fe': 0.2, 'Mg': 2.0, 'Si': 1.9, 'Ca': 0.2, 'Al': 0.4, 'O':6.8}
+assemblage = burnman.Composite([bdg, per, cpv])
+equality_constraints = [('P', pressures), ('T', temperatures)]
+sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+
+S = np.array([assemblage.molar_entropy*assemblage.n_moles])
+
+assemblage = burnman.Composite([bdg, per, ppv, cpv])
+equality_constraints = [('S', S), ('phase_proportion', (bdg, np.array([0.])))]
+sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+bdg_in = assemblage.pressure # this isn't true!!! it's actually bdg_in
 
 
-# Better compositional choice? weighted nnls
-#Ax = b, where A = stoichiometric matrix (converted into site-endmembers), and b = bulk composition (weight heavily)
-#Ax = b, where A = compositional constraints (if any) and b = 0 (weight heavily)
-#Ax = b, where 
-
-#endmember proportions
-#(A1 + A2) / (A1 + A2 + A3) = p_i
-#i.e. A = 1-p, 1-p, -p , b=0
+equality_constraints = [('S', S), ('phase_proportion', (ppv, np.array([0.])))]
+sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+ppv_in = assemblage.pressure
 
 
+pressures = np.linspace(ppv_in, bdg_in, 21)
+equality_constraints = [('P', pressures), ('S', S)]
+sols1, prm1 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+
+
+p1 = np.array([sol[0].x for sol in sols1 if sol[0].success]).T
+
+assemblage = burnman.Composite([bdg, per, cpv])
+pressures = np.linspace(25.e9, ppv_in, 21)
+equality_constraints = [('P', pressures), ('S', S)]
+sols2, prm2 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+
+p2 = np.array([sol[0].x for sol in sols2 if sol[0].success]).T
+
+assemblage = burnman.Composite([ppv, per, cpv])
+pressures = np.linspace(bdg_in, 140.e9, 21)
+equality_constraints = [('P', pressures), ('S', S)]
+sols3, prm3 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+
+p3 = np.array([sol[0].x for sol in sols3 if sol[0].success]).T
+
+
+
+fig = plt.figure()
+ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
+phases = [bdg, per, cpv, ppv]
+colors = ['red', 'green', 'blue', 'orange']
+for p, prm in [(p1, prm1), (p2, prm2), (p3, prm3)]:
+    
+    pressures, temperatures = p[[0, 1],:]
+    ax[0].plot(pressures/1.e9, temperatures, color='black')
+    
+    for i, phase in enumerate(phases):
+        try:
+            idx = prm.parameter_names.index('x({0})'.format(phase.name))
+            x_phase = p[idx,:]
+            ax[i+1].plot(pressures/1.e9, x_phase, color=colors[i])
+            ax[i+1].set_ylim(0,2)
+            ax[i+1].set_xlim(0,140)
+        except:
+            pass
+
+
+plt.show()
+exit()
 
 temperatures = np.linspace(800., 1500., 8)
 pressures = np.linspace(1.e9, 14.e9, 11)

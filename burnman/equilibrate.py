@@ -434,7 +434,7 @@ def jacobian(x, assemblage, equality_constraints, prm):
         elif type_c == 'S': # dS/dx
             # dS/dP = -aV, dS/dT = Cp/T
             full_hessian[i,0:2] = [-assemblage.n_moles*assemblage.alpha*assemblage.molar_volume, 
-                                   assemblage.n_moles*assemblage.heat_capacity_p/x[1]]
+                                   assemblage.n_moles*assemblage.molar_heat_capacity_p/x[1]]
             j=2
             for k, mbr_indices in enumerate(prm.indices):
                 n = len(mbr_indices)
