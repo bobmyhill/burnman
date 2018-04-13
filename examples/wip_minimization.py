@@ -33,9 +33,9 @@ import burnman
 from burnman.minerals import HP_2011_ds62, SLB_2011
 from burnman import equilibrate
 
-aluminosilicates = False
-gt_solvus = False
-lower_mantle = False
+aluminosilicates = True
+gt_solvus = True
+lower_mantle = True
 upper_mantle = False # just a 2D grid of the ol-opx-gt field
 olivine_polymorphs = True
 
@@ -127,9 +127,9 @@ if gt_solvus:
     assemblage = burnman.Composite([gt1, gt2])
     equality_constraints = [('P', pressure), ('T', temperatures)]
     sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-    x1s = np.array([sol.x[3] for sol in sols if sol.success])
-    x2s = np.array([sol.x[6] for sol in sols if sol.success])
-    Ts = np.array([sol.x[1] for sol in sols if sol.success])
+    x1s = np.array([sol.x[3] for sol in sols if sol.code==0])
+    x2s = np.array([sol.x[6] for sol in sols if sol.code==0])
+    Ts = np.array([sol.x[1] for sol in sols if sol.code==0])
     plt.plot(x1s, Ts)
     plt.plot(x2s, Ts)
     plt.show()
@@ -148,34 +148,41 @@ if lower_mantle:
     
     assemblage = burnman.Composite([bdg, per, ppv, cpv])
     equality_constraints = [('S', S), ('phase_proportion', (bdg, np.array([0.])))]
-    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-    bdg_in = assemblage.pressure
+    sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                           store_iterates=False,
+                           initial_state = sol.x[0:2])
+    P_bdg_in = assemblage.pressure
     
     
     equality_constraints = [('S', S), ('phase_proportion', (ppv, np.array([0.])))]
-    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-    ppv_in = assemblage.pressure
-    
-    pressures = np.linspace(ppv_in, bdg_in, 21)
+    sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                           store_iterates=False,
+                           initial_state = sol.x[0:2])
+    P_ppv_in = assemblage.pressure
+    T_ppv_in = assemblage.temperature
+
+    pressures = np.linspace(P_ppv_in, P_bdg_in, 21)
     equality_constraints = [('P', pressures), ('S', S)]
-    sols1, prm1 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    sols1, prm1 = equilibrate(composition, assemblage, equality_constraints,
+                              initial_state = [P_ppv_in, T_ppv_in],
+                              initial_composition_from_assemblage = True,
+                              store_iterates=False)
     p1 = np.array([sol.x for sol in sols1 if sol.success]).T
-    
+
+
     assemblage = burnman.Composite([bdg, per, cpv])
-    pressures = np.linspace(25.e9, ppv_in, 21)
+    pressures = np.linspace(25.e9, P_ppv_in, 21)
     equality_constraints = [('P', pressures), ('S', S)]
     sols2, prm2 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
     
     p2 = np.array([sol.x for sol in sols2 if sol.success]).T
     
     assemblage = burnman.Composite([ppv, per, cpv])
-    pressures = np.linspace(bdg_in, 140.e9, 21)
+    pressures = np.linspace(P_bdg_in, 140.e9, 21)
     equality_constraints = [('P', pressures), ('S', S)]
     sols3, prm3 = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
     
     p3 = np.array([sol.x for sol in sols3 if sol.success]).T
-    
-    
     
     fig = plt.figure()
     ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
@@ -219,6 +226,7 @@ if olivine_polymorphs:
     assemblage = burnman.Composite([ol, wad, rw])
     equality_constraints = [('phase_proportion', (ol, np.array([0.0]))),
                             ('phase_proportion', (rw, np.array([0.0])))]
+    
     sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
     Pinv1, Tinv1 = sol.x[0:2]
           
