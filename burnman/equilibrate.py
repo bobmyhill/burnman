@@ -192,10 +192,10 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
         sol = minimize(func_min_cdist, [0.]*reaction_vectors.shape[1],
                        args=(guess_proportions, baseline_endmember_amounts,
                              reaction_vectors, prm.indices),
-                       method='COBYLA', constraints=cons)
+                       method='COBYLA', constraints=cons, tol=1.e-16)
 
         #assert(sol.status==1)
-        assert(cons_fun(sol.x) > -1.e-12)
+        assert(cons_fun(sol.x) > -eps)
         
         # add the reaction vector
         baseline_endmember_amounts += reaction_vectors.dot(sol.x)
@@ -473,7 +473,7 @@ def F(x, assemblage, equality_constraints, prm):
         
     eqns[2:2+n_reactions] = np.dot(prm.stoic_nullspace, partial_gibbs_vector)
     eqns[2+n_reactions:] = np.dot(prm.stoic_colspace, (new_endmember_amounts - prm.baseline_endmember_amounts))
-    return eqns #*scaling(equality_constraints, n_indices, n_reactions)
+    return eqns # , assemblage.molar_gibbs*assemblage.n_moles #*scaling(equality_constraints, n_indices, n_reactions)
 
 def jacobian(x, assemblage, equality_constraints, prm):
     # The solver always calls the Jacobian with the same
@@ -606,7 +606,7 @@ def lambda_bounds(dx, x, indices):
                     for i, step in enumerate(np.abs(dx))])
     
     #return (1.e-8, 1.)
-    return (min(1.e-8, max_lmda/4.), max_lmda)
+    return (1.e-8, max_lmda)
 
 def phase_proportion_parameter_indices(indices):
     i=2
@@ -671,9 +671,22 @@ def phase_composition_constraint(phase, assemblage, indices, constraint):
 
 
 def equilibrate(composition, assemblage, equality_constraints,
-                initial_state=[5.e9, 1000.], tol=1.e-3,
+                initial_state = None,
+                initial_state_from_assemblage = False,
+                initial_composition_from_assemblage = False, 
+                tol=1.e-3,
                 store_iterates=False, max_iterations=100.,verbose=True):
-    
+
+    if initial_state is None:
+        initial_state = [5.e9, 1000.]
+        
+    if initial_state_from_assemblage is True:
+        if (isinstance(assemblage.pressure, float) and
+            isinstance(assemblage.temperature, float)):
+            initial_state = [assemblage.pressure, assemblage.temperature]
+        else:
+            raise Exception('assemblage has no initial state')
+        
     prm = namedtuple('assemblage_parameters', [])
     
     # Process elements
@@ -774,13 +787,18 @@ def equilibrate(composition, assemblage, equality_constraints,
             initial_state[1] = equality_constraint_lists[i][0][1]
         elif equality_constraint_lists[i][0][0] == 'PT_ellipse':
             initial_state = equality_constraint_lists[i][0][1][1]
-            
-    prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
-                                                                          [equality_constraint_lists[0][0],
-                                                                           equality_constraint_lists[1][0]],
-                                                                          prm)
 
-    prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
+    if initial_composition_from_assemblage:
+        prm.baseline_endmember_amounts = get_endmember_amounts(assemblage, prm.indices)
+        prm.initial_parameters = get_parameters(assemblage, prm.indices)
+    else:
+        prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
+                                                                              [equality_constraint_lists[0][0],
+                                                                               equality_constraint_lists[1][0]],
+                                                                              prm)
+        
+        prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
+        
 
     sol_list = np.empty(shape=(n_c0, n_c1)+(0,)).tolist()
     for i_c0 in range(n_c0):
@@ -839,13 +857,15 @@ def equilibrate(composition, assemblage, equality_constraints,
                         c = prm.constraint_matrix.dot(new_parameters) + prm.constraint_vector
                         if all(c <= 0.):
                             prm.initial_parameters = new_parameters
-                            updated_params = True
                         else:
+                            prm.initial_parameters = s.x
                             exhausted_phases = [assemblage.phases[phase_idx].name
                                                 for phase_idx, v in
                                                 enumerate(new_parameters[proportion_indices]) if v<0.]
                             if len(exhausted_phases) > 0 and verbose:
                                 print('A phase might be exhausted before the next step: {0}'.format(exhausted_phases))
+                        
+                        updated_params = True
                 if not updated_params:
                     prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
                                                                                           cs,
