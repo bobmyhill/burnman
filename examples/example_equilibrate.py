@@ -3,7 +3,7 @@
 # GPL v2 or later.
 
 '''
-example_gibbs_minimization
+example_equilibrate
 --------------------
 
 This example demonstrates how burnman may be used to calculate the
@@ -14,7 +14,7 @@ of a fixed bulk composition.
 
 * :doc:`mineral_database`
 * :class:`burnman.composite.Composite`
-* :func:`burnman.equilibriumassemblage.gibbs_minimizer`
+* :func:`burnman.equilibrate.equilibrate`
 '''
 from __future__ import absolute_import
 from __future__ import print_function
@@ -30,9 +30,10 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 import burnman
-from burnman.minerals import HP_2011_ds62, SLB_2011
+from burnman.minerals import HP_2011_ds62, SLB_2011, JH_2015
 from burnman import equilibrate
 
+ordering = True
 aluminosilicates = True
 gt_solvus = True
 lower_mantle = True
@@ -61,8 +62,27 @@ ppv.guess = np.array([0.86, 0.1, 0.01]) # bdg-in works if guess[2] = 0.
 per.guess = np.array([0.9, 0.1])
 
 
+if ordering:
+    orthopyroxene = JH_2015.orthopyroxene()
+    orthopyroxene.guess = np.array([1./3., 1./3., 1./3., 0., 0., 0.])
+    temperatures = np.linspace(300., 2000., 41)
+
+    Mg_numbers = np.linspace(10., 50., 5)
+    assemblage = burnman.Composite([orthopyroxene])
+    equality_constraints = [('P', 1.e5), ('T', temperatures)]
+    
+    for Mg_number in Mg_numbers:
+        composition = {'Mg': Mg_number/100.*2., 'Fe': (1.-Mg_number/100.)*2., 'Si': 2., 'O': 6.}
+        sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+        Ts = np.array([sol.x[1] for sol in sols if sol.success])
+        p_fms = np.array([sol.x[-1] for sol in sols if sol.success])
+        plt.plot(Ts, p_fms, label='Mg# = {0}'.format(Mg_number))
+    plt.legend(loc='best')
+    plt.show()
 
 
+    
+    
 if aluminosilicates:
     sillimanite = HP_2011_ds62.sill()
     andalusite = HP_2011_ds62.andalusite()
