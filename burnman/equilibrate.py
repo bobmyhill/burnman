@@ -677,16 +677,20 @@ def equilibrate(composition, assemblage, equality_constraints,
                 tol=1.e-3,
                 store_iterates=False, max_iterations=100.,verbose=True):
 
+    # Annoyingly, python overwrites default values and stores them for the next function run
+    # Thus, we need to have the following two lines to set a fixed default initial_state,
+    # rather than setting a default in the function call above.
     if initial_state is None:
         initial_state = [5.e9, 1000.]
         
+    # First, overwrite initial state if the user wants it set from the assemblage    
     if initial_state_from_assemblage is True:
-        if (isinstance(assemblage.pressure, float) and
-            isinstance(assemblage.temperature, float)):
+        try:
             initial_state = [assemblage.pressure, assemblage.temperature]
-        else:
+        except:
             raise Exception('assemblage has no initial state')
-        
+
+    # Initialize a named tuple for the equilibration parameters
     prm = namedtuple('assemblage_parameters', [])
     
     # Process elements
@@ -700,8 +704,6 @@ def equilibrate(composition, assemblage, equality_constraints,
         for mbr_idx in mbr_indices[1:]:
             prm.parameter_names.append(' p({0} in {1})'.format(assemblage.phases[i].endmembers[mbr_idx][0].name, assemblage.phases[i].name))
 
-
-    
 
     # Find the bulk composition vector
     prm.bulk_composition_vector = np.array([composition[e] for e in prm.elements])
@@ -773,13 +775,14 @@ def equilibrate(composition, assemblage, equality_constraints,
                             'Should be one of P, T, S, V, X,\n'
                             'PT_ellipse, phase_proportion, or phase_composition.'.format(i+1))
 
-    
+
+    # Set up solves
     sol_list = []
     n_c0 = len(equality_constraint_lists[0])
     n_c1 = len(equality_constraint_lists[1])
-
     proportion_indices = phase_proportion_parameter_indices(prm.indices)
 
+    # Reformat equality constraints if they are related to pressure or temperature
     for i in range(2):
         if equality_constraint_lists[i][0][0] == 'P':
             initial_state[0] = equality_constraint_lists[i][0][1]
@@ -800,6 +803,7 @@ def equilibrate(composition, assemblage, equality_constraints,
         prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
         
 
+    # Solve the system of equations, loop over input parameters
     sol_list = np.empty(shape=(n_c0, n_c1)+(0,)).tolist()
     for i_c0 in range(n_c0):
         new_c0 = True
