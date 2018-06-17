@@ -1,0 +1,39 @@
+  0.6 Fe +  0.4 O +  0 S =
+ 
+   0.00000    mol   gas_ideal
+           (1200.00 C, 1 atm,     a=1.2154E-06)
+           ( 1.2149E-06      Fe                                        FACT53
+           + 5.5420E-10      FeO                                       FACT53
+           + 5.1711E-13      O                                         FACT53
+           + 3.4613E-14      O2                                        FACT53
+           + 1.4678E-29      O3                                        FACT53)
+ 
+ + 1.0000     mol   Liq(Matte/Metal)
+   (39.907 gram, 1.0000 mol)
+           (1200.00 C, 1 atm,     a=1.0000)
+           ( 0.59189         Fe                                        UQPY
+           + 0.40000         O                                         UQPY
+           + 8.1126E-03      Fe3+                                      UQPY)
+ 
+           Mole fraction of quadruplets:
+           Fe-Fe-Va-Va                        0.44327
+           O-O-Va-Va                          3.1040E-06
+           Fe3+-Fe3+-Va-Va                    3.5775E-04
+           Fe-O-Va-Va                         0.53941
+           Fe-Fe3+-Va-Va                      8.2726E-04
+           O-Fe3+-Va-Va                       1.6129E-02
+           Total amount/mol                   1.4400
+ 
+           System component       Mole fraction  Mass fraction
+           Fe                       0.60000        0.83963
+           O                        0.40000        0.16037
+ 
+ The cutoff concentration has been specified to 1.0000E-75
+ 
+ *****************************************************************
+       H            G            V            S           Cp
+      (J)          (J)        (litre)       (J/K)        (J/K)
+ *****************************************************************
+ -3.63222E+04 -1.72125E+05  0.00000E+00  9.21853E+01  3.50851E+01
+ 
+ Total mass/gram = 39.907

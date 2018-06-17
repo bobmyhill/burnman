@@ -1,0 +1,58 @@
+  0.5 Fe +  0.1 O +  0.4 S =
+ 
+   0.00000    mol   gas_ideal
+           (1200.00 C, 1 atm,     a=1.1412E-03)
+           ( 9.2582E-04      S2                                        FACT53
+           + 1.9290E-04      SO2                                       FACT53
+           + 1.7477E-05      SO                                        FACT53
+           + 3.7806E-06      SSO                                       FACT53
+           + 9.0474E-07      S                                         FACT53
+           + 3.1980E-07      S3                                        FACT53
+           + 6.9670E-09      Fe                                        FACT53
+           + 4.9915E-09      FeS                                       FACT53
+           + 3.4495E-10      S4                                        FACT53
+           + 4.2277E-11      FeO                                       FACT53
+           + 2.0682E-11      SO3                                       FACT53
+           + 6.8786E-12      O                                         FACT53
+           + 6.1244E-12      O2                                        FACT53
+           + 6.2725E-14      S5                                        FACT53
+           + 3.1407E-16      S6                                        FACT53
+           + 8.5365E-19      S7                                        FACT53
+           + 4.4247E-22      S8                                        FACT53
+           + 3.4546E-26      O3                                        FACT53)
+ 
+ + 1.0000     mol   Liq(Matte/Metal)
+   (42.348 gram, 1.0000 mol)
+           (1200.00 C, 1 atm,     a=1.0000)
+           ( 0.40000         S                                         UQPY
+           + 0.49438         Fe                                        UQPY
+           + 0.10000         O                                         UQPY
+           + 5.6206E-03      Fe3+                                      UQPY)
+ 
+           Mole fraction of quadruplets:
+           S-S-Va-Va                          3.3176E-02
+           Fe-Fe-Va-Va                        4.7602E-02
+           O-O-Va-Va                          9.1481E-07
+           Fe3+-Fe3+-Va-Va                    4.7615E-05
+           S-Fe-Va-Va                         0.72974
+           S-O-Va-Va                          3.4842E-04
+           S-Fe3+-Va-Va                       8.8592E-04
+           Fe-O-Va-Va                         0.17321
+           Fe-Fe3+-Va-Va                      9.8900E-05
+           O-Fe3+-Va-Va                       1.4885E-02
+           Total amount/mol                   1.0626
+ 
+           System component       Mole fraction  Mass fraction
+           Fe                       0.50000        0.65935
+           S                        0.40000        0.30287
+           O                        0.10000        3.7780E-02
+ 
+ The cutoff concentration has been specified to 1.0000E-75
+ 
+ *****************************************************************
+       H            G            V            S           Cp
+      (J)          (J)        (litre)       (J/K)        (J/K)
+ *****************************************************************
+ -1.07401E+04 -1.54860E+05  0.00000E+00  9.78312E+01  4.37650E+01
+ 
+ Total mass/gram = 42.348
