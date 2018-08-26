@@ -6,9 +6,10 @@ from scipy.optimize import minimize
 from quasichemical_functions import *
 from models import *
 
+R = 8.31446
 
-test_binary = False
-test_asymmetric_binary = False
+test_binary = True
+test_asymmetric_binary = True
 test_ternary = True
 test_quaternary = False
 
@@ -30,8 +31,8 @@ if test_binary:
     figH = mpimg.imread('binary_42kJ.png')
     figS = mpimg.imread('binary_42kJ_entropy.png')
     
-    ax[0].imshow(figH, extent=[0., 1., -41000., 0.], aspect='auto')
-    ax[1].imshow(figS, extent=[0., 1., 0., 7.25], aspect='auto')
+    ax[0].imshow(figH, extent=[0., 1., -41000., 0.], aspect='auto', alpha=0.3)
+    ax[1].imshow(figS, extent=[0., 1., 0., 7.0], aspect='auto', alpha=0.3)
     
     for dG in [0., -21000., -42000., -84000.]:
         liq.deltaG_0_pairs = lambda P, T: np.array([[0., dG], 
@@ -49,7 +50,7 @@ if test_binary:
         ax[1].plot(xs, Ss, label='{0} kJ/mol'.format(dG/1000.))
 
 
-    ax[1].plot(xs, -8.31446*(xs*np.log(xs) + (1. - xs)*np.log(1. - xs)), linestyle='--', linewidth=2., label='ideal')
+    ax[1].plot(xs, -R*(xs*np.log(xs) + (1. - xs)*np.log(1. - xs)), linestyle='--', linewidth=2., label='ideal')
 
     for i in range(2):
         ax[i].legend(loc='best')
@@ -92,8 +93,8 @@ if test_asymmetric_binary:
     ax[0].set_xlim(0., 1.)
     ax[1].set_xlim(0., 1.)
     ax[1].plot(xs,
-               -8.31446*(xs*np.log(xs) +
-                         (1. - xs)*np.log(1. - xs)),
+               -R*(xs*np.log(xs) +
+                   (1. - xs)*np.log(1. - xs)),
                linestyle='--', linewidth=2., label='ideal')
     ax[0].legend(loc='best')
     ax[1].legend(loc='best')
