@@ -38,7 +38,7 @@ aluminosilicates = False # The example plots the andalusite-sillimanite-kyanite 
 gt_solvus = False # This example demonstrates the shape of the pyrope-grossular solvus
 lower_mantle = True # This example calculates temperatures and assemblage properties along an isentrope in the lower mantle
 upper_mantle = False # This example produces a 2D grid of the ol-opx-gt field
-olivine_polymorphs = True # DOESN'T SOLVE IF LOWER MANTLE OR UPPER MANTLE ARE RUN BEFOREHAND. NEED TO ROOT OUT THIS WEIRD BUG! This example produces a P-T pseudosection for a fo90 composition 
+olivine_polymorphs = True # This example produces a P-T pseudosection for a fo90 composition 
 
 gt = SLB_2011.garnet()
 ol = SLB_2011.mg_fe_olivine()
