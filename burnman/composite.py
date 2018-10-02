@@ -493,9 +493,8 @@ class Composite(Material):
         A = S.T.dot(pinv(E.T))
     
         # First, let's make a guess at a composition using nnls
-        # This will only satisfy the site occupancy constraints if the bulk composition
-        # can be perfectly recreated from the endmembers. Even if not, this should
-        # provide a reasonable starting guess for the constrained minimization
+        # This will not satisfy the site occupancy constraints,
+        # but should provide a reasonable starting guess for the constrained minimization
         Aprime = np.vstack((A, Enull))
         bprime = np.concatenate((bulk_composition_vector, np.zeros(len(Enull))))
         xprime_guess, residual = opt.nnls(Aprime, bprime)
@@ -546,16 +545,9 @@ class Composite(Material):
                 guesses = np.delete(np.array(guesses), excluded_indices, axis=0)
                 mul = np.delete(mul, excluded_indices, axis=0)
                 mul = np.delete(mul, excluded_indices, axis=1)
-
-                cs = lambda E: [{'type': 'ineq',
-                                 'fun': lambda x, eq=eq: eq.dot(baseline_amounts +
-                                                                Snull.T.dot(x))}
-                                for eq in E.T]
                 
-                cons = cs(E)
-        
-                def fn(x, baseline_amounts, Snull, mul):
-                    mbr_amounts = baseline_amounts + Snull.T.dot(x)
+                def fn(x, E, mul):
+                    mbr_amounts = pinv(E.T).dot(sol.x)
                     phase_amounts = np.array([max(1.e-10, v) for v in mul.dot(mbr_amounts)])
 
                     mbr_fractions = mbr_amounts/phase_amounts
@@ -567,14 +559,11 @@ class Composite(Material):
 
                     return np.linalg.norm(mbr_fractions - guessed_fractions)
 
-                baseline_amounts = pinv(E.T).dot(sol.x)
-                Snull = np.array(Matrix(S.T).nullspace()).astype(float)
-                solg = opt.minimize(fn, [0.]*len(Snull), args=(baseline_amounts, Snull, mul),
-                                    method='SLSQP', constraints=cons)
+                solg = opt.minimize(fn, sol.x, args=(E, mul),
+                                    method='SLSQP', bounds=bounds, constraints=cons)
 
                 if solg.success:
                     sol = solg
-                    sol.x = E.T.dot(baseline_amounts + Snull.T.dot(solg.x))
                 else:
                     warnings.warn('Solver failed to minimize the residuals in composition. '
                                   'Falling back to solution ignoring compositional guesses.')
@@ -638,13 +627,6 @@ class Composite(Material):
         else:
             raise Exception("A solution was not found.")
 
-    @material_property
-    def formula(self):
-        """
-        Returns molar formula of the assemblage [atoms/mol]
-        """
-        return sum_formulae([self.phases[i].formula for i in range(len(self.phases))],
-                            np.array(self.molar_fractions))
 
     @material_property
     def molar_internal_energy(self):
