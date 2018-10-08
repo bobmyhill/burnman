@@ -633,14 +633,14 @@ class Composite(Material):
             return (endmember_amounts, residuals, rnorm)
         else:
             raise Exception("A solution was not found.")
-        
+
     @material_property
     def formula(self):
         """
-        Returns bulk formula of the assemblage
+        Returns molar formula of the assemblage [atoms/mol]
         """
         return sum_formulae([self.phases[i].formula for i in range(len(self.phases))],
-                            np.array(self.molar_fractions)*self.n_moles)
+                            np.array(self.molar_fractions))
 
     @material_property
     def molar_internal_energy(self):
