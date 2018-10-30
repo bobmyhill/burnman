@@ -30,11 +30,82 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
 import burnman
-from burnman.minerals import HP_2011_ds62, SLB_2011, JH_2015
 from burnman import equilibrate
+from burnman.nonlinear_solvers import damped_newton_solve
 
-ordering = False # This example plots the state of order of the Jennings and Holland orthopyroxene in the simple en-fs binary at 1 bar.
-aluminosilicates = False # The example plots the andalusite-sillimanite-kyanite phase diagram
+
+from burnman.minerals import HP_2011_ds62, SLB_2011, JH_2015
+
+
+
+"""
+gt = SLB_2011.garnet()
+gt2 = SLB_2011.garnet()
+assemblage = burnman.Composite([gt, gt2])
+bulk_composition = {'Fe': 3., 'Mg':1., 'Si': 4., 'O':12.}
+from scipy.linalg import pinv
+from sympy import Matrix, nsimplify
+import scipy.optimize as opt
+print(assemblage.element_set)
+bulk = assemblage.stoichiometric_matrix()[2]
+
+
+def delta_p(stoichiometric_matrix, compositional_constraints,
+            bulk_composition_vector, delta_index = None, delta=1.e-7):
+
+    S = stoichiometric_matrix
+    E = compositional_constraints.T
+    Enull = np.array(Matrix(E).nullspace()).astype(float)
+    A = S.T.dot(pinv(E.T))
+
+    if delta_index is None:
+        Aprime = np.vstack((A, Enull))
+        bprime = np.concatenate((bulk_composition_vector, np.zeros(len(Enull))))
+    else:
+        Aprime = np.vstack((A, pinv(E.T)[delta_index], Enull))
+        bprime = np.concatenate((bulk_composition_vector, np.array([delta]), np.zeros(len(Enull))))
+        
+    xprime_guess, residual = opt.nnls(Aprime, bprime)
+    x = pinv(E.T).dot(xprime_guess)
+    return (x, residual)
+
+
+elements = assemblage.element_set
+for e in bulk_composition.keys():
+    if e not in elements:
+        raise Exception('The bulk composition contains element {0}, '
+                        'which is not in the assemblage'.format(e))
+
+
+stoic = assemblage.stoichiometric_matrix()
+const = assemblage.compositional_constraints
+bulk_composition_vector = np.array([0. if e not in bulk_composition
+                                    else bulk_composition[e]
+                                    for e in elements])
+
+x, res = delta_p(stoic, const, bulk_composition_vector)
+
+if res > 1.e-12:
+    raise Exception('The bulk composition cannot be satisfied by the chosen assemblage.')
+else:
+    indices = [i for i, v in enumerate(x) if np.abs(v) < 1.e-12]
+    absent_indices = [i for i, v in enumerate(x) if np.abs(v) < 1.e-12]
+    for idx in indices:
+        for delta in [-1.e-7, 1.e-7]:
+            if idx in absent_indices:
+                x, res = delta_p(stoic, const, bulk_composition_vector, delta_index = idx, delta = delta)
+                if res < 1.e-10:
+                    absent_indices = [i for i in absent_indices if np.abs(x[i]) < 1.e-12] # update absent_indices
+
+print(absent_indices)
+"""
+
+# For each endmember, make a tiny amount and add/subtract from the bulk composition
+# Remove the endmember from the list of endmembers, see if composition can be made.
+
+
+ordering = True # This example plots the state of order of the Jennings and Holland orthopyroxene in the simple en-fs binary at 1 bar.
+aluminosilicates = True # The example plots the andalusite-sillimanite-kyanite phase diagram
 gt_solvus = False # This example demonstrates the shape of the pyrope-grossular solvus
 lower_mantle = True # This example calculates temperatures and assemblage properties along an isentrope in the lower mantle
 upper_mantle = False # This example produces a 2D grid of the ol-opx-gt field
@@ -371,3 +442,4 @@ if olivine_polymorphs:
     plt.show()
 
     
+
