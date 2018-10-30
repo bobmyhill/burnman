@@ -11,7 +11,6 @@ from scipy.linalg import lu_factor, lu_solve
 
 from string import ascii_uppercase as ucase
 #from .processchemistry import read_masses, dictionarize_formula, formula_mass, solution_bounds
-from .processchemistry import solution_bounds
 from .nonlinear_solvers import damped_newton_solve
 from collections import namedtuple
 
@@ -75,7 +74,7 @@ def calculate_constraints(assemblage, indices):
             bounds.append(np.array([[]]))
             n_raw_constraints += 1
         else:
-            bounds.append(solution_bounds(assemblage.phases[i].solution_model.endmember_occupancies[e_indices]))
+            bounds.append(assemblage.phases[i].solution_model.endmember_occupancies[e_indices])
             n_constraints += len(bounds[-1][0])
             n_raw_constraints += len(bounds[-1][0])
 

@@ -493,8 +493,9 @@ class Composite(Material):
         A = S.T.dot(pinv(E.T))
     
         # First, let's make a guess at a composition using nnls
-        # This will not satisfy the site occupancy constraints,
-        # but should provide a reasonable starting guess for the constrained minimization
+        # This will only satisfy the site occupancy constraints if the bulk composition
+        # can be perfectly recreated from the endmembers. Even if not, this should
+        # provide a reasonable starting guess for the constrained minimization
         Aprime = np.vstack((A, Enull))
         bprime = np.concatenate((bulk_composition_vector, np.zeros(len(Enull))))
         xprime_guess, residual = opt.nnls(Aprime, bprime)
