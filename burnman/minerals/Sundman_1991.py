@@ -41,10 +41,10 @@ class bcc_iron (Mineral):
             'Kdprime_0': -3.1e-11,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula)}
-        self.property_modifiers = [
-            ['magnetic_chs', {'structural_parameter': 0.4,
-                              'curie_temperature': [1043., 0.],
-                              'magnetic_moment': [2.22, 0.]}]]
+        
+        self.property_modifiers = [['magnetic_chs', {'curie_temperature': [1043., 0.0],
+                                                     'magnetic_moment': [2.22, 0.0],
+                                                     'structural_parameter': 0.4}]]
         Mineral.__init__(self)
 
 
@@ -66,8 +66,8 @@ class fcc_iron (Mineral):
             'Kdprime_0': -3.37e-11,
             'n': sum(formula.values()),
             'molar_mass': formula_mass(formula)}
-        self.property_modifiers = [
-            ['magnetic_chs', {'structural_parameter': 0.28,
-                              'curie_temperature': [201., 0.],
-                              'magnetic_moment': [2.1, 0.]}]]
+        
+        self.property_modifiers = [['magnetic_chs', {'curie_temperature': [201., 0.0],
+                                                     'magnetic_moment': [2.1, 0.0],
+                                                     'structural_parameter': 0.28}]]
         Mineral.__init__(self)

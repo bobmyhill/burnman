@@ -22,6 +22,10 @@ Mineral database
 """
 from __future__ import absolute_import
 
+# Brosh et al., 2007
+from . import Brosh_2007
+from . import Sundman_1991
+
 # Stixrude and Lithgow-Bertelloni
 from . import SLB_2011
 from . import SLB_2011_ZSB_2013
