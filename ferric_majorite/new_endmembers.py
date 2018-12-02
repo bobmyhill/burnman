@@ -21,6 +21,78 @@ from burnman.equilibrate import equilibrate
 import matplotlib.image as mpimg
 from scipy.optimize import fsolve
 
+
+fcc = minerals.BM_2019.fcc_iron()
+bcc = minerals.BM_2019.bcc_iron()
+hcp = minerals.BM_2019.hcp_iron()
+
+composition = fcc.formula
+
+
+
+assemblage = burnman.Composite([bcc, fcc, hcp])
+assemblage.set_state(10.e9, 500.)
+equality_constraints = [('phase_proportion', (bcc, 0.0)), ('phase_proportion', (fcc, 0.0))]
+sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+Pinv, Tinv = sol.x[0:2]
+
+assemblage = burnman.Composite([fcc, hcp])
+assemblage.set_state(10.e9, 500.)
+temperatures = np.linspace(Tinv, 3500., 21)
+equality_constraints = [('T', temperatures), ('phase_proportion', (hcp, 0.0))]
+sols, prm = equilibrate(composition, assemblage, equality_constraints, 
+                        initial_state_from_assemblage=True,
+                        store_iterates=False)
+
+pressures = np.array([s.x[0] for s in sols if s.success])
+temperatures = np.array([s.x[1] for s in sols if s.success])
+
+plt.plot(pressures/1.e9, temperatures)
+
+assemblage = burnman.Composite([bcc, hcp])
+assemblage.set_state(12.e9, 300.)
+temperatures = np.linspace(300., Tinv, 8)
+equality_constraints = [('T', temperatures), ('phase_proportion', (hcp, 1.0))]
+sols, prm = equilibrate(composition, assemblage, equality_constraints, 
+                        initial_state_from_assemblage=True,
+                        store_iterates=False)
+
+pressures = np.array([s.x[0] for s in sols])
+temperatures = np.array([s.x[1] for s in sols])
+
+plt.plot(pressures/1.e9, temperatures)
+
+
+
+assemblage = burnman.Composite([bcc, fcc])
+pressures = np.linspace(1.e5, Pinv, 101)
+assemblage.set_state(1.e5, 500.)
+equality_constraints = [('P', pressures), ('phase_proportion', (bcc, 1.0))]
+sols, prm = equilibrate(composition, assemblage, equality_constraints,
+                        initial_state_from_assemblage=True,
+                        store_iterates=False)
+
+pressures = np.array([s.x[0] for s in sols if s.success])
+temperatures = np.array([s.x[1] for s in sols if s.success])
+
+plt.plot(pressures/1.e9, temperatures)
+
+
+assemblage = burnman.Composite([bcc, fcc])
+pressures = np.linspace(1.e5, Pinv, 101)
+assemblage.set_state(1.e5, 1500.)
+equality_constraints = [('P', pressures), ('phase_proportion', (bcc, 1.0))]
+sols, prm = equilibrate(composition, assemblage, equality_constraints,
+                        initial_state_from_assemblage=True,
+                        store_iterates=False)
+
+pressures = np.array([s.x[0] for s in sols if s.success])
+temperatures = np.array([s.x[1] for s in sols if s.success])
+
+plt.plot(pressures/1.e9, temperatures)
+
+plt.show()
+exit()
 fcc = minerals.Brosh_2007.fcc_iron()
 bcc = minerals.Brosh_2007.bcc_iron()
 hcp = minerals.Brosh_2007.hcp_iron()

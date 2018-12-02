@@ -22,7 +22,8 @@ Mineral database
 """
 from __future__ import absolute_import
 
-# Brosh et al., 2007
+# Brosh et al., 2007 and other iron phases
+from . import BM_2019
 from . import Brosh_2007
 from . import Sundman_1991
 

@@ -203,9 +203,12 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
 
     # Get compositional residuals
     res = prm.stoichiometric_matrix.dot(baseline_endmember_amounts) - prm.bulk_composition_vector
-    if any(res > 1.e-9):
-        print('Residuals:\n{0}'.format(res))
-        raise Exception( "Baseline assemblage refinement failed." )
+    try:
+        if any(res > 1.e-9):
+            print('Residuals:\n{0}'.format(res))
+            raise Exception( "Baseline assemblage refinement failed." )
+    except:
+        pass # if only one element, if exactly zero
     return baseline_endmember_amounts
 
 def get_parameters_from_state_and_endmember_amounts(state, assemblage, prm):
