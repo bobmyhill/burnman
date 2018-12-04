@@ -25,15 +25,41 @@ from scipy.optimize import fsolve
 fcc = minerals.BM_2019.fcc_iron()
 bcc = minerals.BM_2019.bcc_iron()
 hcp = minerals.BM_2019.hcp_iron()
+liq = minerals.other.liquid_iron()
+
+burnman.tools.check_eos_consistency(bcc, P=1.e9, T=1800., tol=1.e-7, verbose=True)
+exit()
+
+bcc.set_state(1.e5, 1811.)
+liq.set_state(1.e5, 1811.)
+liq.params['E_0'] = bcc.gibbs - liq.gibbs
+
+temperatures = np.linspace(1800., 3000., 101)
+
+for P in [1.e5, 1.e9, 10.e9]:
+    pressures = P + 0.*temperatures
+    plt.plot(temperatures, (bcc.evaluate(['gibbs'], pressures, temperatures)[0] - 
+                            liq.evaluate(['gibbs'], pressures, temperatures)[0]))
+plt.show()
 
 composition = fcc.formula
+assemblage = burnman.Composite([bcc, fcc, liq])
+assemblage.set_state(2.e9, 2000.)
+equality_constraints = [('phase_proportion', (bcc, 0.0)), ('phase_proportion', (liq, 0.0))]
+sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                       initial_state_from_assemblage=True,
+                       store_iterates=False)
+Pinv, Tinv = sol.x[0:2]
+print(Pinv, Tinv)
 
-
+exit()
 
 assemblage = burnman.Composite([bcc, fcc, hcp])
 assemblage.set_state(10.e9, 500.)
 equality_constraints = [('phase_proportion', (bcc, 0.0)), ('phase_proportion', (fcc, 0.0))]
-sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                       initial_state_from_assemblage=True,
+                       store_iterates=False)
 Pinv, Tinv = sol.x[0:2]
 
 assemblage = burnman.Composite([fcc, hcp])
