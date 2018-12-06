@@ -25,7 +25,29 @@ class BroshCalphad(eos.EquationOfState):
         """
         Returns volume :math:`[m^3]` as a function of pressure :math:`[Pa]`.
         """
-        return 0.
+        X = [1./(1. - params['a'][i-2] +
+                 params['a'][i-2] *
+                 np.power(1. + i/(3.*params['a'][i-2])*pressure/params['K_0'], 1./float(i)))
+             for i in range(2, 6)]
+        V_c = params['V_0']*np.sum([params['c'][i-2]*np.power(X[i-2], 3.)
+                                    for i in range(2, 6)])
+
+        nu = self._theta(pressure, params)/temperature
+        dP = 1000.
+        dthetadP = (self._theta(pressure+dP/2., params) -
+                    self._theta(pressure-dP/2., params))/dP
+        V_qh = 3.*params['n']*gas_constant*np.exp(-nu)/(1. - np.exp(-nu))*dthetadP # eq. 6
+
+        
+        f = np.sqrt(1. + 2.*params['b'][1] *
+                    (1. + params['delta'][1])*pressure/params['K_0'])
+        dIdP = ( (1. + params['delta'][1])/(params['K_0']*(1. + params['b'][1])) *
+                 np.exp((1. - f)/params['b'][1]) )
+        V_th = self._C_T(temperature, params)*dIdP
+
+        #V = dG_c/dP + dG_qh/dP - C_T*(dI_P/dP)
+        return V_c + V_qh + V_th
+        
 
     def pressure(self, temperature, volume, params):
         return 0.
@@ -35,23 +57,25 @@ class BroshCalphad(eos.EquationOfState):
         Returns isothermal bulk modulus :math:`K_T` :math:`[Pa]` as a function of pressure :math:`[Pa]`,
         temperature :math:`[K]` and volume :math:`[m^3]`.
         """
-        return 0.
+        dP = 1000.
+        dV = (self.volume(pressure + dP/2., temperature, params) -
+              self.volume(pressure - dP/2., temperature, params))
+        return 1./volume*dP/dV
 
     def adiabatic_bulk_modulus(self, pressure, temperature, volume, params):
         """
         Returns adiabatic bulk modulus :math:`K_s` of the mineral. :math:`[Pa]`.
         """
-        return 0.
+        if temperature < 1.e-10:
+            return self.isothermal_bulk_modulus(pressure, temperature, volume, params)
+        else:
+            return (self.isothermal_bulk_modulus(pressure, temperature, volume, params) *
+                    self.molar_heat_capacity_p(pressure, temperature, volume, params) /
+                    self.molar_heat_capacity_v(pressure, temperature, volume, params))
 
     def shear_modulus(self, pressure, temperature, volume, params):
         """
         Returns shear modulus :math:`G` of the mineral. :math:`[Pa]`
-        """
-        return 0.
-
-    def entropy(self, pressure, temperature, volume, params):
-        """
-        Returns the molar entropy :math:`\mathcal{S}` of the mineral. :math:`[J/K/mol]`
         """
         return 0.
     
@@ -60,8 +84,49 @@ class BroshCalphad(eos.EquationOfState):
         Returns the internal energy :math:`\mathcal{E}` of the mineral. :math:`[J/mol]`
         """
         
-        return 0.
+        return (self.gibbs_free_energy(pressure, temperature, volume, params) -
+                pressure * self.volume(pressure, temperature, params) +
+                temperature * self.entropy(pressure, temperature, volume, params))
 
+    def _Cp_1bar(self, temperature, params):
+        # first, identify which of the piecewise segments we're in
+        i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
+
+        # select the appropriate coefficients
+        coeffs = params['gibbs_coefficients'][i][1]
+        Cp = -(coeffs[2] + 2.*coeffs[3]/temperature/temperature +
+               6.*coeffs[4]/(temperature*temperature*temperature) +
+               12.*coeffs[5]*np.power(temperature, -4.) +
+               90.*coeffs[6]*np.power(temperature, -10.) +
+               2.*coeffs[7]*temperature +
+               6.*coeffs[8]*temperature*temperature +
+               12.*coeffs[9]*temperature*temperature*temperature +
+               42.*coeffs[10]*np.power(temperature, 6.) -
+               0.25*coeffs[11]/np.sqrt(temperature) -
+               coeffs[12]/temperature)
+        return Cp
+
+
+    def _S_1bar(self, temperature, params):
+        # first, identify which of the piecewise segments we're in
+        i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
+
+        # select the appropriate coefficients
+        coeffs = params['gibbs_coefficients'][i][1]
+        S = (-coeffs[1] - coeffs[2]*(1. + np.log(temperature)) +
+              coeffs[3]/temperature/temperature +
+              2.*coeffs[4]/(temperature*temperature*temperature) +
+              3.*coeffs[5]*np.power(temperature, -4.) +
+              9.*coeffs[6]*np.power(temperature, -10.) -
+              2.*coeffs[7]*temperature -
+              3.*coeffs[8]*temperature*temperature -
+              4.*coeffs[9]*temperature*temperature*temperature -
+              7.*coeffs[10]*np.power(temperature, 6.) -
+              0.5*coeffs[11]/np.sqrt(temperature) -
+              coeffs[12]/temperature)
+        return S
+
+    
     def _gibbs_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
         i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
@@ -79,84 +144,167 @@ class BroshCalphad(eos.EquationOfState):
                  coeffs[11]*np.sqrt(temperature) +
                  coeffs[12]*np.log(temperature))
         return gibbs
+
+    def _X(self, pressure, params):
+        return [1./(1. - params['a'][n-2] + params['a'][n-2] *
+                    np.power(1. + float(n)/(3.*params['a'][n-2]) *
+                             pressure/params['K_0'], 1./float(n)))
+                for n in range(2, 6)] # eq. A2
+
+    def _Gamma(self, n, an, Xn):
         
+        d = lambda k, Xn: (np.power(Xn, 3. - float(k)) * float(k) / (float(k) - 3.) if k != 3
+                           else -3.*np.log(Xn))  # eq. A9
+        
+        return (3.*np.power(an, 1. - float(n)) / float(n) *
+                np.sum([binom(n, k) *
+                        np.power(an - 1., float(n-k)) *
+                        d(k, Xn)
+                        for k in range(0, n+1)])) # eq. A9, CHECKED
+
+    def _theta(self, pressure, params):
+        # Theta (for quasiharmonic term)
+        ab2 =  (1./(3.*params['b'][0] - 1.))
+        K0b = params['K_0']/(1. + params['delta'][0]) # eq. B1b
+        XT2 = 1./(1. - ab2 + ab2 *
+                  np.power(1. + 2./(3.*ab2) *
+                           pressure/K0b, 0.5)) # eq. 6 b of SE2015
+        
+        return (params['theta_0'] *
+                np.exp(params['grueneisen_0'] /
+                       (1. + params['delta'][0]) *
+                       (self._Gamma(2, ab2, XT2) -
+                        self._Gamma(2, ab2, 1.)))) # eq. B1 or 6 of SE2015
+
+    def _interpolating_function(self, pressure, params):
+        f = np.sqrt(1. + 2.*params['b'][1] *
+                    (1. + params['delta'][1])*pressure/params['K_0']) # CHECKED
+    
+        return (1. / (1. + params['b'][1]) *
+                (params['b'][1] + f) *
+                np.exp((1. - f)/params['b'][1])) # eq. D2, or eq. 9 of SE2015, CHECKED
+
+    def _gibbs_qh(self, temperature, theta, n):
+        return (3. * n * gas_constant * temperature *
+                np.log(1. - np.exp(-theta/temperature))) # eq. 5, CHECKED
+
+
+    def _S_qh(self, temperature, theta, n):
+        nu = theta/temperature
+        return (3. * n * gas_constant * (nu / (np.exp(nu) - 1.) -
+                                         np.log(1. - np.exp(-nu))))
+
+    def _C_T(self, temperature, params):
+        # C, which is the (G_qh(t,p0) - G_sgte(t,p0)) term
+        G_SGTE = self._gibbs_1bar(temperature, params)
+        G_qh0 = self._gibbs_qh(temperature, params['theta_0'], params['n'])
+        if temperature < params['T_0']:
+            C_T = ( temperature * temperature /
+                    (2.*params['T_0']) * params['delta_Cpr'] )
+        
+        else:
+            C_T = ( (G_qh0 - G_SGTE) + params['delta_Gr'] -
+                    (temperature - params['T_0'])*params['delta_Sr'] + 
+                    (temperature - params['T_0']/2.)*params['delta_Cpr'] )
+            
+        return C_T
+            
     def gibbs_free_energy(self, pressure, temperature, volume, params):
         """
         Returns the Gibbs free energy :math:`\mathcal{G}` of the mineral. :math:`[J/mol]`
         """
     
-        X = [1./(1. - params['a'][i-2] +
-                 params['a'][i-2]*np.power((1. + i/(3.*params['a'][i-2]) *
-                                            pressure/params['K_0']), 1./i))
-             for i in range(2, 6)] # eq. A2
-
-        K0b = params['K_0']/(1. + params['delta'][0]) # eq. B1b
-        XT = [1./(1. - params['ab'][i-2] +
-                  params['ab'][i-2]*np.power((1. + i/(3.*params['ab'][i-2]) *
-                                              pressure/K0b), 1./i))
-              for i in range(2, 6)] # eq. A2, B1b
-
-        d = lambda k, Xi: -3.*np.log(Xi) if k == 3 else np.power(Xi, 3. - k) * k / (k-3.) # eq. A9b
     
-        Gamma = lambda i, Xi: (3.*np.power(params['a'][i-2], 1. - i) / i *
-                               np.sum([binom(i, k)*np.power(params['a'][i-2] - 1., i-k) *
-                                       d(k, Xi) for k in range(0, i+1)])) # eq. A9
-        GammaT = lambda i, XTi: (3.*np.power(params['ab'][i-2], 1. - i) / i *
-                                 np.sum([binom(i, k)*np.power(params['ab'][i-2] - 1., i-k) *
-                                         d(k, XTi) for k in range(0, i+1)])) # eq. A9
+        # Cold compression term
+        X = self._X(pressure, params)
+        G_c = (params['K_0']*params['V_0'] *
+               np.sum([params['c'][n-2]*(self._Gamma(n, params['a'][n-2], X[n-2]) -
+                                         self._Gamma(n, params['a'][n-2], 1.))
+                       for n in range(2, 6)])) # eq. A8, CHECKED
+
+        # G_SGTE
+        G_SGTE = self._gibbs_1bar(temperature, params)
+
+        # G_qh
+        theta = self._theta(pressure, params)
+        G_qh = self._gibbs_qh(temperature, theta, params['n'])
+        G_qh0 = self._gibbs_qh(temperature, params['theta_0'], params['n'])
+        
+        C_T = self._C_T(temperature, params)
+        I_P = self._interpolating_function(pressure, params)
+        return G_SGTE + G_c + G_qh - G_qh0 + C_T*(1. - I_P)
 
     
-        theta = params['theta_0'] * np.exp(params['grueneisen_0'] /
-                                           (1. + params['delta'][0]) *
-                                           (GammaT(2, XT[0]) - GammaT(2, 1.))) # eq. B1
-    
-        f = np.sqrt(1. + 2.*params['b'][1] *
-                    (1. + params['delta'][1])*pressure/params['K_0'])
+    def entropy(self, pressure, temperature, volume, params):
+        """
+        Returns the molar entropy :math:`\mathcal{S}` of the mineral. :math:`[J/K/mol]`
+        """
         
-        I = (1. / (1. + params['b'][1]) *
-             (params['b'][1] + f) *
-             np.exp(1./params['b'][1] - f/params['b'][1])) # eq. D2
-        
-        G_C = params['K_0']*params['V_0']*np.sum([params['c'][i-2]*(Gamma(i, X[i-2]) - Gamma(i, 1))
-                                                  for i in range(2, 6)]) # eq. A8
-        
-        G_QH = (3. * params['n'] * gas_constant * temperature *
-                np.log(1. - np.exp(-theta/temperature))) # eq. 5
-        
-        G_QH0 = (3. * params['n'] * gas_constant * temperature *
-                np.log(1. - np.exp(-params['theta_0']/temperature))) # eq. 5 at 1 bar
-        
-        return G_C + G_QH - (G_QH0 - self._gibbs_1bar(temperature, params))*I
+        S_SGTE = self._S_1bar(temperature, params)
+
+        # S_qh
+        theta = self._theta(pressure, params)
+        S_qh = self._S_qh(temperature, theta, params['n'])
+        S_qh0 = self._S_qh(temperature, params['theta_0'], params['n'])
 
 
+        # dCdT, which is the (S_qh(t,p0) - S_sgte(t,p0)) term
+        if temperature < params['T_0']:
+            dC_TdT = ( temperature / params['T_0'] *
+                       params['delta_Cpr'] )
+        
+        else:
+            dC_TdT = ( -(S_qh0 - S_SGTE) -
+                       params['delta_Sr'] + params['delta_Cpr'] )
+            
+        I_P = self._interpolating_function(pressure, params)
+        return S_SGTE + S_qh - S_qh0 - dC_TdT*(1. - I_P)
 
-        
-        
-        return self.molar_internal_energy(pressure, temperature, volume, params) + volume*pressure
-        
+
     def molar_heat_capacity_v(self, pressure, temperature, volume, params):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
-        return 1.e99
+        return (self.molar_heat_capacity_p(pressure, temperature, volume, params) -
+                self.volume(pressure, temperature, params) * temperature *
+                np.power(self.thermal_expansivity(pressure, temperature, volume, params), 2.) *
+                self.isothermal_bulk_modulus(pressure, temperature, volume, params))
 
     def molar_heat_capacity_p(self, pressure, temperature, volume, params):
         """
         Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
         """
-        return 1.e99
+        dT = 0.1
+        if temperature < dT/2.:
+            return 0.
+        else:
+            dS = (self.entropy(pressure, temperature+dT/2., volume, params) -
+                  self.entropy(pressure, temperature-dT/2., volume, params))
+            return temperature*dS/dT
 
     def thermal_expansivity(self, pressure, temperature, volume, params):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[1/K]`
         """
-        return 0.
+        dT = 0.1
+        if temperature < dT/2.:
+            return 0.
+        else:
+            dV = (self.volume(pressure, temperature+dT/2., params) -
+                  self.volume(pressure, temperature-dT/2., params))
+            return (1./self.volume(pressure, temperature, params))*dV/dT
 
     def grueneisen_parameter(self, pressure, temperature, volume, params):
         """
         Since this equation of state does not contain temperature effects, simply return zero. :math:`[unitless]`
         """
-        return 0.
+        Cv = self.molar_heat_capacity_v(pressure, temperature, volume, params)
+        if Cv == 0.:
+            return 0.
+        else:
+            return (self.thermal_expansivity(pressure, temperature, volume, params) *
+                    self.isothermal_bulk_modulus(pressure, temperature, volume, params) *
+                    self.volume(pressure, temperature, params))
 
     def calculate_transformed_parameters(self, params):
         
@@ -208,19 +356,32 @@ class BroshCalphad(eos.EquationOfState):
         Check for existence and validity of the parameters
         """
 
+        params['T_0'] = 298.15
         if 'P_0' not in params:
             params['P_0'] = 1.e5
 
         if 'a' not in params:
             params['a'] =  [(float(i)-1.)/(3.*params['Kprime_0'] - 1.)
                             for i in range(2, 6)] # eq. A2
-
-        if 'ab' not in params:
-            params['ab'] =  [(float(i)-1.)/(3.*params['b'][0] - 1.)
-                             for i in range(2, 6)] # eq. A2, B1b
     
         if 'c' not in params:
             params['c'] = self.calculate_transformed_parameters(params)
+
+        # Calculate reference values for gibbs free energy and heat capacity
+        nur = params['theta_0']/params['T_0']
+        G_qhr = self._gibbs_qh(params['T_0'], params['theta_0'], params['n'])
+        S_qhr = self._S_qh(params['T_0'], params['theta_0'], params['n'])
+        Cp_qhr = (3. * params['n'] * gas_constant *
+                  nur * nur * np.exp(nur) /
+                  np.power( np.exp(nur) - 1., 2.) )
+        
+        G_SGTEr = self._gibbs_1bar(params['T_0'], params)
+        S_SGTEr = self._S_1bar(params['T_0'], params)
+        Cp_SGTEr = self._Cp_1bar(params['T_0'], params)
+
+        params['delta_Cpr'] = (Cp_SGTEr - Cp_qhr)
+        params['delta_Gr'] = (G_SGTEr - G_qhr)
+        params['delta_Sr'] = (S_SGTEr - S_qhr)
             
         # Check that all the required keys are in the dictionary
         expected_keys = ['gibbs_coefficients',

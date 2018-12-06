@@ -22,236 +22,92 @@ import matplotlib.image as mpimg
 from scipy.optimize import fsolve
 
 
-fcc = minerals.BM_2019.fcc_iron()
-bcc = minerals.BM_2019.bcc_iron()
-hcp = minerals.BM_2019.hcp_iron()
-liq = minerals.other.liquid_iron()
-
-burnman.tools.check_eos_consistency(bcc, P=1.e9, T=1800., tol=1.e-7, verbose=True)
-exit()
-
-bcc.set_state(1.e5, 1811.)
-liq.set_state(1.e5, 1811.)
-liq.params['E_0'] = bcc.gibbs - liq.gibbs
-
-temperatures = np.linspace(1800., 3000., 101)
-
-for P in [1.e5, 1.e9, 10.e9]:
-    pressures = P + 0.*temperatures
-    plt.plot(temperatures, (bcc.evaluate(['gibbs'], pressures, temperatures)[0] - 
-                            liq.evaluate(['gibbs'], pressures, temperatures)[0]))
-plt.show()
-
-composition = fcc.formula
-assemblage = burnman.Composite([bcc, fcc, liq])
-assemblage.set_state(2.e9, 2000.)
-equality_constraints = [('phase_proportion', (bcc, 0.0)), ('phase_proportion', (liq, 0.0))]
-sol, prm = equilibrate(composition, assemblage, equality_constraints,
-                       initial_state_from_assemblage=True,
-                       store_iterates=False)
-Pinv, Tinv = sol.x[0:2]
-print(Pinv, Tinv)
-
-exit()
-
-assemblage = burnman.Composite([bcc, fcc, hcp])
-assemblage.set_state(10.e9, 500.)
-equality_constraints = [('phase_proportion', (bcc, 0.0)), ('phase_proportion', (fcc, 0.0))]
-sol, prm = equilibrate(composition, assemblage, equality_constraints,
-                       initial_state_from_assemblage=True,
-                       store_iterates=False)
-Pinv, Tinv = sol.x[0:2]
-
-assemblage = burnman.Composite([fcc, hcp])
-assemblage.set_state(10.e9, 500.)
-temperatures = np.linspace(Tinv, 3500., 21)
-equality_constraints = [('T', temperatures), ('phase_proportion', (hcp, 0.0))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, 
-                        initial_state_from_assemblage=True,
-                        store_iterates=False)
-
-pressures = np.array([s.x[0] for s in sols if s.success])
-temperatures = np.array([s.x[1] for s in sols if s.success])
-
-plt.plot(pressures/1.e9, temperatures)
-
-assemblage = burnman.Composite([bcc, hcp])
-assemblage.set_state(12.e9, 300.)
-temperatures = np.linspace(300., Tinv, 8)
-equality_constraints = [('T', temperatures), ('phase_proportion', (hcp, 1.0))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints, 
-                        initial_state_from_assemblage=True,
-                        store_iterates=False)
-
-pressures = np.array([s.x[0] for s in sols])
-temperatures = np.array([s.x[1] for s in sols])
-
-plt.plot(pressures/1.e9, temperatures)
+fcc = minerals.SE_2015.fcc_iron()
+bcc = minerals.SE_2015.bcc_iron()
+hcp = minerals.SE_2015.hcp_iron()
+liq = minerals.SE_2015.liquid_iron()
 
 
+calib = [[bcc, 1.e5, 1., 69538., 7.0496],
+         [bcc, 1.e5, 300., -8183., 7.0947],
+         [bcc, 1.e9, 1., 76567., 7.0094],
+         [bcc, 1.e5, 1000., -42271., 7.3119],
+         [bcc, 1.e9, 1000., -34987., 7.2583],
+         [fcc, 3.e9, 1000., -20604., 7.0250],
+         [fcc, 10.e9, 1000., 27419., 6.7139],
+         [hcp, 40.e9, 1000., 214601., 5.8583]]
 
-assemblage = burnman.Composite([bcc, fcc])
-pressures = np.linspace(1.e5, Pinv, 101)
-assemblage.set_state(1.e5, 500.)
-equality_constraints = [('P', pressures), ('phase_proportion', (bcc, 1.0))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints,
-                        initial_state_from_assemblage=True,
-                        store_iterates=False)
-
-pressures = np.array([s.x[0] for s in sols if s.success])
-temperatures = np.array([s.x[1] for s in sols if s.success])
-
-plt.plot(pressures/1.e9, temperatures)
-
-
-assemblage = burnman.Composite([bcc, fcc])
-pressures = np.linspace(1.e5, Pinv, 101)
-assemblage.set_state(1.e5, 1500.)
-equality_constraints = [('P', pressures), ('phase_proportion', (bcc, 1.0))]
-sols, prm = equilibrate(composition, assemblage, equality_constraints,
-                        initial_state_from_assemblage=True,
-                        store_iterates=False)
-
-pressures = np.array([s.x[0] for s in sols if s.success])
-temperatures = np.array([s.x[1] for s in sols if s.success])
-
-plt.plot(pressures/1.e9, temperatures)
-
-plt.show()
-exit()
-fcc = minerals.Brosh_2007.fcc_iron()
-bcc = minerals.Brosh_2007.bcc_iron()
-hcp = minerals.Brosh_2007.hcp_iron()
-liq = minerals.Brosh_2007.liquid_iron()
-
-def find_pressure(T, m1, m2, P_guess=5.e9):
-    def delta_gibbs(P, T, m1, m2):
-        m1.set_state(P[0], T)
-        m2.set_state(P[0], T)
-        return m1.gibbs - m2.gibbs
-
-    return fsolve(delta_gibbs, [P_guess], args=(T, m1, m2))[0]
-
-def find_temperature(P, m1, m2, T_guess=1000.):
-    def delta_gibbs(T, P, m1, m2):
-        m1.set_state(P, T[0])
-        m2.set_state(P, T[0])
-        return m1.gibbs - m2.gibbs
-
-    return fsolve(delta_gibbs, [T_guess], args=(P, m1, m2))[0]
+for (m, P, T, G, V) in calib:
+    m.set_state(P, T)
+    print(m.gibbs, G, m.V*1.e6, V)
 
 
 Fe_diag_img = mpimg.imread('figures/fe_perplex.png') # from SE15ver.dat bundled with PerpleX 6.8.3 (September 2018)
-Fe_diag_img = mpimg.imread('figures/fe_brosh.png') # alternative, from paper
-plt.imshow(Fe_diag_img, extent=[0.0, 350.0, 300, 8000], aspect='auto')
+#Fe_diag_img = mpimg.imread('figures/fe_brosh.png') # alternative, from Brosh paper
+plt.imshow(Fe_diag_img, extent=[0.0, 350.0, 300, 8000], alpha=0.3, aspect='auto')
 
+def invariant(m1, m2, m3, P=5.e9, T=2000.):
+    composition = m1.formula
+    assemblage = burnman.Composite([m1, m2, m3])
+    assemblage.set_state(P, T)
+    equality_constraints = [('phase_proportion', (m1, 0.0)), ('phase_proportion', (m2, 0.0))]
+    sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                           initial_state_from_assemblage=True,
+                           store_iterates=False)
+    return sol.x[0:2]
 
-pressures = np.linspace(1.e5, 10.e9, 101)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = find_temperature(P, bcc, fcc, T_guess=500.)
-
-plt.plot(pressures/1.e9, temperatures)
-
-pressures = np.linspace(1.e5, 1.e9, 101)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = find_temperature(P, bcc, fcc, T_guess=1500.)
-
-plt.plot(pressures/1.e9, temperatures)
-
-
-pressures = np.linspace(1.e5, 1.e9, 101)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = find_temperature(P, bcc, liq, T_guess=1500.)
-
-plt.plot(pressures/1.e9, temperatures)
-
-pressures = np.linspace(1.e5, 65.e9, 101)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = find_temperature(P, fcc, liq, T_guess=2500.)
-
-plt.plot(pressures/1.e9, temperatures)
-
-pressures = np.linspace(55.e9, 350.e9, 101)
-temperatures = np.empty_like(pressures)
-for i, P in enumerate(pressures):
-    temperatures[i] = find_temperature(P, hcp, liq, T_guess=3000.)
-
-plt.plot(pressures/1.e9, temperatures)
-
-
-temperatures = np.linspace(700., 4000., 101)
-pressures = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    pressures[i] = find_pressure(T, fcc, hcp)
-
-plt.plot(pressures/1.e9, temperatures)
+def univariant(m1, m2, condition_constraints, P=5.e9, T=2000.):
+    composition = m1.formula
+    assemblage = burnman.Composite([m1, m2])
+    assemblage.set_state(P, T)
+    equality_constraints = [condition_constraints, ('phase_proportion', (m1, 0.0))]
+    sols, prm = equilibrate(composition, assemblage, equality_constraints,
+                            initial_state_from_assemblage=True,
+                            store_iterates=False)
     
-temperatures = np.linspace(300., 1000., 101)
-pressures = np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    pressures[i] = find_pressure(T, bcc, hcp)
+    pressures = np.array([s.x[0] for s in sols])
+    temperatures = np.array([s.x[1] for s in sols])
+    return pressures, temperatures
 
+Tmin = 1.
+Pmin = 1.e5
+Pmax = 350.e9
+
+# BCC-FCC-LIQ invariant
+Pinv, Tinv = invariant(bcc, fcc, liq, P=5.e9, T=2000.)
+
+pressures, temperatures =  univariant(bcc, liq, ('P', np.linspace(Pmin, Pinv, 11)), P=Pmin, T=1800.)
 plt.plot(pressures/1.e9, temperatures)
-plt.show()
+
+pressures, temperatures =  univariant(bcc, fcc, ('P', np.linspace(Pmin, Pinv, 11)), P=Pmin, T=1800.)
+plt.plot(pressures/1.e9, temperatures)
+
+
+# FCC-HCP-LIQ invariance
+Pinv2, Tinv2 = invariant(fcc, hcp, liq, P=90.e9, T=3000.)
+
+pressures, temperatures =  univariant(fcc, liq, ('P', np.linspace(Pinv, Pinv2, 11)), P=Pinv, T=Tinv)
+plt.plot(pressures/1.e9, temperatures)
+
+pressures, temperatures =  univariant(hcp, liq, ('P', np.linspace(Pinv2, Pmax, 11)), P=Pinv2, T=Tinv2)
+plt.plot(pressures/1.e9, temperatures)
 
 
 
-Fe_EoS_img = mpimg.imread('figures/fe_RT_eos_and_hugoniot.png')
-plt.imshow(Fe_EoS_img, extent=[0.0, 500.0, 3.5, 7.5], aspect='auto')
+# BCC-FCC-HCP invariance
+Pinv3, Tinv3 = invariant(bcc, fcc, hcp, P=10.e9, T=1000.)
 
-pressures = np.linspace(0., 500.e9, 101)
+pressures, temperatures =  univariant(bcc, hcp, ('T', np.linspace(Tmin, Tinv3, 11)), P=10.e9, T=Tmin)
+plt.plot(pressures/1.e9, temperatures)
 
-for m in [fcc, bcc, hcp]:
-    for T in [300]:
-        
-        temperatures = T + pressures*0.
-        gibbs_m = m.evaluate(['gibbs'], pressures, temperatures)[0]
+pressures, temperatures =  univariant(bcc, fcc, ('P', np.linspace(Pmin, Pinv3, 11)), P=Pmin, T=Tinv3)
+plt.plot(pressures/1.e9, temperatures)
 
-    
-        plt.plot(pressures/1.e9, np.gradient(gibbs_m, pressures, edge_order=2)*1.e6, label=str(T)+' '+m.name)
-        plt.scatter([0.], [m.params['V_0']*1.e6])
-        
-plt.xlim(0., 500.)
-plt.legend(loc='best')
-plt.show()
+pressures, temperatures =  univariant(fcc, hcp, ('P', np.linspace(Pinv3, Pinv2, 11)), P=Pinv3, T=Tinv3)
+plt.plot(pressures/1.e9, temperatures)
 
-
-pressures = np.linspace(0., 50.e9, 101)
-
-for T in [300., 500., 700.]:
-    temperatures = T + pressures*0.
-    delta_gibbs = bcc.evaluate(['gibbs'], pressures, temperatures)[0] - hcp.evaluate(['gibbs'], pressures, temperatures)[0]
-    plt.plot(pressures/1.e9, delta_gibbs, label=str(T))
-
-    
-for T in [1000., 1500., 2000.]:
-    temperatures = T + pressures*0.
-    delta_gibbs = fcc.evaluate(['gibbs'], pressures, temperatures)[0] - hcp.evaluate(['gibbs'], pressures, temperatures)[0]
-    plt.plot(pressures/1.e9, delta_gibbs, label=str(T))
-
-
-plt.ylim(-100., 100.)
-plt.legend(loc='best')
-plt.show()
-
-exit()
-
-
-temperatures = np.linspace(300., 3000., 1001)
-
-for P in [1.e5]:
-    pressures = 0.*temperatures + P
-
-    gibbs_fcc = fcc.evaluate(['gibbs'], pressures, temperatures)[0]
-    gibbs_bcc = bcc.evaluate(['gibbs'], pressures, temperatures)[0]
-    gibbs_hcp = hcp.evaluate(['gibbs'], pressures, temperatures)[0]
-    gibbs_liq = liq.evaluate(['gibbs'], pressures, temperatures)[0]
-    
-    plt.plot(temperatures, gibbs_bcc - gibbs_fcc)
-    plt.plot(temperatures, gibbs_hcp - gibbs_fcc)
-plt.ylim(0., 100.)
+plt.xlim(0., 350.)
+plt.ylim(0., 8000.)
+plt.xlabel('Pressure (GPa)')
+plt.ylabel('Temperature (K)')
 plt.show()

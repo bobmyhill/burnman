@@ -168,7 +168,7 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
     assert np.all(constraints(guess) < eps), 'The starting guess is outside the supplied constraints.' # this starting instance can't be compared against eps because of limited precision of np.dot()/float
 
     if not isinstance(tol, float):
-        assert len(tol) < len(guess), 'tol must either be a float or an array like guess.'
+        assert len(tol) == len(guess), 'tol must either be a float or an array like guess.'
 
     sol = namedtuple('Solution', ['x', 'n_it', 'F', 'F_norm', 'J', 'code', 'text', 'success'])
 
@@ -287,7 +287,7 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
         F_j = F(x_j)
         dxbar_j = lu_solve(luJ, -F_j) # this is the simplified newton step
         dxbar_j_norm = np.linalg.norm(dxbar_j, ord=2)
-              
+
         if (all(np.abs(dxbar_j) < tol) and                     # <- Success requirements
             all(np.abs(dx) < np.sqrt(10.*tol)) and             # <- avoids pathological cases
             np.abs(lmda - lmda_bounds[1]) < eps) :             # <- end on a maximal newton step

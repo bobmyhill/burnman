@@ -22,9 +22,8 @@ Mineral database
 """
 from __future__ import absolute_import
 
-# Brosh et al., 2007 and other iron phases
-from . import BM_2019
-from . import Brosh_2007
+# Saxena and Eriksson, 2015 and other iron papers
+from . import SE_2015
 from . import Sundman_1991
 
 # Stixrude and Lithgow-Bertelloni

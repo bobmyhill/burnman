@@ -266,11 +266,13 @@ def _magnetic_excesses_chs(pressure, temperature, params):
 
     A = (518. / 1125.) + (11692. / 15975.) * ((1. / structural_parameter) - 1.)
     if tau < 1:
-        f = 1. - (1. / A) * (79. / (140. * structural_parameter * tau)
-                             + (474. / 497.) * (1. / structural_parameter - 1.) * (np.power(tau, 3.) / 6.
-                                                                                   + np.power(
-                                                                                   tau, 9.) / 135.
-                                                                                   + np.power(tau, 15.) / 600.))
+        f = 1. - ((1. / A) * 
+                  (79. / (140. * structural_parameter * tau) + 
+                   (474. / 497.) * (1. / structural_parameter - 1.) *
+                   (np.power(tau, 3.) / 6.
+                    + np.power(tau, 9.) / 135.
+                    + np.power(tau, 15.) / 600.)))
+                  
         dfdtau = -(1. / A) * (-79. / (140. * structural_parameter * tau * tau)
                               + (474. / 497.) * (1. / structural_parameter - 1.) * (tau * tau / 2.
                                                                                     + np.power(
@@ -284,9 +286,11 @@ def _magnetic_excesses_chs(pressure, temperature, params):
                                                                                       + 14. * np.power(tau, 13.) / 40.))
 
     else:
-        f = - \
-            (1. / A) * (np.power(tau, -5.) / 10. + np.power(
-                tau, -15.) / 315. + np.power(tau, -25.) / 1500.)
+        f = - ((1. / A) *
+               (np.power(tau, -5.) / 10. +
+                np.power(tau, -15.) / 315. +
+                np.power(tau, -25.) / 1500.))
+        
         dfdtau = (1. / A) * (np.power(tau, -6.) / 2. +
                              np.power(tau, -16.) / 21. + np.power(tau, -26.) / 60.)
         d2fdtau2 = - \

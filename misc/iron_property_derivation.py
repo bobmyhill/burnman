@@ -8,7 +8,7 @@ import burnman
 from burnman import minerals
 from burnman import tools
 from burnman.mineral import Mineral
-from burnman.minerals import Myhill_calibration_iron
+from burnman.minerals import BM_2019
 from burnman.processchemistry import *
 from burnman.chemicalpotentials import *
 from burnman import constants
@@ -20,62 +20,79 @@ import matplotlib.image as mpimg
 from scipy import optimize
 atomic_masses=read_masses()
 
-nA=6.02214e23
-voltoa=1.e30
-Pr=1.e5
-
-'''
-First, let's use the description of bcc and fcc iron from Sundman, 1991
-N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar expression, but this is basically the same as Sundman's, with a few numbers tweaked badly (there is a discontinuity in Gbcc at 1811 K) and insufficient data in the paper (no reference to the magnetic contribution in FCC).
-'''
-
-bcc=Myhill_calibration_iron.bcc_iron()
-fcc=Myhill_calibration_iron.fcc_iron()
-
-
-
-temperatures=np.linspace(300., 2000., 101)
-bcc_gibbs=np.empty_like(temperatures)
-fcc_gibbs=np.empty_like(temperatures)
-for i, T in enumerate(temperatures):
-    bcc.set_state(Pr, T)
-    fcc.set_state(Pr, T)
-    fcc_gibbs[i] = fcc.gibbs
-    bcc_gibbs[i] = bcc.gibbs
-
-plt.plot( temperatures, bcc_gibbs - fcc_gibbs, 'r-', linewidth=3., label='bcc - fcc (Sundman, 1991)')
-plt.title('1 bar iron model')
-plt.xlabel("Temperature (K)")
-plt.ylabel("Gibbs free energy difference (J/mol)")
-plt.show()
 
 
 def magnetic_gibbs(T, Tc, beta, p):
     A = (518./1125.) + (11692./15975.)*((1./p) - 1.)
     tau=T/Tc
     if tau < 1: 
-        f=1.-(1./A)*(79./(140.*p*tau) + (474./497.)*(1./p - 1.)*(np.power(tau, 3.)/6. + np.power(tau, 9.)/135. + np.power(tau, 15.)/600.))
+        f=1.-(1./A)*(79./(140.*p*tau) +
+                     (474./497.)*(1./p - 1.)*(np.power(tau, 3.)/6. +
+                                              np.power(tau, 9.)/135. +
+                                              np.power(tau, 15.)/600.))
     else:
         f=-(1./A)*(np.power(tau,-5)/10. + np.power(tau,-15)/315. + np.power(tau, -25)/1500.)
     return constants.gas_constant*T*np.log(beta + 1.)*f
 
 
-def gibbs_bcc_1bar_SD1998(T):
+def gibbs_bcc_1bar_S1991(T):
     if T < 1811:
-        gibbs= 1400. + 124.06*T - 23.5143*T*np.log(T) -0.00439752*T*T - 5.8927e-8*T*T*T + 77359./T 
+        gibbs= 1224.83 + 124.134*T - 23.5143*T*np.log(T) -0.00439752*T*T - 5.8927e-8*T*T*T + 77359./T
+ 
     else:
-        gibbs= - 25383.581 + 299.31255*T - 46.*T*np.log(T) + 2.29603e31*np.power(T,-9.)
+        gibbs= - 25384.451 + 299.31255*T - 46.*T*np.log(T) + 2.2960305e31*np.power(T,-9.)
     Tc=1043.
     beta=2.22
     p=0.4
     return gibbs + magnetic_gibbs(T, Tc, beta, p)
 
-def bcc_hcp_eqm(T):
-    bcc.set_state(Pr, T)
-    fcc.set_state(Pr, T)
+
+def gibbs_fcc_1bar_S1991(T):
+    if T < 1811:
+        gibbs = 1224.83 + 124.134*T - 23.5143*T*np.log(T) -0.00439752*T*T - 5.8927e-8*T*T*T + 77359./T
+        gibbs += -1462.4 + 8.282*T - 1.15*T*np.log(T) + 6.4e-4*T*T
+    else:
+        gibbs = - 27098.266 + 300.25256*T - 46.*T*np.log(T) + 2.78854e31*np.power(T,-9.)
+    Tc=201.
+    beta=2.1
+    p=0.28
+    return gibbs + magnetic_gibbs(T, Tc, beta, p) 
+
+
+
+nA=6.02214e23
+voltoa=1.e30
+Pr=1.e5
+
+'''
+Here, we use the Cp description of bcc and fcc iron from Sundman, 1991
+N.B.: Saxena and Dubrovinsky, 1998 (Geophysical Monograph 101) have a similar expression, but this is basically the same as Sundman's, with a few numbers tweaked badly (there is a discontinuity in Gbcc at 1811 K) and insufficient data in the paper (no reference to the magnetic contribution in FCC).
+'''
+
+bcc=BM_2019.bcc_iron()
+fcc=BM_2019.fcc_iron()
+hcp=BM_2019.hcp_iron()
+
+temperatures = np.linspace(1100., 1700., 101)
+pressures = 1.e5 * temperatures*0.
+
+plt.plot( temperatures, (bcc.evaluate(['gibbs'], pressures, temperatures)[0] -
+                         fcc.evaluate(['gibbs'], pressures, temperatures)[0]), 'r-', linewidth=3., label='bcc - fcc (Sundman, 1991)')
+plt.plot( temperatures, [gibbs_bcc_1bar_S1991(T) - gibbs_fcc_1bar_S1991(T) for T in temperatures], linestyle='--')
+plt.title('1 bar iron model')
+plt.xlabel("Temperature (K)")
+plt.ylabel("Gibbs free energy difference (J/mol)")
+plt.show()
+
+
+
+def bcc_fcc_eqm(T, P):
+    bcc.set_state(P, T)
+    fcc.set_state(P, T)
+    print(bcc.gibbs, fcc.gibbs, T)
     return bcc.gibbs - fcc.gibbs
 
-print 'fcc stable between', optimize.fsolve(bcc_hcp_eqm, 1184.)[0], 'and', optimize.fsolve(bcc_hcp_eqm, 1668.)[0], 'K'
+print 'fcc stable between', optimize.fsolve(bcc_fcc_eqm, 1184., args=(1.e5))[0], 'and', optimize.fsolve(bcc_fcc_eqm, 1668., args=(1.e5))[0], 'K'
 
 
 '''
@@ -99,7 +116,7 @@ volumes=np.array(V)*nA/voltoa/Z
 pt=np.array(zip(np.array(P)*1.e9, T))
 '''
 
-scaling=1.0
+scaling=0.9895
 for line in open('Nishihara_et_al_2012_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
@@ -122,7 +139,7 @@ sigmas=np.array(Verr)*nA/voltoa/Z
 pt=np.array(zip(np.array(P)*1.e9, T))
 
 
-'''
+"""
 for line in open('Boehler_fcc_volumes.dat'):
     content=line.strip().split()
     if content[0] != '%':
@@ -134,8 +151,9 @@ P, T, V = zip(*fcc_data)
 
 Z=4.
 volumes=np.array(V)*1.e-6
+sigmas=np.array(V)*1.e-11
 pt=np.array(zip(np.array(P)*1.e8, T))
-'''
+"""
 
 # Initial guess.
 def fitV(mineral):
@@ -221,7 +239,7 @@ def fitV_T0(mineral):
         return vols
     return fit
 
-'''
+
 guesses=np.array([fcc.params['V_0'], fcc.params['K_0'], fcc.params['a_0']])
 
 popt, pcov = optimize.curve_fit(fitV(fcc), pt, volumes, guesses, sigmas)
@@ -238,7 +256,7 @@ print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", fcc.params['Kprime_0'], '[fixed]'
 print "k0\":", -1.e9*fcc.params['Kprime_0']/popt[1], "GPa^-1"
 print "a0 :", popt[2], "+/-", np.sqrt(pcov[2][2]), "K^-1"
-'''
+
 
 bcc_expt_temperatures=[]
 bcc_expt_volumes=[]
@@ -323,7 +341,6 @@ They used Au as a pressure standard (equation of state from Tsuchiya, 2003)
 '''
 
 Z=2.
-hcp=Myhill_calibration_iron.hcp_iron()
 
 hcp_data=[]
 for line in open('../burnman/data/input_iron_allotropes/Yamazaki_et_al_2012.dat'):
@@ -370,7 +387,7 @@ volumes=np.array(V_D)*(nA/Z/voltoa)
 sigma=np.array(Verr_D)*(nA/Z/voltoa)
 p=np.array(P_D)*1.e9
 
-'''
+"""
 # Initial guess.
 guesses=np.array([hcp.params['V_0'], hcp.params['K_0'], hcp.params['Kprime_0']])
 popt, pcov = optimize.curve_fit(fitV_T0(hcp), p, volumes, guesses, sigma)
@@ -382,7 +399,7 @@ print "V0: ", popt[0]/(nA/Z/voltoa), "+/-", np.sqrt(pcov[0][0])/(nA/Z/voltoa), "
 print "k0: ", popt[1]/1.e9, "+/-", np.sqrt(pcov[1][1])/1.e9, "GPa"
 print "k0':", popt[2], "+/-", np.sqrt(pcov[2][2])
 print "k0\":", -1.e9*popt[2]/popt[1], "GPa^-1"
-'''
+"""
 
 
 Vdiff=np.empty_like(volumes)
@@ -461,8 +478,11 @@ print 'FCC parameters'
 print "H0: ", fcc.params['H_0'], "J/mol"
 print "S0: ", fcc.params['S_0'], "J/K/mol"
 
-
+'''
+'''
 hcp.params['S_0']= 30.7 # To match BCC-HCP phase boundary
+'''
+'''
 guesses=np.array([hcp.params['a_0'], fcc.params['K_0']])
 popt, pcov = optimize.curve_fit(fit_H_S(hcp, fcc), np.array([transition_volumes, transition_temperatures]).T, transition_temperatures, guesses, transition_temperature_uncertainties)
 
@@ -544,11 +564,3 @@ plt.xlabel("Pressure (GPa)")
 plt.ylim(300., 2700.)
 plt.legend(loc='lower right')
 plt.show()
-
-'''
-Finally, let's print our updated mineral classes
-'''
-'''
-tools.print_mineral_class(fcc, 'fcc_iron')
-tools.print_mineral_class(hcp, 'hcp_iron')
-'''

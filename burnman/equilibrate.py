@@ -711,7 +711,9 @@ def equilibrate(composition, assemblage, equality_constraints,
             # Set the initial proportions and compositions of the phases in the assemblage:
             set_compositions_and_state_from_parameters(prm.initial_parameters, assemblage,
                                                        prm.indices, prm.endmembers_per_phase)
-
+            if type(tol) is float:
+                tol = prm.initial_parameters*0. + tol
+                tol[0] = 1.e6*tol[0] # pressure accuracy should be lower than others
             sol = damped_newton_solve(F = lambda x: F(x, assemblage, equality_constraints, prm),
                                       J = lambda x: jacobian(x, assemblage, equality_constraints, prm),
                                       lambda_bounds = lambda dx, x: lambda_bounds(dx, x, prm.indices),
