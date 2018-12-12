@@ -110,15 +110,18 @@ fper = Solution(name = 'ferropericlase',
 ol = Solution(name = 'olivine',
               solution_type ='symmetric',
               endmembers=[[fo, '[Mg]2SiO4'], [fa, '[Fe]2SiO4']],
-              energy_interaction=[[5.2e3]]) # O'Neill et al., 2003
+              energy_interaction=[[5.2e3]],
+              volume_interaction=[[0.e-7]]) # O'Neill et al., 2003
 wad = Solution(name = 'wadsleyite',
                solution_type ='symmetric',
                endmembers=[[mwd, '[Mg]2SiO4'], [fwd, '[Fe]2SiO4']],
-               energy_interaction=[[15.e3]])
+               energy_interaction=[[15.e3]],
+               volume_interaction=[[0.e-7]])
 rw = Solution(name = 'ringwoodite',
               solution_type ='symmetric',
               endmembers=[[mrw, '[Mg]2SiO4'], [frw, '[Fe]2SiO4']],
-              energy_interaction=[[8.2e3]]) 
+              energy_interaction=[[8.2e3]],
+              volume_interaction=[[0.e-7]]) 
 
 solutions = {'mw': fper,
              'ol': ol,
@@ -155,10 +158,11 @@ def rms_misfit_affinities(args):
 
     
     fper.solution_model.We[0][1] = args[14]*1.e3
-    wad.solution_model.We[0][1] = args[15]*1.e3
-    rw.solution_model.We[0][1] = args[16]*1.e3
+    ol.solution_model.We[0][1] = args[15]*1.e3
+    wad.solution_model.We[0][1] = args[16]*1.e3
+    rw.solution_model.We[0][1] = args[17]*1.e3
     
-    Perr = np.array(args[17:])*1.e9 # arguments in GPa
+    Perr = np.array(args[18:])*1.e9 # arguments in GPa
     
     misfit = 0.
     n=0.
@@ -226,11 +230,17 @@ def rms_misfit_affinities(args):
                 dGs = mus[i1] - mus[i2]
                 sigma_dGs = np.sqrt(dGdFsigmaF[i1]*dGdFsigmaF[i1] +
                                     dGdFsigmaF[i2]*dGdFsigmaF[i2])
-                misfit += np.power(dGs[0]/sigma_dGs[0], 2.) # Mg endmembers
+                misfit += np.power(dGs[0]/sigma_dGs[0], 2.) # Mg endmembers 
                 misfit += np.power(dGs[1]/sigma_dGs[1], 2.) # Fe endmembers
                 
                 dGs = mus[i1] - mus[i3]
                 sigma_dGs = np.sqrt(dGdFsigmaF[i1]*dGdFsigmaF[i1] +
+                                    dGdFsigmaF[i3]*dGdFsigmaF[i3])
+                misfit += np.power(dGs[0]/sigma_dGs[0], 2.) # Mg endmembers
+                misfit += np.power(dGs[1]/sigma_dGs[1], 2.) # Fe endmembers
+                
+                dGs = mus[i2] - mus[i3]
+                sigma_dGs = np.sqrt(dGdFsigmaF[i2]*dGdFsigmaF[i2] +
                                     dGdFsigmaF[i3]*dGdFsigmaF[i3])
                 misfit += np.power(dGs[0]/sigma_dGs[0], 2.) # Mg endmembers
                 misfit += np.power(dGs[1]/sigma_dGs[1], 2.) # Fe endmembers
@@ -258,9 +268,10 @@ def rms_misfit_affinities(args):
 
     
     # include original alphas as priors
-    well_constrained_indices = [0, 1, 2, 3] # per, wus, fo, fa
-    less_constrained_indices = [4, 6, 7] # mwd, mrw, frw
-    poorly_constrained_indices = [5] # fwd
+    well_constrained_indices = [0, 2, 3] # per, wus, fo, fa
+    less_constrained_indices = [1, 4] # wus, mwd
+    poorly_constrained_indices = [6, 7] # mrw, frw
+    unknown_indices = [5] # fwd
     das = [fper.endmembers[0][0].params['a_0_orig'] - fper.endmembers[0][0].params['a_0'],
            fper.endmembers[1][0].params['a_0_orig'] - fper.endmembers[1][0].params['a_0'],
            ol.endmembers[0][0].params['a_0_orig'] - ol.endmembers[0][0].params['a_0'],
@@ -270,13 +281,18 @@ def rms_misfit_affinities(args):
            rw.endmembers[0][0].params['a_0_orig'] - rw.endmembers[0][0].params['a_0'],
            rw.endmembers[1][0].params['a_0_orig'] - rw.endmembers[1][0].params['a_0']]
     for idx in well_constrained_indices:
-        misfit += das[idx]*das[idx]/(3.e-7*3.e-7)
+        misfit += das[idx]*das[idx]/(1.e-7*1.e-7)
     for idx in less_constrained_indices:
-        misfit += das[idx]*das[idx]/(6.e-7*6.e-7)
+        misfit += das[idx]*das[idx]/(5.e-7*5.e-7)
     for idx in poorly_constrained_indices:
-        misfit += das[idx]*das[idx]/(10.e-7*10.e-7)
- 
-    
+        misfit += das[idx]*das[idx]/(10.e-7*10.e-7) 
+    for idx in unknown_indices:
+        misfit += das[idx]*das[idx]/(20.e-7*20.e-7) 
+
+    # add prior for olivine interaction parameter
+    misfit += np.power((ol.solution_model.We[0][1] - 5.2e3)/(1.e3), 2.)
+
+    # Nominal pressure error of experiments
     misfit += np.sum(Perr*Perr)/(0.5e9*0.5e9)
     n += len(Perr)
     rms_misfit = np.sqrt(misfit)/float(n)
@@ -299,6 +315,7 @@ args = [ol.endmembers[0][0].params['H_0']*1.e-3,
         rw.endmembers[0][0].params['a_0']*1.e5,
         rw.endmembers[1][0].params['a_0']*1.e5,
         fper.solution_model.We[0][1]*1.e-3,
+        ol.solution_model.We[0][1]*1.e-3,
         wad.solution_model.We[0][1]*1.e-3,
         rw.solution_model.We[0][1]*1.e-3]
 
@@ -314,22 +331,67 @@ rw.endmembers[0][0].params['a_0_orig'] = rw.endmembers[0][0].params['a_0']
 rw.endmembers[1][0].params['a_0_orig'] = rw.endmembers[1][0].params['a_0']
 
 # HERE ARE THE ARGUMENTS TAKEN FROM ONE ITERATION (NOT NECESSARILY CONVERGED)
-args = [-2171.68926628, -1476.93427354, -2135.1866126, -1464.36985721, -2131.92327782, -1472.07798858, 3.00096351404, 3.3288933686, 2.97726179874, 2.59466331239, 2.30255271613, 2.18230856407, 2.52249277112, 2.1871625162, 11.4197490885, 15.4771147383, 7.97425321059, 0.00359895247643, -0.000781087881406, 0.0227282501241, -0.101107082049, 0.0204740691209, 0.00130320839318, -0.0200635829394, -0.217865531078, -0.664896983702, 0.435740067012, 0.323924067, -0.00726587433416, 0.489646105897, -0.274645680342, -0.82851903331, 0.19499058072, -0.00261065958816, 0.718866878964, -0.558988472635, -0.0692191746842, 0.522619719052, -0.828759778583, -0.0525072998252, 0.116585922889]
 
-# 0.13837235
-args = [-2172.34610531, -1477.73211874, -2134.34892171, -1465.0234708, -2131.6104473, -1471.12029336, 3.00624767712, 3.31288109174, 3.01526262103, 2.65091385796, 2.19548325357, 2.26596314784, 2.4536616818, 2.03541247468, 11.5194717698, 14.952230769, 8.77405321164, -0.158925791626, -0.0296728447761, -0.708495437561, -0.462134548126, 0.0612368339494, 0.17847474152, -0.0608736960728, -0.634134208195, -1.28082935237, 0.478804835282, 0.73627584009, -0.116033266802, -0.0196608577644, -0.2453002901, -1.22689170887, 0.202350973926, 0.0451222981939, 0.786357401416, -0.493058434364, -0.000993673193318, 2.07219196459, -2.03593900896, -0.128061722901, -0.216298709251]
- 
-# 0.13819087
-args=[-2172.21223539, -1477.72452097, -2134.2341807, -1465.29608059, -2131.62715247, -1471.08200087, 3.01245452303, 3.30715621229, 3.0109207735, 2.65425579193, 2.18386033433, 2.33041032258, 2.45190017049, 2.02432920654, 11.4911896823, 14.2782037565, 8.69990330194, -0.20341258985, -0.0513066750318, -0.600080851911, -0.457218321663, 0.137997878128, 0.219686938956, -0.0713644048061, -0.652668366406, -1.27941046463, 0.42905411959, 0.686702729068, -0.154854734077, 0.00406750447899, -0.288107895233, -0.966887361548, 0.15406382392, -0.0158241532333, 0.743780621605, -0.533529483197, -0.0401675584242, 2.28971469789, -1.96563096836, -0.150833204653, -0.214300555933]
+# INVERSION COMPLETED (with fixed olivine interaction parameter)
+args = np.array([-2.17224175e+03, -1.47773131e+03, -2.13421347e+03, -1.46531939e+03,
+                 -2.13162992e+03, -1.47104265e+03,  3.01200165e+00,  3.30732943e+00,
+                 3.01275217e+00,  2.65419478e+00,  2.18044096e+00,  2.33747381e+00,
+                 2.45021207e+00,  2.01927830e+00,  1.14897316e+01,  1.41940312e+01,
+                 8.69867295e+00, -1.86422445e-01, -4.38628577e-02, -6.46750372e-01,
+                 -4.70004057e-01,  1.58148675e-01,  2.05052961e-01, -6.81584221e-02,
+                 -6.50116080e-01, -1.29253514e+00,  4.25710718e-01,  6.98762867e-01,
+                 -1.39297711e-01, -1.27964488e-02, -2.89254807e-01, -1.03472470e+00,
+                 1.52425120e-01, -1.92100585e-02,  7.43293988e-01, -5.35123545e-01,
+                 -4.87160443e-02,  2.25691972e+00, -1.99175907e+00, -1.46009954e-01,
+                 -2.29528315e-01])
 
-# 0.13818157
-args=[-2172.24229763, -1477.73094097, -2134.21348695, -1465.31766259, -2131.63032415, -1471.04378335, 3.01193296779, 3.30738399758, 3.01271689759, 2.65405572914, 2.18066223274, 2.33720344564, 2.45049133556, 2.01972735396, 11.4891376195, 14.1993935189, 8.69849871036, -0.186502273085, -0.0440581798871, -0.64773423322, -0.470447001968, 0.157226141826, 0.2054996226, -0.0682073255836, -0.650536954345, -1.29282668751, 0.427370007216, 0.698874720275, -0.139509968718, -0.0123107992564, -0.288102521504, -1.03411671737, 0.153692111568, -0.0178630849702, 0.744145456324, -0.533673662192, -0.048844253772, 2.25905517232, -1.99209646683, -0.14634334767, -0.229038577315]
 
-# 0.13818149
-args=[-2172.24174745, -1477.73130752, -2134.21346864, -1465.31939364, -2131.62992484, -1471.04264588, 3.01200165238, 3.30732943344, 3.0127521696, 2.65419477917, 2.18044095698, 2.33747380641, 2.45021206894, 2.01927829666, 11.4897316424, 14.1940311961, 8.69867294921, -0.186422444988, -0.0438628576799, -0.646750372017, -0.470004056874, 0.158148675231, 0.205052961369, -0.0681584220526, -0.650116080449, -1.29253514405, 0.425710717915, 0.698762866569, -0.139297710744, -0.0127964487537, -0.289254807464, -1.03472470265, 0.152425119556, -0.0192100585134, 0.743293988333, -0.53512354493, -0.0487160442682, 2.25691971525, -1.99175907231, -0.146009953735, -0.229528314654]
+# With looser alpha constraints for [per, wus, fo, fa] [mwd] [mrw, frw] [fwd] (3, 6, 12, 20) (with prior on olivine interaction parameter)
+args = np.array([-2.17187007e+03, -1.47717868e+03, -2.13480659e+03, -1.46471191e+03,
+       -2.13226979e+03, -1.47133741e+03,  3.01537108e+00,  3.30430514e+00,
+        3.01875794e+00,  2.65792107e+00,  2.29143759e+00,  2.28735133e+00,
+        2.56480424e+00,  2.11120287e+00,  1.14155443e+01,  4.88728484e+00,
+        1.46990294e+01,  8.62164614e+00, -1.75369072e-01, -2.77510910e-02,
+       -7.35432067e-01, -4.74859738e-01,  8.58707816e-02,  2.25029008e-01,
+       -6.57368289e-02, -6.06117548e-01, -1.25812383e+00,  4.25875875e-01,
+        7.54535199e-01, -1.33112661e-01, -3.02454273e-02, -2.74618719e-01,
+       -1.00462549e+00,  1.64155095e-01, -4.09346415e-03,  7.25091777e-01,
+       -5.19636208e-01, -4.52347238e-02,  2.29288715e+00, -2.04517905e+00,
+       -7.88136705e-02, -2.23498278e-01])
 
-# Try with a smaller interaction parameter for wadsleyite (better for KD with fper) ... this is in progress
-#args= [-2172.34922804, -1477.74726094, -2134.34337761, -1464.99322165, -2131.61972781, -1471.12853973, 3.0461037191, 3.27607594536, 2.97600626585, 2.56960649568, 2.17684187064, 2.54686774039, 2.42431153731, 1.95566185472, 11.5082491237, 9.02339820944, 8.76547268054, -0.159039215714, -0.0297233984955, -0.708189288327, -0.462176307003, 0.0635574717662, 0.178261547124, -0.0609242009597, -0.634273914862, -1.28078173749, 0.46849007803, 0.736092054282, -0.116105363338, -0.015042697209, -0.235494122185, -1.22739703651, 0.192196743595, 0.0193257330532, 0.785738461228, -0.495400734321, -0.00159701161369, 2.0722115239, -2.03565008925, -0.128196669735, -0.210663818324]
+
+# Tweaked alpha constraints (1, 5, 10, 20) (with prior on olivine interaction parameter)
+args = np.array([-2.17003205e+03, -1.47836511e+03, -2.13482932e+03, -1.46497810e+03,
+                 -2.13255358e+03, -1.47141748e+03,  3.09761335e+00,  3.23082786e+00,
+                 2.87092861e+00,  2.79939648e+00,  2.29865662e+00,  2.26298360e+00,
+                 2.59070780e+00,  2.03719253e+00,  1.13727459e+01,  4.82607012e+00,
+                 1.42752856e+01,  8.47084620e+00, -1.76559710e-01, -3.06209598e-02,
+                 -8.07639908e-01, -5.68869527e-01,  5.37149877e-02,  6.38619726e-01,
+                 -1.44497949e-01, -5.93686133e-01, -1.31673248e+00,  2.66680165e-01,
+                 7.14336790e-01, -1.32810240e-01, -1.51552708e-01, -3.91775119e-01,
+                 1.34537662e+00,  1.50722306e-02, -1.80588618e-01,  5.34129982e-01,
+                 -6.78013798e-01, -7.26456505e-01,  4.90515853e+00, -2.09095454e+00,
+                 -8.53561254e-02, -3.08260075e-01])
+
+
+
+# Tweaked alpha constraints on wus (5e-7) (with prior on olivine interaction parameter)
+# This one is nice!!
+args = np.array([-2.17074415e+03, -1.47777317e+03, -2.13515806e+03, -1.46460379e+03,
+                 -2.13256643e+03, -1.47132773e+03,  3.09726854e+00,  3.50431526e+00,
+                 2.87301690e+00,  2.79781933e+00,  2.27537973e+00,  2.28940567e+00,
+                 2.54355319e+00,  2.12823868e+00,  1.13803459e+01,  4.77516547e+00,
+                 1.47183920e+01,  8.49632135e+00, -1.47464145e-01, -1.14842263e-02,
+                 -8.34343861e-01, -5.33233653e-01,  4.03562474e-02,  4.40321269e-01,
+                 -1.15903978e-01, -5.57711227e-01, -1.28582289e+00,  3.47302594e-01,
+                 7.77973754e-01, -1.16037058e-01, -7.79416664e-02, -3.29241758e-01,
+                 5.27607601e-01,  8.94235846e-02, -9.58771026e-02,  6.17514130e-01,
+                 -6.00385900e-01, -5.20244075e-01,  4.01636962e+00, -2.10274838e+00,
+                 -3.66568437e-02, -2.57793742e-01])
+
+# Initial (with equal volume excesses per cation as fper for ol, wad, rw)
+#args = [-2169.76539849, -1478.53740612, -2135.29081612, -1464.10812096, -2132.95738941, -1471.51310088, 3.0983299398, 3.49224419559, 2.86872493233, 2.79917688885, 2.34389266541, 2.14503446826, 2.63172433122, 2.14441408529, 11.8296445541, 4.64852683114, 13.9507226317, 6.24160636504, -0.395205283307, -0.0525535759923, -1.23644279723, -0.5553775851, -0.00630936467201, 0.722378145232, -0.182835010592, -1.08501081085, -1.06758144501, 0.184834157079, 0.998739888333, -0.308809213375, -0.224485120169, -0.49371418684, 1.95992037135, -0.0809100851041, -0.23435055841, 0.428760741745, -0.778955862038, -0.905282589771, 5.28247576201, -2.09690664394, 0.0303140865176, -0.260923883137]
+
 # THIS LINE RUNS THE MINIMIZATION!!!
 if run_inversion == 'y' or run_inversion == 'Y' or run_inversion == 'yes' or run_inversion == 'Yes':
     print(minimize(rms_misfit_affinities, args, method='BFGS')) # , options={'eps': 1.e-02}))
@@ -354,11 +416,20 @@ rw.endmembers[1][0].params['a_0'] = args[13]*1.e-5
 
 
 fper.solution_model.We[0][1] = args[14]*1.e3
-wad.solution_model.We[0][1] = args[15]*1.e3
-rw.solution_model.We[0][1] = args[16]*1.e3
+ol.solution_model.We[0][1] = args[15]*1.e3
+wad.solution_model.We[0][1] = args[16]*1.e3
+rw.solution_model.We[0][1] = args[17]*1.e3
 
-Perr = np.array(args[17:])*1.e9 # arguments in GPa
+Perr = np.array(args[18:])*1.e9 # arguments in GPa
 
+
+P_fa_fwd = fsolve(endmember_affinity, 6.3e9, args=(1473.15,
+                                                   ol.endmembers[1][0],
+                                                   wad.endmembers[1][0]))
+P_fa_frw = fsolve(endmember_affinity, 6.2e9, args=(1873.15,
+                                                   ol.endmembers[1][0],
+                                                   rw.endmembers[1][0]))
+print(P_fa_fwd/1.e9, P_fa_frw/1.e9)
 
 # PLOT VOLUMES COMPARED WITH OTHER DATASETS
 class Murnaghan_EOS(object):
@@ -455,8 +526,8 @@ for P in [1.e5, 5.e9, 10.e9, 15.e9]:
     for m in mins:
         m.set_state(P, T)
     G = (per.gibbs - wus.gibbs - fo.gibbs/2. + fa.gibbs/2.)
-    W_ol = ol.solution_model.We[0][1]/2. # 1 cation
-    W_fper = fper.solution_model.We[0][1]
+    W_ol = (ol.solution_model.We[0][1] + ol.solution_model.Wv[0][1] * P) /2. # 1 cation
+    W_fper = fper.solution_model.We[0][1] + fper.solution_model.Wv[0][1] * P
     
     x_ols = np.linspace(0.00001, 0.99999, 101)
     x_fpers = np.array([fsolve(affinity_ol_fper, [x_ol], args=(x_ol, G, T, W_ol, W_fper))[0]
@@ -504,8 +575,8 @@ for P in [10.e9, 12.e9, 14.e9, 16.e9, 18.e9]:
     for m in mins:
         m.set_state(P, T)
     G = (per.gibbs - wus.gibbs - mwd.gibbs/2. + fwd.gibbs/2.)
-    W_wad = wad.solution_model.We[0][1]/2. # 1 cation
-    W_fper = fper.solution_model.We[0][1]
+    W_wad = (wad.solution_model.We[0][1] + wad.solution_model.Wv[0][1] * P)/2. # 1 cation
+    W_fper = fper.solution_model.We[0][1] + fper.solution_model.Wv[0][1] * P
     
     x_wads = np.linspace(0.00001, 0.99999, 101)
     x_fpers = np.array([fsolve(affinity_ol_fper, [x_wad], args=(x_wad, G, T, W_wad, W_fper))[0]
@@ -549,8 +620,8 @@ for P in [10.e9, 12.5e9, 15.e9, 17.5e9, 20.e9]:
     for m in mins:
         m.set_state(P, T)
     G = (per.gibbs - wus.gibbs - mrw.gibbs/2. + frw.gibbs/2.) 
-    W_rw = rw.solution_model.We[0][1]/2. # 1 cation
-    W_fper = fper.solution_model.We[0][1]
+    W_rw = (rw.solution_model.We[0][1]  + rw.solution_model.Wv[0][1] * P)/2. # 1 cation
+    W_fper = fper.solution_model.We[0][1] + fper.solution_model.Wv[0][1] * P
     
     x_rws = np.linspace(0.00001, 0.99999, 101)
     x_fpers = np.array([fsolve(affinity_ol_fper, [x_rw], args=(x_rw, G, T, W_rw, W_fper))[0]
@@ -631,4 +702,25 @@ for (m1, m2) in [(wad, ol), (wad, rw), (ol, rw)]:
 
     plt.plot(x_m1s, pressures/1.e9, linewidth=4., color='blue')
     plt.plot(x_m2s, pressures/1.e9, linewidth=4., color='blue')
+
+p_x_m = {'ol': [], 'wad': [], 'ring': []}
+for i, run in enumerate(compositions):
+    P, T = conditions[i]
+    for j, chamber in enumerate(compositions[i]):
+        n_ol_polymorphs = 0
+        for m in ['ol', 'wad', 'ring']:
+            if m in compositions[i][j]:
+                n_ol_polymorphs += 1
+                
+        if n_ol_polymorphs > 1:
+            for m in ['ol', 'wad', 'ring']:
+                if m in compositions[i][j]:
+                    p_x_m[m].append([P, compositions[i][j][m][0]/(compositions[i][j][m][0] +
+                                                                  compositions[i][j][m][6])])
+
+for m in ['ol', 'wad', 'ring']:
+    pressures, xs = np.array(zip(*p_x_m[m]))
+    plt.scatter(xs, pressures/1.e9, s=80., label='data')
+
+
 plt.show()
