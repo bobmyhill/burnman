@@ -14,31 +14,12 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
 
-# Plot endmember phase diagrams
-def eqm_pressures(m1, m2, temperatures):
-    composition = m1.formula
-    assemblage = burnman.Composite([m1, m2])
-    assemblage.set_state(1.e5, temperatures[0])
-    equality_constraints = [('T', temperatures), ('phase_proportion', (m1, 0.0))]
-    sols, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
-                                    initial_state_from_assemblage=True,
-                                    store_iterates=False)
-    if type(sols) is list:
-        return np.array([sol.x[0] for sol in sols])
-    else:
-        return sols.x[0]
 
 run_inversion = raw_input("Do you want to invert the data now [y/n]?:\n(n plots the results of a previous inversion) ")
 
 
 # A few images:
 ol_polymorph_img = mpimg.imread('frost_2003_figures/ol_polymorphs.png')
-ol_polymorph_img_1200C = mpimg.imread('frost_2003_figures/Akimoto_1987_fo_fa_phase_diagram_1200C.png')
-ol_polymorph_img_1000C = mpimg.imread('frost_2003_figures/Akimoto_1987_fo_fa_phase_diagram_1000C.png')
-ol_polymorph_img_800C = mpimg.imread('frost_2003_figures/Akimoto_1987_fo_fa_phase_diagram_800C.png')
-
-
-
 ol_fper_img = mpimg.imread('frost_2003_figures/ol_fper_RTlnKD.png')
 wad_fper_img = mpimg.imread('frost_2003_figures/wad_fper_RTlnKD.png')
 rw_fper_img = mpimg.imread('frost_2003_figures/ring_fper_gt_KD.png')
@@ -57,48 +38,30 @@ frw_Cp_diagram = mpimg.imread('frost_2003_figures/frw_Cp_Yong_2007.png')
 fo_phase_diagram = mpimg.imread('frost_2003_figures/Mg2SiO4_phase_diagram_Jacobs_2017.png')
 fa_phase_diagram = mpimg.imread('frost_2003_figures/Fe2SiO4_phase_diagram_Yagi_1987.png')
 fa_phase_diagram2 = mpimg.imread('frost_2003_figures/Fe2SiO4_phase_diagram_Jacobs_2001.png')
-
-
-# LOAD DATA
-# Endmember reaction conditions
-with open('data/endmember_transitions.dat', 'r') as f:
-    ds = [line.split() for line in f if line.split() != [] and line[0] != '#']
-    
-endmember_transitions = [(float(d[0])*1.e9, float(d[1])*1.e9, float(d[2]), d[3], d[4]) for d in ds]
-
-    
-# Frost partitioning data
+# First, let's load the Frost database:
 with open('data/Frost_2003_chemical_analyses.dat', 'r') as f:
     ds = [line.split() for line in f if line.split() != [] and line[0] != '#']
 
 all_runs = [d[0] for d in ds]
-set_runs = list(set([d[0] for d in ds]))
-all_conditions = [(float(ds[all_runs.index(run)][2])*1.e9,
-               float(ds[all_runs.index(run)][3])) for run in set_runs]
-all_chambers = [list(set([d[1] for d in ds if d[0] == run])) for run in set_runs]
+runs = list(set([d[0] for d in ds]))
+conditions = [(float(ds[all_runs.index(run)][2])*1.e9,
+               float(ds[all_runs.index(run)][3])) for run in runs]
+chambers = [list(set([d[1] for d in ds if d[0] == run])) for run in runs]
 
-all_compositions = []
-for i, run in enumerate(set_runs):
-    all_compositions.append([])
+compositions = []
+for i, run in enumerate(runs):
+    compositions.append([])
     run_indices = [idx for idx, x in enumerate(ds) if x[0] == run]
-    for j, chamber in enumerate(all_chambers[i]):
+    for j, chamber in enumerate(chambers[i]):
         chamber_indices = [run_idx for run_idx in run_indices
                            if (ds[run_idx][1] == chamber and
                                ds[run_idx][4] != 'cen' and
                                ds[run_idx][4] != 'anB' and
                                ds[run_idx][4] != 'mag')]
         if len(chamber_indices) > 1:
-            all_compositions[-1].append({ds[idx][4]: map(float, ds[idx][5:13])
-                                         for idx in chamber_indices})
+            compositions[-1].append({ds[idx][4]: map(float, ds[idx][5:13])
+                                     for idx in chamber_indices})
             #print(run, chamber, [ds[idx][4] for idx in chamber_indices])
-
-# Take only the data at > 2.2 GPa (i.e. not the PC experiment)
-compositions, conditions, chambers, runs = zip(*[[all_compositions[i],
-                                                  all_conditions[i],
-                                                  all_chambers[i],
-                                                  set_runs[i]]
-                                                 for i, c in enumerate(all_compositions)
-                                                 if all_conditions[i][0] > 2.2e9])
 
 def endmember_affinity(P, T, m1, m2):
     m1.set_state(P, T)
@@ -121,10 +84,10 @@ frw = burnman.minerals.HHPH_2013.frw()
 mins = [per, wus, fo, fa, mwd, fwd, mrw, frw]
 
 wus.params['H_0'] = -2.65453e+05
-wus.params['S_0'] = 59.82
+wus.params['S_0'] = 58.
 wus.params['V_0'] = 12.239e-06
 wus.params['a_0'] = 3.22e-05
-wus.params['K_0'] = 162.e9
+wus.params['K_0'] = 152.e9
 wus.params['Kprime_0'] = 4.9
 wus.params['Cp'] = np.array([42.638, 0.00897102, -260780.8, 196.6])
 
@@ -133,10 +96,9 @@ fwd.params['K_0'] = 160.e9 # 169.e9 is SLB
 fwd.params['a_0'] = 2.48e-5 # 2.31e-5 is SLB
 
 # Katsura et al., 2004
-mrw.params['V_0'] = 3.95e-5
-mrw.params['a_0'] = 2.13e-5
+mrw.params['V_0'] = 3.949e-5
+mrw.params['a_0'] = 2.2e-5
 mrw.params['K_0'] = 182.e9
-mrw.params['Kprime_0'] = 4.59
 
 # Armentrout and Kavner, 2011
 frw.params['V_0'] = 42.03e-6
@@ -144,137 +106,13 @@ frw.params['K_0'] = 202.e9
 frw.params['Kprime_0'] = 4.
 frw.params['a_0'] = 1.95e-5
 
-per.params['S_0_orig'] = [26.9, 0.1] # exp paper reported in Jacobs et al., 2017
-wus.params['S_0_orig'] = [58., 6.] # exp paper reported in Jacobs et al., 2017
-
-fo.params['S_0_orig'] = [94.0, 0.1] # Dachs et al., 2007
-fa.params['S_0_orig'] = [151.4, 0.1] # Dachs et al., 2007
-
-mwd.params['S_0_orig'] = [86.4, 0.4] # exp paper reported in Jacobs et al., 2017
-fwd.params['S_0_orig'] = [140.2, 10.] # same as Yong et al., 2007 for rw, but with bigger error
-
-mrw.params['S_0_orig'] = [82.7, 0.5] # exp paper reported in Jacobs et al., 2017
-frw.params['S_0_orig'] = [140.2, 1.] # Yong et al., 2007; formal error is 0.4
-
-
-for m in mins:
-    m.params['S_0'] = m.params['S_0_orig'][0]
-
-
-"""
-# Entropies for fo-fa solid solutions from Dachs (2007). Almost a perfectly straight line.
-plt.plot([0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.0],
-         [151.4, 144.9, 138.9, 134.2,
-         128.9,
-         121.7,
-         116.1,
-         110.8,
-         99.5,
-          94.0])
-plt.show()
-exit()
-"""
-
-fa.set_state(1.e5, 1673.15)
-fa_gibbs = fa.gibbs
-
-from scipy.optimize import curve_fit
-func_Cp = lambda T, *c: c[0] + c[1]*T + c[2]/T/T + c[3]/np.sqrt(T)
-
-"""
-# mwd from Jahn et al., 2013
-T, Cp, sigma = np.loadtxt('data/mwd_Cp_Jahn_2013.dat', unpack=True)
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=mwd.params['Cp'])
-mwd.params['Cp'] = popt
-"""
-
-"""
-Cp -= 8./(2500.*2500.)*T*T
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=mrw.params['Cp'])
-mrw.params['Cp'] = popt
-"""
-
-# mrw from Kojitani et al., 2012
-func_Cp_mrw_Kojitani = lambda T: 164.30 + 1.0216e-2*T + 7.6665e3/T - 1.1595e7/T/T + 1.3807e9/T/T/T 
-tweak = lambda T: 5./(2500.*2500.)*T*T
-T = np.linspace(306., 2500., 101)
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = func_Cp_mrw_Kojitani(T) + tweak(T), p0=mrw.params['Cp'])
-mrw.params['Cp'] = popt
-
-
-# WARNING, THIS IS NOT THE CP OF MWD, ITS JUST AN EASY WAY TO CREATE A SMOOTH MWD-MRW TRANSITION!!
-tweak = lambda T: 2./(2500.*2500.)*T*T
-T = np.linspace(306., 2500., 101)
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = func_Cp_mrw_Kojitani(T) + tweak(T), p0=mrw.params['Cp'])
-mwd.params['Cp'] = popt
-
-
-# fa from Benisek et al., 2012 (also used for fwd, frw)
-T, Cp, sigma = np.loadtxt('data/fa_Cp_Benisek_2012.dat', unpack=True)
-T = list(T)
-T.extend([900., 1000., 1100., 1200., 1300., 1500., 1700., 2000., 2200.])
-Cp = list(Cp)
-Cp.extend([187.3, 190.9, 189, 180., 200., 205., 211.7, 219.6, 230.5])
-sigma = list(sigma)
-sigma.extend([1., 1., 1., 1., 1., 1., 1, 1])
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=fa.params['Cp'])
-fa.params['Cp'] = popt
-
-# NOTE: making the heat capacity of frw lower than fa results in a convex-down-pressure boundary in poor agreement with the experimental data.
-# NOTE: making the heat capacity of frw the same as fa results in a nearly-linear curve
-# NOTE: making the heat capacity of frw the same as fa+10./(np.sqrt(2500.))*np.sqrt(T) results in a curve that is too convex-up-pressure
-
-# NOTE: fwd should have a slightly lower heat capacity than frw
-tweak = lambda T: -6./(np.sqrt(2500.))*np.sqrt(T)
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = np.array(Cp) + tweak(np.array(T)), p0=fa.params['Cp'])
-fwd.params['Cp'] = popt
-
-tweak = lambda T: -2./(np.sqrt(2500.))*np.sqrt(T)
-popt, pcov = curve_fit(func_Cp, xdata = T, ydata = np.array(Cp) + tweak(np.array(T)), p0=fa.params['Cp'])
-frw.params['Cp'] = popt
-
-fa.set_state(1.e5, 1673.15)
-fa.params['H_0'] += fa_gibbs - fa.gibbs
-
-
-
-
-# Plot heat capacities of mwd and mrw
-temperatures = np.linspace(300., 2400., 101)
-pressures = 1.e5 + temperatures*0.
-
-fig = plt.figure(figsize=(20., 15.))
-ax = [fig.add_subplot(2, 2, i) for i in range(1, 5)]
-ax[0].imshow(mwd_Cp_diagram, extent=[0., 800., 0., 180.], aspect='auto')
-ax[0].plot(temperatures, mwd.evaluate(['C_p'], pressures, temperatures)[0])
-
-ax[1].imshow(mrw_Cp_diagram, extent=[0., 1000., 0., 180.], aspect='auto')
-ax[1].plot(temperatures, mrw.evaluate(['C_p'], pressures, temperatures)[0])
-
-ax[2].plot(temperatures, fo.evaluate(['C_p'], pressures, temperatures)[0], label='fo', linewidth=3.)
-ax[2].plot(temperatures, mwd.evaluate(['C_p'], pressures, temperatures)[0], label='mwd')
-ax[2].plot(temperatures, mrw.evaluate(['C_p'], pressures, temperatures)[0], label='mrw')
-ax[2].legend()
-
-#ax[3].imshow(fa_Cp_diagram, extent=[250., 2200., 100., 240.], aspect='auto')
-ax[3].imshow(frw_Cp_diagram, extent=[0., 700., 0., 200.], aspect='auto')
-
-ax[3].plot(temperatures, fa.evaluate(['C_p'], pressures, temperatures)[0], label='fa', linewidth=3.)
-ax[3].plot(temperatures, fwd.evaluate(['C_p'], pressures, temperatures)[0], label='fwd')
-ax[3].plot(temperatures, frw.evaluate(['C_p'], pressures, temperatures)[0], label='frw')
-ax[3].legend()
-
-plt.show()
-
-
 for (P, m1, m2) in [[14.25e9, fo, mwd],
                     [19.7e9, mwd, mrw],
-                    [6.2e9, fa, frw],
-                    [6.23e9, fa, fwd]]:
+                    [6.4e9, fa, frw],
+                    [6.3e9, fa, fwd]]:
     m1.set_state(P, 1673.15)
     m2.set_state(P, 1673.15)
     m2.params['H_0'] += m1.gibbs - m2.gibbs
-    
 
 fper = Solution(name = 'ferropericlase',
                 solution_type ='symmetric',
@@ -302,17 +140,6 @@ solutions = {'mw': fper,
              'wad': wad,
              'ring': rw}
 
-endmembers = {'per': per,
-              'wus': wus,
-              'fo': fo,
-              'fa': fa,
-              'mwd': mwd,
-              'fwd': fwd,
-              'mrw': mrw,
-              'frw': frw}
-              
-
-
 # For each mineral pair, use the pressure and temperature to calculate the independent reaction affinities
 
 # We want to minimize these by varying:
@@ -324,8 +151,38 @@ endmembers = {'per': per,
 # The pressure errors for each experiment have a Gaussian uncertainty of 0.5 GPa centered on the nominal pressure. 
 
 def rms_misfit_affinities(args):
-    # set parameters 
-    Perr = set_params(args)
+
+    ol.endmembers[0][0].params['H_0'] = args[0]*1.e3
+    ol.endmembers[1][0].params['H_0'] = args[1]*1.e3
+    wad.endmembers[0][0].params['H_0'] = args[2]*1.e3
+    #wad.endmembers[1][0].params['H_0'] = args[3]*1.e3
+    rw.endmembers[0][0].params['H_0'] = args[3]*1.e3
+    rw.endmembers[1][0].params['H_0'] = args[4]*1.e3
+    
+    fper.endmembers[0][0].params['a_0'] = args[5]*1.e-5
+    fper.endmembers[1][0].params['a_0'] = args[6]*1.e-5
+    ol.endmembers[0][0].params['a_0'] = args[7]*1.e-5
+    ol.endmembers[1][0].params['a_0'] = args[8]*1.e-5
+    wad.endmembers[0][0].params['a_0'] = args[9]*1.e-5
+    wad.endmembers[1][0].params['a_0'] = args[10]*1.e-5
+    rw.endmembers[0][0].params['a_0'] = args[11]*1.e-5
+    rw.endmembers[1][0].params['a_0'] = args[12]*1.e-5
+    
+    fper.solution_model.We[0][1] = args[13]*1.e3
+    ol.solution_model.We[0][1] = args[14]*1.e3
+    wad.solution_model.We[0][1] = args[15]*1.e3
+    rw.solution_model.We[0][1] = args[16]*1.e3
+    
+    Perr = np.array(args[17:])*1.e9 # arguments in GPa
+
+    # MAKE FWD UNSTABLE RELATIVE TO FRW
+    dP = 0.03e9
+    P_fa_frw = fsolve(endmember_affinity, 6.4e9, args=(1673.15,
+                                                       ol.endmembers[1][0],
+                                                       rw.endmembers[1][0]))
+    wad.endmembers[1][0].set_state(P_fa_frw, 1673.15)
+    wad.endmembers[1][0].params['H_0'] += rw.endmembers[1][0].gibbs - wad.endmembers[1][0].gibbs + dP*(wad.endmembers[1][0].V - rw.endmembers[1][0].V)
+    
     
     misfit = 0.
     n=0.
@@ -410,40 +267,35 @@ def rms_misfit_affinities(args):
 
 
     # apply strong priors to stable endmember transition pressures
-    max_P_err = 0.
-    for (Pnom, P_sigma, Tnom, m1, m2) in endmember_transitions:
-        dP = fsolve(endmember_affinity, Pnom, args=(Tnom, endmembers[m1], endmembers[m2]))[0] - Pnom
-        #print('dP({0}, {1}): {2}'.format(m1, m2, dP/1.e9))
-        misfit += np.power(dP/P_sigma, 2.)
-        max_weighted_P_err = np.max([np.abs(dP/P_sigma), max_P_err])
-    print('Maximum dP/sigma(P): {0}'.format(max_weighted_P_err))
-    
-    # apply prior to fwd instability ove a wide temperature range
-    T = 473.15
-    dP = (fsolve(endmember_affinity, 6.2e9, args=(T, fa, fwd))[0] -
-          fsolve(endmember_affinity, 6.2e9, args=(T, fa, frw))[0])
-    if dP < 0.1e9:
-        misfit += np.power(np.abs(dP-0.1e9)/0.1e9, 2.)
-    #print('dP({0}, {1}): {2} at {3} K'.format(fwd.name, frw.name, dP/1.e9, T))
-    T = 1873.15
-    dP = (fsolve(endmember_affinity, 6.2e9, args=(T, fa, fwd))[0] -
-          fsolve(endmember_affinity, 6.2e9, args=(T, fa, frw))[0])
-    if dP < 0.1e9:
-        misfit += np.power(np.abs(dP-0.1e9)/0.1e9, 2.)
-    #print('dP({0}, {1}): {2} at {3} K'.format(fwd.name, frw.name, dP/1.e9, T))
-    
+    for (Porig, m1, m2) in [(14.25e9, ol.endmembers[0][0], wad.endmembers[0][0]),
+                        (19.7e9, wad.endmembers[0][0], rw.endmembers[0][0]),
+                        (6.4e9, ol.endmembers[1][0], rw.endmembers[1][0])]:
+        dP = fsolve(endmember_affinity, Porig, args=(T, m1, m2))[0] - Porig
+        print('dP({0}, {1}): {2}'.format(m1.name, m2.name, dP/1.e9))
+        misfit += (dP*dP)/0.1e9/0.1e9
+
     
     # include original alphas as priors
-    for (ms, sigma) in [([per, fo, fa, mrw], 2.e-7),
-                        ([wus, mwd, frw], 5.e-7),
-                        ([fwd], 20.e-7)]:
-        for m in ms:
-            d_alpha = m.params['a_0_orig'] - m.params['a_0']
-            misfit += np.power(d_alpha/sigma, 2.)
-            
-    # include original entropies as priors
-    for m in mins:
-        misfit += np.power((m.params['S_0_orig'][0] - m.params['S_0'])/m.params['S_0_orig'][1], 2.)
+    well_constrained_indices = [0, 1, 2, 3] # per, wus, fo, fa
+    less_constrained_indices = [4, 6] # mwd, mrw
+    poorly_constrained_indices = [7] # frw
+    unknown_indices = [5] # fwd
+    das = [fper.endmembers[0][0].params['a_0_orig'] - fper.endmembers[0][0].params['a_0'],
+           fper.endmembers[1][0].params['a_0_orig'] - fper.endmembers[1][0].params['a_0'],
+           ol.endmembers[0][0].params['a_0_orig'] - ol.endmembers[0][0].params['a_0'],
+           ol.endmembers[1][0].params['a_0_orig'] - ol.endmembers[1][0].params['a_0'],
+           wad.endmembers[0][0].params['a_0_orig'] - wad.endmembers[0][0].params['a_0'],
+           wad.endmembers[1][0].params['a_0_orig'] - wad.endmembers[1][0].params['a_0'],
+           rw.endmembers[0][0].params['a_0_orig'] - rw.endmembers[0][0].params['a_0'],
+           rw.endmembers[1][0].params['a_0_orig'] - rw.endmembers[1][0].params['a_0']]
+    for idx in well_constrained_indices:
+        misfit += das[idx]*das[idx]/(2.e-7*2.e-7)
+    for idx in less_constrained_indices:
+        misfit += das[idx]*das[idx]/(5.e-7*5.e-7)
+    for idx in poorly_constrained_indices:
+        misfit += das[idx]*das[idx]/(10.e-7*10.e-7) 
+    for idx in unknown_indices:
+        misfit += das[idx]*das[idx]/(20.e-7*20.e-7) 
 
     # add prior for olivine interaction parameter
     misfit += np.power((ol.solution_model.We[0][1] - 5.2e3)/(1.e3), 2.)
@@ -456,71 +308,25 @@ def rms_misfit_affinities(args):
     print(*args, sep = ", ")
     return rms_misfit
 
-def get_params(Perr):
-    args = [fper.endmembers[0][0].params['H_0']*1.e-3,
-            fper.endmembers[1][0].params['H_0']*1.e-3,
-            wad.endmembers[0][0].params['H_0']*1.e-3,
-            wad.endmembers[1][0].params['H_0']*1.e-3,
-            rw.endmembers[0][0].params['H_0']*1.e-3,
-            rw.endmembers[1][0].params['H_0']*1.e-3,
-            fper.endmembers[0][0].params['S_0'],
-            fper.endmembers[1][0].params['S_0'],
-            ol.endmembers[0][0].params['S_0'],
-            ol.endmembers[1][0].params['S_0'],
-            wad.endmembers[0][0].params['S_0'],
-            wad.endmembers[1][0].params['S_0'],
-            rw.endmembers[0][0].params['S_0'],
-            rw.endmembers[1][0].params['S_0'],
-            fper.endmembers[0][0].params['a_0']*1.e5,
-            fper.endmembers[1][0].params['a_0']*1.e5, 
-            ol.endmembers[0][0].params['a_0']*1.e5,
-            ol.endmembers[1][0].params['a_0']*1.e5, 
-            wad.endmembers[0][0].params['a_0']*1.e5,
-            wad.endmembers[1][0].params['a_0']*1.e5,
-            rw.endmembers[0][0].params['a_0']*1.e5,
-            rw.endmembers[1][0].params['a_0']*1.e5,
-            fper.solution_model.We[0][1]*1.e-3,
-            ol.solution_model.We[0][1]*1.e-3,
-            wad.solution_model.We[0][1]*1.e-3,
-            rw.solution_model.We[0][1]*1.e-3]
+args = [ol.endmembers[0][0].params['H_0']*1.e-3,
+        ol.endmembers[1][0].params['H_0']*1.e-3,
+        wad.endmembers[0][0].params['H_0']*1.e-3, #wad.endmembers[1][0].params['H_0']*1.e-3,
+        rw.endmembers[0][0].params['H_0']*1.e-3,
+        rw.endmembers[1][0].params['H_0']*1.e-3,
+        fper.endmembers[0][0].params['a_0']*1.e5,
+        fper.endmembers[1][0].params['a_0']*1.e5, 
+        ol.endmembers[0][0].params['a_0']*1.e5,
+        ol.endmembers[1][0].params['a_0']*1.e5, 
+        wad.endmembers[0][0].params['a_0']*1.e5,
+        wad.endmembers[1][0].params['a_0']*1.e5,
+        rw.endmembers[0][0].params['a_0']*1.e5,
+        rw.endmembers[1][0].params['a_0']*1.e5,
+        fper.solution_model.We[0][1]*1.e-3,
+        ol.solution_model.We[0][1]*1.e-3,
+        wad.solution_model.We[0][1]*1.e-3,
+        rw.solution_model.We[0][1]*1.e-3]
 
-    args.extend(Perr)
-    return args
-
-def set_params(args):
-    fper.endmembers[0][0].params['H_0'] = args[0]*1.e3
-    fper.endmembers[1][0].params['H_0'] = args[1]*1.e3
-    wad.endmembers[0][0].params['H_0'] = args[2]*1.e3
-    wad.endmembers[1][0].params['H_0'] = args[3]*1.e3
-    rw.endmembers[0][0].params['H_0'] = args[4]*1.e3
-    rw.endmembers[1][0].params['H_0'] = args[5]*1.e3
-    
-    fper.endmembers[0][0].params['S_0'] = args[6]
-    fper.endmembers[1][0].params['S_0'] = args[7]
-    ol.endmembers[0][0].params['S_0'] = args[8]
-    ol.endmembers[1][0].params['S_0'] = args[9]
-    wad.endmembers[0][0].params['S_0'] = args[10]
-    wad.endmembers[1][0].params['S_0'] = args[11]
-    rw.endmembers[0][0].params['S_0'] = args[12]
-    rw.endmembers[1][0].params['S_0'] = args[13]
-    
-    fper.endmembers[0][0].params['a_0'] = args[14]*1.e-5
-    fper.endmembers[1][0].params['a_0'] = args[15]*1.e-5
-    ol.endmembers[0][0].params['a_0'] = args[16]*1.e-5
-    ol.endmembers[1][0].params['a_0'] = args[17]*1.e-5
-    wad.endmembers[0][0].params['a_0'] = args[18]*1.e-5
-    wad.endmembers[1][0].params['a_0'] = args[19]*1.e-5
-    rw.endmembers[0][0].params['a_0'] = args[20]*1.e-5
-    rw.endmembers[1][0].params['a_0'] = args[21]*1.e-5
-    
-    
-    fper.solution_model.We[0][1] = args[22]*1.e3
-    ol.solution_model.We[0][1] = args[23]*1.e3
-    wad.solution_model.We[0][1] = args[24]*1.e3
-    rw.solution_model.We[0][1] = args[25]*1.e3
-    
-    Perr = np.array(args[26:])*1.e9 # arguments in GPa
-    return Perr
+args.extend([0.]*len(compositions))
 
 fper.endmembers[0][0].params['a_0_orig'] = fper.endmembers[0][0].params['a_0']
 fper.endmembers[1][0].params['a_0_orig'] = fper.endmembers[1][0].params['a_0']
@@ -531,49 +337,119 @@ wad.endmembers[1][0].params['a_0_orig'] = wad.endmembers[1][0].params['a_0']
 rw.endmembers[0][0].params['a_0_orig'] = rw.endmembers[0][0].params['a_0']
 rw.endmembers[1][0].params['a_0_orig'] = rw.endmembers[1][0].params['a_0']
 
-args = get_params([0.]*len(compositions))
+# HERE ARE THE ARGUMENTS TAKEN FROM ONE ITERATION (NOT NECESSARILY CONVERGED)
 
-# mwd, frw: 0, 4
-args = np.array([-6.04659013e+02, -2.62364260e+02, -2.14497024e+03, -1.46392867e+03,
-                 -2.13447658e+03, -1.46210882e+03,  2.68990125e+01,  6.21490796e+01,
-                 9.41294929e+01,  1.51419065e+02,  8.50428195e+01,  1.42774157e+02,
-                 8.15933125e+01,  1.38208471e+02,  3.07918132e+00,  3.39458748e+00,
-                 2.84213200e+00,  2.77623376e+00,  2.13474857e+00,  1.99628333e+00,
-                 2.22408127e+00,  1.94133547e+00,  1.11333420e+01,  5.00437164e+00,
-                 1.57423442e+01,  7.57846521e+00, -8.27432755e-02, -1.17414129e-01,
-                 7.46439836e-02, -4.59182495e-01, -3.49214631e-02,  5.47369309e-01,
-                 -5.92176590e-02, -3.19531339e-01, -1.09428616e+00,  4.54302255e-01,
-                 2.78984832e-01, -6.18452574e-02,  2.07796321e-01, -3.01902796e-01,
-                 9.23075711e-01,  1.57796037e-01, -1.52361107e-02,  8.03159438e-01,
-                 -5.63615619e-01, -2.41119543e-01, -1.18825217e+00, -3.69594607e-01,
-                 -1.09254906e-01])
+# INVERSION COMPLETED (with fixed olivine interaction parameter)
+args = np.array([-2.17224175e+03, -1.47773131e+03, -2.13421347e+03, #-1.46531939e+03,
+                 -2.13162992e+03, -1.47104265e+03,  3.01200165e+00,  3.30732943e+00,
+                 3.01275217e+00,  2.65419478e+00,  2.18044096e+00,  2.33747381e+00,
+                 2.45021207e+00,  2.01927830e+00,  1.14897316e+01,  1.41940312e+01,
+                 8.69867295e+00, -1.86422445e-01, -4.38628577e-02, -6.46750372e-01,
+                 -4.70004057e-01,  1.58148675e-01,  2.05052961e-01, -6.81584221e-02,
+                 -6.50116080e-01, -1.29253514e+00,  4.25710718e-01,  6.98762867e-01,
+                 -1.39297711e-01, -1.27964488e-02, -2.89254807e-01, -1.03472470e+00,
+                 1.52425120e-01, -1.92100585e-02,  7.43293988e-01, -5.35123545e-01,
+                 -4.87160443e-02,  2.25691972e+00, -1.99175907e+00, -1.46009954e-01,
+                 -2.29528315e-01])
 
-# -2, 2
-args = [-604.647266862, -262.376007143, -2144.95376795, -1464.01677766, -2134.50100115, -1462.45368056, 26.8827811498, 62.0757801241, 94.1029147167, 151.315576339, 85.020050769, 142.916251188, 81.5759757215, 138.689079496, 3.08481852749, 3.39261851987, 2.84674756023, 2.78017942756, 2.13901107531, 1.88429601859, 2.23400101287, 1.92649235633, 11.1809223691, 5.01012836854, 15.7682972952, 7.58840926312, -0.0755892458475, -0.116407545658, 0.119111212601, -0.464280106369, -0.0312889519228, 0.547956834137, -0.0594776346765, -0.293532918493, -1.06488615805, 0.458814588423, 0.261099725295, -0.0575384489927, 0.209104152415, -0.298408086129, 0.971880455557, 0.162368404455, -0.00664251485364, 0.798451629717, -0.553358268055, -0.253536253022, -1.12769700359, -0.367107772082, -0.112662013682]
 
-# -4, 0
-args = [-604.493422398, -262.529852822, -2144.9927018, -1464.2929659, -2134.56565173, -1462.90077172, 26.9147408469, 61.9328730884, 94.103566932, 151.385707994, 85.0188746001, 143.383139214, 81.5373429227, 139.374737812, 3.07554445302, 3.3920453455, 2.83343418781, 2.77722968253, 2.13297021438, 1.81690472934, 2.22591418552, 1.92930491706, 11.1786326401, 5.05694782305, 15.9068149163, 7.55642904454, -0.065361281466, -0.119359756732, 0.272504687232, -0.476241692776, -0.0188794981785, 0.551256076128, -0.0597029535157, -0.249504442624, -1.00779670572, 0.473934565401, 0.197036213563, -0.0504916269646, 0.212209687562, -0.280883192136, 1.02825926289, 0.179566055035, 0.0157209653469, 0.811019505664, -0.533514694072, -0.269069377221, -0.958649478777, -0.384788412933, -0.106961697389]
+# With looser alpha constraints for [per, wus, fo, fa] [mwd] [mrw, frw] [fwd] (3, 6, 12, 20) (with prior on olivine interaction parameter)
+args = np.array([-2.17187007e+03, -1.47717868e+03, -2.13480659e+03, #-1.46471191e+03,
+       -2.13226979e+03, -1.47133741e+03,  3.01537108e+00,  3.30430514e+00,
+        3.01875794e+00,  2.65792107e+00,  2.29143759e+00,  2.28735133e+00,
+        2.56480424e+00,  2.11120287e+00,  1.14155443e+01,  4.88728484e+00,
+        1.46990294e+01,  8.62164614e+00, -1.75369072e-01, -2.77510910e-02,
+       -7.35432067e-01, -4.74859738e-01,  8.58707816e-02,  2.25029008e-01,
+       -6.57368289e-02, -6.06117548e-01, -1.25812383e+00,  4.25875875e-01,
+        7.54535199e-01, -1.33112661e-01, -3.02454273e-02, -2.74618719e-01,
+       -1.00462549e+00,  1.64155095e-01, -4.09346415e-03,  7.25091777e-01,
+       -5.19636208e-01, -4.52347238e-02,  2.29288715e+00, -2.04517905e+00,
+       -7.88136705e-02, -2.23498278e-01])
 
-# -6, -2
-args=np.array([-6.02747777e+02, -2.64275678e+02, -2.14499275e+03, -1.46610625e+03,
-               -2.13450637e+03, -1.46547080e+03,  2.68996056e+01,  5.98323367e+01,
-               9.41310288e+01,  1.51414041e+02,  8.50283980e+01,  1.44104565e+02,
-               8.15643547e+01,  1.38707780e+02,  3.07887583e+00,  3.39632247e+00,
-               2.84187197e+00,  2.77768230e+00,  2.13662249e+00,  2.00907629e+00,
-               2.22453691e+00,  1.92937022e+00,  1.11480556e+01,  5.12628257e+00,
-               1.57526115e+01,  7.62046929e+00, -7.40250600e-02, -1.25124869e-01,
-               1.41585944e-02, -4.45970654e-01, -3.14972926e-02,  5.49313020e-01,
-               -5.86154820e-02, -2.98316475e-01, -1.06471059e+00,  4.63321961e-01,
-               2.22041502e-01, -5.41369376e-02,  2.16523549e-01, -2.92372606e-01,
-               9.62297419e-01,  1.66647706e-01, -7.30509033e-03,  8.14478439e-01,
-               -5.54772564e-01, -2.32384445e-01, -1.14896987e+00, -4.05818126e-01,
-               -1.04205365e-01])
+
+# Tweaked alpha constraints (1, 5, 10, 20) (with prior on olivine interaction parameter)
+args = np.array([-2.17003205e+03, -1.47836511e+03, -2.13482932e+03, #-1.46497810e+03,
+                 -2.13255358e+03, -1.47141748e+03,  3.09761335e+00,  3.23082786e+00,
+                 2.87092861e+00,  2.79939648e+00,  2.29865662e+00,  2.26298360e+00,
+                 2.59070780e+00,  2.03719253e+00,  1.13727459e+01,  4.82607012e+00,
+                 1.42752856e+01,  8.47084620e+00, -1.76559710e-01, -3.06209598e-02,
+                 -8.07639908e-01, -5.68869527e-01,  5.37149877e-02,  6.38619726e-01,
+                 -1.44497949e-01, -5.93686133e-01, -1.31673248e+00,  2.66680165e-01,
+                 7.14336790e-01, -1.32810240e-01, -1.51552708e-01, -3.91775119e-01,
+                 1.34537662e+00,  1.50722306e-02, -1.80588618e-01,  5.34129982e-01,
+                 -6.78013798e-01, -7.26456505e-01,  4.90515853e+00, -2.09095454e+00,
+                 -8.53561254e-02, -3.08260075e-01])
+
+
+
+# Loosened alpha constraints on wus (5e-7) (with prior on olivine interaction parameter)
+# This one is nice!!
+args = np.array([-2.17074415e+03, -1.47777317e+03, -2.13515806e+03, #-1.46460379e+03,
+                 -2.13256643e+03, -1.47132773e+03,  3.09726854e+00,  3.50431526e+00,
+                 2.87301690e+00,  2.79781933e+00,  2.27537973e+00,  2.28940567e+00,
+                 2.54355319e+00,  2.12823868e+00,  1.13803459e+01,  4.77516547e+00,
+                 1.47183920e+01,  8.49632135e+00, -1.47464145e-01, -1.14842263e-02,
+                 -8.34343861e-01, -5.33233653e-01,  4.03562474e-02,  4.40321269e-01,
+                 -1.15903978e-01, -5.57711227e-01, -1.28582289e+00,  3.47302594e-01,
+                 7.77973754e-01, -1.16037058e-01, -7.79416664e-02, -3.29241758e-01,
+                 5.27607601e-01,  8.94235846e-02, -9.58771026e-02,  6.17514130e-01,
+                 -6.00385900e-01, -5.20244075e-01,  4.01636962e+00, -2.10274838e+00,
+                 -3.66568437e-02, -2.57793742e-01])
+
+
+# Tighter constraints on mrw alpha (5.e-7) (Using the Katsura data),
+# shifted mwd-mrw transition to 19.7GPa
+args = np.array([-2171.69448055, -1478.38431728, -2135.23939121, #-1464.48525107,
+                 -2131.47508914, -1470.89408152, 3.0943818865, 3.54644775479, 2.87547463697, 2.79736592794, 2.2064213984, 2.23897033825, 2.36720129462, 2.02500888516, 11.3711857207, 4.58973537019, 14.7166237374, 8.26563776546, -0.207252880983, -0.0476971698231, -0.640182027704, -0.571746879436, 0.0330121624908, 0.406866114716, -0.114573659112, -0.695293817837, -1.39603463069, 0.445039597309, 0.682231361303, -0.149789882668, 0.0560447260197, -0.260378605507, 0.379942706087, 0.173946982827, -0.0139437628626, 0.744956500623, -0.52730455766, -0.495074176112, 3.82119139368, -2.02187901507, -0.175299654316, -0.190787503041])
+
+# more tweaking (tightest prior on alpha is now 2.e-7, wus joins this group
+args = np.array([-2171.77846972, -1478.36611927, -2135.06341287, -2131.56356304, -1470.93952883, 3.04495913232, 3.2700648468, 2.93968656724, 2.73028050033, 2.23413963511, 2.12018505006, 2.41814597565, 1.9591950641, 11.3368016828, 4.58137956447, 14.7160448027, 8.19032372992, -0.214386075157, -0.0544944734435, -0.606709254416, -0.543220878817, 0.0376103824769, 0.404319344011, -0.111793922298, -0.700228576783, -1.36597963414, 0.40923668383, 0.673205789922, -0.154546481015, 0.00136168839039, -0.309264574557, 0.298236194166, 0.133169976424, -0.0477096890266, 0.70581105124, -0.571302938201, -0.467828468345, 3.77233661949, -2.00044885902, -0.1871040984, -0.319202187292])
+
+
+
+# Initial (with equal volume excesses per cation as fper for ol, wad, rw)
+#args = [-2169.76539849, -1478.53740612, -2135.29081612, -1464.10812096, -2132.95738941, -1471.51310088, 3.0983299398, 3.49224419559, 2.86872493233, 2.79917688885, 2.34389266541, 2.14503446826, 2.63172433122, 2.14441408529, 11.8296445541, 4.64852683114, 13.9507226317, 6.24160636504, -0.395205283307, -0.0525535759923, -1.23644279723, -0.5553775851, -0.00630936467201, 0.722378145232, -0.182835010592, -1.08501081085, -1.06758144501, 0.184834157079, 0.998739888333, -0.308809213375, -0.224485120169, -0.49371418684, 1.95992037135, -0.0809100851041, -0.23435055841, 0.428760741745, -0.778955862038, -0.905282589771, 5.28247576201, -2.09690664394, 0.0303140865176, -0.260923883137]
 
 # THIS LINE RUNS THE MINIMIZATION!!!
 if run_inversion == 'y' or run_inversion == 'Y' or run_inversion == 'yes' or run_inversion == 'Yes':
     print(minimize(rms_misfit_affinities, args, method='BFGS')) # , options={'eps': 1.e-02}))
 
-Perr = set_params(args)
+
+
+ol.endmembers[0][0].params['H_0'] = args[0]*1.e3
+ol.endmembers[1][0].params['H_0'] = args[1]*1.e3
+wad.endmembers[0][0].params['H_0'] = args[2]*1.e3
+#wad.endmembers[1][0].params['H_0'] = args[3]*1.e3
+rw.endmembers[0][0].params['H_0'] = args[3]*1.e3
+rw.endmembers[1][0].params['H_0'] = args[4]*1.e3
+
+fper.endmembers[0][0].params['a_0'] = args[5]*1.e-5
+fper.endmembers[1][0].params['a_0'] = args[6]*1.e-5
+ol.endmembers[0][0].params['a_0'] = args[7]*1.e-5
+ol.endmembers[1][0].params['a_0'] = args[8]*1.e-5
+wad.endmembers[0][0].params['a_0'] = args[9]*1.e-5
+wad.endmembers[1][0].params['a_0'] = args[10]*1.e-5
+rw.endmembers[0][0].params['a_0'] = args[11]*1.e-5
+rw.endmembers[1][0].params['a_0'] = args[12]*1.e-5
+
+
+fper.solution_model.We[0][1] = args[13]*1.e3
+ol.solution_model.We[0][1] = args[14]*1.e3
+wad.solution_model.We[0][1] = args[15]*1.e3
+rw.solution_model.We[0][1] = args[16]*1.e3
+
+Perr = np.array(args[17:])*1.e9 # arguments in GPa
+
+
+# MAKE FWD UNSTABLE RELATIVE TO FRW
+dP = 0.03e9
+P_fa_frw = fsolve(endmember_affinity, 6.3e9, args=(1673.15,
+                                                   ol.endmembers[1][0],
+                                                   rw.endmembers[1][0]))[0]
+fwd.set_state(P_fa_frw, 1673.15)
+frw.set_state(P_fa_frw, 1673.15)
+fwd.params['H_0'] += frw.gibbs - fwd.gibbs + dP*(fwd.V - frw.V)
+
 
 # Plot mrw EoS
 pressures = np.linspace(1.e5, 25.e9, 101) 
@@ -583,6 +459,112 @@ for T in [300., 700., 1100., 1500., 1900.]:
     plt.plot(pressures/1.e9, mrw.evaluate(['V'], pressures, temperatures)[0]*1.e6)
 plt.show()
 
+
+# Plot endmember phase diagrams
+def eqm_pressures(m1, m2, temperatures):
+    composition = m1.formula
+    assemblage = burnman.Composite([m1, m2])
+    assemblage.set_state(1.e5, temperatures[0])
+    equality_constraints = [('T', temperatures), ('phase_proportion', (m1, 0.0))]
+    sols, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                    initial_state_from_assemblage=True,
+                                    store_iterates=False)
+    if type(sols) is list:
+        return np.array([sol.x[0] for sol in sols])
+    else:
+        return sols.x[0]
+
+mwd_P = eqm_pressures(fo, mwd, np.array([1673.15]))
+mrw_P = eqm_pressures(mwd, mrw, np.array([1673.15]))
+frw_P = eqm_pressures(fa, frw, np.array([1673.15]))
+fwd_P = eqm_pressures(fa, fwd, np.array([1673.15]))
+fa.set_state(1.e5, 1673.15)
+fa_gibbs = fa.gibbs
+
+from scipy.optimize import curve_fit
+func_Cp = lambda T, *c: c[0] + c[1]*T + c[2]/T/T + c[3]/np.sqrt(T)
+
+# mwd from Jahn et al., 2013
+T, Cp, sigma = np.loadtxt('data/mwd_Cp_Jahn_2013.dat', unpack=True)
+popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=mrw.params['Cp'])
+mwd.params['Cp'] = popt
+
+# mrw from Kojitani et al., 2012
+func_Cp_mrw_Kojitani = lambda T: 164.30 + 1.0216e-2*T + 7.6665e3/T - 1.1595e7/T/T + 1.3807e9/T/T/T
+T = np.linspace(306., 2500., 101)
+popt, pcov = curve_fit(func_Cp, xdata = T, ydata = func_Cp_mrw_Kojitani(T), p0=mrw.params['Cp'])
+mrw.params['Cp'] = popt
+
+# fa from Benisek et al., 2012 (also used for fwd, frw)
+T, Cp, sigma = np.loadtxt('data/fa_Cp_Benisek_2012.dat', unpack=True)
+T = list(T)
+T.extend([900., 1100., 1300., 1700., 2000., 2200.])
+Cp = list(Cp)
+Cp.extend([187.3, 194.3, 200., 211.7, 219.6, 224.5])
+sigma = list(sigma)
+sigma.extend([1., 1., 1., 1., 1., 1.])
+popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=fa.params['Cp'])
+fa.params['Cp'] = popt
+fwd.params['Cp'] = popt
+frw.params['Cp'] = popt
+
+fa.set_state(1.e5, 1673.15)
+fa.params['H_0'] += fa_gibbs - fa.gibbs
+
+
+
+
+# Plot heat capacities of mwd and mrw
+temperatures = np.linspace(300., 2400., 101)
+pressures = 1.e5 + temperatures*0.
+
+fig = plt.figure(figsize=(20., 15.))
+ax = [fig.add_subplot(2, 2, i) for i in range(1, 5)]
+ax[0].imshow(mwd_Cp_diagram, extent=[0., 800., 0., 180.], aspect='auto')
+ax[0].plot(temperatures, mwd.evaluate(['C_p'], pressures, temperatures)[0])
+
+ax[1].imshow(mrw_Cp_diagram, extent=[0., 1000., 0., 180.], aspect='auto')
+ax[1].plot(temperatures, mrw.evaluate(['C_p'], pressures, temperatures)[0])
+
+ax[2].plot(temperatures, fo.evaluate(['C_p'], pressures, temperatures)[0], label='fo', linewidth=3.)
+ax[2].plot(temperatures, mwd.evaluate(['C_p'], pressures, temperatures)[0], label='mwd')
+ax[2].plot(temperatures, mrw.evaluate(['C_p'], pressures, temperatures)[0], label='mrw')
+ax[2].legend()
+
+ax[3].imshow(fa_Cp_diagram, extent=[250., 2200., 100., 240.], aspect='auto')
+ax[3].imshow(frw_Cp_diagram, extent=[0., 700., 0., 200.], aspect='auto')
+
+ax[3].plot(temperatures, fa.evaluate(['C_p'], pressures, temperatures)[0], label='fa', linewidth=3.)
+ax[3].plot(temperatures, fwd.evaluate(['C_p'], pressures, temperatures)[0], label='fwd')
+ax[3].plot(temperatures, frw.evaluate(['C_p'], pressures, temperatures)[0], label='frw')
+ax[3].legend()
+
+plt.show()
+
+
+
+def HS_m2(args, m1, m2, PTs):
+    m2.params['H_0'] = args[0]
+    m2.params['S_0'] = args[1]
+    return PTs[:,0] - eqm_pressures(m1, m2, PTs[:,1])
+
+
+print(fsolve(HS_m2, [mwd.params['H_0'], mwd.params['S_0']],
+             args = (fo, mwd,
+                     np.array([[mwd_P, 1673.15],
+                               [12.e9, 1000.]]))))
+print(fsolve(HS_m2, [mrw.params['H_0'], mrw.params['S_0']],
+             args = (mwd, mrw,
+                     np.array([[mrw_P, 1673.15],
+                               [16.75e9, 1000.]]))))
+print(fsolve(HS_m2, [frw.params['H_0'], frw.params['S_0']],
+             args = (fa, frw,
+                     np.array([[frw_P, 1673.15],
+                               [4.e9, 700.]]))))
+print(fsolve(HS_m2, [fwd.params['H_0'], fwd.params['S_0']],
+             args = (fa, fwd,
+                     np.array([[fwd_P, 1673.15],
+                               [4.03e9, 700.]]))))
 
 fig = plt.figure(figsize=(30, 15))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
@@ -832,11 +814,11 @@ plt.show()
 
 # BINARY PHASE DIAGRAM
 
-#plt.imshow(ol_polymorph_img, extent=[0., 1., 6., 20.], aspect='auto')
-#plt.imshow(ol_polymorph_img_1000C, extent=[-0.01, 1.005, 4., 21.], aspect='auto')
-
-for (T0, color) in [(1273.15, 'blue'),
+plt.imshow(ol_polymorph_img, extent=[0., 1., 6., 20.], aspect='auto')
+    
+for (T0, color) in [(1473.15, 'blue'),
                     (1673.15, 'orange'),
+                    (1873.15, 'red'),
                     (2073.15, 'purple')]:
 
     x_m1 = 0.3
