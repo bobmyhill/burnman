@@ -408,11 +408,13 @@ class IdealSolution (SolutionModel):
 
     def _log_ideal_activity_derivatives(self, molar_fractions):
         site_occupancies = np.dot(molar_fractions, self.endmember_occupancies)
+
         dlnadp = np.einsum('ij, j, mj',
                            self.endmember_occupancies,
                            self.site_multiplicities*inverseish(site_occupancies),
                            self.endmember_occupancies)
-        return dlnadp
+        n_site_atoms = self.endmember_occupancies[0].dot(self.site_multiplicities)
+        return dlnadp - n_site_atoms
 
 
     def _ideal_activities(self, molar_fractions):
