@@ -174,6 +174,13 @@ class SolidSolution(Mineral):
             self.endmembers[i][0].set_state(pressure, temperature)
 
     @material_property
+    def endmember_formulae(self):
+        """
+        Returns molar chemical formulae of the endmembers in the solid solution
+        """
+        return [self.endmembers[i][0].params['formula'] for i in range(self.n_endmembers)]
+
+    @material_property
     def formula(self):
         """
         Returns molar chemical formula of the solid solution

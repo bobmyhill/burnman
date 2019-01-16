@@ -343,13 +343,7 @@ class test_solidsolution(BurnManTest):
         H = np.zeros((3, 3))
         for i in range(3):
             f = np.array(f0)
-            f[i] -= dp/2.
-            f /= np.sum(f)
-            ss.set_composition(f)
-            dGdx1 = ss.partial_gibbs
-            
-            f = np.array(f0)
-            f[i] += dp/2.
+            f[i] += dp
             f /= np.sum(f)
             ss.set_composition(f)
             dGdx2 = ss.partial_gibbs
