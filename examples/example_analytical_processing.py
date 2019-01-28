@@ -26,22 +26,22 @@ from burnman.processanalyses import compute_and_set_phase_compositions, assembla
 
 
 # Let's first create instances of the minerals in our sample and provide compositional uncertainties
-
-components = ['Na2O', 'CaO', 'FeO', 'MgO', 'Al2O3', 'SiO2', 'TiO2'] # No Na, Fe3+, Cr3+ ...
+components = ['CaO', 'FeO', 'MgO', 'Al2O3', 'SiO2'] # Create a garnet model for a sodium-free system
 garnet = feasible_solution_in_component_space(SLB_2011.garnet(), components)
-print(garnet.endmember_formulae)
 
-garnet.composition = {'Mg': 1.64, 'Ca': 1.5, 'Al': 1.85, 'Si': 3.05, 'Fe': 0.01, 'Na': 0.01}
-garnet.compositional_uncertainties = {'Mg': 0.1, 'Ca': 0.1, 'Al': 0.1, 'Si': 0.2, 'Fe': 0.01, 'Na': 0.01}
+garnet.fitted_elements = ['Mg', 'Ca', 'Al', 'Si', 'Fe']
+garnet.composition = np.array([1.64, 1.5, 1.85, 3.05, 0.01])
+garnet.compositional_uncertainties = np.array([0.1, 0.1, 0.1, 0.2, 0.01])
 
 olivine = SLB_2011.mg_fe_olivine()
-olivine.composition = {'Mg': 1.8, 'Fe': 0.2, 'Si': 1.0}
-olivine.compositional_uncertainties = {'Mg': 0.1, 'Fe': 0.1, 'Si': 0.1}
+olivine.fitted_elements = ['Mg', 'Fe', 'Si']
+olivine.composition = np.array([1.8, 0.2, 1.0])
+olivine.compositional_uncertainties = np.array([0.1, 0.1, 0.1])
 
 quartz = SLB_2011.quartz()
 
 assemblage = burnman.Composite([garnet, olivine, quartz])
-assemblage.nominal_state = 10.e9, 500.
+assemblage.nominal_state = (10.e9, 500.)
 assemblage.state_covariances = np.diag(np.array([1.e9*1.e9, 10.*10.])) 
 
 # Now let's prepare the assemblage by assigning covariances to each of the solid solutions
@@ -54,3 +54,30 @@ assemblage.set_state(*assemblage.nominal_state)
 print(assemblage_affinity_misfit(assemblage))
 
 
+
+
+# We can do the same for an olivine-wadsleyite composition:
+
+olivine = SLB_2011.mg_fe_olivine()
+olivine.fitted_elements = ['Mg', 'Fe', 'Si']
+olivine.composition = np.array([0.82, 0.18, 0.5])
+olivine.compositional_uncertainties = np.array([0.05, 0.05, 0.05])
+
+wadsleyite = SLB_2011.mg_fe_wadsleyite()
+wadsleyite.fitted_elements = ['Mg', 'Fe', 'Si']
+wadsleyite.composition = np.array([0.72, 0.28, 0.5])
+wadsleyite.compositional_uncertainties = np.array([0.05, 0.05, 0.05])
+
+
+assemblage = burnman.Composite([olivine, wadsleyite])
+assemblage.nominal_state = (13.e9, 1673.)
+assemblage.state_covariances = np.diag(np.array([1.e9*1.e9, 10.*10.])) 
+
+# Now let's prepare the assemblage by assigning covariances to each of the solid solutions
+compute_and_set_phase_compositions(assemblage)
+
+# Assign a state to the assemblage
+assemblage.set_state(*assemblage.nominal_state)
+
+# Calculate the misfit
+print(assemblage_affinity_misfit(assemblage))

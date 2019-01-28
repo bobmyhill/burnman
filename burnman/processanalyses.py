@@ -10,34 +10,33 @@ from scipy.optimize import curve_fit, minimize
 
 from . import SolidSolution
 
-def fit_composition(composition, compositional_uncertainties, formulae, endmember_site_occupancies, normalize=True):
+def fit_composition(fitted_elements, composition, compositional_uncertainties, formulae, endmember_site_occupancies, normalize=True):
     """
     It is assumed that any elements not in composition were not measured (but may exist in unknown quantities).
     If distinct oxidation states or site occupancies were measured
     (by Moessbauer, for example), then formulae should be modified 
 
-    composition, compositional uncertainties and formulae should either be given as arrays or as dictionaries
-    If the compositional covariances are non-zero, all must be given as arrays
-    It is currently assumed that compositions are independent
+    fitted elements should be a list of strings
+    composition and compositional uncertainties should be given as arrays
+    formulae should either be given as arrays (with columns corresponding to elements) or as dictionaries
+    If the compositional uncertainties can either be sigmas or covariance matrices
 
     The composition and associated uncertainties in endmember *amounts*, not proportions. If normalize=True, then the endmember amounts are normalized to a total of one.
     """
 
-    if type(composition) is dict: 
-        elements = list(composition.keys())
-        u_elements = list(compositional_uncertainties.keys())
-        if not all(element in u_elements for element in elements):
-            raise Exception('The compositional uncertainties dictionary does not contain all the elements in composition')
-
-        b = np.array([composition[e] for e in elements])
-        b_uncertainties = np.diag(np.array([compositional_uncertainties[e]*compositional_uncertainties[e] for e in elements]))
-        stoichiometric_matrix = np.array([[f[e] if e in f else 0. for e in elements] for f in formulae])
-
+    if type(formulae[0]) is dict:
+        stoichiometric_matrix = np.array([[f[e] if e in f else 0. for e in fitted_elements] for f in formulae])
     else:
-        b = composition
-        b_uncertainties = compositional_uncertainties
         stoichiometric_matrix = formulae
+
+    b = composition
     
+    if len(compositional_uncertainties.shape) == 1:
+        b_uncertainties = np.diag(compositional_uncertainties *
+                                  compositional_uncertainties)
+    else:
+        b_uncertainties = compositional_uncertainties
+
     endmember_constraints = lambda site_occ: [{'type': 'ineq', 'fun': lambda x, eq=eq: eq.dot(x)}
                                               for eq in site_occ]
     cons = endmember_constraints(endmember_site_occupancies.T)    
@@ -71,7 +70,8 @@ def fit_composition(composition, compositional_uncertainties, formulae, endmembe
 def compute_and_set_phase_compositions(assemblage, verbose=False):
     for phase in assemblage.phases:
         if isinstance(phase, SolidSolution):
-            popt, pcov, res = fit_composition(phase.composition,
+            popt, pcov, res = fit_composition(phase.fitted_elements,
+                                              phase.composition,
                                               phase.compositional_uncertainties,
                                               phase.endmember_formulae,
                                               phase.solution_model.endmember_occupancies,
