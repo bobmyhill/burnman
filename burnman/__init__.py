@@ -199,7 +199,9 @@ from . import averaging_schemes
 from . import eos
 
 from . import processchemistry
+from . import processanalyses
 from . import chemicalpotentials
+from . import solutionbases
 from . import geotherm
 
 # miscellaneous
