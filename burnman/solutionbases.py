@@ -9,7 +9,7 @@ import numpy as np
 from sympy import Matrix, nsimplify
 from fractions import Fraction
 from scipy.optimize import linprog
-from .processchemistry import dictionarize_formula, compositional_array, formula_to_string
+from .processchemistry import dictionarize_formula, compositional_array, formula_to_string, site_occupancies_to_strings
 from . import CombinedMineral, SolidSolution
 
 def feasible_site_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
@@ -75,24 +75,6 @@ def dependent_endmember_sums(solution_model, as_fractions=False):
     
     return independent_sums
 
-def site_occupancies_to_strings(solution_model, site_occupancies):
-    site_formulae = []
-    for mbr_occupancies in site_occupancies:
-        i=0
-        site_formulae.append('')
-        for site in solution_model.sites:
-            amounts = mbr_occupancies[i:i+len(site)]
-            mult = solution_model.site_multiplicities[i]
-            if np.abs(mult - 1.) < 1.e-12:
-                mult=''
-            else:
-                mult=str(nsimplify(mult))
-            amounts /= sum(amounts)
-            site_formulae[-1] += '['+formula_to_string(dict(zip(site, amounts)))+']'+mult
-            i+=len(site)
-
-    return site_formulae
-
 def independent_row_indices(array):
     _, pivots, swaps = Matrix(array)._row_reduce(iszerofunc=lambda x: x.is_zero,
                                                  simpfunc=nsimplify)
@@ -103,6 +85,9 @@ def independent_row_indices(array):
     return indices[:len(pivots)]
 
 def feasible_solution_basis_in_component_space(solution, components):
+    """
+    Note that this function finds the extreme endmembers and finds the subset within the components. Thus, starting with a solution with a disordered endmember and then restricting component range may produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], the extreme endmembers are [A] and [B]. A component space A--AB will result in only endmember [A] being valid!!
+    """
 
     # 1) Convert components into a matrix
     component_array, component_elements = compositional_array([dictionarize_formula(c) for c in components])
@@ -112,7 +97,7 @@ def feasible_solution_basis_in_component_space(solution, components):
     
     # 3) Get the endmember compositional array
     independent_endmember_array, endmember_elements = compositional_array(solution.endmember_formulae)
-    all_endmember_array = dependent_sums.dot(independent_endmember_array)
+    all_endmember_array = dependent_sums.dot(independent_endmember_array).round(decimals=12)
     n_all = len(all_endmember_array)
 
     # 4) Find the endmembers that can be described with a linear combination of components
@@ -139,50 +124,54 @@ def feasible_solution_basis_in_component_space(solution, components):
     for i in range(n_el):
         element_indexing[i] = endmember_elements.index(component_elements[i])
 
-
     # 4d) Find independent endmember set
     linear_solutions_exist = lambda A, B: [linprog(np.zeros(len(A)), A_eq=A.T, b_eq=b).success for b in B]
     exist = linear_solutions_exist(component_array,
                                    all_endmember_array[possible_endmember_indices[:, None],element_indexing])
     endmember_indices = possible_endmember_indices[exist]
-    
     independent_indices = endmember_indices[independent_row_indices(dependent_sums[endmember_indices])]
 
     # 5) Return new basis in terms of proportions of the original endmember set
     return dependent_sums[independent_indices]
 
-
-def transform_solution_to_new_basis(solution, new_basis,
+def complete_basis(basis):
+    # Creates a full basis by filling remaining rows with
+    # rows of the identity matrix with row indices not
+    # in the column pivot list of the basis RREF
+    n, m = basis.shape
+    if n < m:
+        complete_basis = np.empty((m, m))
+        pivots=list(Matrix(basis).rref()[1])
+        return np.concatenate((basis,
+                               np.identity(m)[[i for i in range(m)
+                                               if i not in pivots],:]),
+                              axis=0)
+    else:
+        return basis
+            
+def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
                                     solution_name=None, endmember_names=None,
                                     molar_fractions=None):
 
     new_basis = np.array(new_basis)
-    n_mbrs, n_all_mbrs = new_basis.shape
-
+    if n_mbrs is None:
+        n_mbrs, n_all_mbrs = new_basis.shape
+    else:
+        _, n_all_mbrs = new_basis.shape
+        
     if solution_name is None:
         name = solution.name+' (modified)'
     else:
         name = solution_name 
 
     solution_type = solution.solution_type
-
     if solution_type == 'ideal':
         ESV_modifiers = [[0.,0.,0.] for v in new_basis]
         
     elif (solution_type == 'asymmetric' or
           solution_type == 'symmetric'):
 
-        # Creates a full basis by filling remaining rows with
-        # rows of the identity matrix with row indices not
-        # in the column pivot list of the basis RREF
-        if n_mbrs != n_all_mbrs:
-            pivots=list(Matrix(new_basis).rref()[1])
-            A = np.concatenate((new_basis.T,
-                                np.identity(n_all_mbrs)[:,[i for i in range(n_all_mbrs)
-                                                           if i not in pivots]]),
-                               axis=1)
-        else:
-            A = new_basis.T
+        A = complete_basis(new_basis).T
             
         diag_a = np.diag(solution.solution_model.alphas)
         alphas = A.T.dot(solution.solution_model.alphas)
@@ -213,7 +202,9 @@ def transform_solution_to_new_basis(solution, new_basis,
 
     # Create site formulae
     new_occupancies= np.array(new_basis).dot(solution.solution_model.endmember_occupancies)
-    site_formulae = site_occupancies_to_strings(solution.solution_model, new_occupancies)
+    site_formulae = site_occupancies_to_strings(solution.solution_model.sites,
+                                                solution.solution_model.site_multiplicities,
+                                                new_occupancies)
 
     # Create endmembers
     endmembers = []
@@ -246,9 +237,13 @@ def transform_solution_to_new_basis(solution, new_basis,
                              alphas=alphas,
                              molar_fractions=molar_fractions)
 
+
 def feasible_solution_in_component_space(solution, components,
                                          solution_name=None, endmember_names=None,
                                          molar_fractions=None):
+    """
+    Note that this function finds the extreme endmembers and finds the subset within the components. Thus, starting with a solution with a disordered endmember and then restricting component range may produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], the extreme endmembers are [A] and [B]. A component space A--AB will result in only endmember [A] being valid!!
+    """
     new_basis = feasible_solution_basis_in_component_space(solution, components)
     return transform_solution_to_new_basis(solution, new_basis,
                                            solution_name=solution_name,

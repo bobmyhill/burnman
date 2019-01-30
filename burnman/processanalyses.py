@@ -37,6 +37,9 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
     else:
         b_uncertainties = compositional_uncertainties
 
+    if np.linalg.det(b_uncertainties) < 1.e-12: # ensure uncertainty matrix is positive-definite
+        b_uncertainties += np.identity(len(b))*1.e-12
+
     endmember_constraints = lambda site_occ: [{'type': 'ineq', 'fun': lambda x, eq=eq: eq.dot(x)}
                                               for eq in site_occ]
     cons = endmember_constraints(endmember_site_occupancies.T)    
@@ -110,7 +113,7 @@ def assemblage_affinity_misfit(assemblage):
         else:
             dmudPT[i] = np.array([phase.V, -phase.S])
             mu[i] = phase.gibbs
-            n_mbrs += 1.
+            i += 1
 
     Cov_mu += dmudPT.dot(assemblage.state_covariances).dot(dmudPT.T)
 

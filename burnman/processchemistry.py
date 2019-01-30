@@ -294,6 +294,24 @@ def process_solution_chemistry(solution_model):
     solution_model.endmember_occupancies = endmember_occupancies
     solution_model.endmember_noccupancies = np.einsum('ij, j->ij', endmember_occupancies, site_multiplicities)
 
+def site_occupancies_to_strings(site_names, site_multiplicities, site_occupancies):
+    site_formulae = []
+    for mbr_occupancies in site_occupancies:
+        i=0
+        site_formulae.append('')
+        for site in site_names:
+            amounts = mbr_occupancies[i:i+len(site)]
+            mult = site_multiplicities[i]
+            if np.abs(mult - 1.) < 1.e-12:
+                mult=''
+            else:
+                mult=str(nsimplify(mult))
+            amounts /= sum(amounts)
+            site_formulae[-1] += '['+formula_to_string(dict(zip(site, amounts)))+']'+mult
+            i+=len(site)
+
+    return site_formulae
+
 def compositional_array(formulae):
     """
     Parameters
