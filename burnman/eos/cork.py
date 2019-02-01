@@ -109,6 +109,15 @@ class CORK(eos.EquationOfState):
         """
         return 0.
 
+    def entropy(self, pressure, temperature, volume, params):
+        """
+        Numerical for now
+        """
+        dT = 0.1
+        S = -(self.gibbs_free_energy(pressure, temperature + dT/2., volume, params) -
+              self.gibbs_free_energy(pressure, temperature - dT/2., volume, params))
+        return S
+
     def gibbs_free_energy(self, pressure, temperature, volume, params):
         """
         Returns the gibbs free energy [J/mol] as a function of pressure [Pa]

@@ -37,8 +37,13 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
     else:
         b_uncertainties = compositional_uncertainties
 
-    if np.linalg.det(b_uncertainties) < 1.e-12: # ensure uncertainty matrix is positive-definite
-        b_uncertainties += np.identity(len(b))*1.e-12
+    if np.linalg.det(b_uncertainties) < 1.e-30: # ensure uncertainty matrix is not singular
+        warnings.warn('The compositional covariance matrix is nearly singular or not positive-definite (determinant = {0}). '
+                      'This is likely to be because your fitting parameters are not independent. '
+                      'For now, we increase all diagonal components by 1%. '
+                      'However, you may wish to redefine your problem.'.format(np.linalg.det(b_uncertainties)))
+
+        b_uncertainties += np.diag(np.diag(b_uncertainties))*0.01
 
     endmember_constraints = lambda site_occ: [{'type': 'ineq', 'fun': lambda x, eq=eq: eq.dot(x)}
                                               for eq in site_occ]
