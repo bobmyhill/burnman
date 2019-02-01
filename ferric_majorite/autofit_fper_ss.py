@@ -30,10 +30,18 @@ from scipy.optimize import minimize
 
 
 
+# TODO
+# Add parameter constraints and uncertainties -> could do this inside a second misfit function similar to get_params
+# Add state constraints and uncertainties -> could do this by grouping assemblages and systematic state uncertainties together inside a ?dictionary?, with P, T offset as hyperparameter(s)
+# Add compositional degrees of freedom for solutions as hyperparameter(s)? Especially for Fe3+ and order/disorder? (might need to add constraints though...)
+
+
+
+
+
 # Here we define all of our desired minerals
 # All declared solution endmembers must be declared here,
 # otherwise we can't fit them later
-
 
 O2 = HP_2011_fluids.O2()
 fcc_iron = SE_2015.fcc_iron()
@@ -77,7 +85,7 @@ fper = burnman.SolidSolution(name = 'ferropericlase',
                                            [Fe23O, '[Fef2/3V1/3]O']],
                              energy_interaction = [[[7625.0, 9485.0],
                                                     [40590., 23595.]],
-                                                   [[-17136.0, 5164.0]]])
+                                                   [[-17136.0, 5164.0]]]) # the last two values are from Sundman, 1991. We don't want to change these.
 
 gt = burnman.minerals.SLB_2011.garnet()
 # Make a dictionary of the parent solutions which we will use
