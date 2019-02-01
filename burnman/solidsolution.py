@@ -85,13 +85,12 @@ class SolidSolution(Mineral):
         if hasattr(self, 'endmembers') == False:
             raise Exception(
                 "'endmembers' attribute missing from solid solution")
-
-        try:
-            self.endmember_formulae = [mbr[0].formula for mbr in self.endmembers]
-        except:
-            raise Warning('formulae not found for all endmembers in solid solution.'
-                          'This will make many calculations impossible.')
         
+        try:
+            self.endmember_formulae = [mbr[0].params['formula'] for mbr in self.endmembers]
+        except:
+            raise Exception("Not all endmembers of this solid solution have a formula in their params dictionary.")
+
         # Set default solution model type
         if hasattr(self, 'solution_type'):
             if self.solution_type == 'mechanical':
@@ -173,13 +172,6 @@ class SolidSolution(Mineral):
         Mineral.set_state(self, pressure, temperature)
         for i in range(self.n_endmembers):
             self.endmembers[i][0].set_state(pressure, temperature)
-
-    @material_property
-    def endmember_formulae(self):
-        """
-        Returns molar chemical formulae of the endmembers in the solid solution
-        """
-        return [self.endmembers[i][0].params['formula'] for i in range(self.n_endmembers)]
 
     @material_property
     def formula(self):
