@@ -94,7 +94,7 @@ def compute_and_set_phase_compositions(assemblage, verbose=False):
             Cov_p = dpdx.dot(pcov).dot(dpdx.T)
 
             phase.set_composition(popt)
-            phase.proportion_covariances = Cov_p
+            phase.molar_fraction_covariances = Cov_p
 
             if verbose:
                 print(phase.name)
@@ -111,7 +111,7 @@ def assemblage_affinity_misfit(assemblage):
     i=0
     for phase in assemblage.phases:
         if isinstance(phase, SolidSolution):
-            Cov_mu[i:i+phase.n_endmembers,i:i+phase.n_endmembers] = (phase.gibbs_hessian).dot(phase.proportion_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
+            Cov_mu[i:i+phase.n_endmembers,i:i+phase.n_endmembers] = (phase.gibbs_hessian).dot(phase.molar_fraction_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
             dmudPT[i:i+phase.n_endmembers] = np.array([phase.partial_volumes, -phase.partial_entropies]).T
             mu[i:i+phase.n_endmembers] = phase.partial_gibbs
             i += phase.n_endmembers

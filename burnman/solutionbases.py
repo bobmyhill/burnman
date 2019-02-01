@@ -228,7 +228,7 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
     if n_mbrs == 1:
         return endmembers[0][0]
     else:
-        return SolidSolution(name=name,
+        new_solution = SolidSolution(name=name,
                              solution_type=solution_type,
                              endmembers=endmembers,
                              energy_interaction=energy_interaction,
@@ -236,6 +236,9 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
                              entropy_interaction=entropy_interaction,
                              alphas=alphas,
                              molar_fractions=molar_fractions)
+        new_solution.parent = solution
+        new_solution.basis = new_basis
+        return new_solution
 
 
 def feasible_solution_in_component_space(solution, components,
