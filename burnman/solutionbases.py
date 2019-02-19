@@ -6,13 +6,22 @@ from __future__ import absolute_import
 
 import cdd
 import numpy as np
-from sympy import Matrix, nsimplify
+from sympy import Matrix, Rational
 from fractions import Fraction
 from scipy.optimize import linprog
 from .processchemistry import dictionarize_formula, compositional_array, formula_to_string, site_occupancies_to_strings
 from . import CombinedMineral, SolidSolution
 
-def feasible_site_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
+def independent_row_indices(array):
+    m = Matrix(array.shape[0], array.shape[1], lambda i, j: Rational(array[i,j]).limit_denominator(1000))
+    _, pivots, swaps = m._row_reduce(iszerofunc=lambda x: x.is_zero,
+                                     simpfunc=lambda x: Rational(x).limit_denominator(1000))
+    indices = np.array(range(len(array)))
+    for swap in np.array(swaps):
+        indices[swap] = indices[swap[::-1]]
+    return indices[:len(pivots)]
+
+def feasible_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
     n_sites = len(charges)
     all_charges = np.concatenate(charges)
     n_site_elements = len(all_charges)
@@ -39,6 +48,15 @@ def feasible_site_occupancies_from_charge_balance(charges, charge_total, as_frac
     vertices = V[:,1:]/V[:,0,np.newaxis]
     
     return vertices
+
+
+def independent_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
+    a = feasible_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions)
+    return a[independent_row_indices(a)]
+
+def generate_complete_basis(incomplete_basis, complete_basis):
+    a = np.concatenate((incomplete_basis, complete_basis))
+    return a[independent_row_indices(a)]
 
 def dependent_endmember_site_occupancies(solution_model, as_fractions=False):
     n_sites = len(solution_model.sites)
@@ -74,15 +92,6 @@ def dependent_endmember_sums(solution_model, as_fractions=False):
                                        rcond=None)[0].T.round(decimals=12)
     
     return independent_sums
-
-def independent_row_indices(array):
-    _, pivots, swaps = Matrix(array)._row_reduce(iszerofunc=lambda x: x.is_zero,
-                                                 simpfunc=nsimplify)
-    indices = np.array(range(len(array)))
-    for swap in np.array(swaps):
-        indices[swap] = indices[swap[::-1]]
-
-    return indices[:len(pivots)]
 
 def feasible_solution_basis_in_component_space(solution, components):
     """
@@ -148,7 +157,60 @@ def complete_basis(basis):
                               axis=0)
     else:
         return basis
-            
+
+def _subregular_matrix_conversion(new_basis, binary_matrix,
+                                  ternary_terms=None, endmember_excesses=None):
+    n_mbrs = len(binary_matrix)
+    # Compact 3D representation of original interactions
+    W = (np.einsum('i, jk -> ijk', np.ones(n_mbrs), binary_matrix) +
+         np.einsum('ij, jk -> ijk', binary_matrix, np.identity(n_mbrs)) -
+         np.einsum('ij, ik -> ijk', binary_matrix, np.identity(n_mbrs)))/2.
+
+    # Add endmember components to 3D representation
+    if endmember_excesses is not None:
+        W += (np.einsum('i, j, k->ijk', endmember_excesses, np.ones(n_mbrs), np.ones(n_mbrs)) +
+              np.einsum('j, i, k->ijk', endmember_excesses, np.ones(n_mbrs), np.ones(n_mbrs)) +
+              np.einsum('k, i, j->ijk', endmember_excesses, np.ones(n_mbrs), np.ones(n_mbrs)))/3.
+
+    # Add ternary values to 3D representation
+    if ternary_terms is not None:
+        for i, j, k, val in ternary_terms:
+            W[i,j,k] += val
+
+    # Transformation to new 3D representation
+    A = new_basis.T
+    Wn = np.einsum('il, jm, kn, ijk -> lmn', A, A, A, W)
+
+    # New endmember components
+    new_endmember_excesses = np.copy(np.einsum('iii->i', Wn)) # needs to be copied, otherwise just a view onto Wn
+
+    # Removal of endmember components from 3D representation
+    Wn -= (np.einsum('i, j, k->ijk', new_endmember_excesses, np.ones(n_mbrs), np.ones(n_mbrs)) +
+           np.einsum('i, j, k->ijk', np.ones(n_mbrs), new_endmember_excesses, np.ones(n_mbrs)) +
+           np.einsum('i, j, k->ijk', np.ones(n_mbrs), np.ones(n_mbrs), new_endmember_excesses))/3.
+
+    # Transformed 2D components
+    # (i=j, i=k, j=k)
+    new_binary_matrix = (np.einsum('jki, jk -> ij', Wn, np.identity(n_mbrs)) +
+                         np.einsum('jik, jk -> ij', Wn, np.identity(n_mbrs)) +
+                         np.einsum('ijk, jk -> ij', Wn, np.identity(n_mbrs))).round(decimals=12)
+
+    # Removal unitary component from 3D representation
+    Wn -= np.einsum('i, jk -> ijk', np.ones(n_mbrs), new_binary_matrix/2.)
+
+    # Find the 3D components Wijk by adding the elements at
+    # the six equivalent positions in the matrix
+    new_ternary_terms = []
+    for i in range(n_mbrs):
+        for j in range(i+1,n_mbrs):
+            for k in range(j+1,n_mbrs):
+                val=(Wn[i,j,k] + Wn[j,k,i] + Wn[k,i,j] +
+                     Wn[k,j,i] + Wn[j,i,k] + Wn[i,k,j]).round(decimals=12)
+                if np.abs(val) > 1.e-12:
+                    new_ternary_terms.append([i, j, k, val])
+
+    return (new_binary_matrix, new_ternary_terms, new_endmember_excesses)
+
 def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
                                     solution_name=None, endmember_names=None,
                                     molar_fractions=None):
@@ -172,31 +234,57 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
           solution_type == 'symmetric'):
 
         A = complete_basis(new_basis).T
-            
-        diag_a = np.diag(solution.solution_model.alphas)
-        alphas = A.T.dot(solution.solution_model.alphas)
-        inv_diag_alphas = np.diag(1./np.array(alphas))
-        B = diag_a.dot(A).dot(inv_diag_alphas)
-        alphas=list(alphas[0:n_mbrs])
         
-        Qe = B.T.dot(solution.solution_model.We).dot(B)
-        Qs = B.T.dot(solution.solution_model.Ws).dot(B)
-        Qv = B.T.dot(solution.solution_model.Wv).dot(B)
+        old_alphas = solution.solution_model.alphas
+        alphas = np.einsum('i, ij', solution.solution_model.alphas, A)
+        inv_diag_alphas = np.diag(1./alphas)
+        B = np.einsum('ij, jk, kl->il',
+                      np.diag(old_alphas),
+                      A, inv_diag_alphas)
+        alphas=list(alphas[0:n_mbrs])
+        Qe = np.einsum('ik, ij, kl->jl', solution.solution_model.We, B, B)
+        Qs = np.einsum('ik, ij, kl->jl', solution.solution_model.Ws, B, B)
+        Qv = np.einsum('ik, ij, kl->jl', solution.solution_model.Wv, B, B)
         
         def new_interactions(Q, n_mbrs):
             return [[float((Q[i,j] + Q[j,i] - Q[i,i] - Q[j,j]) *
                            (alphas[i] + alphas[j])/2.)
                      for j in range(i+1, n_mbrs)]
                     for i in range(n_mbrs-1)]
-    
+
         energy_interaction=new_interactions(Qe, n_mbrs)
         entropy_interaction=new_interactions(Qs, n_mbrs)
         volume_interaction=new_interactions(Qv, n_mbrs)
 
-        ESV_modifiers = [[Qe[i,i]*diag_a[i,i], Qs[i,i]*diag_a[i,i], Qv[i,i]*diag_a[i,i]]
+        ESV_modifiers = [[Qe[i,i]*old_alphas[i],
+                          Qs[i,i]*old_alphas[i],
+                          Qv[i,i]*old_alphas[i]]
                          for i in range(n_mbrs)]
-        
 
+    elif solution_type == 'subregular':
+        full_basis = complete_basis(new_basis)
+
+        def new_interactions(W, n_mbrs):
+            return [[[W[i,j], W[j,i]] for j in range(i+1, n_mbrs)]
+                    for i in range(n_mbrs-1)]
+
+        # N.B. initial endmember_excesses are zero
+        We, ternary_e, Emod = _subregular_matrix_conversion(full_basis,
+                                                            solution.solution_model.We,
+                                                            solution.solution_model.ternary_terms_e)
+        Ws, ternary_s, Smod = _subregular_matrix_conversion(full_basis,
+                                                            solution.solution_model.Ws,
+                                                            solution.solution_model.ternary_terms_s)
+        Wv, ternary_v, Vmod = _subregular_matrix_conversion(full_basis,
+                                                            solution.solution_model.Wv,
+                                                            solution.solution_model.ternary_terms_v)
+        
+        energy_interaction=new_interactions(We, n_mbrs)
+        entropy_interaction=new_interactions(Ws, n_mbrs)
+        volume_interaction=new_interactions(Wv, n_mbrs)
+
+        ESV_modifiers = [[Emod[i], Smod[i], Vmod[i]] for i in range(n_mbrs)]
+      
     else:
         raise Exception('The function to change basis for the {0} solution model has not yet been implemented.'.format(solution_type))
 
