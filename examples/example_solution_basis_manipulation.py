@@ -37,9 +37,15 @@ simple_majorite_array = independent_endmember_occupancies_from_charge_balance([[
 print(simple_majorite_array)
 
 # Four site majorite, independent endmembers
-complex_majorite_array = independent_endmember_occupancies_from_charge_balance([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]], 6, as_fractions=False)
+complex_majorite_array = independent_endmember_occupancies_from_charge_balance([[1, 1.5, 2], [1, 1.5, 2], [1, 1.5, 2], [1, 1.5, 2]], 6, as_fractions=False)
 print(complex_majorite_array)
 
+
+# Jamie's ?problematic? example
+
+disordered_px_array = independent_endmember_occupancies_from_charge_balance([[2, 2, 3], [2, 2, 3],[6,8]], 12, as_fractions=False)
+print(disordered_px_array)
+exit()
 
 # NCFMASO garnet
 # Multiplicity 3     | Multiplicity 2     | total charge

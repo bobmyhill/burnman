@@ -16,7 +16,7 @@ from collections import Counter
 import pkgutil
 from string import ascii_uppercase as ucase
 from scipy.optimize import nnls
-from sympy import Matrix, nsimplif
+from sympy import Matrix, nsimplify
 
 def read_masses():
     """
