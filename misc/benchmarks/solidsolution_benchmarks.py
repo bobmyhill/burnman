@@ -12,28 +12,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-'''
-Solvus shapes (a proxy for Gibbs free energy checking
-'''
-
-# van Laar parameter
-# Figure 2a of Holland and Powell, 2003
-
-# Temperature dependence
-# Figure 2b of Holland and Powell, 2003
-
-# A specific solvus example: sanidine-high albite
-# Includes asymmetry and pressure, temperature dependence
-# Figure 3 of Holland and Powell, 2003
-
 
 '''
-Excess properties
+Excess properties of solid solutions
 '''
+
 # Configurational entropy
 # Navrotsky and Kleppa, 1967
-
-
 class o_d_spinel(burnman.SolidSolution):
 
     def __init__(self):
@@ -53,8 +38,7 @@ for i, c in enumerate(comp):
     molar_fractions = [1.0 - c, c]
     sp.set_composition(np.array(molar_fractions))
     sp.set_state(1e5, 298.15)
-    sp_entropies[i] = sp.solution_model._configurational_entropy(
-        molar_fractions)
+    sp_entropies[i] = sp.configurational_entropy
     sp_entropies_NK1967[i] = -8.3145 * (c * np.log(c) + (1. - c) * np.log(1. - c) + c * np.log(
         c / 2.) + (2. - c) * np.log(1. - c / 2.))  # eq. 7 in Navrotsky and Kleppa, 1967.
 
@@ -128,8 +112,7 @@ for idx, model in enumerate(opx_models):
         molar_fractions = [1.0 - c, c]
         model.set_composition(np.array(molar_fractions))
         model.set_state(0., 0.)
-        opx_entropies[idx][
-            i] = model.solution_model._configurational_entropy(molar_fractions)
+        opx_entropies[idx][i] = model.configurational_entropy
 
 fig1 = mpimg.imread('configurational_entropy.png')
                     # Uncomment these two lines if you want to overlay the plot

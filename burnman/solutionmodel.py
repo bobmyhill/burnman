@@ -414,7 +414,7 @@ class IdealSolution (SolutionModel):
     def volume_hessian(self, pressure, temperature, molar_fractions):
         return np.zeros((len(molar_fractions), len(molar_fractions)))
 
-    def _configurational_entropy(self, molar_fractions):
+    def configurational_entropy(self, molar_fractions):
         site_occupancies = np.dot(molar_fractions, self.endmember_occupancies)
         conf_entropy = - constants.gas_constant * (site_occupancies * 
                                                    self.site_multiplicities *

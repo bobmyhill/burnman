@@ -346,6 +346,13 @@ class SolidSolution(Mineral):
         return sum([self.endmembers[i][0].S * self.molar_fractions[i] for i in range(self.n_endmembers)]) + self.excess_entropy
 
     @material_property
+    def configurational_entropy(self):
+        """
+        Returns molar configurational entropy of the solid solution [J/K/mol]
+        """
+        return self.solution_model.configurational_entropy(self.molar_fractions)
+
+    @material_property
     def excess_enthalpy(self):
         """
         Returns excess molar enthalpy [J/mol]
