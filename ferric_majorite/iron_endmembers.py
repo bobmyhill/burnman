@@ -22,6 +22,11 @@ import matplotlib.image as mpimg
 from scipy.optimize import fsolve
 
 
+fcc = minerals.SE_2015.fcc_iron()
+bcc = minerals.SE_2015.bcc_iron()
+hcp = minerals.SE_2015.hcp_iron()
+liq = minerals.SE_2015.liquid_iron()
+
 calib = [[bcc, 1.e5, 1., 69538., 7.0496],
          [bcc, 1.e5, 300., -8183., 7.0947],
          [bcc, 1.e9, 1., 76567., 7.0094],

@@ -263,7 +263,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def molar_heat_capacity_v(self, pressure, temperature, volume, params):
         """
-        Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
+        Dependent thermodynamic parameter. :math:`[J/K/mol]`
         """
         return (self.molar_heat_capacity_p(pressure, temperature, volume, params) -
                 self.volume(pressure, temperature, params) * temperature *
@@ -272,7 +272,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def molar_heat_capacity_p(self, pressure, temperature, volume, params):
         """
-        Since this equation of state does not contain temperature effects, simply return a very large number. :math:`[J/K/mol]`
+        For now, this is calculated numerically. :math:`[J/K/mol]`
         """
         dT = 0.1
         if temperature < dT/2.:
@@ -284,7 +284,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def thermal_expansivity(self, pressure, temperature, volume, params):
         """
-        Since this equation of state does not contain temperature effects, simply return zero. :math:`[1/K]`
+        For now, this is calculated numerically. :math:`[1/K]`
         """
         dT = 0.1
         if temperature < dT/2.:
@@ -296,7 +296,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def grueneisen_parameter(self, pressure, temperature, volume, params):
         """
-        Since this equation of state does not contain temperature effects, simply return zero. :math:`[unitless]`
+        Dependent thermodynamic variable
         """
         Cv = self.molar_heat_capacity_v(pressure, temperature, volume, params)
         if Cv == 0.:
