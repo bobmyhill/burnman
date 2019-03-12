@@ -90,7 +90,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def _Cp_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
-        i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
+        i = np.argmax(np.greater(zip(*params['gibbs_coefficients'])[0],temperature))
 
         # select the appropriate coefficients
         coeffs = params['gibbs_coefficients'][i][1]
@@ -304,7 +304,7 @@ class BroshCalphad(eos.EquationOfState):
         else:
             return (self.thermal_expansivity(pressure, temperature, volume, params) *
                     self.isothermal_bulk_modulus(pressure, temperature, volume, params) *
-                    self.volume(pressure, temperature, params))
+                    self.volume(pressure, temperature, params))/Cv
 
     def calculate_transformed_parameters(self, params):
         

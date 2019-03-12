@@ -68,6 +68,9 @@ def univariant(m1, m2, condition_constraints, P=5.e9, T=2000.):
     temperatures = np.array([s.x[1] for s in sols])
     return pressures, temperatures
 
+
+print(univariant(fcc, liq, ('P', np.array([21.e9, 21.e9])), P=21.e9, T=2500.))
+
 Tmin = 1.
 Pmin = 1.e5
 Pmax = 350.e9
@@ -79,17 +82,17 @@ pressures, temperatures =  univariant(bcc, liq, ('P', np.linspace(Pmin, Pinv, 11
 plt.plot(pressures/1.e9, temperatures)
 
 pressures, temperatures =  univariant(bcc, fcc, ('P', np.linspace(Pmin, Pinv, 11)), P=Pmin, T=1800.)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='bcc-fcc')
 
 
 # FCC-HCP-LIQ invariance
 Pinv2, Tinv2 = invariant(fcc, hcp, liq, P=90.e9, T=3000.)
 
 pressures, temperatures =  univariant(fcc, liq, ('P', np.linspace(Pinv, Pinv2, 11)), P=Pinv, T=Tinv)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='fcc-liq')
 
 pressures, temperatures =  univariant(hcp, liq, ('P', np.linspace(Pinv2, Pmax, 11)), P=Pinv2, T=Tinv2)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='hcp-liq')
 
 
 
@@ -97,16 +100,20 @@ plt.plot(pressures/1.e9, temperatures)
 Pinv3, Tinv3 = invariant(bcc, fcc, hcp, P=10.e9, T=1000.)
 
 pressures, temperatures =  univariant(bcc, hcp, ('T', np.linspace(Tmin, Tinv3, 11)), P=10.e9, T=Tmin)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='bcc-hcp')
 
 pressures, temperatures =  univariant(bcc, fcc, ('P', np.linspace(Pmin, Pinv3, 11)), P=Pmin, T=Tinv3)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='bcc-fcc')
 
 pressures, temperatures =  univariant(fcc, hcp, ('P', np.linspace(Pinv3, Pinv2, 11)), P=Pinv3, T=Tinv3)
-plt.plot(pressures/1.e9, temperatures)
+plt.plot(pressures/1.e9, temperatures, label='fcc-hcp')
+
+
+plt.scatter([21.], [2516], label='Saxena and Eriksson, 2015, Fig2')
 
 plt.xlim(0., 350.)
 plt.ylim(0., 8000.)
 plt.xlabel('Pressure (GPa)')
 plt.ylabel('Temperature (K)')
+plt.legend()
 plt.show()
