@@ -533,7 +533,7 @@ def phase_proportion_constraint(phase, assemblage, indices, proportion):
 
 def phase_composition_constraint(phase, assemblage, indices, constraint):
     phase_idx = assemblage.phases.index(phase)
-    start_idx = int(sum([len(i) for i in indices[:phase_idx]])) + 3. # +3 comes from P, T and the proportion of the phase of interest
+    start_idx = int(sum([len(i) for i in indices[:phase_idx]])) + 3 # +3 comes from P, T and the proportion of the phase of interest
     n_indices = sum([len(i) for i in indices])
     mbr_indices = indices[phase_idx]
 
@@ -550,7 +550,7 @@ def phase_composition_constraint(phase, assemblage, indices, constraint):
         f = v*atoms0[1] - atoms0[0]
         constraints.append(['X', [np.zeros((n_indices+2)), f]])
         constraints[-1][1][0][start_idx:start_idx+len(mbr_indices)-1] = numer - v*denom
-        
+
     return constraints
 
 
@@ -565,7 +565,8 @@ def equilibrate(composition, assemblage, equality_constraints,
                 initial_composition_from_assemblage = False, 
                 tol=1.e-3,
                 store_iterates=False, store_assemblage=False,
-                max_iterations=100.,verbose=True):
+                max_iterations=100.,verbose=True,
+                exit_on_first_failure=False):
 
     # Annoyingly, python overwrites default values and stores them for the next function run
     # Thus, we need to have the following two lines to set a fixed default initial_state,
@@ -637,15 +638,14 @@ def equilibrate(composition, assemblage, equality_constraints,
             equality_constraint_lists.append(phase_composition_constraint(phase, assemblage,
                                                                           prm.indices, constraint))
         elif equality_constraints[i][0] == 'X':
-            constraint=equality_constraints[i][1][1]
+            constraint=equality_constraints[i][1]
             if isinstance(constraint[-1], float):
                 constraint = (constraint[0], np.array([constraint[-1]]))
             if not isinstance(constraint[-1], np.ndarray):
                 raise Exception('The last constraint parameter in equality {0} should be '
                                 'a float or numpy array'.format(i+1))
-            equality_constraint_lists.append([[equality_constraints[i][0],
-                                               [equality_constraints[i][0][0], p]]
-                                              for p in equality_constraints[i][0][1]])
+            equality_constraint_lists.append([['X', [constraint[0], p]]
+                                              for p in constraint[1]])
             
         elif (equality_constraints[i][0] == 'P' or
               equality_constraints[i][0] == 'T' or
@@ -664,7 +664,6 @@ def equilibrate(composition, assemblage, equality_constraints,
                             'not recognised for constraint {0}.\n'
                             'Should be one of P, T, S, V, X,\n'
                             'PT_ellipse, phase_proportion, or phase_composition.'.format(i+1))
-
 
     # Set up solves
     sol_list = []
@@ -729,6 +728,11 @@ def equilibrate(composition, assemblage, equality_constraints,
                 print(sol.text)
                 
             sol_list[i_c0][i_c1] = sol
+
+            if (sol.success == False and exit_on_first_failure):
+                print('Exiting on first failure')
+                break
+                
             new_c0 = False
 
             prev = []
@@ -770,6 +774,9 @@ def equilibrate(composition, assemblage, equality_constraints,
                                                                                           cs,
                                                                                           prm)
                     prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
+        else:
+            continue # continue if the inner loop was not broken
+        break
 
     # Finally, make dimensions of sol_list equal the input dimensions 
     if len(sol_list[0]) == 1:
