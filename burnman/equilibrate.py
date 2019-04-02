@@ -6,7 +6,7 @@ from __future__ import print_function
 import numpy as np
 import warnings
 
-from scipy.optimize import nnls, minimize
+from scipy.optimize import nnls, minimize, linprog
 from scipy.linalg import lu_factor, lu_solve
 
 from string import ascii_uppercase as ucase
@@ -21,6 +21,43 @@ from .composite import Composite
 from sympy import Matrix, nsimplify
 from sympy import zeros as sp_zeros
 
+def remove_redundant_inequalities(inequalities_matrix, inequalities_vector):
+    # Set of existing inequalities
+    # Ax <= -b
+    # We want to test if there is any solution to the additional constraint
+    # Sx >= -t
+    # If not, that constraint is redundant
+    
+    # Set up bounds and null vector for the linear programming problem
+    n_dim = len(inequalities_matrix[0])
+    bounds = [[None, None] for j in range(n_dim)]
+    c = np.zeros(n_dim)
+
+    # First, test that there is a value of x where all constraints are satisfied!
+    lp = linprog(c, A_ub=inequalities_matrix, b_ub=-inequalities_vector, bounds=bounds)
+    assert(lp.success)
+
+    A = np.copy(inequalities_matrix)
+    b = np.copy(inequalities_vector)
+    
+    # Sweep forward and backward to remove all redundant constraints
+    for dirn in ['forward', 'backward']:
+        A_build = np.copy(A[0,np.newaxis])
+        b_build = np.ones(1)*b[0]
+        for i in range(1, len(A)):
+            A_ub = np.concatenate((A_build, -A[i,np.newaxis]))
+            b_ub = np.concatenate((b_build, -b[i,np.newaxis]+1.e-10))
+        
+            lp = linprog(c, A_ub=A_ub, b_ub=-b_ub, bounds=bounds)
+            
+            if lp.success:
+                A_build = np.concatenate((A_build, A[i,np.newaxis]))
+                b_build = np.concatenate((b_build, b[i,np.newaxis]))
+                
+        A = np.copy(A_build[::-1])
+        b = np.copy(b_build[::-1])
+
+    return (A, b)
 
 def simplify_matrix(arr):
     def f(i,j):
@@ -105,6 +142,10 @@ def calculate_constraints(assemblage, indices):
             cidx += m 
         rcidx += m
         pidx += n
+
+    
+    constraint_matrix, constraint_vector = remove_redundant_inequalities(constraint_matrix, constraint_vector)
+    
     return constraint_vector, constraint_matrix, raw_constraint_matrix
 
 
@@ -203,9 +244,14 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
 
     # Get compositional residuals
     res = prm.stoichiometric_matrix.dot(baseline_endmember_amounts) - prm.bulk_composition_vector
-    if any(res > 1.e-9):
-        print('Residuals:\n{0}'.format(res))
-        raise Exception( "Baseline assemblage refinement failed." )
+
+    try:
+        if any(res > 1.e-9):
+            print('Residuals:\n{0}'.format(res))
+            raise Exception( "Baseline assemblage refinement failed." )
+    except:
+        pass # if only one element, if exactly zero
+
     return baseline_endmember_amounts
 
 def get_parameters_from_state_and_endmember_amounts(state, assemblage, prm):
@@ -530,7 +576,7 @@ def phase_proportion_constraint(phase, assemblage, indices, proportion):
 
 def phase_composition_constraint(phase, assemblage, indices, constraint):
     phase_idx = assemblage.phases.index(phase)
-    start_idx = int(sum([len(i) for i in indices[:phase_idx]])) + 3. # +3 comes from P, T and the proportion of the phase of interest
+    start_idx = int(sum([len(i) for i in indices[:phase_idx]])) + 3 # +3 comes from P, T and the proportion of the phase of interest
     n_indices = sum([len(i) for i in indices])
     mbr_indices = indices[phase_idx]
 
@@ -634,15 +680,16 @@ def equilibrate(composition, assemblage, equality_constraints,
             equality_constraint_lists.append(phase_composition_constraint(phase, assemblage,
                                                                           prm.indices, constraint))
         elif equality_constraints[i][0] == 'X':
-            constraint=equality_constraints[i][1][1]
+            constraint=equality_constraints[i][1]
             if isinstance(constraint[-1], float):
                 constraint = (constraint[0], np.array([constraint[-1]]))
             if not isinstance(constraint[-1], np.ndarray):
                 raise Exception('The last constraint parameter in equality {0} should be '
                                 'a float or numpy array'.format(i+1))
-            equality_constraint_lists.append([[equality_constraints[i][0],
-                                               [equality_constraints[i][0][0], p]]
-                                              for p in equality_constraints[i][0][1]])
+        
+            equality_constraint_lists.append([['X', [constraint[0], p]]
+                                              for p in constraint[1]])
+            
             
         elif (equality_constraints[i][0] == 'P' or
               equality_constraints[i][0] == 'T' or
