@@ -126,6 +126,15 @@ def assemblage_affinity_misfit(assemblage):
     reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
     a = reaction_matrix.dot(mu)
     Cov_a = reaction_matrix.dot(Cov_mu).dot(reaction_matrix.T)
-    
-    chi_sqr = a.dot(np.linalg.solve(Cov_a, a))
+    try:
+        chi_sqr = a.dot(np.linalg.solve(Cov_a, a))
+    except:
+        print('Could not find misfit for assemblage')
+        try:
+            print(assemblage.experiment_id)
+        except:
+            pass
+        print([ph.name for ph in assemblage.phases])
+        print(Cov_a)
+        exit()
     return chi_sqr

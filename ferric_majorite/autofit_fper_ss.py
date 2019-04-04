@@ -109,7 +109,7 @@ child_ss = {'alm-gr': transform_solution_to_new_basis(parent_ss['gt'],
 # 1) Data from O'Neill et al., 2003 
 # ---------------------------------
 
-data = np.genfromtxt('ONeill_et_al_2003_iron_magnesiowuestite.dat', dtype=None, encoding='utf8')
+data = np.genfromtxt('data/ONeill_et_al_2003_iron_magnesiowuestite.dat', dtype=None, encoding='utf8')
 
 F = 96484.56 # value of Faraday constant from paper
 # All the magnesiowuestites are in equilibrium with metallic iron (fcc at 1473 K)

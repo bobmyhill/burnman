@@ -343,7 +343,8 @@ gt = Solution(name = 'garnet',
               solution_type ='symmetric',
               endmembers=[[py, '[Mg]3Al2Si3O12'], [alm, '[Fe]3Al2Si3O12']],
               energy_interaction=[[-2.e3]],
-              volume_interaction=[[0.e-7]]) 
+              volume_interaction=[[0.e-7]])
+
 
 solutions = {'mw': fper,
              'ol': ol,
@@ -542,76 +543,86 @@ def rms_misfit_affinities(args):
     print(*args, sep = ", ")
     return rms_misfit
 
+
+solutions = {'mw': fper,
+             'ol': ol,
+             'wad': wad,
+             'ring': rw,
+             'gt': gt}
+
+endmembers = {'per': per,
+              'wus': wus,
+              'fo': fo,
+              'fa': fa,
+              'mwd': mwd,
+              'fwd': fwd,
+              'mrw': mrw,
+              'frw': frw,
+              'py': py,
+              'alm': alm}
+
+
+endmember_args = [['per', 'H_0', 1.e-3],
+                  ['wus', 'H_0', 1.e-3],
+                  ['mwd', 'H_0', 1.e-3],
+                  ['fwd', 'H_0', 1.e-3],
+                  ['mrw', 'H_0', 1.e-3],
+                  ['frw', 'H_0', 1.e-3],
+                  ['alm', 'H_0', 1.e-3],
+                  ['per', 'S_0', 1.],
+                  ['wus', 'S_0', 1.],
+                  ['fo',  'S_0', 1.],
+                  ['fa',  'S_0', 1.],
+                  ['mwd', 'S_0', 1.],
+                  ['fwd', 'S_0', 1.],
+                  ['mrw', 'S_0', 1.],
+                  ['frw', 'S_0', 1.],
+                  ['alm', 'S_0', 1.],
+                  ['per', 'a_0', 1.e5],
+                  ['wus', 'a_0', 1.e5],
+                  ['fo',  'a_0', 1.e5],
+                  ['fa',  'a_0', 1.e5],
+                  ['mwd', 'a_0', 1.e5],
+                  ['fwd', 'a_0', 1.e5],
+                  ['mrw', 'a_0', 1.e5],
+                  ['frw', 'a_0', 1.e5]]
+
+solution_args = [['mw', 'E', 0, 0, 1.e-3],
+                 ['ol', 'E', 0, 0, 1.e-3],
+                 ['wad', 'E', 0, 0, 1.e-3],
+                 ['ring', 'E', 0, 0, 1.e-3],
+                 ['gt', 'E', 0, 0, 1.e-3]]
+
+
 def get_params(Perr):
-    args = [fper.endmembers[0][0].params['H_0']*1.e-3,
-            fper.endmembers[1][0].params['H_0']*1.e-3,
-            wad.endmembers[0][0].params['H_0']*1.e-3,
-            wad.endmembers[1][0].params['H_0']*1.e-3,
-            rw.endmembers[0][0].params['H_0']*1.e-3,
-            rw.endmembers[1][0].params['H_0']*1.e-3,
-            gt.endmembers[1][0].params['H_0']*1.e-3,
-            fper.endmembers[0][0].params['S_0'],
-            fper.endmembers[1][0].params['S_0'],
-            ol.endmembers[0][0].params['S_0'],
-            ol.endmembers[1][0].params['S_0'],
-            wad.endmembers[0][0].params['S_0'],
-            wad.endmembers[1][0].params['S_0'],
-            rw.endmembers[0][0].params['S_0'],
-            rw.endmembers[1][0].params['S_0'],
-            gt.endmembers[1][0].params['S_0'],
-            fper.endmembers[0][0].params['a_0']*1.e5,
-            fper.endmembers[1][0].params['a_0']*1.e5, 
-            ol.endmembers[0][0].params['a_0']*1.e5,
-            ol.endmembers[1][0].params['a_0']*1.e5, 
-            wad.endmembers[0][0].params['a_0']*1.e5,
-            wad.endmembers[1][0].params['a_0']*1.e5,
-            rw.endmembers[0][0].params['a_0']*1.e5,
-            rw.endmembers[1][0].params['a_0']*1.e5,
-            fper.solution_model.We[0][1]*1.e-3,
-            ol.solution_model.We[0][1]*1.e-3,
-            wad.solution_model.We[0][1]*1.e-3,
-            rw.solution_model.We[0][1]*1.e-3,
-            gt.solution_model.We[0][1]*1.e-3]
+    args = [endmembers[a[0]].params[a[1]]*a[2] for a in endmember_args]
+
+    for a in solution_args:
+        if a[1] == 'E':
+            args.append(solutions[a[0]].energy_interaction[a[2]][a[3]]*a[4])
+        else:
+            raise Exception('Not implemented')
 
     args.extend(Perr)
     return args
 
 def set_params(args):
-    fper.endmembers[0][0].params['H_0'] = args[0]*1.e3
-    fper.endmembers[1][0].params['H_0'] = args[1]*1.e3
-    wad.endmembers[0][0].params['H_0'] = args[2]*1.e3
-    wad.endmembers[1][0].params['H_0'] = args[3]*1.e3
-    rw.endmembers[0][0].params['H_0'] = args[4]*1.e3
-    rw.endmembers[1][0].params['H_0'] = args[5]*1.e3
-    gt.endmembers[1][0].params['H_0'] = args[6]*1.e3
+    i=0
+    for a in endmember_args:
+        endmembers[a[0]].params[a[1]] = args[i]/a[2]
+        i+=1
+
+    for a in solution_args:
+        if a[1] == 'E':
+            solutions[a[0]].energy_interaction[a[2]][a[3]] = args[i]/a[4]
+        else:
+            raise Exception('Not implemented')
+        i+=1
+        
+    for name in solutions:
+        burnman.SolidSolution.__init__(solutions[name])
     
-    fper.endmembers[0][0].params['S_0'] = args[7]
-    fper.endmembers[1][0].params['S_0'] = args[8]
-    ol.endmembers[0][0].params['S_0'] = args[9]
-    ol.endmembers[1][0].params['S_0'] = args[10]
-    wad.endmembers[0][0].params['S_0'] = args[11]
-    wad.endmembers[1][0].params['S_0'] = args[12]
-    rw.endmembers[0][0].params['S_0'] = args[13]
-    rw.endmembers[1][0].params['S_0'] = args[14]
-    gt.endmembers[1][0].params['S_0'] = args[15]
-    
-    fper.endmembers[0][0].params['a_0'] = args[16]*1.e-5
-    fper.endmembers[1][0].params['a_0'] = args[17]*1.e-5
-    ol.endmembers[0][0].params['a_0'] = args[18]*1.e-5
-    ol.endmembers[1][0].params['a_0'] = args[19]*1.e-5
-    wad.endmembers[0][0].params['a_0'] = args[20]*1.e-5
-    wad.endmembers[1][0].params['a_0'] = args[21]*1.e-5
-    rw.endmembers[0][0].params['a_0'] = args[22]*1.e-5
-    rw.endmembers[1][0].params['a_0'] = args[23]*1.e-5
-    
-    
-    fper.solution_model.We[0][1] = args[24]*1.e3
-    ol.solution_model.We[0][1] = args[25]*1.e3
-    wad.solution_model.We[0][1] = args[26]*1.e3
-    rw.solution_model.We[0][1] = args[27]*1.e3
-    gt.solution_model.We[0][1] = args[28]*1.e3
-    
-    Perr = np.array(args[29:])*1.e9 # arguments in GPa
+    Perr = np.array(args[i:])*1.e9 # arguments in GPa
     return Perr
 
 fper.endmembers[0][0].params['a_0_orig'] = fper.endmembers[0][0].params['a_0']
