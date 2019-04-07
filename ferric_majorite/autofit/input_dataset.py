@@ -13,6 +13,7 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
     sys.path.insert(1, os.path.abspath('..'))
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
+from burnman.solutionbases import transform_solution_to_new_basis
 
 # Some figures
 mrw_volume_diagram = mpimg.imread('figures/Katsura_2004_rw_volumes.png')
@@ -34,8 +35,31 @@ mrw = burnman.minerals.HHPH_2013.mrw()
 frw = burnman.minerals.HHPH_2013.frw()
 py = burnman.minerals.HHPH_2013.py()
 alm = burnman.minerals.HHPH_2013.alm()
+gr = burnman.minerals.HHPH_2013.gr()
+dmaj = burnman.minerals.HHPH_2013.maj()
+andr = burnman.minerals.HP_2011_ds62.andr()
 
-mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm]
+
+formula = burnman.processchemistry.dictionarize_formula('Na2MgSi5O12')
+namaj = burnman.Mineral(params = {'name': 'namaj',
+                                  'formula': formula,
+                                  'equation_of_state': 'hp_tmt',
+                                  'H_0': -5985000.0,
+                                  'S_0': 260.6,
+                                  'V_0': 0.0001109,
+                                  'Cp': [620.8, 0.0112, -3755900.0, -4421.3],
+                                  'a_0': 2.1e-05,
+                                  'K_0': 1.7e+11,
+                                  'Kprime_0': 4.0,
+                                  'Kdprime_0': -2.3e-11,
+                                  'n': sum(formula.values()),
+                                  'molar_mass': burnman.processchemistry.formula_mass(formula)}) # these are the params for nagt, not namaj
+namaj.params['S_0_orig'] = [300.0, 40.] # not even a guess
+gr.params['S_0_orig'] = [gr.params['S_0'], 1.] # from HP
+dmaj.params['S_0_orig'] = [dmaj.params['S_0'], 1.] # from HP
+andr.params['S_0_orig'] = [andr.params['S_0'], 1.] # from HP
+
+mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj, namaj]
 
 wus.params['H_0'] = -2.65453e+05
 wus.params['S_0'] = 59.82
@@ -45,6 +69,7 @@ wus.params['K_0'] = 162.e9
 wus.params['Kprime_0'] = 4.9
 wus.params['Cp'] = np.array([42.638, 0.00897102, -260780.8, 196.6])
 
+# Metastable ferrowadsleyite
 fwd.params['V_0'] = 4.31e-5 # original for HP is 4.321e-5
 fwd.params['K_0'] = 160.e9 # 169.e9 is SLB
 fwd.params['a_0'] = 2.48e-5 # 2.31e-5 is SLB
@@ -70,7 +95,7 @@ fo.params['S_0_orig'] = [94.0, 0.1] # Dachs et al., 2007
 fa.params['S_0_orig'] = [151.4, 0.1] # Dachs et al., 2007
 
 mwd.params['S_0_orig'] = [86.4, 0.4] # exp paper reported in Jacobs et al., 2017
-fwd.params['S_0_orig'] = [140.2, 10.] # same as Yong et al., 2007 for rw, but with bigger error
+fwd.params['S_0_orig'] = [144.2, 3.] # same as Yong et al., 2007 for rw, but with bigger error
 
 mrw.params['S_0_orig'] = [82.7, 0.5] # exp paper reported in Jacobs et al., 2017
 frw.params['S_0_orig'] = [140.2, 1.] # Yong et al., 2007; formal error is 0.4
@@ -153,18 +178,18 @@ fa.params['Cp'] = popt
 # NOTE: making the heat capacity of frw the same as fa+10./(np.sqrt(2500.))*np.sqrt(T) results in a curve that is too convex-up-pressure
 
 # NOTE: fwd should have a slightly lower heat capacity than frw
-tweak = lambda T: -6./(np.sqrt(2500.))*np.sqrt(T)
+tweak = lambda T: -2./(np.sqrt(2500.))*np.sqrt(T)
 popt, pcov = curve_fit(func_Cp, xdata = T, ydata = np.array(Cp) + tweak(np.array(T)), p0=fa.params['Cp'])
 fwd.params['Cp'] = popt
 
-tweak = lambda T: -2./(np.sqrt(2500.))*np.sqrt(T)
+tweak = lambda T: 2./(np.sqrt(2500.))*np.sqrt(T)
 popt, pcov = curve_fit(func_Cp, xdata = T, ydata = np.array(Cp) + tweak(np.array(T)), p0=fa.params['Cp'])
 frw.params['Cp'] = popt
 
 fa.set_state(1.e5, 1673.15)
 fa.params['H_0'] += fa_gibbs - fa.gibbs
 
-
+"""
 # Plot heat capacities of mwd and mrw
 temperatures = np.linspace(300., 2400., 101)
 pressures = 1.e5 + temperatures*0.
@@ -190,8 +215,12 @@ ax[3].plot(temperatures, fwd.evaluate(['C_p'], pressures, temperatures)[0], labe
 ax[3].plot(temperatures, frw.evaluate(['C_p'], pressures, temperatures)[0], label='frw')
 ax[3].legend()
 
-plt.show()
+for i in range(4):
+    ax[i].set_xlabel('T (K)')
+    ax[i].set_ylabel('C_p (J/K/mol)')
 
+plt.show()
+"""
 
 for (P, m1, m2) in [[14.25e9, fo, mwd],
                     [19.7e9, mwd, mrw],
@@ -210,7 +239,7 @@ fper = Solution(name = 'ferropericlase',
 ol = Solution(name = 'olivine',
               solution_type ='symmetric',
               endmembers=[[fo, '[Mg]2SiO4'], [fa, '[Fe]2SiO4']],
-              energy_interaction=[[5.2e3]],
+              energy_interaction=[[6.37e3]],
               volume_interaction=[[0.e-7]]) # O'Neill et al., 2003
 wad = Solution(name = 'wadsleyite',
                solution_type ='symmetric',
@@ -222,12 +251,33 @@ rw = Solution(name = 'ringwoodite',
               endmembers=[[mrw, '[Mg]2SiO4'], [frw, '[Fe]2SiO4']],
               energy_interaction=[[7.6e3]],
               volume_interaction=[[0.e-7]]) 
-gt = Solution(name = 'garnet',
-              solution_type ='symmetric',
-              endmembers=[[py, '[Mg]3Al2Si3O12'], [alm, '[Fe]3Al2Si3O12']],
-              energy_interaction=[[-2.e3]],
-              volume_interaction=[[0.e-7]])
+gt = Solution(name = 'disordered garnet',
+              solution_type = 'symmetric',
+              endmembers = [[py, '[Mg]3[Al]2Si3O12'],
+                            [alm, '[Fe]3[Al]2Si3O12'],
+                            [gr, '[Ca]3[Al]2Si3O12'],
+                            [andr, '[Ca]3[Fe]2Si3O12'],
+                            [dmaj, '[Mg]3[Mg1/2Si1/2]2Si3O12'],
+                            [namaj, '[Na2/3Mg1/3]3[Si]2Si3O12']],
+              energy_interaction=[[0.e3, 30.e3, 60.e3, 0., 0.], # py-.....
+                                  [0.e3, 0.e3, 0., 0.], # alm-....
+                                  [5.e3, 0., 0.], # gr-...
+                                  [0., 0.], # andr-..
+                                  [0.]], # dmaj-namaj
+              volume_interaction=[[0., 0., 0., 0., 0.],
+                                  [0., 0., 0., 0.],
+                                  [0., 0., 0.],
+                                  [0., 0.],
+                                  [0.]])
 
+# Child solutions *must* be in dictionary to be reset properly
+child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
+                                                                np.array([[1., 0., 0., 0., 0., 0.],
+                                                                          [0., 1., 0., 0., 0., 0.]])),
+                   'alm_sk_gt': transform_solution_to_new_basis(gt,
+                                                                np.array([[0., 1.,  0., 0., 0., 0.],
+                                                                          [0., 1., -1., 1., 0., 0.]]))}
+                   
 
 solutions = {'mw': fper,
              'ol': ol,
@@ -244,4 +294,8 @@ endmembers = {'per': per,
               'mrw': mrw,
               'frw': frw,
               'py': py,
-              'alm': alm}
+              'alm': alm,
+              'gr': gr,
+              'andr': andr,
+              'dmaj': dmaj,
+              'namaj': namaj}

@@ -14,10 +14,65 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.processanalyses import compute_and_set_phase_compositions, assemblage_affinity_misfit
-
+from burnman.equilibrate import equilibrate
 
 
 from input_dataset import * 
+
+
+
+"""
+# Test
+
+composition = {'Fe': 0.3, 'Mg': 1.7, 'Si': 0.8, 'O': 3.6}
+assemblage = burnman.Composite([fper, ol, wad], [0.2, 0.4, 0.4])
+fper.guess = np.array([0.85, 0.15])
+ol.guess = np.array([0.87, 0.13])
+wad.guess = np.array([0.83, 0.17])
+for m in [fper, ol, wad]:
+    m.set_composition(m.guess)
+assemblage.set_state(13.0e9, 1673.15)
+
+equality_constraints = [('P', 13.7e9), ('T', 1673.15)]
+sols, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False,
+                        initial_composition_from_assemblage=True)
+print(assemblage)
+
+assemblage.experiment_id = 'TEST'
+assemblage.nominal_state = np.array([assemblage.pressure + 1.e8,
+                                     assemblage.temperature])
+
+assemblage.state_covariances = np.array([[1.e8*1.e8, 0.],[0., 10.*10]])
+                
+for k in range(3):
+    assemblage.phases[k].fitted_elements = ['Mg', 'Fe']
+    
+    assemblage.phases[k].composition = assemblage.phases[k].molar_fractions
+    assemblage.phases[k].compositional_uncertainties = np.array([0.01, 0.01])
+                    
+burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
+                
+assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
+                                   assemblage.phases[k].molar_fraction_covariances)
+                                  for k in range(3)]
+            
+assemblage.set_state(*assemblage.nominal_state)
+
+
+c_diff = np.array([[0.005, -0.005],
+                   [0.002, -0.002],
+                   [-0.003, 0.003]])
+for k in range(3):
+    molar_fractions, assemblage.phases[k].molar_fraction_covariances = assemblage.stored_compositions[k]
+    assemblage.phases[k].set_composition(molar_fractions + c_diff[k])
+
+
+print(assemblage_affinity_misfit(assemblage))
+
+
+
+exit()
+"""
 
 
 
@@ -33,10 +88,23 @@ else:
     print('Not running inversion. Use --fit as command line argument to invert parameters')
 
 
+def set_params_from_special_constraints():
+    # Destabilise fwd
+    fa.set_state(6.25e9, 1673.15)
+    frw.set_state(6.25e9, 1673.15)
+    fwd.set_state(6.25e9, 1673.15)
+
+    # First, determine the entropy which will give the fa-fwd reaction the same slope as the fa-frw reaction
+    dPdT = (frw.S - fa.S)/(frw.V - fa.V) # = dS/dV
+    dV = fwd.V - fa.V
+    dS = dPdT*dV
+    fwd.params['S_0'] += fa.S - fwd.S + dS
+    fwd.params['H_0'] += frw.gibbs - fwd.gibbs + 100. # make fwd a little less stable than frw
+    
 def minimize_func(params, assemblages):
     # Set parameters 
     set_params(params)
-
+    
     chisqr = []
     # Run through all assemblages for affinity misfit
     for i, assemblage in enumerate(assemblages):
@@ -96,8 +164,7 @@ def minimize_func(params, assemblages):
 
 endmember_args = [['per', 'H_0', per.params['H_0'], 1.e3],
                   ['wus', 'H_0', wus.params['H_0'], 1.e3],
-                  ['mwd', 'H_0', mwd.params['H_0'], 1.e3],
-                  ['fwd', 'H_0', fwd.params['H_0'], 1.e3],
+                  ['mwd', 'H_0', mwd.params['H_0'], 1.e3], # ['fwd', 'H_0', fwd.params['H_0'], 1.e3],
                   ['mrw', 'H_0', mrw.params['H_0'], 1.e3],
                   ['frw', 'H_0', frw.params['H_0'], 1.e3],
                   ['alm', 'H_0', alm.params['H_0'], 1.e3],
@@ -105,12 +172,13 @@ endmember_args = [['per', 'H_0', per.params['H_0'], 1.e3],
                   ['wus', 'S_0', wus.params['S_0'], 1.],
                   ['fo',  'S_0', fo.params['S_0'],  1.],
                   ['fa',  'S_0', fa.params['S_0'],  1.],
-                  ['mwd', 'S_0', mwd.params['S_0'], 1.],
-                  ['fwd', 'S_0', fwd.params['S_0'], 1.],
+                  ['mwd', 'S_0', mwd.params['S_0'], 1.], # ['fwd', 'S_0', fwd.params['S_0'], 1.],
                   ['mrw', 'S_0', mrw.params['S_0'], 1.],
                   ['frw', 'S_0', frw.params['S_0'], 1.],
                   ['alm', 'S_0', alm.params['S_0'], 1.],
                   ['fwd', 'V_0', fwd.params['V_0'], 1.e-5],
+                  ['fwd', 'K_0', fwd.params['K_0'], 1.e11],
+                  ['frw', 'K_0', frw.params['K_0'], 1.e11],
                   ['per', 'a_0', per.params['a_0'], 1.e-5],
                   ['wus', 'a_0', wus.params['a_0'], 1.e-5],
                   ['fo',  'a_0', fo.params['a_0'],  1.e-5],
@@ -123,8 +191,9 @@ endmember_args = [['per', 'H_0', per.params['H_0'], 1.e3],
 solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0, ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
-                 ['ring', 'E', 0, 0, rw.energy_interaction[0][0], 1.e3],
-                 ['gt', 'E', 0, 0, gt.energy_interaction[0][0], 1.e3]]
+                 ['ring', 'E', 0, 0, rw.energy_interaction[0][0], 1.e3]]
+
+# ['gt', 'E', 0, 0, gt.energy_interaction[0][0], 1.e3] # py-alm interaction fixed as ideal
 
 endmember_priors = [['per', 'a_0', per.params['a_0_orig'], 2.e-7],
                     ['fo', 'a_0', fo.params['a_0_orig'], 2.e-7],
@@ -134,18 +203,19 @@ endmember_priors = [['per', 'a_0', per.params['a_0_orig'], 2.e-7],
                     ['mwd', 'a_0', mwd.params['a_0_orig'], 5.e-7],
                     ['frw', 'a_0', frw.params['a_0_orig'], 5.e-7],
                     ['fwd', 'a_0', fwd.params['a_0_orig'], 20.e-7],
-                    ['fwd', 'V_0', 4.31e-5, 2.15e-7], # 0.5% uncertainty, somewhat arbitrary
+                    ['fwd', 'V_0', fwd.params['V_0'], 2.15e-7], # 0.5% uncertainty, somewhat arbitrary
+                    ['fwd', 'K_0', fwd.params['K_0'], fwd.params['K_0']/100.*2.], # 2% uncertainty, somewhat arbitrary
+                    ['frw', 'K_0', frw.params['K_0'], frw.params['K_0']/100.*0.5], # 0.5% uncertainty, somewhat arbitrary
                     ['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_orig'][1]],
                     ['wus', 'S_0', wus.params['S_0_orig'][0], wus.params['S_0_orig'][1]],
                     ['fo',  'S_0', fo.params['S_0_orig'][0],  fo.params['S_0_orig'][1]],
                     ['fa',  'S_0', fa.params['S_0_orig'][0],  fa.params['S_0_orig'][1]],
-                    ['mwd', 'S_0', mwd.params['S_0_orig'][0], mwd.params['S_0_orig'][1]],
-                    ['fwd', 'S_0', fwd.params['S_0_orig'][0], fwd.params['S_0_orig'][1]],
+                    ['mwd', 'S_0', mwd.params['S_0_orig'][0], mwd.params['S_0_orig'][1]], #['fwd', 'S_0', fwd.params['S_0_orig'][0], fwd.params['S_0_orig'][1]],
                     ['mrw', 'S_0', mrw.params['S_0_orig'][0], mrw.params['S_0_orig'][1]],
                     ['frw', 'S_0', frw.params['S_0_orig'][0], frw.params['S_0_orig'][1]],
                     ['alm', 'S_0', alm.params['S_0_orig'][0], alm.params['S_0_orig'][1]]]
 
-solution_priors = [['ol', 'E', 0, 0, 5.2e3, 1.e3]]
+solution_priors = [] # ['gt', 'E', 0, 0, 0.3e3, 0.4e3]
 
 experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
                             ['50Fe', 'P', 0., 0.5e9],
@@ -230,28 +300,45 @@ def set_params(args):
     for name in solutions:
         burnman.SolidSolution.__init__(solutions[name])
 
+    # Reset dictionary of child solutions
+    for k, ss in child_solutions.items():
+        ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
+                                                           ss.basis).__dict__)
+
     # Experimental uncertainties
     for j, u in enumerate(experiment_uncertainties):
         dict_experiment_uncertainties[u[0]][u[1]] = args[i]*u[3]
         experiment_uncertainties[j][2] = args[i]*u[3]
         i+=1
 
+    # Special one-off constraints
+    set_params_from_special_constraints()
     return None
 
-set_params([-601.3453, -265.6778, -2145.2891, -1465.4495, -2135.2160, -1469.7595, -5258.7219, 26.8835, 57.8398, 94.1394, 151.4104, 85.0606, 143.4888, 80.8637, 135.6502, 341.5676, 4.3099, 3.0837, 3.3717, 2.8343, 2.7844, 2.1969, 1.7645, 2.2154, 1.9452, 11.3566, 5.9386, 18.5443, 7.9449, -2.1949, -0.3940, -0.0641, -2.9597, -0.0518, 1.0549, -3.8583, -0.0432, -0.2590, -0.6305, 0.1343, 0.1782, 1.5145, 1.8494, 2.0586, -0.6711, -1.0292, -1.0906, -0.2548, 0.2573, 0.7087, 0.4244, -0.1634, 1.2794])
-set_params([-600.8729, -266.1502, -2145.5672, -1464.9199, -2135.0357, -1469.8020, -5258.7219, 26.9476, 57.6979, 94.1621, 151.4353, 85.0096, 143.3162, 81.5983, 137.0470, 341.6043, 4.3102, 3.0842, 3.3528, 2.8185, 2.7849, 2.1472, 1.4385, 2.2359, 1.9630, 11.3218, 4.1223, 18.3509, 8.4515, -2.1949, -0.6021, -0.0862, -2.8626, -0.0920, 1.0177, -3.7252, -0.2226, -0.2805, -0.7647, 0.1421, 0.1777, 1.4966, 1.3428, 1.6705, -1.0299, -1.0966, -0.9390, -0.6202, -0.1556, 0.3566, 0.0831, -0.1665, 0.9527])
-#set_params([-601.746980562, -265.276034006, -2144.71808977, -1469.48233461, -2134.29281496, -1468.63466009, -5258.72190383, 26.9051660668, 58.5650007626, 94.1341411507, 151.436804912, 85.2595397066, 141.59078394, 81.6944694747, 136.858605106, 341.247642929, 3.0735457519, 3.38361213012, 2.84077558721, 2.78356225901, 2.13735721521, 1.86516990446, 2.21729429679, 1.94870855992, 11.1933607058, 5.36559846496, 16.7285246068, 7.63313673751, -2.19494923262, -0.0686185435259, -0.128658784141, -0.0448149995613, -0.43597561594, 0.0253782583923, 0.656901571957, -0.0650126447055, -0.278004147651, -1.03846776617, 0.447206414024, 0.202738370713, -0.0538262759527, 0.147687088716, -0.323765584945, 1.28000180067, 0.150132784573, -0.00441653723548, 0.804843464431, -0.585043751064, -0.298859309975, -1.12861762895, -0.415092369702, -0.134296076711])
+
+#######################
+# EXPERIMENTAL DATA ###
+#######################
 
 from Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
+from ONeill_Wood_1979_ol_gt import ONeill_Wood_1979_assemblages
 from endmember_reactions import endmember_reaction_assemblages
-from destabilise_endmember_reactions import destabilised_endmember_reaction_assemblages
-assemblages = Frost_2003_assemblages
+
+assemblages = list(Frost_2003_assemblages) # makes a copy
 assemblages.extend(endmember_reaction_assemblages)
-assemblages.extend(destabilised_endmember_reaction_assemblages)
+assemblages.extend(ONeill_Wood_1979_assemblages)
 minimize_func(get_params(), assemblages)
 
 
-# THIS LINE RUNS THE MINIMIZATION!!!
+#######################
+### PUT PARAMS HERE ###
+#######################
+
+set_params([-600.6965, -266.3231, -2144.8950, -2134.4060, -1470.4815, -5251.7948, 26.9002, 57.1942, 94.1178, 151.4378, 85.2802, 81.8233, 135.1509, 346.0247, 4.3098, 1.6180, 2.0163, 3.0843, 3.3645, 2.8250, 2.7601, 2.1467, 1.8779, 2.2286, 2.1131, 11.6227, 6.0495, 17.4479, 8.6370, -1.5060, -0.3204, -3.1250, -0.4259, 1.3442, -4.5732, -1.9000, -0.3362, -0.9867, 0.0389, -0.0141, 1.1919, 0.6170, 1.6417, -1.0691, -1.2070, -0.9305, -0.5875, -0.0808, 0.3360, 0.0241, -0.1917, 0.9139])
+
+########################
+# RUN THE MINIMIZATION #
+########################
 if run_inversion:
     print(minimize(minimize_func, get_params(), args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
@@ -259,9 +346,9 @@ if run_inversion:
 print(get_params())
 
 
-###################
-# A few images:
-###################
+####################
+### A few images ###
+####################
 
 ol_polymorph_img = mpimg.imread('frost_2003_figures/ol_polymorphs.png')
 ol_polymorph_img_1200C = mpimg.imread('frost_2003_figures/Akimoto_1987_fo_fa_phase_diagram_1200C.png')
@@ -296,7 +383,7 @@ def eqm_pressures(m1, m2, temperatures):
 
 ###################################################
 # PLOTS
-
+"""
 # Plot mrw EoS
 pressures = np.linspace(1.e5, 25.e9, 101) 
 plt.imshow(mrw_volume_diagram, extent=[0., 25., 35.5,40.5], aspect='auto')
@@ -314,12 +401,12 @@ temperatures = np.linspace(1000., 2600., 21)
 ax[0].plot(temperatures, eqm_pressures(fo, mwd, temperatures)/1.e9, linewidth=4.)
 ax[0].plot(temperatures, eqm_pressures(mwd, mrw, temperatures)/1.e9, linewidth=4.)
 
-"""
-ax[1].imshow(fa_phase_diagram, extent=[3., 7., 550.+273.15, 1350.+273.15], aspect='auto')
-temperatures = np.linspace(550.+273.15, 1350.+273.15, 21)
-ax[1].plot(eqm_pressures(fa, frw, temperatures)/1.e9, temperatures, linewidth=4.)
-ax[1].plot(eqm_pressures(fa, fwd, temperatures)/1.e9, temperatures, linestyle=':', linewidth=4.)
-"""
+
+#ax[1].imshow(fa_phase_diagram, extent=[3., 7., 550.+273.15, 1350.+273.15], aspect='auto')
+#temperatures = np.linspace(550.+273.15, 1350.+273.15, 21)
+#ax[1].plot(eqm_pressures(fa, frw, temperatures)/1.e9, temperatures, linewidth=4.)
+#ax[1].plot(eqm_pressures(fa, fwd, temperatures)/1.e9, temperatures, linestyle=':', linewidth=4.)
+
 
 ax[1].imshow(fa_phase_diagram2, extent=[700., 1900., 0., 10.], aspect='auto')
 temperatures = np.linspace(700., 1900., 21)
@@ -396,12 +483,10 @@ for i in range(0, 8):
     ax[i].legend(loc='best')
 plt.show()
 
-
-# FPER-OL POLYMORPH PARTITIONING
+"""
+# FPER-OL POLYMORPH (OR GARNET) PARTITIONING
 def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):
-    """
-    G is deltaG = G_per + G_fa/2. - G_fper - G_fo/2.
-    """
+    #G is deltaG = G_per + G_fa/2. - G_fper - G_fo/2.
     x_fper = v[0]
     if np.abs(np.abs(x_ol - 0.5) - 0.5) < 1.e-10:
         v[0] = x_ol
@@ -424,7 +509,7 @@ Tmax = 1673.2
 fig = plt.figure(figsize=(20, 10))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 for i, Pplot in enumerate(set(ol_gt_data.T[0])):
-    for T in set(ol_gt_data.T[1]):
+    for T in sorted(set(ol_gt_data.T[1])):
         for m in mins:
             m.set_state(Pplot, T)
         G = (py.gibbs/3. - alm.gibbs/3. - fo.gibbs/2. + fa.gibbs/2.)
@@ -444,6 +529,11 @@ for i, Pplot in enumerate(set(ol_gt_data.T[0])):
     mask = [idx for idx, P in enumerate(Ps) if np.abs(P - Pplot) < 10000.]
     ax[i].errorbar(XMgOl[mask], lnKD[mask], yerr=lnKDerr[mask], linestyle='None')
     ax[i].scatter(XMgOl[mask], lnKD[mask], c=Ts[mask], s=80., label='data', cmap=viridis, vmin=Tmin, vmax=Tmax)
+
+    ax[i].set_xlabel('p(fo)')
+    ax[i].set_ylabel('ln(KD ol-gt)')
+    ax[i].legend()
+    
 
 plt.show()
                                     
@@ -474,29 +564,24 @@ for P in [1.e5, 5.e9, 10.e9, 15.e9]:
     ax[0].plot(x_ols, burnman.constants.gas_constant*T*np.log(KDs), color = viridis((P-Pmin)/(Pmax-Pmin)), linewidth=3., label='{0} GPa'.format(P/1.e9))
 
 
-"""
-pressures = []
-x_ols = []
-x_fpers = []
-RTlnKDs = []
-for i, run in enumerate(F2003_mw_compositions):
-    P, T = F2003_mw_conditions[i]
-    for j, chamber in enumerate(F2003_mw_compositions[i]):
-        if 'ol' in F2003_mw_compositions[i][j]:
-            pressures.append(F2003_mw_conditions[i][0])
-            x_ols.append(F2003_mw_compositions[i][j]['ol'][0]/
-                         (F2003_mw_compositions[i][j]['ol'][0] +
-                          F2003_mw_compositions[i][j]['ol'][6]))
-            x_fpers.append(F2003_mw_compositions[i][j]['mw'][0]/
-                           (F2003_mw_compositions[i][j]['mw'][0] +
-                            F2003_mw_compositions[i][j]['mw'][6]))
-            RTlnKDs.append(burnman.constants.gas_constant *
-                           T*np.log((x_ols[-1]*(1. - x_fpers[-1]))/
-                                    (x_fpers[-1]*(1. - x_ols[-1]))))
-            
+P_Xol_RTlnKDs = []
+for assemblage in Frost_2003_assemblages:
+    if solutions['ol'] in assemblage.phases:
+        idx_ol = assemblage.phases.index(solutions['ol'])
+        idx_mw = assemblage.phases.index(solutions['mw'])
+        T = assemblage.nominal_state[1]
+        x_ol = assemblage.stored_compositions[idx_ol][0][1]
+        x_fper = assemblage.stored_compositions[idx_mw][0][1]
+        RTlnKD = burnman.constants.gas_constant*T*np.log((x_ol*(1. - x_fper))/
+                                                         (x_fper*(1. - x_ol)))
+        P_Xol_RTlnKDs.append([assemblage.nominal_state[0],
+                              x_ol, RTlnKD])
+
+
+
+pressures, x_ols, RTlnKDs = np.array(zip(*P_Xol_RTlnKDs))
 ax[0].scatter(x_ols, RTlnKDs, c=pressures, s=80., label='data',
               cmap=viridis, vmin=Pmin, vmax=Pmax)
-"""
 
 
 ax[0].set_xlim(0., 0.8)
@@ -526,29 +611,25 @@ for P in [10.e9, 12.e9, 14.e9, 16.e9, 18.e9]:
            (x_fpers*(1. - x_wads)))
     ax[1].plot(x_wads, burnman.constants.gas_constant*T*np.log(KDs), color = viridis((P-Pmin)/(Pmax-Pmin)), linewidth=3., label='{0} GPa'.format(P/1.e9))
 
-"""
-pressures = []
-x_wads = []
-x_fpers = []
-RTlnKDs = []
-for i, run in enumerate(F2003_mw_compositions):
-    P, T = F2003_mw_conditions[i]
-    for j, chamber in enumerate(F2003_mw_compositions[i]):
-        if 'wad' in F2003_mw_compositions[i][j]:
-            pressures.append(F2003_mw_conditions[i][0])
-            x_wads.append(F2003_mw_compositions[i][j]['wad'][0]/
-                          (F2003_mw_compositions[i][j]['wad'][0] +
-                           F2003_mw_compositions[i][j]['wad'][6]))
-            x_fpers.append(F2003_mw_compositions[i][j]['mw'][0]/
-                           (F2003_mw_compositions[i][j]['mw'][0] +
-                            F2003_mw_compositions[i][j]['mw'][6]))
-            RTlnKDs.append(burnman.constants.gas_constant*T*np.log((x_wads[-1]*(1. - x_fpers[-1]))/
-                                                                   (x_fpers[-1]*(1. - x_wads[-1]))))
+P_Xwad_RTlnKDs = []
+for assemblage in Frost_2003_assemblages:
+    if solutions['wad'] in assemblage.phases:
+        idx_wad = assemblage.phases.index(solutions['wad'])
+        idx_mw = assemblage.phases.index(solutions['mw'])
+        x_wad = assemblage.stored_compositions[idx_wad][0][1]
+        x_fper = assemblage.stored_compositions[idx_mw][0][1]
+        T = assemblage.nominal_state[1]
+        RTlnKD = burnman.constants.gas_constant*T*np.log((x_wad*(1. - x_fper))/
+                                                         (x_fper*(1. - x_wad)))
+        P_Xwad_RTlnKDs.append([assemblage.nominal_state[0],
+                               x_wad, RTlnKD])
 
 
+
+pressures, x_wads, RTlnKDs = np.array(zip(*P_Xwad_RTlnKDs))
 ax[1].scatter(x_wads, RTlnKDs, c=pressures, s=80., label='data',
               cmap=viridis, vmin=Pmin, vmax=Pmax)
-"""
+
 ax[1].set_xlim(0., 0.4)
 ax[1].legend(loc='best')
 
@@ -575,24 +656,21 @@ for P in [10.e9, 12.5e9, 15.e9, 17.5e9, 20.e9]:
 
     ax[2].plot(x_rws, x_fpers, color=viridis((P-Pmin)/(Pmax-Pmin)), linewidth=3., label=P/1.e9)
 
-"""
-pressures = []
-x_rws = []
-x_fpers = []
-for i, run in enumerate(F2003_mw_compositions):
-    for j, chamber in enumerate(F2003_mw_compositions[i]):
-        if 'ring' in F2003_mw_compositions[i][j]:
-            pressures.append(F2003_mw_conditions[i][0])
-            x_rws.append(F2003_mw_compositions[i][j]['ring'][0]/
-                         (F2003_mw_compositions[i][j]['ring'][0] +
-                          F2003_mw_compositions[i][j]['ring'][6]))
-            x_fpers.append(F2003_mw_compositions[i][j]['mw'][0]/
-                           (F2003_mw_compositions[i][j]['mw'][0] +
-                            F2003_mw_compositions[i][j]['mw'][6]))
+
+P_Xrw_Xfper = []
+for assemblage in Frost_2003_assemblages:
+    if solutions['ring'] in assemblage.phases:
+        idx_rw = assemblage.phases.index(solutions['ring'])
+        idx_mw = assemblage.phases.index(solutions['mw'])
+        P_Xrw_Xfper.append([assemblage.nominal_state[0],
+                            assemblage.stored_compositions[idx_rw][0][1],
+                            assemblage.stored_compositions[idx_mw][0][1]])
+
             
+pressures, x_rws, x_fpers = np.array(zip(*P_Xrw_Xfper))
 c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',
                   cmap=viridis, vmin=Pmin, vmax=Pmax)
-"""
+
 ax[2].set_xlim(0., 1.)
 ax[2].set_ylim(0., 1.)
 ax[2].legend(loc='best')
@@ -664,12 +742,21 @@ for assemblage in Frost_2003_assemblages:
         for i, phase in enumerate(assemblage.phases):
             for m in ['ol', 'wad', 'ring']:
                 if phase == solutions[m]:
-                    P_Xmg_phase[m].append([assemblage.nominal_state[0],
+                    P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']
+                    
+                    P_Xmg_phase[m].append([assemblage.nominal_state[0], P_shift,
                                            assemblage.stored_compositions[i][0][1]])
 
-for m in ['ol', 'wad', 'ring']:
-    pressures, xs = np.array(zip(*P_Xmg_phase[m]))
-    plt.scatter(xs, pressures/1.e9, s=80., label='data')
+arrow_params = {'shape': 'full',
+                'width': 0.001,
+                'length_includes_head': True,
+                'head_starts_at_zero': False}
 
+for m in ['ol', 'wad', 'ring']:
+    pressures, pressure_shift, xs = np.array(zip(*P_Xmg_phase[m]))
+    for i in range(len(xs)):
+        plt.arrow(xs[i], pressures[i]/1.e9, 0., pressure_shift[i]/1.e9, **arrow_params)
+    plt.scatter(xs, pressures/1.e9, s=80., label='data')
+    
 plt.legend()
 plt.show()

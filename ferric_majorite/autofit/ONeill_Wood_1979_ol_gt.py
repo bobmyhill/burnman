@@ -11,27 +11,33 @@ run_id=0
 for P, T, XMgOl, lnKD, lnKDerr in ol_gt_data:
     run_id+=1
     
-    # KD is (XGtFe*XOlMg)/(XGtMg*XOlFe)
+    # KD is (XGtFe*XMgOl)/(XGtMg*XOlFe)
+    # KD*(XMgGt*(1 - XMgOl)) = (XMgOl*(1 - XMgGt))
+    # XMgGt*(KD*(1 - XMgOl)) = XMgOl - XMgOl*XMgGt
+    # XMgGt*(KD*(1 - XMgOl) + XMgOl) = XMgOl
+    # XMgGt = XMgOl/(KD*(1 - XMgOl) + XMgOl)
+    # XMgGt = 1./(KD*(1./XMgOl - 1.) + 1.)
+    # XMgGt = 1./(1. + KD*(1. - XMgOl)/XMgOl)
+    
     KD = np.exp(lnKD)
     XMgGt = 1./( 1. + ((1. - XMgOl)/XMgOl)*KD)
     dXMgGtdlnKD = -(1. - XMgOl)*KD/(XMgOl * np.power( (1. - XMgOl)*KD/XMgOl + 1., 2. ))
-    XMgGterr = dXMgGtdlnKD*lnKDerr
+    XMgGterr = np.abs(dXMgGtdlnKD*lnKDerr) # typically ~0.01
 
-
-    assemblage = burnman.Composite([ol, gt])
+    assemblage = burnman.Composite([ol, child_solutions['py_alm_gt']])
     
     assemblage.experiment_id = 'ONeill_Wood_1979_{0}'.format(run_id)
-    assemblage.nominal_state = np.array([P, T])
+    assemblage.nominal_state = np.array([P*1.e9, T]) # CONVERT PRESSURE TO GPA
     assemblage.state_covariances = np.array([[1.e7*1.e7, 0.], [0., 100.]])
 
     ol.fitted_elements = ['Mg', 'Fe']  
     ol.composition = np.array([XMgOl, 1. - XMgOl])
-    ol.compositional_uncertainties = np.array([XMgGterr, XMgGterr])
+    ol.compositional_uncertainties = np.array([XMgGterr/2., XMgGterr/2.])
     
-    gt.fitted_elements = ['Mg', 'Fe']  
-    gt.composition = np.array([XMgGt, 1. - XMgGt])
-    gt.compositional_uncertainties = np.array([XMgGterr, XMgGterr])
-        
+    child_solutions['py_alm_gt'].fitted_elements = ['Mg', 'Fe']  
+    child_solutions['py_alm_gt'].composition = np.array([XMgGt, 1. - XMgGt])
+    child_solutions['py_alm_gt'].compositional_uncertainties = np.array([XMgGterr/2., XMgGterr/2.])
+    
     burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
     
     assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
@@ -40,6 +46,3 @@ for P, T, XMgOl, lnKD, lnKDerr in ol_gt_data:
     
         
     ONeill_Wood_1979_assemblages.append(assemblage)
-    
-
-print(ONeill_Wood_1979_assemblages[0].phases[1].molar_fractions)
