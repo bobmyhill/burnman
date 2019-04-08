@@ -15,31 +15,60 @@ import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.solutionbases import transform_solution_to_new_basis
 
-# Some figures
-mrw_volume_diagram = mpimg.imread('figures/Katsura_2004_rw_volumes.png')
-mwd_Cp_diagram = mpimg.imread('frost_2003_figures/Cp_wadsleyite_Jacobs_2007.png')
-mrw_Cp_diagram = mpimg.imread('frost_2003_figures/Cp_ringwoodite_Jacobs_2007.png')
+#########################
+# ENDMEMBER DEFINITIONS #
+#########################
 
-fa_Cp_diagram = mpimg.imread('frost_2003_figures/fa_Cp_Benisek_2012.png')
-frw_Cp_diagram = mpimg.imread('frost_2003_figures/frw_Cp_Yong_2007.png')
+# Iron endmembers
+bcc_iron = burnman.minerals.SE_2015.bcc_iron()
+fcc_iron = burnman.minerals.SE_2015.fcc_iron()
+hcp_iron = burnman.minerals.SE_2015.hcp_iron()
 
+# O2
+O2 = burnman.minerals.HP_2011_fluids.O2()
 
-# Load the minerals and solid solutions we wish to use
+# MgO and FeO
 per = burnman.minerals.HHPH_2013.per()
 wus = burnman.minerals.HHPH_2013.fper()
+
+# Olivine endmembers
 fo = burnman.minerals.HHPH_2013.fo()
 fa = burnman.minerals.HHPH_2013.fa()
+
+# Wadsleyite endmembers
 mwd = burnman.minerals.HHPH_2013.mwd()
 fwd = burnman.minerals.HHPH_2013.fwd()
+
+# Spinel endmembers
 mrw = burnman.minerals.HHPH_2013.mrw()
 frw = burnman.minerals.HHPH_2013.frw()
+sp = burnman.minerals.HP_2011_ds62.sp()
+herc = burnman.minerals.HP_2011_ds62.herc()
+
+# Orthopyroxene endmembers
+oen = burnman.minerals.HHPH_2013.en()
+ofs = burnman.minerals.HHPH_2013.fs()
+
+# High pressure clinopyroxene endmembers
+hen = burnman.minerals.HHPH_2013.hen()
+hfs = burnman.minerals.HHPH_2013.hfs()
+
+# Garnet endmembers
 py = burnman.minerals.HHPH_2013.py()
 alm = burnman.minerals.HHPH_2013.alm()
 gr = burnman.minerals.HHPH_2013.gr()
 dmaj = burnman.minerals.HHPH_2013.maj()
 andr = burnman.minerals.HP_2011_ds62.andr()
 
+# SiO2 polymorphs
+qtz = burnman.minerals.HP_2011_ds62.q()
+coe = burnman.minerals.HP_2011_ds62.coe()
+stv = burnman.minerals.HP_2011_ds62.stv()
 
+
+#############################
+# NEW ENDMEMBER DEFINITIONS #
+#############################
 formula = burnman.processchemistry.dictionarize_formula('Na2MgSi5O12')
 namaj = burnman.Mineral(params = {'name': 'namaj',
                                   'formula': formula,
@@ -54,12 +83,18 @@ namaj = burnman.Mineral(params = {'name': 'namaj',
                                   'Kdprime_0': -2.3e-11,
                                   'n': sum(formula.values()),
                                   'molar_mass': burnman.processchemistry.formula_mass(formula)}) # these are the params for nagt, not namaj
+
 namaj.params['S_0_orig'] = [300.0, 40.] # not even a guess
+
+
+###############################
+# MODIFY ENDMEMBER PROPERTIES #
+###############################
+
 gr.params['S_0_orig'] = [gr.params['S_0'], 1.] # from HP
 dmaj.params['S_0_orig'] = [dmaj.params['S_0'], 1.] # from HP
 andr.params['S_0_orig'] = [andr.params['S_0'], 1.] # from HP
 
-mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj, namaj]
 
 wus.params['H_0'] = -2.65453e+05
 wus.params['S_0'] = 59.82
@@ -89,20 +124,29 @@ frw.params['a_0'] = 1.95e-5
 
 # PRIORS FOR PARAMETERS
 per.params['S_0_orig'] = [26.9, 0.1] # exp paper reported in Jacobs et al., 2017
-wus.params['S_0_orig'] = [58., 6.] # exp paper reported in Jacobs et al., 2017
+wus.params['S_0_orig'] = [60.45, 1.] # Stolen et al., 1996 (in Jacobs et al., 2019)
 
 fo.params['S_0_orig'] = [94.0, 0.1] # Dachs et al., 2007
 fa.params['S_0_orig'] = [151.4, 0.1] # Dachs et al., 2007
 
 mwd.params['S_0_orig'] = [86.4, 0.4] # exp paper reported in Jacobs et al., 2017
-fwd.params['S_0_orig'] = [144.2, 3.] # same as Yong et al., 2007 for rw, but with bigger error
+fwd.params['S_0_orig'] = [144.2, 3.] # similar relationship to fa and frw as the Mg-endmembers
 
 mrw.params['S_0_orig'] = [82.7, 0.5] # exp paper reported in Jacobs et al., 2017
 frw.params['S_0_orig'] = [140.2, 1.] # Yong et al., 2007; formal error is 0.4
 
+oen.params['S_0_orig'] = [66.27*2., 0.1*2.] # reported in Jacobs et al., 2017 (Krupka et al., 1985)
+ofs.params['S_0_orig'] = [186.5, 0.5] # Yong et al., 2007; formal error is 0.4
+
+print('WARNING - S_0_orig for hen, hfs completely guessed')
+hen.params['S_0_orig'] = [66.27*2., 0.1*2.] # TOTAL GUESS
+hfs.params['S_0_orig'] = [186.5, 0.5] # TOTAL GUESS
 
 py.params['S_0_orig'] = [265.94, 1.] # Dachs and Geiger, 2006; nominally 0.23, but sample dependent. HP2011_ds62 has 269.5, SLB has 244.55 (yeah, this what happens when you use a Debye model)
 alm.params['S_0_orig'] = [342.6, 2.] # Anovitz et al., 1993
+
+
+mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj, namaj]
 
 for m in mins:
     # Set entropies
@@ -231,6 +275,11 @@ for (P, m1, m2) in [[14.25e9, fo, mwd],
     m2.params['H_0'] += m1.gibbs - m2.gibbs
     
 
+
+###################
+# SOLID SOLUTIONS #
+###################
+
 fper = Solution(name = 'ferropericlase',
                 solution_type ='symmetric',
                 endmembers=[[per, '[Mg]O'], [wus, '[Fe]O']],
@@ -251,6 +300,16 @@ rw = Solution(name = 'ringwoodite',
               endmembers=[[mrw, '[Mg]2SiO4'], [frw, '[Fe]2SiO4']],
               energy_interaction=[[7.6e3]],
               volume_interaction=[[0.e-7]]) 
+opx = Solution(name = 'orthopyroxene',
+               solution_type ='symmetric',
+               endmembers=[[oen, '[Mg]2Si2O6'], [ofs, '[Fe]2Si2O6']],
+               energy_interaction=[[2.e3]],
+               volume_interaction=[[0.e-7]]) 
+hpx = Solution(name = 'high pressure clinopyroxene',
+               solution_type ='symmetric',
+               endmembers=[[hen, '[Mg]2Si2O6'], [hfs, '[Fe]2Si2O6']],
+               energy_interaction=[[2.e3]],
+               volume_interaction=[[0.e-7]]) 
 gt = Solution(name = 'disordered garnet',
               solution_type = 'symmetric',
               endmembers = [[py, '[Mg]3[Al]2Si3O12'],
@@ -285,7 +344,10 @@ solutions = {'mw': fper,
              'ring': rw,
              'gt': gt}
 
-endmembers = {'per': per,
+endmembers = {'bcc_iron': bcc_iron,
+              'fcc_iron': fcc_iron,
+              'hcp_iron': hcp_iron,
+              'per': per,
               'wus': wus,
               'fo': fo,
               'fa': fa,
@@ -293,9 +355,18 @@ endmembers = {'per': per,
               'fwd': fwd,
               'mrw': mrw,
               'frw': frw,
+              'sp': sp,
+              'herc': herc,
               'py': py,
               'alm': alm,
               'gr': gr,
               'andr': andr,
               'dmaj': dmaj,
-              'namaj': namaj}
+              'namaj': namaj,
+              'oen': oen,
+              'ofs': ofs,
+              'hen': hen,
+              'hfs': hfs,
+              'qtz': qtz,
+              'coe': coe,
+              'stv': stv}
