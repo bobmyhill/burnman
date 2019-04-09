@@ -172,9 +172,6 @@ plt.show()
 exit()
 """
 
-fa.set_state(1.e5, 1673.15)
-fa_gibbs = fa.gibbs
-
 from scipy.optimize import curve_fit
 func_Cp = lambda T, *c: c[0] + c[1]*T + c[2]/T/T + c[3]/np.sqrt(T)
 
@@ -210,12 +207,25 @@ mwd.params['Cp'] = popt
 T, Cp, sigma = np.loadtxt('data/fa_Cp_Benisek_2012.dat', unpack=True)
 T = list(T)
 T.extend([900., 1000., 1100., 1200., 1300., 1500., 1700., 2000., 2200.])
+T = np.array(T)
+P = 1.e5 * 0.*T
+# This doesn't use the Benisek data...
+Cp = fa.evaluate(['C_p'], P, T)[0]
+
+"""
+# Use Benisek data
+fa.set_state(1.e5, 1673.15)
+fa_gibbs = fa.gibbs
 Cp = list(Cp)
 Cp.extend([187.3, 190.9, 189, 180., 200., 205., 211.7, 219.6, 230.5])
 sigma = list(sigma)
 sigma.extend([1., 1., 1., 1., 1., 1., 1, 1])
 popt, pcov = curve_fit(func_Cp, xdata = T, ydata = Cp, p0=fa.params['Cp'])
 fa.params['Cp'] = popt
+
+fa.set_state(1.e5, 1673.15)
+fa.params['H_0'] += fa_gibbs - fa.gibbs
+"""
 
 # NOTE: making the heat capacity of frw lower than fa results in a convex-down-pressure boundary in poor agreement with the experimental data.
 # NOTE: making the heat capacity of frw the same as fa results in a nearly-linear curve
@@ -229,9 +239,6 @@ fwd.params['Cp'] = popt
 tweak = lambda T: 2./(np.sqrt(2500.))*np.sqrt(T)
 popt, pcov = curve_fit(func_Cp, xdata = T, ydata = np.array(Cp) + tweak(np.array(T)), p0=fa.params['Cp'])
 frw.params['Cp'] = popt
-
-fa.set_state(1.e5, 1673.15)
-fa.params['H_0'] += fa_gibbs - fa.gibbs
 
 """
 # Plot heat capacities of mwd and mrw
@@ -342,7 +349,9 @@ solutions = {'mw': fper,
              'ol': ol,
              'wad': wad,
              'ring': rw,
-             'gt': gt}
+             'gt': gt,
+             'opx': opx,
+             'hpx': hpx}
 
 endmembers = {'bcc_iron': bcc_iron,
               'fcc_iron': fcc_iron,
@@ -370,3 +379,4 @@ endmembers = {'bcc_iron': bcc_iron,
               'qtz': qtz,
               'coe': coe,
               'stv': stv}
+
