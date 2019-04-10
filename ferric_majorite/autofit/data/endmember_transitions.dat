@@ -1,5 +1,6 @@
 # P(GPa)    Perr(est)	  T(K)	  Terr(est)   phases
 
+# Mg2SiO4 composition
 # fo -> mwd (Stixrude diagrams / compilation from Jacobs et al., 2001)
 12.50  	    0.1	  	  1050	  10.	      fo mwd
 13.04  	    0.1 	  1230 	  10. 	      fo mwd
@@ -14,12 +15,7 @@
 18.99  	    0.1 	  1465    10. 	      mwd mrw
 23.29  	    0.5 	  2100 	  10. 	      mwd mrw
 
-# fa -> frw (Stixrude diagrams / compilation from Jacobs et al., 2001)
-4.8    	    0.1 	  1073.   10. 	      fa frw
-5.25   	    0.1 	  1273.   10. 	      fa frw
-5.8    	    0.1 	  1473.   10. 	      fa frw
-6.5    	    0.1 	  1815.   10. 	      fa frw
-
+# MgSiO3 composition
 # oen -> hen (Pacalo and Gasparik, 1990)
 7.85        0.2	          1223.15 10.	      oen hen
 8.05	    0.2		  1273.15 10.	      oen hen
@@ -28,9 +24,34 @@
 9.60	    0.2		  1773.15 10.	      oen hen
 10.4	    0.2		  1973.15 10.	      oen hen
 
-# hen -> mwd + stv (Akaogi and Akimoto, 1977)
-17.25	    0.3	          1273.15 10.	      hen mwd stv
-18.5	    0.3		  1523.15 10.	      hen mwd stv
+# oen -> hen (Presnall and Gasparik, 1990)
+11.6        0.5           2413.15 20.	      oen hen
+
+# hen -> dmaj (Presnall and Gasparik, 1990)
+16.3        0.5          2643.15  20.	      hen dmaj
+16.5        0.3          2423.15  20.	      hen dmaj
+
+# hen -> dmaj (Sawamoto, 1987, as found in Fig.3 of Yusa et al., 1993)
+17.0	    0.3		 2273.15  20.	      hen dmaj
+
+# oen -> hen (Sawamoto, 1987, as found in Fig.3 of Yusa et al., 1993)
+
+# hen -> mwd + stv (Ito and Navrotsky, 1985, found in Fig.3 of Yusa et al., 1993)
+16.0  	    0.5          1473.15  20.         hen mwd stv
+
+# hen -> mwd + stv (Presnall and Gasparik, 1990)
+16.5        0.5          1673.15  20.	      hen mwd stv
+
+# mwd + stv -> maj (Sawamoto, 1987, as found in Fig.3 of Yusa et al., 1993)
+18.5  	    0.3	   	 2023.15  20.  	      mwd stv dmaj
+
+
+# Fe2SiO4 composition
+# fa -> frw (Stixrude diagrams / compilation from Jacobs et al., 2001)
+4.8    	    0.1 	  1073.   10. 	      fa frw
+5.25   	    0.1 	  1273.   10. 	      fa frw
+5.8    	    0.1 	  1473.   10. 	      fa frw
+6.5    	    0.1 	  1815.   10. 	      fa frw
 
 # frw -> wus + stv (with iron, and FeCl as flux; Katsura et al., 1998)
 17.45 	    0.2	   	  1000.00 10. 	      frw wus stv
@@ -38,6 +59,8 @@
 17.45 	    0.2	   	  1400.00 10. 	      frw wus stv
 17.05 	    0.4	   	  1600.00 10. 	      frw wus stv
 
+
+# FeSiO3 composition
 # ofs -> fa + qtz (beta quartz above ~1150C; Bohlen et al., 1980)
 1.055	    0.05          973.15  10.	      ofs fa qtz
 1.090	    0.10         1023.15  10.	      ofs fa qtz
@@ -64,6 +87,8 @@
 9.1   	    0.3	   	 1273.15  5.          hfs frw stv
 9.6   	    0.2	   	 1453.15  30.         hfs frw stv
 
+
+# SiO2 composition
 # qtz -> coe (Mirwald and Massonne, 1980)
 2.85  	    0.05      	 1075.    5.	      qtz coe
 3.05  	    0.05      	 1275.    5.	      qtz coe
