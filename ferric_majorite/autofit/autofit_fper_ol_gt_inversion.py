@@ -213,7 +213,7 @@ endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3],
 solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0, ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
-                 ['ring', 'E', 0, 0, rw.energy_interaction[0][0], 1.e3],
+                 ['sp', 'E', 0, 0, spinel.energy_interaction[3][0], 1.e3], # mrw-frw
                  ['opx', 'E', 0, 0, opx.energy_interaction[0][0], 1.e3]]
 
 # ['gt', 'E', 0, 0, gt.energy_interaction[0][0], 1.e3] # py-alm interaction fixed as ideal
@@ -366,7 +366,7 @@ assemblages.extend(QFI_assemblages)
 ### PUT PARAMS HERE ###
 #######################
 
-set_params([-269.1064, -2173.4441, -1476.9044, -2145.8479, -2135.4064, -1472.7076, -5258.3530, -907.0113, -867.0839, -3089.6186, -2389.8977, -3082.5583, -2392.2055, 26.9197, 55.6103, 94.1206, 151.3796, 85.2546, 81.7131, 135.7962, 340.7383, 132.4345, 188.5206, 131.3840, 177.9764, 39.6156, 28.9893, 4.3090, 1.6183, 2.0176, 3.0821, 3.3950, 2.8413, 2.7577, 2.1597, 1.8792, 2.2339, 2.1104, 11.6271, 5.9732, 17.5599, 8.6782, -1.4889, -1.4718, -0.3138, -2.9980, -0.4248, 1.0979, -4.2173, -1.5652, -0.4076, -1.1697, 0.1268, -0.0079, 1.0991, 0.1483, 1.6935, -1.0234, -1.1785, -0.8732, -0.5445, -0.0339, 0.3843, 0.0739, -0.1851, 0.9652])
+set_params([-269.0792, -2173.4836, -1476.9122, -2145.7575, -2135.5996, -1472.7334, -5258.2888, -907.0115, -867.3844, -3089.7563, -2389.8787, -3082.4015, -2392.1905, 26.8807, 55.5686, 94.2084, 151.4062, 85.4220, 81.7165, 135.8285, 340.6464, 132.3161, 188.4748, 131.4391, 177.9551, 39.6230, 29.5232, 4.3053, 1.6102, 2.0093, 3.0847, 3.4498, 2.8015, 2.7330, 2.0997, 1.8693, 2.1880, 2.1287, 11.3716, 5.8810, 17.4960, 8.6782, -1.4860, -1.4663, -0.3108, -3.0403, -0.4191, 1.0919, -4.2236, -1.5626, -0.4069, -1.1745, 0.1191, -0.0074, 1.0992, 0.1703, 1.5458, -1.1353, -1.0090, -0.9139, -0.6605, -0.1253, 0.2582, -0.0373, -0.1852, 0.8344])
 
 ########################
 # RUN THE MINIMIZATION #
@@ -376,7 +376,6 @@ if run_inversion:
 
 # Print the current parameters
 print(get_params())
-
 
 ####################
 ### A few images ###
@@ -679,7 +678,7 @@ for P in [10.e9, 12.5e9, 15.e9, 17.5e9, 20.e9]:
     for m in mins:
         m.set_state(P, T)
     G = (per.gibbs - wus.gibbs - mrw.gibbs/2. + frw.gibbs/2.) 
-    W_rw = (rw.solution_model.We[0][1]  + rw.solution_model.Wv[0][1] * P)/2. # 1 cation
+    W_rw = (child_solutions['ring'].solution_model.We[0][1]  + child_solutions['ring'].solution_model.Wv[0][1] * P)/2. # 1 cation
     W_fper = fper.solution_model.We[0][1] + fper.solution_model.Wv[0][1] * P
     
     x_rws = np.linspace(0.00001, 0.99999, 101)
@@ -691,8 +690,8 @@ for P in [10.e9, 12.5e9, 15.e9, 17.5e9, 20.e9]:
 
 P_Xrw_Xfper = []
 for assemblage in Frost_2003_assemblages:
-    if solutions['ring'] in assemblage.phases:
-        idx_rw = assemblage.phases.index(solutions['ring'])
+    if child_solutions['ring'] in assemblage.phases:
+        idx_rw = assemblage.phases.index(child_solutions['ring'])
         idx_mw = assemblage.phases.index(solutions['mw'])
         P_Xrw_Xfper.append([assemblage.nominal_state[0],
                             assemblage.stored_compositions[idx_rw][0][1],
@@ -716,22 +715,22 @@ plt.show()
 for (T0, color) in [(1273.15, 'blue'),
                     (1673.15, 'orange'),
                     (2073.15, 'purple')]:
-
+    
     x_m1 = 0.3
 
     composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1.-x_m1), 'Si': 1., 'O': 4.}
-    rw.guess = np.array([1. - x_m1, x_m1])
+    child_solutions['ring'].guess = np.array([0.15, 0.85])
     wad.guess = np.array([1. - x_m1, x_m1])
     ol.guess = np.array([1. - x_m1, x_m1])
-    assemblage = burnman.Composite([ol, wad, rw])
+    assemblage = burnman.Composite([ol, wad, child_solutions['ring']])
+    assemblage.set_state(14.e9, T0)
     equality_constraints = [('T', T0), ('phase_proportion', (ol, 0.0))]
-    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
+    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints, store_iterates=False, initial_state_from_assemblage=True)
     P_inv = assemblage.pressure
     x_ol_inv = assemblage.phases[0].molar_fractions[1]
     x_wad_inv = assemblage.phases[1].molar_fractions[1]
     x_rw_inv = assemblage.phases[2].molar_fractions[1]
-
-    for (m1, m2) in [(wad, ol), (wad, rw), (ol, rw)]:
+    for (m1, m2) in [(wad, ol), (wad, child_solutions['ring']), (ol, child_solutions['ring'])]:
         composition = {'Fe': 0., 'Mg': 2., 'Si': 1., 'O': 4.}
         assemblage = burnman.Composite([m1.endmembers[0][0], m2.endmembers[0][0]])
         equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[0][0], 0.0))]
@@ -766,22 +765,22 @@ for (T0, color) in [(1273.15, 'blue'),
         plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
         plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color, label='{0} K'.format(T0))
     plt.plot([x_ol_inv, x_rw_inv], [P_inv/1.e9, P_inv/1.e9], linewidth=3., color=color)
-
+    
     # Now do the same for rw -> fper + stv
     x_m1s = np.linspace(0.2, 0.999, 21)
     pressures = np.empty_like(x_m1s)
     x_m2s = np.empty_like(x_m1s)
     for i, x_m1 in enumerate(x_m1s):
         composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}
-        assemblage = burnman.Composite([rw, fper, stv])
+        assemblage = burnman.Composite([child_solutions['ring'], fper, stv])
         assemblage.set_state(25.e9, T0)
-        rw.guess = np.array([1. - x_m1, x_m1])
+        child_solutions['ring'].guess = np.array([1. - x_m1, x_m1])
         fper.guess = np.array([1. - x_m1, x_m1])
-        equality_constraints = [('T', T0), ('phase_proportion', (rw, 0.0))]
+        equality_constraints = [('T', T0), ('phase_proportion', (child_solutions['ring'], 0.0))]
         sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                        initial_state_from_assemblage=True,
                                        store_iterates=False)
-        x_m2s[i] = rw.molar_fractions[1]
+        x_m2s[i] = child_solutions['ring'].molar_fractions[1]
         pressures[i] = assemblage.pressure
 
     plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
@@ -807,12 +806,19 @@ for assemblage in Frost_2003_assemblages:
     if len(assemblage.phases) > 2:
         for i, phase in enumerate(assemblage.phases):
             for m in ['ol', 'wad', 'ring']:
-                if phase == solutions[m]:
-                    P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']
+                try:
+                    if phase == solutions[m]:
+                        P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']
                     
-                    P_Xmg_phase[m].append([assemblage.nominal_state[0], P_shift,
-                                           assemblage.stored_compositions[i][0][1]])
-
+                        P_Xmg_phase[m].append([assemblage.nominal_state[0], P_shift,
+                                               assemblage.stored_compositions[i][0][1]])
+                except:
+                    if phase == child_solutions[m]:
+                        P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']
+                    
+                        P_Xmg_phase[m].append([assemblage.nominal_state[0], P_shift,
+                                               assemblage.stored_compositions[i][0][1]])
+                    
 arrow_params = {'shape': 'full',
                 'width': 0.001,
                 'length_includes_head': True,

@@ -24,9 +24,16 @@ for i, run in enumerate(set_runs):
                                ds[run_idx][4] != 'cen' and
                                ds[run_idx][4] != 'anB' and
                                ds[run_idx][4] != 'mag')]
+
         
-        assemblage = burnman.Composite([solutions[ds[idx][4]]
-                                        for idx in chamber_indices])
+        phases = []
+        for idx in chamber_indices:
+            try:
+                phases.append(solutions[ds[idx][4]])
+            except:
+                phases.append(child_solutions[ds[idx][4]])
+
+        assemblage = burnman.Composite(phases)
         
         assemblage.experiment_id = run
         assemblage.nominal_state = np.array([pressure, temperature])
