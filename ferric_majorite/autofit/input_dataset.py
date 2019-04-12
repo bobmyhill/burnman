@@ -27,6 +27,9 @@ hcp_iron = burnman.minerals.SE_2015.hcp_iron()
 # O2
 O2 = burnman.minerals.HP_2011_fluids.O2()
 
+# Oxides
+hem = burnman.minerals.HP_2011_ds62.hem()
+
 # MgO and FeO
 per = burnman.minerals.HHPH_2013.per()
 wus = burnman.minerals.HHPH_2013.fper()
@@ -374,12 +377,20 @@ child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
                    'alm_sk_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[0., 1.,  0., 0., 0., 0.],
                                                                           [0., 1., -1., 1., 0., 0.]])),
+                   'sk_gt': transform_solution_to_new_basis(gt, np.array([[0., 1., -1., 1., 0., 0.]])),
                    'py_dmaj_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[1., 0., 0., 0., 0., 0.],
                                                                           [0., 0., 0., 0., 1., 0.]])),
                    'ring': transform_solution_to_new_basis(spinel,
                                                            np.array([[0., 0., 0., 1., 0.],
                                                                      [0., 0., 0., 0., 1.]])),
+                   'herc_mt_frw': transform_solution_to_new_basis(spinel,
+                                                                  np.array([[0., 1., 0., 0., 0.],
+                                                                            [0., 0., 1., 0., 0.],
+                                                                            [0., 0., 0., 0., 1.]])),
+                   'mt_frw': transform_solution_to_new_basis(spinel,
+                                                             np.array([[0., 0., 1., 0., 0.],
+                                                                       [0., 0., 0., 0., 1.]])),
                    'oen_ofs': transform_solution_to_new_basis(opx,
                                                               np.array([[1., 0., 0., 0.],
                                                                         [0., 1., 0., 0.]])),
