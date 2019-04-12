@@ -55,6 +55,7 @@ hed = burnman.minerals.HP_2011_ds62.hed()
 cen = burnman.minerals.HP_2011_ds62.cen()
 cats = burnman.minerals.HP_2011_ds62.cats()
 jd = burnman.minerals.HP_2011_ds62.jd()
+aeg = burnman.minerals.HP_2011_ds62.acm() # aegirine is also known as acmite
 
 # Orthopyroxene endmembers
 oen = burnman.minerals.HHPH_2013.en()
@@ -319,12 +320,15 @@ cpx = Solution(name = 'clinopyroxene',
                              [hed,  '[Ca][Fe][Si]2O6'],
                              [cen,  '[Mg][Mg][Si]2O6'],
                              [cats, '[Ca][Al][Si1/2Al1/2]2O6'],
-                             [jd, '[Na][Al][Si]2O6']],
-              energy_interaction=[[0.e3, 25.e3, 26.e3, 24.e3],
-                                  [25.e3, 0.e3, 0.e3],
-                                  [61.e3, 0.e3],
-                                  [10.e3]],
-              volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                             [jd,   '[Na][Al][Si]2O6'],
+                             [aeg,  '[Na][Fef][Si]2O6']],
+              energy_interaction=[[0.e3, 25.e3, 26.e3, 24.e3, 24.e3],
+                                  [25.e3, 0.e3, 0.e3, 0.],
+                                  [61.e3, 0.e3, 0.],
+                                  [10.e3, 10.e3],
+                                  [0.e3]],
+              volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7],
                                   [0.e-7, 0.e-7, 0.e-7],
                                   [0.e-7, 0.e-7],
                                   [0.e-7]])
@@ -405,15 +409,15 @@ child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
                                                               np.array([[1., 0., 0., 0.],
                                                                         [0., 0., 0., 1.]])),
                    'di_cen': transform_solution_to_new_basis(cpx,
-                                                             np.array([[1., 0., 0., 0., 0.],
-                                                                       [0., 0., 1., 0., 0.]])),
+                                                             np.array([[1., 0., 0., 0., 0., 0.],
+                                                                       [0., 0., 1., 0., 0., 0.]])),
                    'di_hed': transform_solution_to_new_basis(cpx,
-                                                             np.array([[1., 0., 0., 0., 0.],
-                                                                       [0., 1., 0., 0., 0.]])),
+                                                             np.array([[1., 0., 0., 0., 0., 0.],
+                                                                       [0., 1., 0., 0., 0., 0.]])),
                    'di_cen_cats': transform_solution_to_new_basis(cpx,
-                                                                  np.array([[1., 0., 0., 0., 0.],
-                                                                            [0., 0., 1., 0., 0.],
-                                                                            [0., 0., 0., 1., 0.]]))}
+                                                                  np.array([[1., 0., 0., 0., 0., 0.],
+                                                                            [0., 0., 1., 0., 0., 0.],
+                                                                            [0., 0., 0., 1., 0., 0.]]))}
 
 
 solutions = {'mw': fper,

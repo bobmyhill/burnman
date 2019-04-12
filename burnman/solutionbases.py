@@ -314,6 +314,8 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
             endmembers[i][0].name = endmember_names[i]
 
     if n_mbrs == 1:
+        endmembers[0][0].parent = solution
+        endmembers[0][0].basis = new_basis
         return endmembers[0][0]
     else:
         new_solution = SolidSolution(name=name,
