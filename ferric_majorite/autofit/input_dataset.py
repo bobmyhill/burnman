@@ -131,11 +131,7 @@ mrw.params['S_0_orig'] = [82.7, 0.5] # exp paper reported in Jacobs et al., 2017
 frw.params['S_0_orig'] = [140.2, 1.] # Yong et al., 2007; formal error is 0.4
 
 oen.params['S_0_orig'] = [66.27*2., 0.1*2.] # reported in Jacobs et al., 2017 (Krupka et al., 1985)
-ofs.params['S_0_orig'] = [186.5, 0.5] # Yong et al., 2007; formal error is 0.4
-
-print('WARNING - S_0_orig for hen, hfs completely guessed')
-hen.params['S_0_orig'] = [66.27*2., 0.1*2.] # TOTAL GUESS
-hfs.params['S_0_orig'] = [186.5, 0.5] # TOTAL GUESS
+ofs.params['S_0_orig'] = [186.5, 0.5] # Cemic and Dachs, 2006
 
 py.params['S_0_orig'] = [265.94, 1.] # Dachs and Geiger, 2006; nominally 0.23, but sample dependent. HP2011_ds62 has 269.5, SLB has 244.55 (yeah, this what happens when you use a Debye model)
 alm.params['S_0_orig'] = [342.6, 2.] # Anovitz et al., 1993
@@ -330,7 +326,6 @@ cpx = Solution(name = 'clinopyroxene',
                                   [0.e-7, 0.e-7],
                                   [0.e-7]])
                
-
 opx = Solution(name = 'orthopyroxene',
                solution_type ='symmetric',
                endmembers=[[oen,  '[Mg][Mg]SiSiO6'],
@@ -348,7 +343,8 @@ hpx = Solution(name = 'high pressure clinopyroxene',
                solution_type ='symmetric',
                endmembers=[[hen, '[Mg]2Si2O6'], [hfs, '[Fe]2Si2O6']],
                energy_interaction=[[2.e3]],
-               volume_interaction=[[0.e-7]]) 
+               volume_interaction=[[0.e-7]])
+
 gt = Solution(name = 'disordered garnet',
               solution_type = 'symmetric',
               endmembers = [[py, '[Mg]3[Al]2Si3O12'],
@@ -372,6 +368,9 @@ gt = Solution(name = 'disordered garnet',
 child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[1., 0., 0., 0., 0., 0.],
                                                                           [0., 1., 0., 0., 0., 0.]])),
+                   'py_gr_gt': transform_solution_to_new_basis(gt,
+                                                               np.array([[1., 0., 0., 0., 0., 0.],
+                                                                         [0., 0., 1., 0., 0., 0.]])),
                    'alm_sk_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[0., 1.,  0., 0., 0., 0.],
                                                                           [0., 1., -1., 1., 0., 0.]])),
@@ -387,10 +386,24 @@ child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
                    'oen_mgts': transform_solution_to_new_basis(opx,
                                                                np.array([[1., 0., 0., 0.],
                                                                          [0., 0., 1., 0.]])),
+                   'oen_mgts_odi': transform_solution_to_new_basis(opx,
+                                                                   np.array([[1., 0., 0., 0.],
+                                                                             [0., 0., 1., 0.],
+                                                                             [0., 0., 0., 1.]])),
+                   'oen_odi': transform_solution_to_new_basis(opx,
+                                                              np.array([[1., 0., 0., 0.],
+                                                                        [0., 0., 0., 1.]])),
+                   'di_cen': transform_solution_to_new_basis(cpx,
+                                                             np.array([[1., 0., 0., 0., 0.],
+                                                                       [0., 0., 1., 0., 0.]])),
                    'di_hed': transform_solution_to_new_basis(cpx,
                                                              np.array([[1., 0., 0., 0., 0.],
-                                                                       [0., 1., 0., 0., 0.]]))}
-                   
+                                                                       [0., 1., 0., 0., 0.]])),
+                   'di_cen_cats': transform_solution_to_new_basis(cpx,
+                                                                  np.array([[1., 0., 0., 0., 0.],
+                                                                            [0., 0., 1., 0., 0.],
+                                                                            [0., 0., 0., 1., 0.]]))}
+
 
 solutions = {'mw': fper,
              'ol': ol,
