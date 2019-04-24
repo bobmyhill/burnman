@@ -14,18 +14,20 @@ if not os.path.exists('burnman') and os.path.exists('../burnman'):
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.solutionbases import transform_solution_to_new_basis
-
+from input_buffers import rhenium, rhenium_dioxide
 #########################
 # ENDMEMBER DEFINITIONS #
 #########################
+
+# Buffer phases
+Re = rhenium()
+ReO2 = rhenium_dioxide()
+O2 = burnman.minerals.HP_2011_fluids.O2()
 
 # Iron endmembers
 bcc_iron = burnman.minerals.SE_2015.bcc_iron()
 fcc_iron = burnman.minerals.SE_2015.fcc_iron()
 hcp_iron = burnman.minerals.SE_2015.hcp_iron()
-
-# O2
-O2 = burnman.minerals.HP_2011_fluids.O2()
 
 # Oxides
 hem = burnman.minerals.HP_2011_ds62.hem()
@@ -337,12 +339,76 @@ opx = Solution(name = 'orthopyroxene',
                solution_type ='symmetric',
                endmembers=[[oen,  '[Mg][Mg]SiSiO6'],
                            [ofs,  '[Fe][Fe]SiSiO6'],
-                           [mgts, '[Mg][Al]AlSiO6'], # Al avoidance, see Figure 3
+                           [mgts, '[Mg][Al]AlSiO6'], # Al avoidance, see Figure 3 of SLB2011
                            [odi,  '[Ca][Mg]SiSiO6']],
                energy_interaction=[[2.e3, 0.e3, 0.e3],
                                    [0.e3, 0.e3],
                                    [0.e3]],
                volume_interaction=[[0.e-7, 0.e-7, 0.e-7],
+                                   [0.e-7, 0.e-7],
+                                   [0.e-7]])
+
+
+spinel_od = Solution(name = 'spinel with order-disorder',
+                     solution_type ='symmetric', # fake multiplicity of 1 (should be 2)
+                     endmembers=[[nsp,   '[Mg][Al]AlO4'],
+                                 [nherc, '[Fe][Al]AlO4'],
+                                 [nmt,   '[Fe][Fef]FefO4'],
+                                 [mrw,   '[Si][Mg]MgO4'],
+                                 [frw,   '[Si][Fe]FeO4'],
+                                 [isp,   '[Al][Mg1/2Al1/2]Mg1/2Al1/2O4'],
+                                 [iherc, '[Al][Fe1/2Al1/2]Fe1/2Al1/2O4'],
+                                 [imt,   '[Fef][Fe1/2Fef1/2]Fe1/2Fef1/2O4']], # 3 ordered endmembers
+                     energy_interaction=[[0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3],
+                                         [0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3,],
+                                         [0.e3, 0.e3, 0.e3, 0.e3, 0.e3,],
+                                         [0.e3, 0.e3, 0.e3, 0.e3],
+                                         [0.e3, 0.e3, 0.e3],
+                                         [0.e3, 0.e3],
+                                         [7.6e3]],
+                     volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                         [0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                         [0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                         [0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                         [0.e-7, 0.e-7, 0.e-7],
+                                         [0.e-7, 0.e-7],
+                                         [0.e-7]])
+
+cpx_od = Solution(name = 'clinopyroxene with order-disorder',
+               solution_type = 'symmetric', # fake multiplicity of 1/2 (should be 2)
+               endmembers = [[di,   '[Ca][Mg][Si]1/2O6'],
+                             [hed,  '[Ca][Fe][Si]1/2O6'],
+                             [cen,  '[Mg][Mg][Si]1/2O6'],
+                             [cats, '[Ca][Al][Si1/2Al1/2]1/2O6'],
+                             [jd,   '[Na][Al][Si]1/2O6'],
+                             [aeg,  '[Na][Fef][Si]1/2O6'],
+                             [cfs,  '[Fe][Fe][Si]1/2O6']], # order-disorder
+              energy_interaction=[[0.e3, 25.e3, 26.e3, 24.e3, 24.e3, 0.e3],
+                                  [25.e3, 0.e3, 0.e3, 0.e3, 0.e3],
+                                  [61.e3, 0.e3, 0.e3, 0.e3],
+                                  [10.e3, 10.e3, 0.e3],
+                                  [0.e3, 0.e3],
+                                  [0.e3]],
+              volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                  [0.e-7, 0.e-7, 0.e-7],
+                                  [0.e-7, 0.e-7],
+                                  [0.e-7]])
+               
+opx_od = Solution(name = 'orthopyroxene with order-disorder',
+               solution_type ='symmetric', # fake multiplicity of 1/2 (should be 2)
+               endmembers=[[oen,  '[Mg][Mg][Si]1/2Si3/2O6'],
+                           [ofs,  '[Fe][Fe][Si]1/2Si3/2O6'],
+                           [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'], 
+                           [odi,  '[Ca][Mg][Si]1/2Si3/2O6'], 
+                           [ofm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d
+               energy_interaction=[[2.e3, 0.e3, 0.e3, 0.e3],
+                                   [0.e3, 0.e3, 0.e3],
+                                   [0.e3, 0.e3],
+                                   [0.e3]],
+               volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7],
+                                   [0.e-7, 0.e-7, 0.e-7],
                                    [0.e-7, 0.e-7],
                                    [0.e-7]])
 

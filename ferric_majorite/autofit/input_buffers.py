@@ -20,7 +20,7 @@ from burnman.solutionbases import transform_solution_to_new_basis
 #########################
 
 
-class Re_metal (burnman.Mineral):
+class rhenium (burnman.Mineral):
     def __init__(self):
         self.params = {'name': 'rhenium metal',
                        'formula': {'Re': 1.0},
@@ -38,7 +38,7 @@ class Re_metal (burnman.Mineral):
                        'molar_mass': 0.186207}
         burnman.Mineral.__init__(self)
 
-class ReO2_ortho (burnman.Mineral):
+class rhenium_dioxide (burnman.Mineral):
     def __init__(self):
         self.params = {'name': 'rhenium (IV) oxide',
                        'formula': {'Re': 1.0, 'O': 2.0},
@@ -88,7 +88,7 @@ exit()
 print(0.218206/0.01161e6 - 8.8726e-6)
 """
 """
-Re = Re_metal()
+Re = rhenium()
 O2 = burnman.minerals.HP_2011_fluids.O2()
 
 def gibbs_formation_ReO2_Jacob(T):
@@ -110,8 +110,8 @@ plt.show()
 exit()
 """
 """
-Re = Re_metal()
-ReO2 = ReO2_ortho()
+Re = rhenium()
+ReO2 = rhenium_dioxide()
 pressures = np.linspace(1.e5, 10.e9, 101)
 TC = [20., 200., 400, 600, 800, 1000.]
 
