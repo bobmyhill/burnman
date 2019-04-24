@@ -88,6 +88,13 @@ for i, run in enumerate(set_runs):
                                                      assemblage.phases[k].molar_fraction_covariances)
             except:
                 pass # some phases are endmembers
-        
+
+        # Change the formulae of the endmembers back
+        child_solutions['alm_sk_gt'].endmembers[1][0].params['formula'] = {'O':  12.0,
+                                                                           'Fe':  5.0,
+                                                                           'Si':  3.0}
+        child_solutions['herc_mt_frw'].endmembers[1][0].params['formula'] = {'O':  4.0,
+                                                                             'Fe':  3.0}
+
         Woodland_ONeill_1993_FASO_assemblages.append(assemblage)
     
