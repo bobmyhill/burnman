@@ -22,10 +22,6 @@ Mineral database
 """
 from __future__ import absolute_import
 
-# Saxena and Eriksson, 2015 and other iron papers
-from . import SE_2015
-from . import Sundman_1991
-
 # Stixrude and Lithgow-Bertelloni
 from . import SLB_2011
 from . import SLB_2011_ZSB_2013
@@ -48,6 +44,7 @@ from . import HP_2011_ds62
 from . import HP_2011_fluids
 from . import HHPH_2013
 from . import JH_2015
+from . import HGP_2018_ds633
 
 # Kurnosov et al. 2017
 from . import KMFBZ_2017
