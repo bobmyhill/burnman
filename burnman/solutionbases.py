@@ -256,9 +256,9 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
         entropy_interaction=new_interactions(Qs, n_mbrs)
         volume_interaction=new_interactions(Qv, n_mbrs)
 
-        ESV_modifiers = [[Qe[i,i]*old_alphas[i],
-                          Qs[i,i]*old_alphas[i],
-                          Qv[i,i]*old_alphas[i]]
+        ESV_modifiers = [[Qe[i,i]*alphas[i],
+                          Qs[i,i]*alphas[i],
+                          Qv[i,i]*alphas[i]]
                          for i in range(n_mbrs)]
 
     elif solution_type == 'subregular':
