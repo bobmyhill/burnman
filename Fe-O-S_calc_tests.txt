@@ -1,0 +1,258 @@
+                                                                              FactSage 7.2
+  0.6 Fe  +  0.4 O  =
+ 
+    0          mol   gas_ideal
+            (1200 C, 1 atm,     a=1.2745E-06)
+            ( 1.2739E-06      Fe
+            + 5.7752E-10      FeO
+            + 5.1388E-13      O
+            + 3.4181E-14      O2
+            + 1.4404E-29      O3)
+ 
+  + 1.0000     mol   Liq(Matte/Metal)
+    (39.907 gram, 1.0000 mol)
+            (1200 C, 1 atm,     a=1.0000)
+            ( 0.57280         Fe
+            + 0.40000         O
+            + 2.7198E-02      Fe3+)
+ 
+            Mole fraction of quadruplets:
+            Fe-Fe-Va-Va                        0.43759
+            O-O-Va-Va                          3.0850E-06
+            Fe3+-Fe3+-Va-Va                    3.3605E-03
+            Fe-O-Va-Va                         0.50439
+            Fe-Fe3+-Va-Va                      2.5191E-03
+            O-Fe3+-Va-Va                       5.2141E-02
+            Total amount/mol                   1.4375
+ 
+            System component         Amount/mol    Amount/gram   Mole fraction  Mass fraction
+            Fe                       0.60000        33.507         0.60000        0.83963
+            O                        0.40000        6.3998         0.40000        0.16037
+ 
+  Cut-off limit for gaseous fractions/phase activities = 1.00E-75
+ 
+  ********************************************************************
+        H             G             V             S            Cp
+       (J)           (J)         (litre)        (J/K)         (J/K)
+  ********************************************************************
+  -3.54516E+04  -1.71807E+05   0.00000E+00   9.25603E+01   3.54530E+01
+ 
+ 
+                                                                              FactSage 7.2
+  0.43 Fe  +  0.57 O  =
+ 
+    0          mol   gas_ideal
+            (1200 C, 1 atm,     a=6.2499E-06)
+            ( 6.2429E-06      O2
+            + 6.9448E-09      O
+            + 8.4898E-11      FeO
+            + 1.3857E-11      Fe
+            + 3.5553E-17      O3)
+ 
+  + 1.0000     mol   Liq(Matte/Metal)
+    (33.133 gram, 1.0000 mol)
+            (1200 C, 1 atm,     a=1.0000)
+            ( 0.14491         Fe
+            + 0.57000         O
+            + 0.28509         Fe3+)
+ 
+            Mole fraction of quadruplets:
+            Fe-Fe-Va-Va                        9.1326E-04
+            O-O-Va-Va                          8.7636E-05
+            Fe3+-Fe3+-Va-Va                    3.7874E-03
+            Fe-O-Va-Va                         0.25235
+            Fe-Fe3+-Va-Va                      1.2217E-04
+            O-Fe3+-Va-Va                       0.74274
+            Total amount/mol                   1.1456
+ 
+            System component         Amount/mol    Amount/gram   Mole fraction  Mass fraction
+            Fe                       0.43000        24.013         0.43000        0.72476
+            O                        0.57000        9.1197         0.57000        0.27524
+ 
+  Cut-off limit for gaseous fractions/phase activities = 1.00E-75
+ 
+  ********************************************************************
+        H             G             V             S            Cp
+       (J)           (J)         (litre)        (J/K)         (J/K)
+  ********************************************************************
+  -1.05095E+05  -2.18804E+05   0.00000E+00   7.71879E+01   3.32729E+01
+ 
+ 
+ 
+                                                                               FactSage 7.2
+  0.5 Fe  +  0.4 O  +  0.1 S  =
+ 
+    0          mol   gas_ideal
+            (1200 C, 1 atm,     a=3.3014E-07)
+            ( 2.5997E-07      Fe
+            + 2.6140E-08      SO2
+            + 2.3751E-08      S2
+            + 1.4479E-08      SO
+            + 4.5825E-09      S
+            + 9.4337E-10      FeS
+            + 2.5803E-10      FeO
+            + 1.5864E-11      SSO
+            + 1.1251E-12      O
+            + 1.6385E-13      O2
+            + 4.1554E-14      S3
+            + 4.5842E-16      SO3
+            + 2.2702E-19      S4
+            + 2.0908E-25      S5
+            + 1.5118E-28      O3
+            + 5.3026E-30      S6
+            + 7.2999E-35      S7
+            + 1.9164E-40      S8)
+ 
+  + 1.0000     mol   Liq(Matte/Metal)
+    (37.529 gram, 1.0000 mol)
+            (1200 C, 1 atm,     a=1.0000)
+            ( 0.10000         S
+            + 0.47367         Fe
+            + 0.40000         O
+            + 2.6330E-02      Fe3+)
+ 
+            Mole fraction of quadruplets:
+            S-S-Va-Va                          4.6310E-04
+            Fe-Fe-Va-Va                        3.6823E-02
+            O-O-Va-Va                          3.8570E-06
+            Fe3+-Fe3+-Va-Va                    8.3878E-04
+            S-Fe-Va-Va                         0.19165
+            S-O-Va-Va                          8.4526E-05
+            S-Fe3+-Va-Va                       3.6722E-04
+            Fe-O-Va-Va                         0.69482
+            Fe-Fe3+-Va-Va                      3.6509E-04
+            O-Fe3+-Va-Va                       7.4583E-02
+            Total amount/mol                   1.0397
+ 
+            System component         Amount/mol    Amount/gram   Mole fraction  Mass fraction
+            Fe                       0.50000        27.923         0.50000        0.74403
+            S                        0.10000        3.2065         0.10000        8.5441E-02
+            O                        0.40000        6.3998         0.40000        0.17053
+ 
+  Cut-off limit for gaseous fractions/phase activities = 1.00E-75
+ 
+  ********************************************************************
+        H             G             V             S            Cp
+       (J)           (J)         (litre)        (J/K)         (J/K)
+  ********************************************************************
+  -6.31683E+04  -1.96232E+05   0.00000E+00   9.03261E+01   3.92800E+01
+ 
+ 
+ 
+                                                                               FactSage 7.2
+  0.5 Fe  +  0.1 O  +  0.4 S  =
+ 
+    0          mol   gas_ideal
+            (1200 C, 1 atm,     a=1.6504E-03)
+            ( 1.2100E-03      S2
+            + 4.0515E-04      SO2
+            + 2.7081E-05      SO
+            + 6.6972E-06      SSO
+            + 1.0343E-06      S
+            + 4.7780E-07      S3
+            + 6.4119E-09      Fe
+            + 5.2516E-09      FeS
+            + 5.8917E-10      S4
+            + 5.8879E-11      SO3
+            + 5.2738E-11      FeO
+            + 1.1252E-11      O2
+            + 9.3235E-12      O
+            + 1.2248E-13      S5
+            + 7.0107E-16      S6
+            + 2.1784E-18      S7
+            + 1.2908E-21      S8
+            + 8.6028E-26      O3)
+ 
+  + 1.0000     mol   Liq(Matte/Metal)
+    (42.348 gram, 1.0000 mol)
+            (1200 C, 1 atm,     a=1.0000)
+            ( 0.40000         S
+            + 0.49235         Fe
+            + 0.10000         O
+            + 7.6526E-03      Fe3+)
+ 
+            Mole fraction of quadruplets:
+            S-S-Va-Va                          3.3747E-02
+            Fe-Fe-Va-Va                        4.4672E-02
+            O-O-Va-Va                          1.0280E-06
+            Fe3+-Fe3+-Va-Va                    8.2544E-05
+            S-Fe-Va-Va                         0.73122
+            S-O-Va-Va                          3.7252E-04
+            S-Fe3+-Va-Va                       1.1499E-03
+            Fe-O-Va-Va                         0.16825
+            Fe-Fe3+-Va-Va                      1.2615E-04
+            O-Fe3+-Va-Va                       2.0371E-02
+            Total amount/mol                   1.0596
+ 
+            System component         Amount/mol    Amount/gram   Mole fraction  Mass fraction
+            Fe                       0.50000        27.922         0.50000        0.65935
+            S                        0.40000        12.826         0.40000        0.30287
+            O                        0.10000        1.5999         0.10000        3.7780E-02
+ 
+  Cut-off limit for gaseous fractions/phase activities = 1.00E-75
+ 
+  ********************************************************************
+        H             G             V             S            Cp
+       (J)           (J)         (litre)        (J/K)         (J/K)
+  ********************************************************************
+  -1.21382E+04  -1.54340E+05   0.00000E+00   9.65294E+01   4.37366E+01
+ 
+ 
+ 
+                                                                              FactSage 7.2
+  0.9 Fe  +  0.05 O  +  0.05 S  =
+ 
+    0          mol   gas_ideal
+            (1200 C, 1 atm,     a=1.1192E-04)
+            ( 1.1007E-04      SO2
+            + 1.5407E-06      SO
+            + 1.7171E-07      S2
+            + 1.1068E-07      Fe
+            + 1.2321E-08      S
+            + 4.5387E-09      SSO
+            + 4.3476E-09      FeO
+            + 1.0799E-09      FeS
+            + 2.5662E-10      O2
+            + 7.6395E-11      SO3
+            + 4.4526E-11      O
+            + 8.0773E-13      S3
+            + 1.1865E-17      S4
+            + 2.9382E-23      S5
+            + 9.3699E-24      O3
+            + 2.0036E-27      S6
+            + 7.4162E-32      S7
+            + 5.2349E-37      S8)
+ 
+  + 1.0000     mol   Liq(Matte/Metal)
+    (52.664 gram, 1.0000 mol)
+            (1200 C, 1 atm,     a=1.0000)
+            ( 5.0000E-02      S
+            + 0.90000         Fe
+            + 5.0000E-02      O
+            + 3.9730E-06      Fe3+)
+ 
+            Mole fraction of quadruplets:
+            S-S-Va-Va                          4.1715E-05
+            Fe-Fe-Va-Va                        0.92307
+            O-O-Va-Va                          6.8097E-08
+            Fe3+-Fe3+-Va-Va                    3.6323E-10
+            S-Fe-Va-Va                         3.8430E-02
+            S-O-Va-Va                          3.3709E-06
+            S-Fe3+-Va-Va                       1.6547E-07
+            Fe-O-Va-Va                         3.8454E-02
+            Fe-Fe3+-Va-Va                      1.2029E-06
+            O-Fe3+-Va-Va                       3.8167E-06
+            Total amount/mol                   2.6002
+ 
+            System component         Amount/mol    Amount/gram   Mole fraction  Mass fraction
+            Fe                       0.90000        50.260         0.90000        0.95437
+            S                        5.0000E-02     1.6032         5.0000E-02     3.0443E-02
+            O                        5.0000E-02     0.79997        5.0000E-02     1.5190E-02
+ 
+  Cut-off limit for gaseous fractions/phase activities = 1.00E-75
+ 
+  ********************************************************************
+        H             G             V             S            Cp
+       (J)           (J)         (litre)        (J/K)         (J/K)
+  ********************************************************************
+   4.55763E+04  -9.51179E+04   0.00000E+00   9.55057E+01   3.85989E+01
