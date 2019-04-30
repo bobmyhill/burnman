@@ -10,7 +10,7 @@ from scipy.optimize import curve_fit, minimize
 
 from . import SolidSolution
 
-def fit_composition(fitted_elements, composition, compositional_uncertainties, formulae, endmember_site_occupancies, normalize=True):
+def fit_composition(fitted_elements, composition, compositional_uncertainties, formulae, endmember_site_occupancies, normalize=True, name=None):
     """
     It is assumed that any elements not in composition were not measured (but may exist in unknown quantities).
     If distinct oxidation states or site occupancies were measured
@@ -38,10 +38,10 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
         b_uncertainties = compositional_uncertainties
 
     if np.linalg.det(b_uncertainties) < 1.e-30: # ensure uncertainty matrix is not singular
-        warnings.warn('The compositional covariance matrix is nearly singular or not positive-definite (determinant = {0}). '
-                      'This is likely to be because your fitting parameters are not independent. '
-                      'For now, we increase all diagonal components by 1%. '
-                      'However, you may wish to redefine your problem.'.format(np.linalg.det(b_uncertainties)))
+        #warnings.warn('The compositional covariance matrix for the {0} solution is nearly singular or not positive-definite (determinant = {1}). '
+        #              'This is likely to be because your fitting parameters are not independent. '
+        #              'For now, we increase all diagonal components by 1%. '
+        #              'However, you may wish to redefine your problem.'.format(name, np.linalg.det(b_uncertainties)))
 
         b_uncertainties += np.diag(np.diag(b_uncertainties))*0.01
 
@@ -59,8 +59,8 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
 
     # Check constraints
     if any([c['fun'](popt)<0. for c in cons]):
-        warnings.warn('Warning: Simple least squares predicts an unfeasible solution composition.'
-                      'Recalculating with site constraints. The covariance matrix must be treated with caution.')
+        warnings.warn('Warning: Simple least squares predicts an unfeasible solution composition for {0} solution. '
+                      'Recalculating with site constraints. The covariance matrix must be treated with caution.'.format(name))
         fn = lambda x, A, b, b_uncertainties: np.sqrt((A.dot(popt) - b).dot(np.linalg.solve(b_uncertainties, A.dot(popt) - b)))
         sol = minimize(fn, popt, args=(A, b, b_uncertainties), method='SLSQP',constraints=cons)
         popt = sol.x
@@ -78,13 +78,17 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
 def compute_and_set_phase_compositions(assemblage, verbose=False):
     for phase in assemblage.phases:
         if isinstance(phase, SolidSolution):
+            try:
+                name = phase.name
+            except:
+                name = 'unnamed solution' 
             popt, pcov, res = fit_composition(phase.fitted_elements,
                                               phase.composition,
                                               phase.compositional_uncertainties,
                                               phase.endmember_formulae,
                                               phase.solution_model.endmember_occupancies,
-                                              normalize=True)
-        
+                                              normalize=True, name=name)
+            
             # Convert uncertainties in amounts into uncertainties in proportions
             n_mbrs = len(phase.endmember_formulae)
             dpdx = np.zeros((n_mbrs, n_mbrs))

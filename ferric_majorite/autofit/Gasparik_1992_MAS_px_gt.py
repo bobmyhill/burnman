@@ -31,7 +31,7 @@ for i, run in enumerate(set_runs):
             phases[-1].composition = np.array([float(Mg), float(Al), float(Si)])
             phases[-1].compositional_uncertainties = np.array([0.01, 0.01, 0.01])
         elif phase == 'hpx':
-            phases.append(hen)
+            phases.append(hen) # within 0.5% of pure hen
 
             
     assemblage = burnman.Composite(phases)

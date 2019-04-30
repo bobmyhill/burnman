@@ -30,7 +30,7 @@ class rhenium (burnman.Mineral):
                        'V_0': 8.8726e-6, # Anzellini et al., 2014
                        'Cp': [2.94473137e+01, 1.50972491e-03,
                               2.13054329e+04, -8.84258085e+01], # from Arblaster data up to 1800 K
-                       'a_0': 6.2e-6, # wiki
+                       'a_0': 18.6e-6, # wiki, linear coefficient = 6.2e-6, multiply by three
                        'K_0': 352.6e9, # Anzellini et al., 2014
                        'Kprime_0': 4.56, # Anzellini et al., 2014
                        'Kdprime_0': -4.56/352.6e9, # HP heuristic
@@ -56,13 +56,68 @@ class rhenium_dioxide (burnman.Mineral):
                        'molar_mass': 0.218206}
         burnman.Mineral.__init__(self)
 
+class molybdenum (burnman.Mineral):
+    def __init__(self):
+        self.params = {'name': 'molybdenum metal (bcc)', # bcc stable to ~600 GPa; doi:10.3390/cryst9020086
+                       'formula': {'Mo': 1.0},
+                       'equation_of_state': 'hp_tmt',
+                       'H_0': 0., # element
+                       'S_0': 28.593, # Barin
+                       'V_0': 31.14e-30/2.*6.02214e23, # Litasov et al., 2013
+                       'Cp': [ 2.50090042e+01,  3.78550047e-03, 
+                               -1.46962994e+05, -1.02047030e+01], # T < 1000 K, Barin
+                       'a_0': 15.6e-6, # Wang and Reeber, 1998
+                       'K_0': 260.e9, # Litasov et al., 2013
+                       'Kprime_0': 4.21, # Litasov et al., 2013
+                       'Kdprime_0': -4.21/260.e9, # HP heuristic
+                       'n': 1.0,
+                       'molar_mass': 0.09596}
+        burnman.Mineral.__init__(self)
 
+class molybdenum_dioxide (burnman.Mineral):
+    def __init__(self):
+        self.params = {'name': 'alpha-molybdenum dioxide/tugarinovite (VO2 structure)', # note new HP structure found by Luedtke et al., 2017, stability field unknnown.
+                       'formula': {'Mo': 1.0, 'O': 2.0},
+                       'equation_of_state': 'hp_tmt',
+                       'H_0': -588.940e3, # Barin
+                       'S_0': 46.275, # Barin
+                       'V_0': 33.38e-30*6.02214e23, # per formula unit, Becker and Dronskowski, 2016
+                       'Cp': [ 7.41560833e+01,  1.61308609e-02,
+                               -7.49130013e+05, -2.51344759e+02], # T < 1000 K, Barin
+                       'a_0': 11.0e-6, # rough estimate calculated from linear coefficients plotted in Alves et al., 2017 (~2.5, ~3.5, ~5.0); https://doi.org/10.1016/j.jallcom.2017.02.148
+                       'K_0': 232.e9, # ab-initio from Becker and Dronskowski, 2016
+                       'Kprime_0': 4., # heuristic
+                       'Kdprime_0': -4./232.e9, # HP heuristic
+                       'n': 3.0,
+                       'molar_mass': 0.12794}
+        burnman.Mineral.__init__(self)
+
+        
 
 """
 def func_Cp(temperature, a, b, c, d):
     return (a + b * temperature +
             c * np.power(temperature, -2.) +
             d * np.power(temperature, -0.5))
+
+T, Cp = np.loadtxt('data/Mo_Cp_Barin.dat', unpack=True)
+mask = [i for i, temp in enumerate(T) if temp < 1000.]
+Mo_Cp_params = curve_fit(func_Cp, T[mask], Cp[mask], [1., 1., 1., 1.])[0]
+print(Mo_Cp_params)
+plt.plot(T, Cp)
+plt.plot(T, func_Cp(T, *Mo_Cp_params))
+plt.plot(T, molybdenum().evaluate(['C_p'], T, T)[0], linestyle=':')
+plt.show()
+
+
+T, Cp = np.loadtxt('data/MoO2_Cp_Barin.dat', unpack=True)
+mask = [i for i, temp in enumerate(T) if temp < 1000.]
+MoO2_Cp_params = curve_fit(func_Cp, T[mask], Cp[mask], [1., 1., 1., 1.])[0]
+print(MoO2_Cp_params)
+plt.plot(T, Cp)
+plt.plot(T, func_Cp(T, *MoO2_Cp_params))
+plt.show()
+
 
 T, Cp = np.loadtxt('data/Re_Cp_Arblaster_1996.dat', unpack=True)
 mask = [i for i, temp in enumerate(T) if temp < 1800.]
