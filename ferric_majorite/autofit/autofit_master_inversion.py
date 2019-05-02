@@ -15,7 +15,7 @@ import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.processanalyses import compute_and_set_phase_compositions, assemblage_affinity_misfit
 from burnman.equilibrate import equilibrate
-
+from fitting_functions import equilibrium_order
 
 from input_dataset import * 
 
@@ -58,6 +58,7 @@ def minimize_func(params, assemblages):
             if isinstance(phase, burnman.SolidSolution):
                 molar_fractions, phase.molar_fraction_covariances = assemblage.stored_compositions[j]
                 phase.set_composition(molar_fractions)
+
                 
         # Assign a state to the assemblage
         P, T = np.array(assemblage.nominal_state)
@@ -68,6 +69,13 @@ def minimize_func(params, assemblages):
             pass
         
         assemblage.set_state(P, T)
+
+
+        # Equilibrate phases with order-disorder
+        for j, phase in enumerate(assemblage.phases):
+            if isinstance(phase, burnman.SolidSolution):
+                if 'order-disorder' in phase.name:
+                    equilibrium_order(phase)
         
         
         # Calculate the misfit and store it
@@ -113,22 +121,28 @@ def minimize_func(params, assemblages):
 # Si: SiO2 qtz
 # Al: Mg3Al2Si3O12 pyrope
 # Ca: CaMgSi2O6 diopside
-# Na: NaAlSi2O6 jadeite
+# Na: NaAlSi2O6 jadeite 
 
-endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3], 
-                  ['fo',  'H_0', fo.params['H_0'],  1.e3],
-                  ['fa',  'H_0', fa.params['H_0'],  1.e3],
-                  ['mwd', 'H_0', mwd.params['H_0'], 1.e3], # fwd H_0 and S_0 obtained in set_params_from_special_constraints()
-                  ['mrw', 'H_0', mrw.params['H_0'], 1.e3],
-                  ['frw', 'H_0', frw.params['H_0'], 1.e3],
-                  ['alm', 'H_0', alm.params['H_0'], 1.e3],
-                  ['coe', 'H_0', coe.params['H_0'], 1.e3],
-                  ['stv', 'H_0', stv.params['H_0'], 1.e3],
-                  ['oen', 'H_0', oen.params['H_0'], 1.e3],
-                  ['ofs', 'H_0', ofs.params['H_0'], 1.e3],
-                  ['hen', 'H_0', hen.params['H_0'], 1.e3],
-                  ['hfs', 'H_0', hfs.params['H_0'], 1.e3],
-                  ['per', 'S_0', per.params['S_0'], 1.], # has a prior associated with it, so can be inverted
+endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3], 
+                  ['fo',   'H_0', fo.params['H_0'],  1.e3],
+                  ['fa',   'H_0', fa.params['H_0'],  1.e3],
+                  ['mwd',  'H_0', mwd.params['H_0'], 1.e3], # fwd H_0 and S_0 obtained in set_params_from_special_constraints()
+                  ['mrw',  'H_0', mrw.params['H_0'], 1.e3],
+                  ['frw',  'H_0', frw.params['H_0'], 1.e3],
+                  ['alm',  'H_0', alm.params['H_0'], 1.e3],
+                  ['dmaj', 'H_0', dmaj.params['H_0'], 1.e3],
+                  ['coe',  'H_0', coe.params['H_0'], 1.e3],
+                  ['stv',  'H_0', stv.params['H_0'], 1.e3],
+                  ['oen',  'H_0', oen.params['H_0'], 1.e3],
+                  ['ofs',  'H_0', ofs.params['H_0'], 1.e3],
+                  ['mgts', 'H_0', mgts.params['H_0'], 1.e3],
+                  ['sp',   'H_0', sp.params['H_0'], 1.e3],
+                  ['hen',  'H_0', hen.params['H_0'], 1.e3],
+                  ['hfs',  'H_0', hfs.params['H_0'], 1.e3],
+                  ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3],
+                  ['fbdg', 'H_0', fbdg.params['H_0'], 1.e3],
+                  
+                  ['per',  'S_0', per.params['S_0'], 1.], # has a prior associated with it, so can be inverted
                   ['wus', 'S_0', wus.params['S_0'], 1.],
                   ['fo',  'S_0', fo.params['S_0'],  1.],
                   ['fa',  'S_0', fa.params['S_0'],  1.],
@@ -136,10 +150,13 @@ endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3],
                   ['mrw', 'S_0', mrw.params['S_0'], 1.],
                   ['frw', 'S_0', frw.params['S_0'], 1.],
                   ['alm', 'S_0', alm.params['S_0'], 1.],
+                  ['dmaj', 'S_0', dmaj.params['S_0'], 1.],
                   ['oen', 'S_0', oen.params['S_0'], 1.],
                   ['ofs', 'S_0', ofs.params['S_0'], 1.],
+                  ['mgts', 'S_0', mgts.params['S_0'], 1.],
                   ['hen', 'S_0', hen.params['S_0'], 1.],
                   ['hfs', 'S_0', hfs.params['S_0'], 1.],
+                  ['mbdg', 'S_0', mbdg.params['S_0'], 1.],
                   ['coe', 'S_0', coe.params['S_0'], 1.],
                   ['stv', 'S_0', stv.params['S_0'], 1.],
                   ['fwd', 'V_0', fwd.params['V_0'], 1.e-5],
@@ -158,7 +175,9 @@ solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0, ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
                  ['sp', 'E', 0, 0, spinel.energy_interaction[3][0], 1.e3], # mrw-frw
-                 ['opx', 'E', 0, 0, opx.energy_interaction[0][0], 1.e3]]
+                 ['opx', 'E', 0, 0, opx_od.energy_interaction[0][0], 1.e3],
+                 ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3],
+                 ['gt', 'E', 0, 0, gt.energy_interaction[0][4], 1.e3]] # py-dmaj
 
 # ['gt', 'E', 0, 0, gt.energy_interaction[0][0], 1.e3] # py-alm interaction fixed as ideal
 
@@ -172,6 +191,7 @@ endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_or
                     ['alm', 'S_0', alm.params['S_0_orig'][0], alm.params['S_0_orig'][1]],
                     ['oen', 'S_0', oen.params['S_0_orig'][0], oen.params['S_0_orig'][1]],
                     ['ofs', 'S_0', ofs.params['S_0_orig'][0], ofs.params['S_0_orig'][1]],
+                    ['mbdg', 'S_0', mbdg.params['S_0_orig'][0], mbdg.params['S_0_orig'][1]],
                     ['fwd', 'V_0', fwd.params['V_0'], 2.15e-7], # 0.5% uncertainty, somewhat arbitrary
                     ['fwd', 'K_0', fwd.params['K_0'], fwd.params['K_0']/100.*2.], # 2% uncertainty, somewhat arbitrary
                     ['frw', 'K_0', frw.params['K_0'], frw.params['K_0']/100.*0.5], # 0.5% uncertainty, somewhat arbitrary
@@ -186,7 +206,7 @@ endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_or
 
 solution_priors = [] # ['gt', 'E', 0, 0, 0.3e3, 0.4e3]
 
-experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
+experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['50Fe', 'P', 0., 0.5e9],
                             ['61Fe', 'P', 0., 0.5e9],
                             ['62Fe', 'P', 0., 0.5e9],
@@ -208,7 +228,18 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
                             ['V227', 'P', 0., 0.5e9],
                             ['V229', 'P', 0., 0.5e9],
                             ['V252', 'P', 0., 0.5e9],
-                            ['V254', 'P', 0., 0.5e9]]  
+                            ['V254', 'P', 0., 0.5e9]]
+#                            ['Beyer2019_H4321', 'P', 0., 0.5e9],
+#                            ['Beyer2019_H4556', 'P', 0., 0.5e9],
+#                            ['Beyer2019_H4557', 'P', 0., 0.5e9],
+#                            ['Beyer2019_H4560', 'P', 0., 0.5e9],
+#                            ['Beyer2019_H4692', 'P', 0., 0.5e9],
+#                            ['Beyer2019_Z1699', 'P', 0., 0.5e9],
+#                            ['Beyer2019_Z1700', 'P', 0., 0.5e9],
+#                            ['Beyer2019_Z1782', 'P', 0., 0.5e9],
+#                            ['Beyer2019_Z1785', 'P', 0., 0.5e9],
+#                            ['Beyer2019_Z1786', 'P', 0., 0.5e9]]
+
 
 
 # Make dictionaries
@@ -272,7 +303,8 @@ def set_params(args):
     # Reset dictionary of child solutions
     for k, ss in child_solutions.items():
         ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
-                                                           ss.basis).__dict__)
+                                                           ss.basis,
+                                                           solution_name=ss.name).__dict__)
 
     # Experimental uncertainties
     for j, u in enumerate(experiment_uncertainties):
@@ -289,12 +321,33 @@ def set_params(args):
 # EXPERIMENTAL DATA ###
 #######################
 
+# Endmembers
+from endmember_reactions import endmember_reaction_assemblages
+
+# Fe-Mg-Si-O
 from Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
 from Seckendorff_ONeill_1992_ol_opx import Seckendorff_ONeill_1992_assemblages
 from ONeill_Wood_1979_ol_gt import ONeill_Wood_1979_assemblages
-from endmember_reactions import endmember_reaction_assemblages
 from Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
 from ONeill_1987_QFI import QFI_assemblages
+from Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
+
+# Al
+from Gasparik_1992_MAS_px_gt import Gasparik_1992_MAS_assemblages
+from Gasparik_Newton_1984_MAS_opx_sp_fo import Gasparik_Newton_1984_MAS_assemblages
+from Gasparik_Newton_1984_MAS_py_opx_sp_fo import Gasparik_Newton_1984_MAS_univariant_assemblages
+from Perkins_et_al_1981_MAS_py_opx import Perkins_et_al_1981_MAS_assemblages
+
+"""
+from Carlson_Lindsley_1988_CMS_opx_cpx import Carlson_Lindsley_1988_CMS_assemblages
+from Perkins_Newton_1980_CMAS_opx_cpx_gt import Perkins_Newton_1980_CMAS_assemblages
+from Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp import Klemme_ONeill_2000_CMAS_assemblages
+from Perkins_Vielzeuf_1992_CFMS_ol_cpx import Perkins_1992_CFMS_assemblages
+from Woodland_ONeill_1993_FASO_alm_sk import Woodland_ONeill_1993_FASO_assemblages
+from Frost_2003_FMASO_garnet import Frost_2003_gt_assemblages
+from Rohrbach_et_al_2007_NCFMASO_gt_cpx import Rohrbach_et_al_2007_NCFMASO_assemblages
+from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
+"""
 
 assemblages = list(Frost_2003_assemblages) # makes a copy
 assemblages.extend(Seckendorff_ONeill_1992_assemblages)
@@ -302,6 +355,16 @@ assemblages.extend(Matsuzaka_2000_assemblages)
 assemblages.extend(endmember_reaction_assemblages)
 assemblages.extend(ONeill_Wood_1979_assemblages)
 assemblages.extend(QFI_assemblages)
+assemblages.extend(Nakajima_FR_2012_assemblages)
+assemblages.extend(Gasparik_1992_MAS_assemblages)
+assemblages.extend(Gasparik_Newton_1984_MAS_assemblages)
+assemblages.extend(Gasparik_Newton_1984_MAS_univariant_assemblages)
+assemblages.extend(Perkins_et_al_1981_MAS_assemblages)
+
+"""
+assemblages.extend()
+"""
+
 
 #minimize_func(get_params(), assemblages)
 
@@ -310,7 +373,7 @@ assemblages.extend(QFI_assemblages)
 ### PUT PARAMS HERE ###
 #######################
 
-set_params([-269.0792, -2173.4836, -1476.9122, -2145.7575, -2135.5996, -1472.7334, -5258.2888, -907.0115, -867.3844, -3089.7563, -2389.8787, -3082.4015, -2392.1905, 26.8807, 55.5686, 94.2084, 151.4062, 85.4220, 81.7165, 135.8285, 340.6464, 132.3161, 188.4748, 131.4391, 177.9551, 39.6230, 29.5232, 4.3053, 1.6102, 2.0093, 3.0847, 3.4498, 2.8015, 2.7330, 2.0997, 1.8693, 2.1880, 2.1287, 11.3716, 5.8810, 17.4960, 8.6782, -1.4860, -1.4663, -0.3108, -3.0403, -0.4191, 1.0919, -4.2236, -1.5626, -0.4069, -1.1745, 0.1191, -0.0074, 1.0992, 0.1703, 1.5458, -1.1353, -1.0090, -0.9139, -0.6605, -0.1253, 0.2582, -0.0373, -0.1852, 0.8344])
+#set_params([-269.0792, -2173.4836, -1476.9122, -2145.7575, -2135.5996, -1472.7334, -5258.2888, -907.0115, -867.3844, -3089.7563, -2389.8787, -3082.4015, -2392.1905, 26.8807, 55.5686, 94.2084, 151.4062, 85.4220, 81.7165, 135.8285, 340.6464, 132.3161, 188.4748, 131.4391, 177.9551, 39.6230, 29.5232, 4.3053, 1.6102, 2.0093, 3.0847, 3.4498, 2.8015, 2.7330, 2.0997, 1.8693, 2.1880, 2.1287, 11.3716, 5.8810, 17.4960, 8.6782, -1.4860, -1.4663, -0.3108, -3.0403, -0.4191, 1.0919, -4.2236, -1.5626, -0.4069, -1.1745, 0.1191, -0.0074, 1.0992, 0.1703, 1.5458, -1.1353, -1.0090, -0.9139, -0.6605, -0.1253, 0.2582, -0.0373, -0.1852, 0.8344])
 
 ########################
 # RUN THE MINIMIZATION #

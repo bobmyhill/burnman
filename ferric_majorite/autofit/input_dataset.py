@@ -15,6 +15,7 @@ import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.solutionbases import transform_solution_to_new_basis
 from input_buffers import rhenium, rhenium_dioxide, molybdenum, molybdenum_dioxide
+
 #########################
 # ENDMEMBER DEFINITIONS #
 #########################
@@ -62,6 +63,8 @@ jd = burnman.minerals.HP_2011_ds62.jd()
 aeg = burnman.minerals.HP_2011_ds62.acm() # aegirine is also known as acmite
 
 cfs = burnman.minerals.HP_2011_ds62.fs()
+cfs.params['name'] = 'cfs'
+cfs.name = 'cfs'
 cfs.params['H_0'] += 2.1e3
 cfs.params['S_0'] += 2. # N.B: implies fs->cfs transition at ~1000 K at room pressure!
 cfs.params['V_0'] += 0.045e-5 # Clapeyron slope of 225 K/GPa
@@ -75,12 +78,14 @@ odi.params['H_0'] += -0.1e3
 odi.params['S_0'] += -0.211
 odi.params['V_0'] += 0.005e-5
 
-ofm = burnman.CombinedMineral([oen, ofs], [0.5, 0.5], [-6.6e3, 0., 0.])
+ofm = burnman.CombinedMineral([oen, ofs], [0.5, 0.5], [-6.6e3, 0., 0.], name='ofm')
 
 
 # High pressure clinopyroxene endmembers
 hen = burnman.minerals.HHPH_2013.hen()
 hfs = burnman.minerals.HHPH_2013.hfs()
+
+hfm = burnman.CombinedMineral([hen, hfs], [0.5, 0.5], [-6.6e3, 0., 0.], name='hfm')
 
 # Garnet endmembers
 py = burnman.minerals.HHPH_2013.py()
@@ -89,6 +94,47 @@ gr = burnman.minerals.HHPH_2013.gr()
 dmaj = burnman.minerals.HHPH_2013.maj()
 andr = burnman.minerals.HP_2011_ds62.andr()
 nagt = burnman.minerals.HHPH_2013.nagt()
+
+# xpy, VA^3, err, cubic py-maj from Heinemann et al., 1997
+Heinemann_data = np.array([[0.2592, 0.4985, 0.7510, 0.9998],
+                           [1511.167, 1509.386, 1506.802, 1503.654],
+                           [0.024, 0.044, 0.047, 0.052]])
+quad = lambda x, a, b, c: a*x + b*(1. - x) + c*x*(1. - x)
+
+from scipy.optimize import curve_fit
+popt, pcov = curve_fit(quad,
+                       xdata=Heinemann_data[0],
+                       ydata=Heinemann_data[1]*1.e-30/8.*burnman.constants.Avogadro,
+                       sigma=Heinemann_data[2])
+
+py.params['V_0'] = popt[0]
+dmaj.params['V_0'] = popt[1]
+py_dmaj_Vex = popt[2]
+
+"""
+xs = np.linspace(0., 1., 101)
+plt.errorbar(Heinemann_data[0],
+             Heinemann_data[1]*1.e-30/8.*burnman.constants.Avogadro,
+             yerr=Heinemann_data[2]*1.e-30/8.*burnman.constants.Avogadro,
+             fmt='none', color='r')
+plt.scatter(Heinemann_data[0],
+         Heinemann_data[1]*1.e-30/8.*burnman.constants.Avogadro, color='r')
+plt.plot(xs, quad(xs, *popt), color='r')
+plt.errorbar([0., 0., 0.0659, 0.1285, 0.1906],
+             np.array([1515.258, 1515.183, 1515.669, 1514.330, 1512.063])*1.e-30/8.*burnman.constants.Avogadro,
+             yerr=np.array([0.051, 0.088, 0.419, 0.309, 0.426])*1.e-30/8.*burnman.constants.Avogadro, fmt='none', color='b')
+
+plt.scatter([0., 0., 0.0659, 0.1285, 0.1906],
+             np.array([1515.258, 1515.183, 1515.669, 1514.330, 1512.063])*1.e-30/8.*burnman.constants.Avogadro, color='b')
+plt.ylim(11.3e-5, 11.42e-5)
+plt.show()
+"""
+
+
+
+# Bridgmanite
+mbdg = burnman.minerals.HHPH_2013.mpv()
+fbdg = burnman.minerals.HHPH_2013.fpv()
 
 # SiO2 polymorphs
 qtz = burnman.minerals.HP_2011_ds62.q()
@@ -151,6 +197,8 @@ ofs.params['S_0_orig'] = [186.5, 0.5] # Cemic and Dachs, 2006
 
 py.params['S_0_orig'] = [265.94, 1.] # Dachs and Geiger, 2006; nominally 0.23, but sample dependent. HP2011_ds62 has 269.5, SLB has 244.55 (yeah, this what happens when you use a Debye model)
 alm.params['S_0_orig'] = [342.6, 2.] # Anovitz et al., 1993
+
+mbdg.params['S_0_orig'] = [57.2, 1.] # Akaogi and Ito (1993)
 
 
 mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj]
@@ -294,6 +342,11 @@ for (P, m1, m2) in [[14.25e9, fo, mwd],
 # SOLID SOLUTIONS #
 ###################
 
+bdg = Solution(name = 'bridgmanite',
+               solution_type ='symmetric',
+               endmembers=[[mbdg, '[Mg][Si]O3'], [fbdg, '[Fe][Si]O3']],
+               energy_interaction=[[6.e3]],
+               volume_interaction=[[0.e-7]]) 
 fper = Solution(name = 'ferropericlase',
                 solution_type ='symmetric',
                 endmembers=[[per, '[Mg]O'], [wus, '[Fe]O']],
@@ -325,39 +378,6 @@ spinel = Solution(name = 'spinel',
                                       [0.e-7, 0.e-7, 0.e-7],
                                       [0.e-7, 0.e-7],
                                       [0.e-7]])
-"""
-cpx = Solution(name = 'clinopyroxene',
-               solution_type = 'symmetric',
-               endmembers = [[di,   '[Ca][Mg][Si]2O6'],
-                             [hed,  '[Ca][Fe][Si]2O6'],
-                             [cen,  '[Mg][Mg][Si]2O6'],
-                             [cats, '[Ca][Al][Si1/2Al1/2]2O6'],
-                             [jd,   '[Na][Al][Si]2O6'],
-                             [aeg,  '[Na][Fef][Si]2O6']],
-              energy_interaction=[[0.e3, 25.e3, 26.e3, 24.e3, 24.e3],
-                                  [25.e3, 0.e3, 0.e3, 0.],
-                                  [61.e3, 0.e3, 0.],
-                                  [10.e3, 10.e3],
-                                  [0.e3]],
-              volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7],
-                                  [0.e-7]])
-"""
-
-opx = Solution(name = 'orthopyroxene',
-               solution_type ='symmetric',
-               endmembers=[[oen,  '[Mg][Mg]SiSiO6'],
-                           [ofs,  '[Fe][Fe]SiSiO6'],
-                           [mgts, '[Mg][Al]AlSiO6'], # Al avoidance, see Figure 3 of SLB2011
-                           [odi,  '[Ca][Mg]SiSiO6']],
-               energy_interaction=[[2.e3, 0.e3, 0.e3],
-                                   [0.e3, 0.e3],
-                                   [0.e3]],
-               volume_interaction=[[0.e-7, 0.e-7, 0.e-7],
-                                   [0.e-7, 0.e-7],
-                                   [0.e-7]])
 
 """
 spinel_od = Solution(name = 'spinel with order-disorder',
@@ -387,62 +407,65 @@ spinel_od = Solution(name = 'spinel with order-disorder',
 """
 
 cpx_od = Solution(name = 'clinopyroxene with order-disorder',
-               solution_type = 'symmetric', # fake multiplicity of 1/2 (should be 2)
-               endmembers = [[di,   '[Ca][Mg][Si]1/2O6'],
-                             [hed,  '[Ca][Fe][Si]1/2O6'],
-                             [cen,  '[Mg][Mg][Si]1/2O6'],
-                             [cats, '[Ca][Al][Si1/2Al1/2]1/2O6'],
-                             [jd,   '[Na][Al][Si]1/2O6'],
-                             [aeg,  '[Na][Fef][Si]1/2O6'],
-                             [cfs,  '[Fe][Fe][Si]1/2O6']], # order-disorder
-              energy_interaction=[[0.e3, 25.e3, 26.e3, 24.e3, 24.e3, 0.e3],
-                                  [25.e3, 0.e3, 0.e3, 0.e3, 0.e3],
-                                  [61.e3, 0.e3, 0.e3, 0.e3],
-                                  [10.e3, 10.e3, 0.e3],
-                                  [0.e3, 0.e3],
-                                  [0.e3]],
-              volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7, 0.e-7],
-                                  [0.e-7, 0.e-7],
-                                  [0.e-7]])
+                  solution_type = 'asymmetric', # fake multiplicity of 1/2 (should be 2)
+                  alphas = [1.2, 1.2, 1.0, 1.0, 1.9, 1.2, 1.2],
+                  endmembers = [[di,   '[Ca][Mg][Si]1/2O6'],
+                                [hed,  '[Ca][Fe][Si]1/2O6'],
+                                [cen,  '[Mg][Mg][Si]1/2O6'],
+                                [cfs,  '[Fe][Fe][Si]1/2O6'], # order-disorder
+                                [cats, '[Ca][Al][Si1/2Al1/2]1/2O6'],
+                                [jd,   '[Na][Al][Si]1/2O6'],
+                                [aeg,  '[Na][Fef][Si]1/2O6']],
+                  energy_interaction=[[ 2.9e3, 29.8e3, 25.8e3, 13.0e3, 26.0e3, 26.7e3],
+                                      [26.6e3, 20.9e3,  8.9e3,  9.6e3, 10.4e3],
+                                      [ 2.3e3, 45.2e3, 40.0e3, 60.8e3],
+                                      [25.0e3, 24.0e3, 52.3e3],
+                                      [ 6.0e3, 17.4e3],
+                                      [ 3.2e3]],
+                  volume_interaction=[[ 0.0,  -3e-7,   -3e-7,  -6e-7,    0.0,    7.35e-7],
+                                      [-3e-7, -3e-7,   -6e-7,    0.0,    7.35e-7],
+                                      [ 0.0, -3.5e-06, 0.0,    4.2e-06],
+                                      [-1e-6,  0.0,    1.2e-6],
+                                      [ 0.0,   0.0],
+                                      [ 0.0]])
 
-"""
+
 opx_od = Solution(name = 'orthopyroxene with order-disorder',
-               solution_type ='symmetric', # fake multiplicity of 1/2 (should be 2)
-               endmembers=[[oen,  '[Mg][Mg][Si]1/2Si3/2O6'],
-                           [ofs,  '[Fe][Fe][Si]1/2Si3/2O6'],
-                           [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'], 
-                           [odi,  '[Ca][Mg][Si]1/2Si3/2O6'], 
-                           [ofm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d
-               energy_interaction=[[2.e3, 0.e3, 0.e3, 0.e3],
-                                   [0.e3, 0.e3, 0.e3],
-                                   [0.e3, 0.e3],
-                                   [0.e3]],
-               volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                   [0.e-7, 0.e-7, 0.e-7],
-                                   [0.e-7, 0.e-7],
-                                   [0.e-7]])
-"""
-
-hpx_od = Solution(name = 'high pressure clinopyroxene with order-disorder',
-                  solution_type ='symmetric', # fake multiplicity of 1/2 (should be 2)
+                  solution_type ='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                  alphas = [1., 1., 1., 1.2, 1.],
                   endmembers=[[oen,  '[Mg][Mg][Si]1/2Si3/2O6'],
                               [ofs,  '[Fe][Fe][Si]1/2Si3/2O6'],
                               [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'], 
                               [odi,  '[Ca][Mg][Si]1/2Si3/2O6'], 
-                              [ofm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d
-                  energy_interaction=[[2.e3, 0.e3, 0.e3, 0.e3],
-                                      [0.e3, 0.e3, 0.e3],
-                                      [0.e3, 0.e3],
-                                      [0.e3]],
-                  volume_interaction=[[0.e-7, 0.e-7, 0.e-7, 0.e-7],
-                                      [0.e-7, 0.e-7, 0.e-7],
-                                      [0.e-7, 0.e-7],
-                                      [0.e-7]])
+                              [ofm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d with Mg on the Al site
+                  energy_interaction=[[7.e3, 12.5e3, 32.2e3, 4.e3],
+                                      [11.e3, 25.54e3, 4.e3],
+                                      [75.5e3, 15.e3],
+                                      [22.54e3]],
+                  volume_interaction=[[0., -0.04e-5, 0.12e-5, 0.],
+                                      [-0.15e-5, 0.084e-5, 0.],
+                                      [-0.84e-5, -0.15e-5],
+                                      [0.084e-5]])
 
-gt = Solution(name = 'disordered garnet',
+
+hpx_od = Solution(name = 'high pressure clinopyroxene with order-disorder',
+                  solution_type ='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                  alphas = [1., 1., 1., 1.2, 1.],
+                  endmembers=[[hen,  '[Mg][Mg][Si]1/2Si3/2O6'],
+                              [hfs,  '[Fe][Fe][Si]1/2Si3/2O6'],
+                              [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'], 
+                              [odi,  '[Ca][Mg][Si]1/2Si3/2O6'], 
+                              [hfm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d with Mg on the Al site
+                  energy_interaction=[[7.e3, 12.5e3, 32.2e3, 4.e3],
+                                      [11.e3, 25.54e3, 4.e3],
+                                      [75.5e3, 15.e3],
+                                      [22.54e3]],
+                  volume_interaction=[[0., -0.04e-5, 0.12e-5, 0.],
+                                      [-0.15e-5, 0.084e-5, 0.],
+                                      [-0.84e-5, -0.15e-5],
+                                      [0.084e-5]])
+
+gt = Solution(name = 'garnet',
               solution_type = 'symmetric',
               endmembers = [[py, '[Mg]3[Al]2Si3O12'],
                             [alm, '[Fe]3[Al]2Si3O12'],
@@ -450,76 +473,107 @@ gt = Solution(name = 'disordered garnet',
                             [andr, '[Ca]3[Fe]2Si3O12'],
                             [dmaj, '[Mg]3[Mg1/2Si1/2]2Si3O12'],
                             [nagt, '[Na1/3Mg2/3]3[Al1/2Si1/2]2Si3O12']],
-              energy_interaction=[[0.e3, 30.e3, 60.e3, 0., 0.], # py-.....
-                                  [0.e3, 0.e3, 0., 0.], # alm-....
+              energy_interaction=[[0.e3, 30.e3, 90.e3, 0., 0.], # py-.....
+                                  [0.e3, 60.e3, 0., 0.], # alm-....
                                   [5.e3, 0., 0.], # gr-...
                                   [0., 0.], # andr-..
                                   [0.]], # dmaj-namaj
-              volume_interaction=[[0., 0., 0., 0., 0.],
+              volume_interaction=[[0., 0., 0., py_dmaj_Vex, 0.], # py_dmaj from Heinemann
                                   [0., 0., 0., 0.],
                                   [0., 0., 0.],
                                   [0., 0.],
                                   [0.]])
 
+print('Warning! oen_ofs still doesn\'t have o-d')
+
 # Child solutions *must* be in dictionary to be reset properly
 child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[1., 0., 0., 0., 0., 0.],
-                                                                          [0., 1., 0., 0., 0., 0.]])),
+                                                                          [0., 1., 0., 0., 0., 0.]]),
+                                                                solution_name='py-alm garnet'),
+                   
                    'py_gr_gt': transform_solution_to_new_basis(gt,
                                                                np.array([[1., 0., 0., 0., 0., 0.],
-                                                                         [0., 0., 1., 0., 0., 0.]])),
+                                                                         [0., 0., 1., 0., 0., 0.]]),
+                                                               solution_name='py-gr garnet'),
                    'alm_sk_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[0., 1.,  0., 0., 0., 0.],
-                                                                          [0., 1., -1., 1., 0., 0.]])),
+                                                                          [0., 1., -1., 1., 0., 0.]]),
+                                                                solution_name='alm-sk garnet'),
                    'xna_gt': transform_solution_to_new_basis(gt,
                                                              np.array([[1., 0., 0., 0., 0., 0.],
                                                                        [0., 1., 0., 0., 0., 0.],
                                                                        [0., 0., 1., 0., 0., 0.],
                                                                        [0., 0., 0., 1., 0., 0.],
-                                                                       [0., 0., 0., 0., 1., 0.]])),
+                                                                       [0., 0., 0., 0., 1., 0.]]),
+                                                             solution_name='py-alm-gt-andr-dmaj garnet'),
                    'xmj_gt': transform_solution_to_new_basis(gt,
                                                              np.array([[1., 0., 0., 0., 0., 0.],
                                                                        [0., 1., 0., 0., 0., 0.],
                                                                        [0., 0., 1., 0., 0., 0.],
                                                                        [0., 0., 0., 1., 0., 0.],
-                                                                       [0., 0., 0., 0., 0., 1.]])),
-                   'sk_gt': transform_solution_to_new_basis(gt, np.array([[0., 1., -1., 1., 0., 0.]])),
+                                                                       [0., 0., 0., 0., 0., 1.]]),
+                                                             solution_name='py-alm-gr-andr-nagt garnet'),
+                   
+                   'sk_gt': transform_solution_to_new_basis(gt, np.array([[0., 1., -1., 1., 0., 0.]]),
+                                                                solution_name='skiagite'),
+                   
                    'py_dmaj_gt': transform_solution_to_new_basis(gt,
-                                                                np.array([[1., 0., 0., 0., 0., 0.],
-                                                                          [0., 0., 0., 0., 1., 0.]])),
+                                                                 np.array([[1., 0., 0., 0., 0., 0.],
+                                                                           [0., 0., 0., 0., 1., 0.]]),
+                                                                 solution_name='py-dmaj garnet'),
+                   
                    'ring': transform_solution_to_new_basis(spinel,
                                                            np.array([[0., 0., 0., 1., 0.],
-                                                                     [0., 0., 0., 0., 1.]])),
+                                                                     [0., 0., 0., 0., 1.]]),
+                                                           solution_name='ringwoodite'),
+                   
                    'herc_mt_frw': transform_solution_to_new_basis(spinel,
                                                                   np.array([[0., 1., 0., 0., 0.],
                                                                             [0., 0., 1., 0., 0.],
-                                                                            [0., 0., 0., 0., 1.]])),
+                                                                            [0., 0., 0., 0., 1.]]),
+                                                                  solution_name='herc-mt-frw'),
                    'mt_frw': transform_solution_to_new_basis(spinel,
                                                              np.array([[0., 0., 1., 0., 0.],
-                                                                       [0., 0., 0., 0., 1.]])),
-                   'oen_ofs': transform_solution_to_new_basis(opx,
-                                                              np.array([[1., 0., 0., 0.],
-                                                                        [0., 1., 0., 0.]])),
-                   'oen_mgts': transform_solution_to_new_basis(opx,
-                                                               np.array([[1., 0., 0., 0.],
-                                                                         [0., 0., 1., 0.]])),
-                   'oen_mgts_odi': transform_solution_to_new_basis(opx,
-                                                                   np.array([[1., 0., 0., 0.],
-                                                                             [0., 0., 1., 0.],
-                                                                             [0., 0., 0., 1.]])),
-                   'oen_odi': transform_solution_to_new_basis(opx,
-                                                              np.array([[1., 0., 0., 0.],
-                                                                        [0., 0., 0., 1.]])),
+                                                                       [0., 0., 0., 0., 1.]]),
+                                                             solution_name='mt-frw garnet'),
+                   
+                   'oen_ofs': transform_solution_to_new_basis(opx_od,
+                                                              np.array([[1., 0., 0., 0., 0.],
+                                                                        [0., 1., 0., 0., 0.]]),
+                                                              solution_name='Mg-Fe orthopyroxene'),
+                   
+                   'oen_mgts': transform_solution_to_new_basis(opx_od,
+                                                               np.array([[1., 0., 0., 0., 0.],
+                                                                         [0., 0., 1., 0., 0.]]),
+                                                               solution_name='MAS orthopyroxene'),
+                   
+                   'oen_mgts_odi': transform_solution_to_new_basis(opx_od,
+                                                                   np.array([[1., 0., 0., 0., 0.],
+                                                                             [0., 0., 1., 0., 0.],
+                                                                             [0., 0., 0., 1., 0.]]),
+                                                                   solution_name='CMAS orthopyroxene'),
+                   
+                   'oen_odi': transform_solution_to_new_basis(opx_od,
+                                                              np.array([[1., 0., 0., 0., 0.],
+                                                                        [0., 0., 0., 1., 0.]]),
+                                                              solution_name='CMS orthopyroxene'),
+                   
                    'di_cen': transform_solution_to_new_basis(cpx_od,
                                                              np.array([[1., 0., 0., 0., 0., 0., 0.],
-                                                                       [0., 0., 1., 0., 0., 0., 0.]])),
+                                                                       [0., 0., 1., 0., 0., 0., 0.]]),
+                                                             solution_name='CMS clinopyroxene'),
+                   
                    'di_hed': transform_solution_to_new_basis(cpx_od,
                                                              np.array([[1., 0., 0., 0., 0., 0., 0.],
-                                                                       [0., 1., 0., 0., 0., 0., 0.]])),
+                                                                       [0., 1., 0., 0., 0., 0., 0.]]),
+                                                             solution_name='di-hed clinopyroxene'),
+                   
                    'di_cen_cats': transform_solution_to_new_basis(cpx_od,
                                                                   np.array([[1., 0., 0., 0., 0., 0., 0.],
                                                                             [0., 0., 1., 0., 0., 0., 0.],
-                                                                            [0., 0., 0., 1., 0., 0., 0.]]))}
+                                                                            [0., 0., 0., 0., 1., 0., 0.]]),
+                                                                  solution_name='CMAS orthopyroxene')}
 
 
 solutions = {'mw': fper,
@@ -528,8 +582,9 @@ solutions = {'mw': fper,
              'sp': spinel,
              'gt': gt,
              'cpx': cpx_od,
-             'opx': opx,
-             'hpx': hpx_od}
+             'opx': opx_od,
+             'hpx': hpx_od,
+             'bdg': bdg}
 
 endmembers = {'Re':       Re,       # buffer materials
               'ReO2':     ReO2,
@@ -566,6 +621,9 @@ endmembers = {'Re':       Re,       # buffer materials
               'odi':      odi,
               'hen':      hen,      # high pressure (C2/c) clinopyroxene
               'hfs':      hfs,
+              'mbdg':     mbdg,
+              'fbdg':     fbdg,
               'qtz':      qtz,      # SiO2 polymorphs
               'coe':      coe,
               'stv':      stv}
+

@@ -106,11 +106,11 @@
 9.46	    0.15	 1573.15  10.	      coe stv
 10.15	    0.10	 1803.15  10.	      coe stv
 
-# rw (+ wad) -> mpv + per (Fei et al., 2004; Speziale MgO scale)
-23.43  	    0.25      	 1673.15  10.  	      mpv per mrw
-22.86	    0.40	 1873.15  10.	      mpv per mrw
-22.80	    0.30	 2023.15  10.	      mpv per mrw
-22.82  	    0.37      	 2173.15  10.  	      mpv per mrw mwd
+# rw (+ wad) -> mbdg + per (Fei et al., 2004; Speziale MgO scale)
+23.43  	    0.25      	 1673.15  10.  	      mbdg per mrw
+22.86	    0.40	 1873.15  10.	      mbdg per mrw
+22.80	    0.30	 2023.15  10.	      mbdg per mrw
+22.82  	    0.37      	 2173.15  10.  	      mbdg per mrw mwd
 
-# maj -> mpv (Hirose et al., 2001, using Jamieson Au EoS)
-22.10 	    0.50         2273.15  10	      dmaj mpv  
+# maj -> mbdg (Hirose et al., 2001, using Jamieson Au EoS)
+22.10 	    0.50         2273.15  10	      dmaj mbdg  

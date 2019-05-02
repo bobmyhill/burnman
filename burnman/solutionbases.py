@@ -222,7 +222,7 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
         _, n_all_mbrs = new_basis.shape
         
     if solution_name is None:
-        name = solution.name+' (modified)'
+        name = 'child solution'
     else:
         name = solution_name 
 

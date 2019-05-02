@@ -1,7 +1,7 @@
 import numpy as np
 
 from input_dataset import *
-
+from fitting_functions import equilibrium_order
 
 # Garnet-clinopyroxene partitioning data
 with open('data/Beyer_et_al_2019_NCFMASO.dat', 'r') as f:
@@ -14,15 +14,38 @@ Beyer_et_al_2019_NCFMASO_assemblages = []
 
 
 # Temporarily change the formulae of the endmembers for fitting purposes!!
+
+# Garnet
 gt.endmember_formulae[gt.endmember_names.index('andr')] = {'O':  12.0,
                                                            'Ca':  3.0,
                                                            'Fef': 2.0,
                                                            'Si':  3.0}
 child_solutions['xna_gt'].endmember_formulae[child_solutions['xna_gt'].endmember_names.index('andr')] = {'O':  12.0, 'Ca':  3.0, 'Fef': 2.0, 'Si':  3.0}
 child_solutions['xmj_gt'].endmember_formulae[child_solutions['xmj_gt'].endmember_names.index('andr')] = {'O':  12.0, 'Ca':  3.0, 'Fef': 2.0, 'Si':  3.0}
+
+# Clinopyroxene
 cpx_od.endmember_formulae[cpx_od.endmember_names.index('acm')] = {'O':  6.0,
                                                                   'Na':  1.0,
                                                                   'Fef': 1.0,
+                                                                  'Si': 2.0}
+
+
+# Ordered endmembers
+opx_od.endmember_formulae[opx_od.endmember_names.index('ofm')] = {'O':  6.0,
+                                                                  'Mga': 1.,
+                                                                  'Mg':  1.0,
+                                                                  'Fe': 1.0,
+                                                                  'Si': 2.0}
+
+hpx_od.endmember_formulae[hpx_od.endmember_names.index('hfm')] = {'O':  6.0,
+                                                                  'Mga': 1.0,
+                                                                  'Mg':  1.0,
+                                                                  'Fe': 1.0,
+                                                                  'Si': 2.0}
+
+cpx_od.endmember_formulae[cpx_od.endmember_names.index('cfs')] = {'O':  6.0,
+                                                                  'Fea': 1.0,
+                                                                  'Fe': 2.0,
                                                                   'Si': 2.0}
     
 
@@ -36,10 +59,7 @@ for i, run in enumerate(set_runs):
     for j, chamber in enumerate(all_chambers[i]):
         chamber_indices = [run_idx for run_idx in run_indices
                            if (ds[run_idx][2] == chamber and
-                               ds[run_idx][1] != 'cpx' and
-                               ds[run_idx][1] != 'hpx' and
                                ds[run_idx][1] != 'unwantedphase')]
-        print('WARNING!!! CPX,HPX IGNORED!')
       
         if len(chamber_indices) > 1:
                 phases = []
@@ -58,7 +78,7 @@ for i, run in enumerate(set_runs):
 
                 assemblage = burnman.Composite(phases)
                 
-                assemblage.experiment_id = run
+                assemblage.experiment_id = 'Beyer2019_{0}'.format(run)
                 assemblage.nominal_state = np.array([pressure, temperature])
                 assemblage.state_covariances = np.array([[1.e7*1.e7, 0.],[0., 10.*10]]) # pressure uncertainties v small. We'll add dP hyperparameters to deal with the multichamber nature of the experiments.
 
@@ -66,8 +86,11 @@ for i, run in enumerate(set_runs):
                 for k, idx in enumerate(chamber_indices):
                     
                     # Si, Al, FeT, [Mo], Mg, Ca, Na, [Re, no unc]
-                    c = np.array([float(ds[idx][cidx]) for cidx in [7,9,11,15,17,19]]) 
-                    sig_c = np.array([float(ds[idx][cidx]) for cidx in [8,10,12,16,18,20]]) 
+                    c = np.array([float(ds[idx][cidx]) for cidx in [7,9,11,15,17,19]])
+
+                    sig_c = np.array([max(float(ds[idx][cidx]), 0.001)
+                                      for cidx in [8,10,12,16,18,20]])
+                    
                     cation_total = float(ds[idx][22])
                     f = float(ds[idx][23]) # Fe3+/sumFe
                     sig_f = float(ds[idx][24]) # sigma Fe3+/sumFe
@@ -83,43 +106,67 @@ for i, run in enumerate(set_runs):
                 
                         assemblage.phases[k].fitted_elements = ['Fe', 'Mg']
                         assemblage.phases[k].composition = c[2:4]
-                        assemblage.phases[k].compositional_uncertainties = np.array([max(sig_c[2],
-                                                                                         0.001),
-                                                                                     max(sig_c[3],
-                                                                                         0.001)])
+                        assemblage.phases[k].compositional_uncertainties = sig_c[2:4]
                         
-                    elif (assemblage.phases[k] is opx or
+                    elif (assemblage.phases[k] is opx_od or
                           assemblage.phases[k] is hpx_od): # CFMAS
-                        assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe', 'Mg', 'Ca']
-                        assemblage.phases[k].composition = c[0:5]
-                        assemblage.phases[k].compositional_uncertainties = np.array([max(sig_c[0],
-                                                                                         0.001),
-                                                                                     max(sig_c[1],
-                                                                                         0.001),
-                                                                                     max(sig_c[2],
-                                                                                         0.001),
-                                                                                     max(sig_c[3],
-                                                                                         0.001),
-                                                                                     max(sig_c[4],
-                                                                                         0.001)])
-                        
-                    elif assemblage.phases[k] is cpx_od: # NCFMAS
-                        print('yo')
+                        assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe', 'Mg', 'Ca', 'Mga']
+                        assemblage.phases[k].composition = np.zeros(6)
+                        assemblage.phases[k].compositional_uncertainties = np.zeros(6)
+                        assemblage.phases[k].composition[0:5] = c[0:5]
+                        assemblage.phases[k].compositional_uncertainties[0:5] = sig_c[0:5]
+                        assemblage.phases[k].compositional_uncertainties[5] = 0.001
+
+                    elif assemblage.phases[k] is cpx_od: # NCFMASO
                         assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe',
-                                                                'Mg', 'Ca', 'Na']
-                        assemblage.phases[k].composition = c
-                        assemblage.phases[k].compositional_uncertainties = np.array([max(sig_c[0],
-                                                                                         0.001),
-                                                                                     max(sig_c[1],
-                                                                                         0.001),
-                                                                                     max(sig_c[2],
-                                                                                         0.001),
-                                                                                     max(sig_c[3],
-                                                                                         0.001),
-                                                                                     max(sig_c[4],
-                                                                                         0.001),
-                                                                                     max(sig_c[5],
-                                                                                         0.001)])
+                                                                'Mg', 'Ca', 'Na', 'Fef', 'Fea']
+                        
+                        cpx_od.composition = np.zeros(8)
+                        cpx_od.composition[0:6] = c
+                        
+                        # Fudge Fe3+ and sigma for now
+                        print('WARNING! Fudging Fe3+ (10%) and order (cfs=0.01) in cpx')
+                        f = 0.1
+                        sig_f = 0.05 
+                        cpx_od.composition[2] = c[2]*(1. - f) # Fe2+
+                        cpx_od.composition[6] = c[2]*f # Fe3+
+                        cpx_od.composition[7] = 0.01
+                        
+                        # Uncertainties
+                        cpx_od.compositional_uncertainties = np.zeros((8, 8))
+                        for s_idx, sig in enumerate(sig_c):
+                            cpx_od.compositional_uncertainties[s_idx, s_idx] = np.max([sig*sig, 1.e-4])
+                        
+                        cpx_od.compositional_uncertainties[7,7] = 1.e-4
+                            
+                        # We want to convert FeT and Fe3+/sum(Fe) uncertainties into
+                        # Fe2+ and Fe3+ uncertainties.
+                        # Starting with the equations for the amounts of Fe2+ and Fe3+:
+                        # Fe2+ = (1 - f)*FeT
+                        # Fe3+ = f*FeT
+                        # we can build the Jacobian and transform the uncertainties:
+                        J = np.array([[1.-f, -c[2]],
+                                      [f,     c[2]]])
+                        sig = np.array([[np.power(sig_c[2], 2.)/1000., 0.],
+                                        [0., np.power(sig_f, 2.)/1000.]])
+                        sig_prime = J.dot(sig).dot(J.T)
+                        
+                        cpx_od.compositional_uncertainties[2,2] = sig_prime[0][0]
+                        cpx_od.compositional_uncertainties[2,6] = sig_prime[0][1]
+                        cpx_od.compositional_uncertainties[6,2] = sig_prime[1][0]
+                        cpx_od.compositional_uncertainties[6,6] = sig_prime[1][1]
+
+                        # The following would adjust compositions to reach eqm.
+                        """
+                        a = burnman.Composite([cpx_od])
+                        burnman.processanalyses.compute_and_set_phase_compositions(a)
+                        print(cpx_od.molar_fractions)
+                        a.set_state(pressure, temperature)
+                        equilibrium_order(cpx_od)
+                        print(cpx_od.molar_fractions)
+                        exit()
+                        """
+
                     elif assemblage.phases[k] is gt:
                         gt.fitted_elements = ['Si', 'Al', 'Fe', 'Mg',
                                               'Ca', 'Na', 'Fef']
@@ -156,7 +203,7 @@ for i, run in enumerate(set_runs):
                           assemblage.phases[k] is child_solutions['xmj_gt']):
                         
                         assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe', 'Mg',
-                                                                     'Ca', 'Fef']
+                                                                'Ca', 'Fef']
 
                         # Composition
                         assemblage.phases[k].composition = np.zeros(6)
@@ -212,16 +259,33 @@ for i, run in enumerate(set_runs):
 
 
 # Change formulae back
+
+# Garnet
 gt.endmember_formulae[gt.endmember_names.index('andr')] = {'O':  12.0,
                                                            'Ca': 3.0,
                                                            'Fe': 2.0,
                                                            'Si': 3.0}
 child_solutions['xna_gt'].endmember_formulae[child_solutions['xna_gt'].endmember_names.index('andr')] = {'O': 12.0, 'Ca': 3.0, 'Fe': 2.0, 'Si': 3.0}
 child_solutions['xmj_gt'].endmember_formulae[child_solutions['xmj_gt'].endmember_names.index('andr')] = {'O': 12.0, 'Ca': 3.0, 'Fe': 2.0, 'Si': 3.0}
+
+# Clinopyroxene
 cpx_od.endmember_formulae[cpx_od.endmember_names.index('acm')] = {'O':  6.0,
                                                                   'Na': 1.0,
                                                                   'Fe': 1.0,
                                                                   'Si': 2.0}
 
     
-                
+# Ordered endmembers
+opx_od.endmember_formulae[opx_od.endmember_names.index('ofm')] = {'O':  6.0,
+                                                                  'Mg':  1.0,
+                                                                  'Fe': 1.0,
+                                                                  'Si': 2.0}
+
+hpx_od.endmember_formulae[hpx_od.endmember_names.index('hfm')] = {'O':  6.0,
+                                                                  'Mg': 1.0,
+                                                                  'Fe': 1.0,
+                                                                  'Si': 2.0}
+
+cpx_od.endmember_formulae[cpx_od.endmember_names.index('cfs')] = {'O':  6.0,
+                                                                  'Fe': 2.0,
+                                                                  'Si': 2.0}

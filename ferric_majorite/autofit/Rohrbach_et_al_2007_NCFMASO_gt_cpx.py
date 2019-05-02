@@ -8,6 +8,7 @@ with open('data/Rohrbach_et_al_2007_NCFMASO_gt_cpx.dat', 'r') as f:
     expt_data = [line.split() for line in f if line.split() != [] and line[0] != '#']
 
 set_runs = ['exp_15', 'zuII_4', 'zuIII_1', 'zu_8', 'zuII_3', 'zuIV_1']
+set_runs = ['zuII_4', 'zuIII_1', 'zu_8', 'zuII_3', 'zuIV_1']
 #set_runs = ['zuIII_1', 'zuII_3']
 
 print('WARNING: NOT READY YET!!')
@@ -22,6 +23,10 @@ cpx_od.endmember_formulae[cpx_od.endmember_names.index('acm')] = {'O':  6.0,
                                                                   'Fef': 1.0,
                                                                   'Si': 2.0}
 
+cpx_od.endmember_formulae[cpx_od.endmember_names.index('cfs')] = {'O':  6.0,
+                                                                  'Fea': 1.0,
+                                                                  'Fe': 2.0,
+                                                                  'Si': 2.0}
 
 Rohrbach_et_al_2007_NCFMASO_assemblages = []
 for i, run_id in enumerate(set_runs):
@@ -106,5 +111,6 @@ cpx_od.endmember_formulae[cpx_od.endmember_names.index('acm')] = {'O':  6.0,
                                                                   'Fe': 1.0,
                                                                   'Si': 2.0}
 
-    
-                
+cpx_od.endmember_formulae[cpx_od.endmember_names.index('cfs')] = {'O':  6.0,
+                                                                  'Fe': 2.0,
+                                                                  'Si': 2.0}
