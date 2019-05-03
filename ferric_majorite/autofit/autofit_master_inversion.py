@@ -135,31 +135,40 @@ def minimize_func(params, assemblages):
 # Na: NaAlSi2O6 jadeite 
 
 endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3], # (Mg,Fe)O: no per (Mg std)
-                  ['fo',   'H_0', fo.params['H_0'],  1.e3],
+                  
+                  ['fo',   'H_0', fo.params['H_0'],  1.e3], # olivine
                   ['fa',   'H_0', fa.params['H_0'],  1.e3],
+                  
                   ['mwd',  'H_0', mwd.params['H_0'], 1.e3], # fwd H_0 and S_0 obtained in set_params_from_special_constraints()
+                  
                   ['sp',   'H_0', sp.params['H_0'], 1.e3], # spinels
                   ['herc', 'H_0', herc.params['H_0'], 1.e3],
                   ['mt',   'H_0', mt.params['H_0'], 1.e3],
                   ['mrw',  'H_0', mrw.params['H_0'], 1.e3],
                   ['frw',  'H_0', frw.params['H_0'], 1.e3],
+                  
                   ['alm',  'H_0', alm.params['H_0'], 1.e3], # gt: no py (Al std)
                   ['gr',   'H_0', gr.params['H_0'], 1.e3],
                   ['andr', 'H_0', andr.params['H_0'], 1.e3],
                   ['dmaj', 'H_0', dmaj.params['H_0'], 1.e3],
                   ['nagt', 'H_0', nagt.params['H_0'], 1.e3],
+                  
                   ['oen',  'H_0', oen.params['H_0'], 1.e3], # opx: no odi (from di, itself a std)
                   ['ofs',  'H_0', ofs.params['H_0'], 1.e3], # ofm made mbr (updated automatically)
                   ['mgts', 'H_0', mgts.params['H_0'], 1.e3],
+                  
                   ['hed',  'H_0', hed.params['H_0'], 1.e3], # cpx: no di (Ca std) or jd (Na std)
                   ['cen',  'H_0', cen.params['H_0'], 1.e3], 
                   ['cfs',  'H_0', cfs.params['H_0'], 1.e3], 
                   ['cats', 'H_0', cats.params['H_0'], 1.e3],
                   ['aeg', 'H_0',  aeg.params['H_0'], 1.e3],
+                  
                   ['hen',  'H_0', hen.params['H_0'], 1.e3], # C2/c clinopyroxene
                   ['hfs',  'H_0', hfs.params['H_0'], 1.e3],
+                  
                   ['coe',  'H_0', coe.params['H_0'], 1.e3], # SiO2: no qtz (Si std)
                   ['stv',  'H_0', stv.params['H_0'], 1.e3],
+                  
                   ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3], # bridgmanite
                   ['fbdg', 'H_0', fbdg.params['H_0'], 1.e3],
                   
@@ -326,16 +335,16 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['Frost_2003_V171', 'P', 0., 0.5e9],
                             ['Frost_2003_V175', 'P', 0., 0.5e9],
                             ['Frost_2003_V179', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4321', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4556', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4557', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4560', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4692', 'P', 0., 0.5e9],
-                            ['Beyer2019_Z1699', 'P', 0., 0.5e9],
-                            ['Beyer2019_Z1700', 'P', 0., 0.5e9],
-                            ['Beyer2019_Z1782', 'P', 0., 0.5e9],
-                            ['Beyer2019_Z1785', 'P', 0., 0.5e9],
-                            ['Beyer2019_Z1786', 'P', 0., 0.5e9]]
+                            ['Beyer2019_H4321', 'P', 0., 0.2e9],
+                            ['Beyer2019_H4556', 'P', 0., 0.2e9],
+                            ['Beyer2019_H4557', 'P', 0., 0.2e9],
+                            ['Beyer2019_H4560', 'P', 0., 0.2e9],
+                            ['Beyer2019_H4692', 'P', 0., 0.2e9],
+                            ['Beyer2019_Z1699', 'P', 0., 0.2e9],
+                            ['Beyer2019_Z1700', 'P', 0., 0.2e9],
+                            ['Beyer2019_Z1782', 'P', 0., 0.2e9],
+                            ['Beyer2019_Z1785', 'P', 0., 0.2e9],
+                            ['Beyer2019_Z1786', 'P', 0., 0.2e9]]
 
 
 
@@ -437,6 +446,9 @@ from Gasparik_1992_MAS_px_gt import Gasparik_1992_MAS_assemblages
 from Gasparik_Newton_1984_MAS_opx_sp_fo import Gasparik_Newton_1984_MAS_assemblages
 from Gasparik_Newton_1984_MAS_py_opx_sp_fo import Gasparik_Newton_1984_MAS_univariant_assemblages
 from Perkins_et_al_1981_MAS_py_opx import Perkins_et_al_1981_MAS_assemblages
+#from Liu_et_al_2016_gt_bdg_cor import Liu_et_al_2016_MAS_assemblages
+#from Liu_et_al_2017_bdg_cor import Liu_et_al_2017_MAS_assemblages
+#from Hirose_et_al_2001_ilm_bdg_gt import Hirose_et_al_2001_MAS_assemblages
 
 # CMS
 from Carlson_Lindsley_1988_CMS_opx_cpx import Carlson_Lindsley_1988_CMS_assemblages
@@ -459,7 +471,6 @@ from Rohrbach_et_al_2007_NCFMASO_gt_cpx import Rohrbach_et_al_2007_NCFMASO_assem
 from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
 
 # from Frost_2003_CFMASO_garnet import Frost_2003_CFMASO_gt_assemblages # lousy Fe3+ estimates
-
 
 assemblages = [assemblage for assemblage_list in
                [endmember_reaction_assemblages,
@@ -496,6 +507,7 @@ assemblages = [assemblage for assemblage_list in
 ### PUT PARAMS HERE ###
 #######################
 
+set_params([-264.8590, -2171.1322, -1476.7143, -2145.0354, -2299.3211, -1951.1258, -1117.0178, -2134.4839, -1464.1772, -5260.5125, -6638.9537, -5770.3972, -6035.7907, -5983.7552, -3090.0788, -2389.8929, -3196.2456, -2843.5913, -3094.7536, -2387.1188, -3312.3619, -2575.1535, -3083.0679, -2382.1476, -906.3264, -875.1409, -1441.8479, -1082.9593, 28.9589, 60.0499, 94.9440, 152.5899, 87.4312, 84.0193, 136.8574, 339.6674, 247.1241, 318.6356, 250.8190, 133.0690, 193.0016, 130.8203, 131.9638, 190.2362, 61.6525, 40.2854, 19.3926, 4.2143, 1.7075, 1.9632, 3.2640, 3.2232, 2.4526, 2.3120, 2.2123, 1.8267, 2.2876, 1.1733, 10.4738, 6.5784, 16.4250, 0.8667, 0.7085, 3.2665, 6.5015, 4.2767, 13.4740, 29.0828, 10.3483, 24.8079, 75.2820, 14.9951, 22.0473, 4.3272, 28.1915, 29.7703, 10.8906, 2.1849, 45.7858, 37.9940, 60.4635, 25.0907, 23.7952, 52.2650, 2.9603, 15.1396, 5.9483, 2.9956, -0.2981, 1.4972, 57.8678, -1.0706, 0.5560, 7.3542, -3.2149, 2.0710, 4.9917, -1.7866, 0.1852, -0.0268, -0.0074, -0.0497, -0.0142, -0.0079, -0.0593, -0.0162, -0.0061, -0.0152, -0.0674, 0.0252, -0.0042, 0.1124, 1.9488, -0.0474, -0.3210, -0.0583, 0.4328, 0.9290, 0.8674, 0.5254, -0.0030, 1.1444, -0.0494, -0.1139, -0.1089, -0.0823, 0.0151, -0.3029, -0.5707, -0.2868, -0.0825, 0.0002, -0.0000, -0.0001, -0.0008, -0.0013, 0.0000, -0.0002, -0.0029, -0.0004, -0.0009])
 
 ########################
 # RUN THE MINIMIZATION #

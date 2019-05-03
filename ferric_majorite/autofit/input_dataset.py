@@ -33,6 +33,7 @@ fcc_iron = burnman.minerals.SE_2015.fcc_iron()
 hcp_iron = burnman.minerals.SE_2015.hcp_iron()
 
 # Oxides
+cor = burnman.minerals.HP_2011_ds62.cor()
 hem = burnman.minerals.HP_2011_ds62.hem()
 
 # MgO and FeO
@@ -135,6 +136,21 @@ plt.show()
 # Bridgmanite
 mbdg = burnman.minerals.HHPH_2013.mpv()
 fbdg = burnman.minerals.HHPH_2013.fpv()
+abdg = burnman.minerals.HHPH_2013.apv()
+fefbdg = burnman.minerals.HP_2011_ds62.hem()
+
+fabdg = burnman.CombinedMineral([fefbdg, abdg], [0.5, 0.5], [-6.6e3, 0., 0.], name='fabdg')
+
+# Akimotoite
+mak = burnman.minerals.HHPH_2013.mak()
+fak = burnman.minerals.HHPH_2013.fak()
+
+# High pressure corundum phase
+mcor = burnman.minerals.HHPH_2013.mcor()
+
+facor = burnman.CombinedMineral([cor, hem], [0.5, 0.5], [-6.6e3, 0., 0.], name='facor')
+fcor = burnman.CombinedMineral([mcor, mak, fak], [1., -1., 1.], [-15e3, 0., 0.], name='fcor')
+
 
 # SiO2 polymorphs
 qtz = burnman.minerals.HP_2011_ds62.q()
@@ -344,9 +360,36 @@ for (P, m1, m2) in [[14.25e9, fo, mwd],
 
 bdg = Solution(name = 'bridgmanite',
                solution_type ='symmetric',
-               endmembers=[[mbdg, '[Mg][Si]O3'], [fbdg, '[Fe][Si]O3']],
-               energy_interaction=[[6.e3]],
-               volume_interaction=[[0.e-7]]) 
+               endmembers=[[mbdg, '[Mg][Si]O3'],
+                           [fbdg, '[Fe][Si]O3'],
+                           [abdg, '[Al][Al]O3'],
+                           [fefbdg, '[Fef][Fef]O3'],
+                           [fabdg, '[Fef][Al]O3']],
+               energy_interaction=[[6.e3, 0., 0., 0.],
+                                   [0., 0., 0.],
+                                   [0., 0.],
+                                   [0.]],
+               volume_interaction=[[0., 0., 0., 0.],
+                                   [0., 0., 0.],
+                                   [0., 0.],
+                                   [0.]])
+
+cor = Solution(name = 'corundum',
+               solution_type ='symmetric',
+               endmembers=[[cor, '[Al][Al]O3'],
+                           [hem, '[Fef][Fef]O3'],
+                           [facor, '[Fef][Al]O3'],
+                           [mcor, '[Mg][Si]O3'],
+                           [fcor, '[Fe][Si]O3']],
+               energy_interaction=[[0., 0., 6.e3, 0.],
+                                   [0., 0., 0.],
+                                   [0., 0.],
+                                   [0.]],
+               volume_interaction=[[0., 0., 0., 0.],
+                                   [0., 0., 0.],
+                                   [0., 0.],
+                                   [0.]])
+               
 fper = Solution(name = 'ferropericlase',
                 solution_type ='symmetric',
                 endmembers=[[per, '[Mg]O'], [wus, '[Fe]O']],
@@ -486,7 +529,19 @@ gt = Solution(name = 'garnet',
 print('Warning! oen_ofs still doesn\'t have o-d')
 
 # Child solutions *must* be in dictionary to be reset properly
-child_solutions = {'py_alm_gt': transform_solution_to_new_basis(gt,
+child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
+                                                                np.array([[1., 0., 0., 0., 0.],
+                                                                          [0., 1., 0., 0., 0.]]),
+                                                                solution_name='mg-fe bridgmanite'),
+                   'mg_al_bdg': transform_solution_to_new_basis(bdg,
+                                                                np.array([[1., 0., 0., 0., 0.],
+                                                                          [0., 0., 1., 0., 0.]]),
+                                                                solution_name='mg-al bridgmanite'),
+                   'al_mg_cor': transform_solution_to_new_basis(cor,
+                                                                np.array([[1., 0., 0., 0., 0.],
+                                                                          [0., 0., 0., 1., 0.]]),
+                                                                solution_name='al-mg corundum'),
+                   'py_alm_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[1., 0., 0., 0., 0., 0.],
                                                                           [0., 1., 0., 0., 0., 0.]]),
                                                                 solution_name='py-alm garnet'),

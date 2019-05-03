@@ -61,7 +61,7 @@ for i, run in enumerate(set_runs):
                            if (ds[run_idx][2] == chamber and
                                ds[run_idx][1] != 'unwantedphase')]
       
-        if len(chamber_indices) > 1:
+        if len(chamber_indices) > 1 and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'):
                 phases = []
                 for idx in chamber_indices:
                     
@@ -268,7 +268,7 @@ for i, run in enumerate(set_runs):
                                                              assemblage.phases[k].molar_fraction_covariances)
                     except:
                         pass
-                
+
                 Beyer_et_al_2019_NCFMASO_assemblages.append(assemblage)
 
 

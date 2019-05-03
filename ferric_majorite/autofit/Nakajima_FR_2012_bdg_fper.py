@@ -19,17 +19,17 @@ for run_id, mix, PGPa, TK, t, Febdg, Feerrbdg, Fefper, Feerrfper, _, _, _, _ in 
     fper_cov = float(Feerrfper)*float(Feerrfper) # sqrt2
     
     
-    assemblage = burnman.Composite([bdg, fper]) # in metallic Fe, low Fe3+ in bdg
+    assemblage = burnman.Composite([child_solutions['mg_fe_bdg'], fper]) # in metallic Fe, low Fe3+ in bdg
     
     assemblage.experiment_id = 'Nakajima_FR_2012_{0}'.format(run_id)
     assemblage.nominal_state = np.array([float(PGPa)*1.e9, float(TK)]) # CONVERT PRESSURE TO GPA
     assemblage.state_covariances = np.array([[1.e9*1.e9, 0.], [0., 100.]]) # 1 GPa uncertainty
 
-    bdg.set_composition(np.array([p_mbdg, 1. - p_mbdg]))
+    child_solutions['mg_fe_bdg'].set_composition(np.array([p_mbdg, 1. - p_mbdg]))
     fper.set_composition(np.array([p_per, 1. - p_per]))
 
-    bdg.molar_fraction_covariances = np.array([[bdg_cov, -bdg_cov],
-                                               [-bdg_cov, bdg_cov]])
+    child_solutions['mg_fe_bdg'].molar_fraction_covariances = np.array([[bdg_cov, -bdg_cov],
+                                                                        [-bdg_cov, bdg_cov]])
     fper.molar_fraction_covariances = np.array([[fper_cov, -fper_cov],
                                                 [-fper_cov, fper_cov]])
 
