@@ -9,8 +9,8 @@ import matplotlib.image as mpimg
 from matplotlib import cm
 from scipy.optimize import minimize, fsolve
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../burnman'):
+    sys.path.insert(1, os.path.abspath('../..'))
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.processanalyses import compute_and_set_phase_compositions, assemblage_affinity_misfit
@@ -127,30 +127,33 @@ def minimize_func(params, assemblages):
 # Ca: CaMgSi2O6 diopside
 # Na: NaAlSi2O6 jadeite 
 
-endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3], 
+endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3], # (Mg,Fe)O: no per (Mg std)
                   ['fo',   'H_0', fo.params['H_0'],  1.e3],
                   ['fa',   'H_0', fa.params['H_0'],  1.e3],
                   ['mwd',  'H_0', mwd.params['H_0'], 1.e3], # fwd H_0 and S_0 obtained in set_params_from_special_constraints()
+                  ['sp',   'H_0', sp.params['H_0'], 1.e3], # spinels
+                  ['herc', 'H_0', herc.params['H_0'], 1.e3],
+                  ['mt',   'H_0', mt.params['H_0'], 1.e3],
                   ['mrw',  'H_0', mrw.params['H_0'], 1.e3],
                   ['frw',  'H_0', frw.params['H_0'], 1.e3],
-                  ['alm',  'H_0', alm.params['H_0'], 1.e3],
+                  ['alm',  'H_0', alm.params['H_0'], 1.e3], # gt: no py (Al std)
                   ['gr',   'H_0', gr.params['H_0'], 1.e3],
                   ['andr', 'H_0', andr.params['H_0'], 1.e3],
                   ['dmaj', 'H_0', dmaj.params['H_0'], 1.e3],
-                  ['coe',  'H_0', coe.params['H_0'], 1.e3],
-                  ['stv',  'H_0', stv.params['H_0'], 1.e3],
-                  ['oen',  'H_0', oen.params['H_0'], 1.e3],
-                  ['ofs',  'H_0', ofs.params['H_0'], 1.e3], # no odi (defined from di)
+                  ['nagt', 'H_0', nagt.params['H_0'], 1.e3],
+                  ['oen',  'H_0', oen.params['H_0'], 1.e3], # opx: no odi (from di, itself a std)
+                  ['ofs',  'H_0', ofs.params['H_0'], 1.e3], # ofm made mbr (updated automatically)
                   ['mgts', 'H_0', mgts.params['H_0'], 1.e3],
-                  ['hed',  'H_0', hed.params['H_0'], 1.e3], # no di (Ca std)
+                  ['hed',  'H_0', hed.params['H_0'], 1.e3], # cpx: no di (Ca std) or jd (Na std)
                   ['cen',  'H_0', cen.params['H_0'], 1.e3], 
+                  ['cfs',  'H_0', cfs.params['H_0'], 1.e3], 
                   ['cats', 'H_0', cats.params['H_0'], 1.e3],
-                  ['sp',   'H_0', sp.params['H_0'], 1.e3],
-                  ['herc', 'H_0', herc.params['H_0'], 1.e3],
-                  ['mt',   'H_0', mt.params['H_0'], 1.e3],
-                  ['hen',  'H_0', hen.params['H_0'], 1.e3],
+                  ['aeg', 'H_0',  aeg.params['H_0'], 1.e3],
+                  ['hen',  'H_0', hen.params['H_0'], 1.e3], # C2/c clinopyroxene
                   ['hfs',  'H_0', hfs.params['H_0'], 1.e3],
-                  ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3],
+                  ['coe',  'H_0', coe.params['H_0'], 1.e3], # SiO2: no qtz (Si std)
+                  ['stv',  'H_0', stv.params['H_0'], 1.e3],
+                  ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3], # bridgmanite
                   ['fbdg', 'H_0', fbdg.params['H_0'], 1.e3],
                   
                   ['per',  'S_0', per.params['S_0'], 1.], # has a prior associated with it, so can be inverted
@@ -201,9 +204,17 @@ solution_args = [['mw', 'E', 0, 0,  fper.energy_interaction[0][0], 1.e3],
                  ['cpx', 'E', 2, 1, cpx_od.energy_interaction[2][1], 1.e3], # cen-cats
                  ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3], # mbdg-fbdg
                  ['gt', 'E', 0, 3,  gt.energy_interaction[0][3], 1.e3], # py-dmaj
+                 ['gt', 'E', 0, 4,  gt.energy_interaction[0][4], 1.e3], # py-nagt
                  ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 1.e3], # alm-gr
                  ['gt', 'E', 1, 1,  gt.energy_interaction[1][1], 1.e3], # alm-andr
-                 ['gt', 'E', 2, 0,  gt.energy_interaction[2][0], 1.e3]] # gr-andr
+                 ['gt', 'E', 1, 2,  gt.energy_interaction[1][2], 1.e3], # alm-dmaj
+                 ['gt', 'E', 1, 3,  gt.energy_interaction[1][3], 1.e3], # alm-nagt
+                 ['gt', 'E', 2, 0,  gt.energy_interaction[2][0], 1.e3], # gr-andr
+                 ['gt', 'E', 2, 1,  gt.energy_interaction[2][1], 1.e3], # gr-dmaj
+                 ['gt', 'E', 2, 2,  gt.energy_interaction[2][2], 1.e3], # gr-nagt
+                 ['gt', 'E', 3, 0,  gt.energy_interaction[3][0], 1.e3], # andr-dmaj
+                 ['gt', 'E', 3, 1,  gt.energy_interaction[3][1], 1.e3], # andr-nagt
+                 ['gt', 'E', 4, 0,  gt.energy_interaction[4][0], 1.e3]] # dmaj-nagt
 
 
 solution_priors = [['sp', 'E', 1, 0,  5.e3, 10.e3], # oen-mgts
@@ -262,6 +273,15 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['V229', 'P', 0., 0.5e9],
                             ['V252', 'P', 0., 0.5e9],
                             ['V254', 'P', 0., 0.5e9],
+                            ['Frost_2003_H1554', 'P', 0., 0.5e9],
+                            ['Frost_2003_H1555', 'P', 0., 0.5e9],
+                            ['Frost_2003_H1556', 'P', 0., 0.5e9],
+                            ['Frost_2003_H1582', 'P', 0., 0.5e9],
+                            ['Frost_2003_S2773', 'P', 0., 0.5e9],
+                            ['Frost_2003_V170', 'P', 0., 0.5e9],
+                            ['Frost_2003_V171', 'P', 0., 0.5e9],
+                            ['Frost_2003_V175', 'P', 0., 0.5e9],
+                            ['Frost_2003_V179', 'P', 0., 0.5e9],
                             ['Beyer2019_H4321', 'P', 0., 0.5e9],
                             ['Beyer2019_H4556', 'P', 0., 0.5e9],
                             ['Beyer2019_H4557', 'P', 0., 0.5e9],
@@ -357,12 +377,15 @@ def set_params(args):
 # Endmembers
 from endmember_reactions import endmember_reaction_assemblages
 
+# FSO buffers
+from ONeill_1987_QFI import QFI_assemblages
+from ONeill_1987_QFM import QFM_assemblages
+
 # Fe-Mg-Si-O
 from Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
 from Seckendorff_ONeill_1992_ol_opx import Seckendorff_ONeill_1992_assemblages
 from ONeill_Wood_1979_ol_gt import ONeill_Wood_1979_assemblages
 from Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
-from ONeill_1987_QFI import QFI_assemblages
 from Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
 
 # MAS
@@ -391,16 +414,17 @@ from Frost_2003_FMASO_garnet import Frost_2003_FMASO_gt_assemblages
 from Rohrbach_et_al_2007_NCFMASO_gt_cpx import Rohrbach_et_al_2007_NCFMASO_assemblages
 from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
 
-# from Frost_2003_CFMASO_garnet import Frost_2003_CFMASO_gt_assemblages
+# from Frost_2003_CFMASO_garnet import Frost_2003_CFMASO_gt_assemblages # lousy Fe3+ estimates
 
 
 assemblages = [assemblage for assemblage_list in
-               [Frost_2003_assemblages,
+               [QFI_assemblages,
+                QFM_assemblages,
+                Frost_2003_assemblages,
                 Seckendorff_ONeill_1992_assemblages,
                 Matsuzaka_2000_assemblages,
                 endmember_reaction_assemblages,
                 ONeill_Wood_1979_assemblages,
-                QFI_assemblages,
                 Nakajima_FR_2012_assemblages,
                 Gasparik_1992_MAS_assemblages,
                 Gasparik_Newton_1984_MAS_assemblages,
@@ -417,6 +441,8 @@ assemblages = [assemblage for assemblage_list in
                ]
                for assemblage in assemblage_list]
 
+#for a in assemblages:
+#    print(a.experiment_id)
 
 #minimize_func(get_params(), assemblages)
 

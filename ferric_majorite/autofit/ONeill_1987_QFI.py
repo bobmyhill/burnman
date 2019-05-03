@@ -42,6 +42,7 @@ for i, (T, emfmV) in enumerate(data):
         assemblage = burnman.Composite([fa, iron, qtz,
                                         burnman.CombinedMineral([O2], [1.],
                                                                 [mu_O2, 0., 0.])])
+        assemblage.experiment_id = 'QFI_FeFeO_electrode'
         
         assemblage.nominal_state = np.array([1.e5, T])
         assemblage.state_covariances = np.array([[1., 0.],
@@ -66,7 +67,8 @@ for i, (T, emfmV) in enumerate(data):
         assemblage = burnman.Composite([fa, iron, qtz,
                                         burnman.CombinedMineral([O2], [1.],
                                                                 [mu_O2, 0., 0.])])
-        
+
+        assemblage.experiment_id = 'QFI_MoMoO2_electrode'
         assemblage.nominal_state = np.array([1.e5, T])
         assemblage.state_covariances = np.array([[1., 0.],
                                                  [0., 100.]]) # 10 K uncertainty - this is actually a proxy for the uncertainty in the emf.

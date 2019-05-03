@@ -639,8 +639,10 @@ endmembers = {'Re':       Re,       # buffer materials
               'di':       di,       # clinopyroxene
               'hed':      hed,
               'cen':      cen,
+              'cfs':      cfs,
               'cats':     cats,
               'jd':       jd,
+              'aeg':      aeg,
               'oen':      oen,      # orthopyroxene
               'ofs':      ofs,
               'mgts':     mgts,
