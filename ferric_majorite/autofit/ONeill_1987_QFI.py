@@ -23,7 +23,7 @@ def mu_O2_Mo_MoO2(T):
         raise Exception('T too high')
 
 
-QFI_assemblages = []
+ONeill_1987_QFI_assemblages = []
     
 F = 96484.56 # value of Faraday constant from paper
 
@@ -49,7 +49,7 @@ for i, (T, emfmV) in enumerate(data):
                                                  [0., 100.]]) # 10 K uncertainty - this is actually a proxy for the uncertainty in the emf.
         
         
-        QFI_assemblages.append(assemblage)
+        ONeill_1987_QFI_assemblages.append(assemblage)
                                 
 
 data = np.loadtxt('data/ONeill_1987_QFI_MoMoO2_electrode.dat')
@@ -74,6 +74,6 @@ for i, (T, emfmV) in enumerate(data):
                                                  [0., 100.]]) # 10 K uncertainty - this is actually a proxy for the uncertainty in the emf.
         
         
-        QFI_assemblages.append(assemblage)
+        ONeill_1987_QFI_assemblages.append(assemblage)
     
 

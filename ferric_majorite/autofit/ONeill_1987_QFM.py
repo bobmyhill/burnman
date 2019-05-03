@@ -11,7 +11,7 @@ def mu_O2_Cu_Cu2O(T):
         raise Exception('T too high')
 
 
-QFM_assemblages = []
+ONeill_1987_QFM_assemblages = []
     
 F = 96484.56 # value of Faraday constant from paper
 
@@ -32,5 +32,5 @@ for i, (T, emfmV) in enumerate(data):
                                                  [0., 100.]]) # 10 K uncertainty - this is actually a proxy for the uncertainty in the emf.
         
         
-        QFM_assemblages.append(assemblage)
+        ONeill_1987_QFM_assemblages.append(assemblage)
                                 

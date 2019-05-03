@@ -33,7 +33,7 @@ else:
 
 
 def set_params_from_special_constraints():
-    # Destabilise fwd
+    # 1) Destabilise fwd
     fa.set_state(6.25e9, 1673.15)
     frw.set_state(6.25e9, 1673.15)
     fwd.set_state(6.25e9, 1673.15)
@@ -44,6 +44,13 @@ def set_params_from_special_constraints():
     dS = dPdT*dV
     fwd.params['S_0'] += fa.S - fwd.S + dS
     fwd.params['H_0'] += frw.gibbs - fwd.gibbs + 100. # make fwd a little less stable than frw
+
+    # 2) Copy interaction parameters from opx to hpx:
+    hpx_od.alphas = opx_od.alphas
+    hpx_od.energy_interaction = opx_od.energy_interaction
+    hpx_od.entropy_interaction = opx_od.entropy_interaction
+    hpx_od.volume_interaction = opx_od.volume_interaction
+    
     
 def minimize_func(params, assemblages):
     old_params = get_params()
@@ -190,19 +197,37 @@ endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3], # (Mg,Fe)O: no per (
 solution_args = [['mw', 'E', 0, 0,  fper.energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0,  ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
+                 
                  ['sp', 'E', 1, 0,  spinel.energy_interaction[1][0], 1.e3], # herc-mt
                  ['sp', 'E', 1, 2,  spinel.energy_interaction[1][2], 1.e3], # herc-frw
                  ['sp', 'E', 2, 1,  spinel.energy_interaction[2][1], 1.e3], # mt-frw
                  ['sp', 'E', 3, 0,  spinel.energy_interaction[3][0], 1.e3], # mrw-frw
+                 
                  ['opx', 'E', 0, 0, opx_od.energy_interaction[0][0], 1.e3], # oen-ofs
                  ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 1.e3], # oen-mgts
                  ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 1.e3], # oen-odi
+                 ['opx', 'E', 1, 0, opx_od.energy_interaction[1][0], 1.e3], # ofs-mgts
+                 ['opx', 'E', 1, 1, opx_od.energy_interaction[1][1], 1.e3], # ofs-odi
                  ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 1.e3], # mgts-odi
+                 ['opx', 'E', 2, 1, opx_od.energy_interaction[2][1], 1.e3], # mgts-ofm
+                 ['opx', 'E', 3, 0, opx_od.energy_interaction[3][0], 1.e3], # odi-ofm
+                 
                  ['cpx', 'E', 0, 0, cpx_od.energy_interaction[0][0], 1.e3], # di-hed
                  ['cpx', 'E', 0, 1, cpx_od.energy_interaction[0][1], 1.e3], # di-cen
+                 ['cpx', 'E', 0, 2, cpx_od.energy_interaction[0][1], 1.e3], # di-cfs
                  ['cpx', 'E', 0, 3, cpx_od.energy_interaction[0][3], 1.e3], # di-cats
+                 ['cpx', 'E', 2, 0, cpx_od.energy_interaction[2][0], 1.e3], # cen-cfs
                  ['cpx', 'E', 2, 1, cpx_od.energy_interaction[2][1], 1.e3], # cen-cats
+                 ['cpx', 'E', 2, 2, cpx_od.energy_interaction[2][2], 1.e3], # cen-jd
+                 ['cpx', 'E', 2, 3, cpx_od.energy_interaction[2][3], 1.e3], # cen-aeg
+                 ['cpx', 'E', 3, 0, cpx_od.energy_interaction[3][0], 1.e3], # cfs-cats
+                 ['cpx', 'E', 3, 1, cpx_od.energy_interaction[3][1], 1.e3], # cfs-jd
+                 ['cpx', 'E', 3, 2, cpx_od.energy_interaction[3][2], 1.e3], # cfs-aeg
+                 ['cpx', 'E', 4, 0, cpx_od.energy_interaction[4][0], 1.e3], # cats-jd
+                 ['cpx', 'E', 4, 1, cpx_od.energy_interaction[4][1], 1.e3], # cats-aeg
+                 
                  ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3], # mbdg-fbdg
+                 
                  ['gt', 'E', 0, 3,  gt.energy_interaction[0][3], 1.e3], # py-dmaj
                  ['gt', 'E', 0, 4,  gt.energy_interaction[0][4], 1.e3], # py-nagt
                  ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 1.e3], # alm-gr
@@ -217,10 +242,29 @@ solution_args = [['mw', 'E', 0, 0,  fper.energy_interaction[0][0], 1.e3],
                  ['gt', 'E', 4, 0,  gt.energy_interaction[4][0], 1.e3]] # dmaj-nagt
 
 
-solution_priors = [['sp', 'E', 1, 0,  5.e3, 10.e3], # oen-mgts
+solution_priors = [['sp', 'E', 1, 0,  5.e3, 10.e3], # herc-mt
+                   
                    ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 5.e3], # oen-mgts
                    ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 5.e3], # oen-odi
-                   ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 5.e3], # odi-mgts
+                   ['opx', 'E', 1, 0, opx_od.energy_interaction[1][0], 5.e3], # ofs-mgts
+                   ['opx', 'E', 1, 1, opx_od.energy_interaction[1][1], 10.e3], # ofs-odi
+                   ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 30.e3], # mgts-odi
+                   ['opx', 'E', 2, 1, opx_od.energy_interaction[2][1], 5.e3], # mgts-ofm
+                   ['opx', 'E', 3, 0, opx_od.energy_interaction[3][0], 10.e3], # odi-ofm
+                
+                   ['cpx', 'E', 0, 1, 30.e3, 5.e3], # di-cen
+                   ['cpx', 'E', 0, 2, 26.e3, 5.e3], # di-cfs
+                   ['cpx', 'E', 0, 3, 13.e3, 5.e3], # di-cats
+                   ['cpx', 'E', 2, 0, 26.e3, 5.e3], # cen-cfs
+                   ['cpx', 'E', 2, 1, 21.e3, 5.e3], # cen-cats
+                   ['cpx', 'E', 2, 2,  9.e3, 5.e3], # cen-jd
+                   ['cpx', 'E', 2, 3, 10.e3, 5.e3], # cen-aeg
+                   ['cpx', 'E', 3, 0, 25.e3, 5.e3], # cfs-cats
+                   ['cpx', 'E', 3, 1, 24.e3, 5.e3], # cfs-jd
+                   ['cpx', 'E', 3, 2, 52.e3, 10.e3], # cfs-aeg
+                   ['cpx', 'E', 4, 0, 6.e3,  5.e3], # cats-jd
+                   ['cpx', 'E', 4, 1, 17.e3, 5.e3], # cats-aeg
+                   
                    ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 10.e3], # alm-gr
                    ['gt', 'E', 2, 0,  2.e3, 1.e3]] # gr-andr
 
@@ -378,8 +422,8 @@ def set_params(args):
 from endmember_reactions import endmember_reaction_assemblages
 
 # FSO buffers
-from ONeill_1987_QFI import QFI_assemblages
-from ONeill_1987_QFM import QFM_assemblages
+from ONeill_1987_QFI import ONeill_1987_QFI_assemblages
+from ONeill_1987_QFM import ONeill_1987_QFM_assemblages
 
 # Fe-Mg-Si-O
 from Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
@@ -418,12 +462,12 @@ from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
 
 
 assemblages = [assemblage for assemblage_list in
-               [QFI_assemblages,
-                QFM_assemblages,
+               [endmember_reaction_assemblages,
+                ONeill_1987_QFI_assemblages,
+                ONeill_1987_QFM_assemblages,
                 Frost_2003_assemblages,
                 Seckendorff_ONeill_1992_assemblages,
                 Matsuzaka_2000_assemblages,
-                endmember_reaction_assemblages,
                 ONeill_Wood_1979_assemblages,
                 Nakajima_FR_2012_assemblages,
                 Gasparik_1992_MAS_assemblages,
@@ -441,6 +485,7 @@ assemblages = [assemblage for assemblage_list in
                ]
                for assemblage in assemblage_list]
 
+
 #for a in assemblages:
 #    print(a.experiment_id)
 
@@ -451,12 +496,13 @@ assemblages = [assemblage for assemblage_list in
 ### PUT PARAMS HERE ###
 #######################
 
-#set_params([-269.0792, -2173.4836, -1476.9122, -2145.7575, -2135.5996, -1472.7334, -5258.2888, -907.0115, -867.3844, -3089.7563, -2389.8787, -3082.4015, -2392.1905, 26.8807, 55.5686, 94.2084, 151.4062, 85.4220, 81.7165, 135.8285, 340.6464, 132.3161, 188.4748, 131.4391, 177.9551, 39.6230, 29.5232, 4.3053, 1.6102, 2.0093, 3.0847, 3.4498, 2.8015, 2.7330, 2.0997, 1.8693, 2.1880, 2.1287, 11.3716, 5.8810, 17.4960, 8.6782, -1.4860, -1.4663, -0.3108, -3.0403, -0.4191, 1.0919, -4.2236, -1.5626, -0.4069, -1.1745, 0.1191, -0.0074, 1.0992, 0.1703, 1.5458, -1.1353, -1.0090, -0.9139, -0.6605, -0.1253, 0.2582, -0.0373, -0.1852, 0.8344])
 
 ########################
 # RUN THE MINIMIZATION #
 ########################
 if run_inversion:
+    print('Running inversion with {0} assemblages for {1} parameters'.format(len(assemblages),
+                                                                             len(get_params())))
     print(minimize(minimize_func, get_params(), args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
 # Print the current parameters
