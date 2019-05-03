@@ -106,39 +106,46 @@ def compute_and_set_phase_compositions(assemblage, verbose=False):
                     print('{0}: {1:.3f} +/- {2:.3f}'.format(phase.endmember_names[i], popt[i], np.sqrt(Cov_p[i][i])))
 
 def assemblage_affinity_misfit(assemblage):
-    # d(partial_gibbs)i/d(variables)j can be split into blocks
-    n_mbrs = sum([phase.n_endmembers if isinstance(phase, SolidSolution) else 1 for phase in assemblage.phases])
-    Cov_mu = np.zeros((n_mbrs, n_mbrs))
-    dmudPT = np.zeros((n_mbrs, 2))
-    mu = np.zeros(n_mbrs)
-    
-    i=0
-    for phase in assemblage.phases:
-        if isinstance(phase, SolidSolution):
-            Cov_mu[i:i+phase.n_endmembers,i:i+phase.n_endmembers] = (phase.gibbs_hessian).dot(phase.molar_fraction_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
-            dmudPT[i:i+phase.n_endmembers] = np.array([phase.partial_volumes, -phase.partial_entropies]).T
-            mu[i:i+phase.n_endmembers] = phase.partial_gibbs
-            i += phase.n_endmembers
-        else:
-            dmudPT[i] = np.array([phase.V, -phase.S])
-            mu[i] = phase.gibbs
-            i += 1
-
-    Cov_mu += dmudPT.dot(assemblage.state_covariances).dot(dmudPT.T)
-
-    # Finally, we use the reaction matrix (the nullspace of the stoichiometric matrix) to calculate the affinities
     reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
-    a = reaction_matrix.dot(mu)
-    Cov_a = reaction_matrix.dot(Cov_mu).dot(reaction_matrix.T)
-    try:
-        chi_sqr = a.dot(np.linalg.solve(Cov_a, a))
-    except:
-        print('Could not find misfit for assemblage')
+    if len(reaction_matrix) == 0:
+        print('No reactions between the phases'
+              ' in this assemblage: {0}'.format([ph.name for ph in assemblage.phases]))
+        return 0.
+    else:
+        # d(partial_gibbs)i/d(variables)j can be split into blocks
+        n_mbrs = sum([phase.n_endmembers if isinstance(phase, SolidSolution) else 1 for phase in assemblage.phases])
+        Cov_mu = np.zeros((n_mbrs, n_mbrs))
+        dmudPT = np.zeros((n_mbrs, 2))
+        mu = np.zeros(n_mbrs)
+        
+        i=0
+        for phase in assemblage.phases:
+            if isinstance(phase, SolidSolution):
+                Cov_mu[i:i+phase.n_endmembers,i:i+phase.n_endmembers] = (phase.gibbs_hessian).dot(phase.molar_fraction_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
+                dmudPT[i:i+phase.n_endmembers] = np.array([phase.partial_volumes, -phase.partial_entropies]).T
+                mu[i:i+phase.n_endmembers] = phase.partial_gibbs
+                i += phase.n_endmembers
+            else:
+                dmudPT[i] = np.array([phase.V, -phase.S])
+                mu[i] = phase.gibbs
+                i += 1
+
+        Cov_mu += dmudPT.dot(assemblage.state_covariances).dot(dmudPT.T)
+
+        # Finally, we use the reaction matrix
+        # (the nullspace of the stoichiometric matrix)
+        # to calculate the affinities
+        a = reaction_matrix.dot(mu)
+        Cov_a = reaction_matrix.dot(Cov_mu).dot(reaction_matrix.T)
         try:
-            print(assemblage.experiment_id)
+            chi_sqr = a.dot(np.linalg.solve(Cov_a, a))
         except:
-            pass
-        print([ph.name for ph in assemblage.phases])
-        print(Cov_a)
-        exit()
+            print('Could not find misfit for assemblage')
+            try:
+                print(assemblage.experiment_id)
+            except:
+                pass
+            print([ph.name for ph in assemblage.phases])
+            print(Cov_a)
+            exit()
     return chi_sqr

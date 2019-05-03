@@ -232,6 +232,10 @@ for i, run in enumerate(set_runs):
                         assemblage.phases[k].compositional_uncertainties[2,5] = sig_prime[0][1]
                         assemblage.phases[k].compositional_uncertainties[5,2] = sig_prime[1][0]
                         assemblage.phases[k].compositional_uncertainties[5,5] = sig_prime[1][1]
+                    elif isinstance(assemblage.phases[k], burnman.Mineral):
+                        pass
+                    else:
+                        raise Exception('phase not recognised: {0}'.format(assemblage.phases[k].name))
 
                         
 
@@ -249,8 +253,8 @@ for i, run in enumerate(set_runs):
                 assemblage.stored_compositions = ['composition not assigned']*len(chamber_indices)
                 for k in range(len(chamber_indices)):
                     try:
-                        assemblage.stored_compositions[k] = [(assemblage.phases[k].molar_fractions,
-                                                           assemblage.phases[k].molar_fraction_covariances)]
+                        assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
+                                                             assemblage.phases[k].molar_fraction_covariances)
                     except:
                         pass
                 

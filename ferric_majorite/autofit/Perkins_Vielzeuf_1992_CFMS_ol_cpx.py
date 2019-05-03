@@ -8,7 +8,7 @@ print('N.B. Only using ol-cpx equilibria with Ca in ol < 0.02 and Ca in opx > 0.
 # Garnet-pyroxene partitioning data
 cpx_ol_data = np.loadtxt('data/Perkins_Vielzeuf_1992_CFMS_ol_cpx.dat')
 
-Perkins_1992_CFMS_assemblages = []
+Perkins_Vielzeuf_1992_CFMS_assemblages = []
 
 for run_id, (PGPa, TK, Cacpx, Mgcpx, Fecpx, Caol, Mgol, Feol) in enumerate(cpx_ol_data):
 
@@ -33,4 +33,4 @@ for run_id, (PGPa, TK, Cacpx, Mgcpx, Fecpx, Caol, Mgol, Feol) in enumerate(cpx_o
                                            assemblage.phases[k].molar_fraction_covariances)
                                           for k in range(2)]
 
-        Perkins_1992_CFMS_assemblages.append(assemblage)
+        Perkins_Vielzeuf_1992_CFMS_assemblages.append(assemblage)

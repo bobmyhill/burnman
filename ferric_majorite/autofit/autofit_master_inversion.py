@@ -130,13 +130,20 @@ endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3],
                   ['mrw',  'H_0', mrw.params['H_0'], 1.e3],
                   ['frw',  'H_0', frw.params['H_0'], 1.e3],
                   ['alm',  'H_0', alm.params['H_0'], 1.e3],
+                  ['gr',   'H_0', gr.params['H_0'], 1.e3],
+                  ['andr', 'H_0', andr.params['H_0'], 1.e3],
                   ['dmaj', 'H_0', dmaj.params['H_0'], 1.e3],
                   ['coe',  'H_0', coe.params['H_0'], 1.e3],
                   ['stv',  'H_0', stv.params['H_0'], 1.e3],
                   ['oen',  'H_0', oen.params['H_0'], 1.e3],
-                  ['ofs',  'H_0', ofs.params['H_0'], 1.e3],
+                  ['ofs',  'H_0', ofs.params['H_0'], 1.e3], # no odi (defined from di)
                   ['mgts', 'H_0', mgts.params['H_0'], 1.e3],
+                  ['hed',  'H_0', hed.params['H_0'], 1.e3], # no di (Ca std)
+                  ['cen',  'H_0', cen.params['H_0'], 1.e3], 
+                  ['cats', 'H_0', cats.params['H_0'], 1.e3],
                   ['sp',   'H_0', sp.params['H_0'], 1.e3],
+                  ['herc', 'H_0', herc.params['H_0'], 1.e3],
+                  ['mt',   'H_0', mt.params['H_0'], 1.e3],
                   ['hen',  'H_0', hen.params['H_0'], 1.e3],
                   ['hfs',  'H_0', hfs.params['H_0'], 1.e3],
                   ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3],
@@ -150,6 +157,8 @@ endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3],
                   ['mrw', 'S_0', mrw.params['S_0'], 1.],
                   ['frw', 'S_0', frw.params['S_0'], 1.],
                   ['alm', 'S_0', alm.params['S_0'], 1.],
+                  ['gr', 'S_0',   gr.params['S_0'], 1.],
+                  ['andr', 'S_0',  andr.params['S_0'], 1.],
                   ['dmaj', 'S_0', dmaj.params['S_0'], 1.],
                   ['oen', 'S_0', oen.params['S_0'], 1.],
                   ['ofs', 'S_0', ofs.params['S_0'], 1.],
@@ -171,15 +180,34 @@ endmember_args = [['wus',  'H_0', wus.params['H_0'], 1.e3],
                   ['mrw', 'a_0', mrw.params['a_0'], 1.e-5],
                   ['frw', 'a_0', frw.params['a_0'], 1.e-5]]
 
-solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
-                 ['ol', 'E', 0, 0, ol.energy_interaction[0][0], 1.e3],
+solution_args = [['mw', 'E', 0, 0,  fper.energy_interaction[0][0], 1.e3],
+                 ['ol', 'E', 0, 0,  ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
-                 ['sp', 'E', 0, 0, spinel.energy_interaction[3][0], 1.e3], # mrw-frw
-                 ['opx', 'E', 0, 0, opx_od.energy_interaction[0][0], 1.e3],
-                 ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3],
-                 ['gt', 'E', 0, 0, gt.energy_interaction[0][4], 1.e3]] # py-dmaj
+                 ['sp', 'E', 1, 0,  spinel.energy_interaction[1][0], 1.e3], # herc-mt
+                 ['sp', 'E', 1, 2,  spinel.energy_interaction[1][2], 1.e3], # herc-frw
+                 ['sp', 'E', 2, 1,  spinel.energy_interaction[2][1], 1.e3], # mt-frw
+                 ['sp', 'E', 3, 0,  spinel.energy_interaction[3][0], 1.e3], # mrw-frw
+                 ['opx', 'E', 0, 0, opx_od.energy_interaction[0][0], 1.e3], # oen-ofs
+                 ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 1.e3], # oen-mgts
+                 ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 1.e3], # oen-odi
+                 ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 1.e3], # mgts-odi
+                 ['cpx', 'E', 0, 0, cpx_od.energy_interaction[0][0], 1.e3], # di-hed
+                 ['cpx', 'E', 0, 1, cpx_od.energy_interaction[0][1], 1.e3], # di-cen
+                 ['cpx', 'E', 0, 3, cpx_od.energy_interaction[0][3], 1.e3], # di-cats
+                 ['cpx', 'E', 2, 1, cpx_od.energy_interaction[2][1], 1.e3], # cen-cats
+                 ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3], # mbdg-fbdg
+                 ['gt', 'E', 0, 3,  gt.energy_interaction[0][3], 1.e3], # py-dmaj
+                 ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 1.e3], # alm-gr
+                 ['gt', 'E', 1, 1,  gt.energy_interaction[1][1], 1.e3], # alm-andr
+                 ['gt', 'E', 2, 0,  gt.energy_interaction[2][0], 1.e3]] # gr-andr
 
-# ['gt', 'E', 0, 0, gt.energy_interaction[0][0], 1.e3] # py-alm interaction fixed as ideal
+
+solution_priors = [['sp', 'E', 1, 0,  5.e3, 10.e3], # oen-mgts
+                   ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 5.e3], # oen-mgts
+                   ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 5.e3], # oen-odi
+                   ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 5.e3], # odi-mgts
+                   ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 10.e3], # alm-gr
+                   ['gt', 'E', 2, 0,  2.e3, 1.e3]] # gr-andr
 
 endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_orig'][1]],
                     ['wus', 'S_0', wus.params['S_0_orig'][0], wus.params['S_0_orig'][1]],
@@ -189,6 +217,8 @@ endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_or
                     ['mrw', 'S_0', mrw.params['S_0_orig'][0], mrw.params['S_0_orig'][1]],
                     ['frw', 'S_0', frw.params['S_0_orig'][0], frw.params['S_0_orig'][1]],
                     ['alm', 'S_0', alm.params['S_0_orig'][0], alm.params['S_0_orig'][1]],
+                    ['gr', 'S_0', gr.params['S_0_orig'][0], gr.params['S_0_orig'][1]],
+                    ['andr', 'S_0', andr.params['S_0_orig'][0], gr.params['S_0_orig'][1]],
                     ['oen', 'S_0', oen.params['S_0_orig'][0], oen.params['S_0_orig'][1]],
                     ['ofs', 'S_0', ofs.params['S_0_orig'][0], ofs.params['S_0_orig'][1]],
                     ['mbdg', 'S_0', mbdg.params['S_0_orig'][0], mbdg.params['S_0_orig'][1]],
@@ -204,7 +234,6 @@ endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_or
                     ['mrw', 'a_0', mrw.params['a_0_orig'], 2.e-7],
                     ['frw', 'a_0', frw.params['a_0_orig'], 5.e-7]]
 
-solution_priors = [] # ['gt', 'E', 0, 0, 0.3e3, 0.4e3]
 
 experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['50Fe', 'P', 0., 0.5e9],
@@ -228,17 +257,17 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['V227', 'P', 0., 0.5e9],
                             ['V229', 'P', 0., 0.5e9],
                             ['V252', 'P', 0., 0.5e9],
-                            ['V254', 'P', 0., 0.5e9]]
-#                            ['Beyer2019_H4321', 'P', 0., 0.5e9],
-#                            ['Beyer2019_H4556', 'P', 0., 0.5e9],
-#                            ['Beyer2019_H4557', 'P', 0., 0.5e9],
-#                            ['Beyer2019_H4560', 'P', 0., 0.5e9],
-#                            ['Beyer2019_H4692', 'P', 0., 0.5e9],
-#                            ['Beyer2019_Z1699', 'P', 0., 0.5e9],
-#                            ['Beyer2019_Z1700', 'P', 0., 0.5e9],
-#                            ['Beyer2019_Z1782', 'P', 0., 0.5e9],
-#                            ['Beyer2019_Z1785', 'P', 0., 0.5e9],
-#                            ['Beyer2019_Z1786', 'P', 0., 0.5e9]]
+                            ['V254', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4321', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4556', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4557', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4560', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4692', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1699', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1700', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1782', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1785', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1786', 'P', 0., 0.5e9]]
 
 
 
@@ -332,38 +361,57 @@ from Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
 from ONeill_1987_QFI import QFI_assemblages
 from Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
 
-# Al
+# MAS
 from Gasparik_1992_MAS_px_gt import Gasparik_1992_MAS_assemblages
 from Gasparik_Newton_1984_MAS_opx_sp_fo import Gasparik_Newton_1984_MAS_assemblages
 from Gasparik_Newton_1984_MAS_py_opx_sp_fo import Gasparik_Newton_1984_MAS_univariant_assemblages
 from Perkins_et_al_1981_MAS_py_opx import Perkins_et_al_1981_MAS_assemblages
 
-"""
+# CMS
 from Carlson_Lindsley_1988_CMS_opx_cpx import Carlson_Lindsley_1988_CMS_assemblages
+
+# CMAS
 from Perkins_Newton_1980_CMAS_opx_cpx_gt import Perkins_Newton_1980_CMAS_assemblages
 from Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp import Klemme_ONeill_2000_CMAS_assemblages
-from Perkins_Vielzeuf_1992_CFMS_ol_cpx import Perkins_1992_CFMS_assemblages
+
+# CFMS
+from Perkins_Vielzeuf_1992_CFMS_ol_cpx import Perkins_Vielzeuf_1992_CFMS_assemblages
+
+# FASO
 from Woodland_ONeill_1993_FASO_alm_sk import Woodland_ONeill_1993_FASO_assemblages
-from Frost_2003_FMASO_garnet import Frost_2003_gt_assemblages
+
+# FMASO
+from Frost_2003_FMASO_garnet import Frost_2003_FMASO_gt_assemblages
+
+# NCFMASO
 from Rohrbach_et_al_2007_NCFMASO_gt_cpx import Rohrbach_et_al_2007_NCFMASO_assemblages
 from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
-"""
 
-assemblages = list(Frost_2003_assemblages) # makes a copy
-assemblages.extend(Seckendorff_ONeill_1992_assemblages)
-assemblages.extend(Matsuzaka_2000_assemblages)
-assemblages.extend(endmember_reaction_assemblages)
-assemblages.extend(ONeill_Wood_1979_assemblages)
-assemblages.extend(QFI_assemblages)
-assemblages.extend(Nakajima_FR_2012_assemblages)
-assemblages.extend(Gasparik_1992_MAS_assemblages)
-assemblages.extend(Gasparik_Newton_1984_MAS_assemblages)
-assemblages.extend(Gasparik_Newton_1984_MAS_univariant_assemblages)
-assemblages.extend(Perkins_et_al_1981_MAS_assemblages)
+# from Frost_2003_CFMASO_garnet import Frost_2003_CFMASO_gt_assemblages
 
-"""
-assemblages.extend()
-"""
+
+assemblages = [assemblage for assemblage_list in
+               [Frost_2003_assemblages,
+                Seckendorff_ONeill_1992_assemblages,
+                Matsuzaka_2000_assemblages,
+                endmember_reaction_assemblages,
+                ONeill_Wood_1979_assemblages,
+                QFI_assemblages,
+                Nakajima_FR_2012_assemblages,
+                Gasparik_1992_MAS_assemblages,
+                Gasparik_Newton_1984_MAS_assemblages,
+                Gasparik_Newton_1984_MAS_univariant_assemblages,
+                Perkins_et_al_1981_MAS_assemblages,
+                Carlson_Lindsley_1988_CMS_assemblages,
+                Perkins_Newton_1980_CMAS_assemblages,
+                Klemme_ONeill_2000_CMAS_assemblages,
+                Perkins_Vielzeuf_1992_CFMS_assemblages,
+                Woodland_ONeill_1993_FASO_assemblages,
+                Frost_2003_FMASO_gt_assemblages,
+                Rohrbach_et_al_2007_NCFMASO_assemblages,
+                Beyer_et_al_2019_NCFMASO_assemblages
+               ]
+               for assemblage in assemblage_list]
 
 
 #minimize_func(get_params(), assemblages)

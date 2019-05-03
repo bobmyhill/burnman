@@ -1,4 +1,5 @@
 import numpy as np
+from burnman.processanalyses import compute_and_set_phase_compositions, assemblage_affinity_misfit
 
 from input_dataset import *
 
@@ -58,16 +59,15 @@ for i, run in enumerate(set_runs):
     assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
     
 
-    assemblage.stored_compositions = ['composition not assigned']*n_phases
-    
-
     burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
 
+    
+    assemblage.stored_compositions = ['composition not assigned']*n_phases
     for k in range(n_phases):
         try:
             assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
                                                  assemblage.phases[k].molar_fraction_covariances)
         except:
             pass # fo and sp are endmembers
-        
+    
     Klemme_ONeill_2000_CMAS_assemblages.append(assemblage)
