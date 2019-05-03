@@ -110,14 +110,29 @@ for i, run in enumerate(set_runs):
                         
                     elif (assemblage.phases[k] is opx_od or
                           assemblage.phases[k] is hpx_od): # CFMAS
+                        
                         assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe', 'Mg', 'Ca', 'Mga']
                         assemblage.phases[k].composition = np.zeros(6)
-                        assemblage.phases[k].compositional_uncertainties = np.zeros(6)
                         assemblage.phases[k].composition[0:5] = c[0:5]
+
+                        assemblage.phases[k].compositional_uncertainties = np.zeros(6)
                         assemblage.phases[k].compositional_uncertainties[0:5] = sig_c[0:5]
-                        assemblage.phases[k].compositional_uncertainties[5] = 0.001
+                        assemblage.phases[k].compositional_uncertainties[5] = 0.01
+
+                        
+                        # The following adjusts compositions to reach equilibrium
+                        a = burnman.Composite([assemblage.phases[k]])
+                        burnman.processanalyses.compute_and_set_phase_compositions(a)
+                        a.set_state(pressure, temperature)
+                        equilibrium_order(assemblage.phases[k])
+
+                        if assemblage.phases[k] is opx_od:
+                            opx_od.composition[5] = opx_od.molar_fractions[opx_od.endmember_names.index('ofm')]
+                        if assemblage.phases[k] is hpx_od:
+                            hpx_od.composition[5] = hpx_od.molar_fractions[hpx_od.endmember_names.index('hfm')]
 
                     elif assemblage.phases[k] is cpx_od: # NCFMASO
+                        
                         assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe',
                                                                 'Mg', 'Ca', 'Na', 'Fef', 'Fea']
                         
@@ -125,7 +140,7 @@ for i, run in enumerate(set_runs):
                         cpx_od.composition[0:6] = c
                         
                         # Fudge Fe3+ and sigma for now
-                        print('WARNING! Fudging Fe3+ (10%) and order (cfs=0.01) in cpx')
+                        print('WARNING! Fudging Fe3+ (10%) in cpx')
                         f = 0.1
                         sig_f = 0.05 
                         cpx_od.composition[2] = c[2]*(1. - f) # Fe2+
@@ -156,16 +171,12 @@ for i, run in enumerate(set_runs):
                         cpx_od.compositional_uncertainties[6,2] = sig_prime[1][0]
                         cpx_od.compositional_uncertainties[6,6] = sig_prime[1][1]
 
-                        # The following would adjust compositions to reach eqm.
-                        """
+                        # The following adjusts compositions to reach equilibrium
                         a = burnman.Composite([cpx_od])
                         burnman.processanalyses.compute_and_set_phase_compositions(a)
-                        print(cpx_od.molar_fractions)
                         a.set_state(pressure, temperature)
                         equilibrium_order(cpx_od)
-                        print(cpx_od.molar_fractions)
-                        exit()
-                        """
+                        cpx_od.composition[7] = cpx_od.molar_fractions[cpx_od.endmember_names.index('cfs')]
 
                     elif assemblage.phases[k] is gt:
                         gt.fitted_elements = ['Si', 'Al', 'Fe', 'Mg',

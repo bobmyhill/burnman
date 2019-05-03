@@ -1,7 +1,7 @@
 import numpy as np
 
 from input_dataset import *
-
+from fitting_functions import equilibrium_order
 
 # Garnet-clinopyroxene partitioning data
 with open('data/Rohrbach_et_al_2007_NCFMASO_gt_cpx.dat', 'r') as f:
@@ -29,15 +29,15 @@ for i, run_id in enumerate(set_runs):
     # always garnet then cpx
     gt_idx, cpx_idx = [idx for idx, d in enumerate(expt_data) if d[0] == run_id]
 
-    P = float(expt_data[gt_idx][1]) * 1.e9 # GPa to Pa
-    T = float(expt_data[gt_idx][2]) + 273.15 # C to K
-    if P > 5.e9:
+    pressure = float(expt_data[gt_idx][1]) * 1.e9 # GPa to Pa
+    temperature = float(expt_data[gt_idx][2]) + 273.15 # C to K
+    if pressure > 5.e9:
         assemblage = burnman.Composite([gt, cpx_od, fcc_iron])
     else:
         assemblage = burnman.Composite([child_solutions['xmj_gt'], cpx_od, fcc_iron])
         
     assemblage.experiment_id = 'Rohrbach_et_al_2007_NCFMASO_{0}'.format(run_id)
-    assemblage.nominal_state = np.array([P, T])
+    assemblage.nominal_state = np.array([pressure, temperature])
     assemblage.state_covariances = np.array([[5.e8*5.e8, 0.], [0., 100.]])
 
     c_gt = np.array(map(float, expt_data[gt_idx][5:]))
@@ -89,6 +89,17 @@ for i, run_id in enumerate(set_runs):
     cpx_od.compositional_uncertainties[2,3] = sig_prime[0][1]
     cpx_od.compositional_uncertainties[3,2] = sig_prime[1][0]
     cpx_od.compositional_uncertainties[3,3] = sig_prime[1][1]
+
+    
+    # The following adjusts compositions to reach equilibrium
+    a = burnman.Composite([cpx_od])
+    burnman.processanalyses.compute_and_set_phase_compositions(a)
+    a.set_state(pressure, temperature)
+    equilibrium_order(cpx_od)
+    cpx_od.composition[7] = cpx_od.molar_fractions[cpx_od.endmember_names.index('cfs')]
+
+
+    
     
     burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
 

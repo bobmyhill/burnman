@@ -46,7 +46,9 @@ def set_params_from_special_constraints():
     fwd.params['H_0'] += frw.gibbs - fwd.gibbs + 100. # make fwd a little less stable than frw
     
 def minimize_func(params, assemblages):
-    # Set parameters 
+    old_params = get_params()
+    
+    # Set parameters
     set_params(params)
     
     chisqr = []
@@ -71,11 +73,13 @@ def minimize_func(params, assemblages):
         assemblage.set_state(P, T)
 
 
-        # Equilibrate phases with order-disorder
-        for j, phase in enumerate(assemblage.phases):
-            if isinstance(phase, burnman.SolidSolution):
-                if 'order-disorder' in phase.name:
-                    equilibrium_order(phase)
+        # Equilibrate phases with order-disorder *iff*
+        # there has been a significant change in any params
+        if any(np.array(old_params) - np.array(params) > 1.e-2):
+            for j, phase in enumerate(assemblage.phases):
+                if isinstance(phase, burnman.SolidSolution):
+                    if 'order-disorder' in phase.name:
+                        equilibrium_order(phase)
         
         
         # Calculate the misfit and store it
