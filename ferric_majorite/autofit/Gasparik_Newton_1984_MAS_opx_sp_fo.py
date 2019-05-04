@@ -16,7 +16,7 @@ for run_id, mix, TC, Pkbar, t, N, Mg, Al, Si in opx_sp_fo_data:
     assemblage.experiment_id = 'Gasparik_Newton_1984_MAS_{0}'.format(run_id)
     assemblage.nominal_state = np.array([float(Pkbar)*1.e8,
                                          float(TC)+273.15]) # CONVERT P TO PA, T to K
-    assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
+    assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.], [0., 100.]])
 
 
     child_solutions['oen_mgts'].fitted_elements = ['Mg', 'Al', 'Si']

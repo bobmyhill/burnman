@@ -17,9 +17,10 @@ from burnman.processanalyses import compute_and_set_phase_compositions, assembla
 from burnman.equilibrate import equilibrate
 from fitting_functions import equilibrium_order
 
-from input_dataset import * 
+from input_dataset import *
+from preload_params import *
 
-
+print('WARNING!!!!!! oen-ofs needs order-disorder!!!')
 if len(sys.argv) == 2:
     if sys.argv[1] == '--fit':
         run_inversion = True
@@ -87,6 +88,8 @@ def minimize_func(params, assemblages):
                 if isinstance(phase, burnman.SolidSolution):
                     if 'order-disorder' in phase.name:
                         equilibrium_order(phase)
+                        assemblage.stored_compositions[j] = (assemblage.phases[j].molar_fractions,
+                                                             assemblage.phases[j].molar_fraction_covariances)
         
         
         # Calculate the misfit and store it
@@ -256,23 +259,23 @@ solution_priors = [['sp', 'E', 1, 0,  5.e3, 10.e3], # herc-mt
                    ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 5.e3], # oen-mgts
                    ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 5.e3], # oen-odi
                    ['opx', 'E', 1, 0, opx_od.energy_interaction[1][0], 5.e3], # ofs-mgts
-                   ['opx', 'E', 1, 1, opx_od.energy_interaction[1][1], 10.e3], # ofs-odi
-                   ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 30.e3], # mgts-odi
+                   #['opx', 'E', 1, 1, opx_od.energy_interaction[1][1], 10.e3], # ofs-odi
+                   #['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 30.e3], # mgts-odi
                    ['opx', 'E', 2, 1, opx_od.energy_interaction[2][1], 5.e3], # mgts-ofm
-                   ['opx', 'E', 3, 0, opx_od.energy_interaction[3][0], 10.e3], # odi-ofm
+                   #['opx', 'E', 3, 0, opx_od.energy_interaction[3][0], 10.e3], # odi-ofm
                 
-                   ['cpx', 'E', 0, 1, 30.e3, 5.e3], # di-cen
-                   ['cpx', 'E', 0, 2, 26.e3, 5.e3], # di-cfs
-                   ['cpx', 'E', 0, 3, 13.e3, 5.e3], # di-cats
-                   ['cpx', 'E', 2, 0, 26.e3, 5.e3], # cen-cfs
-                   ['cpx', 'E', 2, 1, 21.e3, 5.e3], # cen-cats
-                   ['cpx', 'E', 2, 2,  9.e3, 5.e3], # cen-jd
-                   ['cpx', 'E', 2, 3, 10.e3, 5.e3], # cen-aeg
-                   ['cpx', 'E', 3, 0, 25.e3, 5.e3], # cfs-cats
-                   ['cpx', 'E', 3, 1, 24.e3, 5.e3], # cfs-jd
-                   ['cpx', 'E', 3, 2, 52.e3, 10.e3], # cfs-aeg
-                   ['cpx', 'E', 4, 0, 6.e3,  5.e3], # cats-jd
-                   ['cpx', 'E', 4, 1, 17.e3, 5.e3], # cats-aeg
+                   #['cpx', 'E', 0, 1, 30.e3, 5.e3], # di-cen
+                   #['cpx', 'E', 0, 2, 26.e3, 5.e3], # di-cfs
+                   #['cpx', 'E', 0, 3, 13.e3, 5.e3], # di-cats
+                   #['cpx', 'E', 2, 0, 26.e3, 5.e3], # cen-cfs
+                   #['cpx', 'E', 2, 1, 21.e3, 5.e3], # cen-cats
+                   #['cpx', 'E', 2, 2,  9.e3, 5.e3], # cen-jd
+                   #['cpx', 'E', 2, 3, 10.e3, 5.e3], # cen-aeg
+                   #['cpx', 'E', 3, 0, 25.e3, 5.e3], # cfs-cats
+                   #['cpx', 'E', 3, 1, 24.e3, 5.e3], # cfs-jd
+                   #['cpx', 'E', 3, 2, 52.e3, 10.e3], # cfs-aeg
+                   #['cpx', 'E', 4, 0, 6.e3,  5.e3], # cats-jd
+                   #['cpx', 'E', 4, 1, 17.e3, 5.e3], # cats-aeg
                    
                    ['gt', 'E', 1, 0,  gt.energy_interaction[1][0], 10.e3], # alm-gr
                    ['gt', 'E', 2, 0,  2.e3, 1.e3]] # gr-andr
@@ -308,44 +311,52 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9], # Frost, 2003
                             ['61Fe', 'P', 0., 0.5e9],
                             ['62Fe', 'P', 0., 0.5e9],
                             ['63Fe', 'P', 0., 0.5e9],
+                            
                             ['64Fe', 'P', 0., 0.5e9],
                             ['66Fe', 'P', 0., 0.5e9],
                             ['67Fe', 'P', 0., 0.5e9],
                             ['68Fe', 'P', 0., 0.5e9],
                             ['V189', 'P', 0., 0.5e9],
+                            
                             ['V191', 'P', 0., 0.5e9],
                             ['V192', 'P', 0., 0.5e9],
                             ['V200', 'P', 0., 0.5e9],
                             ['V208', 'P', 0., 0.5e9],
                             ['V209', 'P', 0., 0.5e9],
+                            
                             ['V212', 'P', 0., 0.5e9],
                             ['V217', 'P', 0., 0.5e9],
                             ['V220', 'P', 0., 0.5e9],
                             ['V223', 'P', 0., 0.5e9],
                             ['V227', 'P', 0., 0.5e9],
+                            
                             ['V229', 'P', 0., 0.5e9],
                             ['V252', 'P', 0., 0.5e9],
                             ['V254', 'P', 0., 0.5e9],
                             ['Frost_2003_H1554', 'P', 0., 0.5e9],
                             ['Frost_2003_H1555', 'P', 0., 0.5e9],
+                            
                             ['Frost_2003_H1556', 'P', 0., 0.5e9],
                             ['Frost_2003_H1582', 'P', 0., 0.5e9],
                             ['Frost_2003_S2773', 'P', 0., 0.5e9],
                             ['Frost_2003_V170', 'P', 0., 0.5e9],
                             ['Frost_2003_V171', 'P', 0., 0.5e9],
+                            
                             ['Frost_2003_V175', 'P', 0., 0.5e9],
-                            ['Frost_2003_V179', 'P', 0., 0.5e9],
-                            ['Beyer2019_H4321', 'P', 0., 0.2e9],
-                            ['Beyer2019_H4556', 'P', 0., 0.2e9],
-                            ['Beyer2019_H4557', 'P', 0., 0.2e9],
-                            ['Beyer2019_H4560', 'P', 0., 0.2e9],
-                            ['Beyer2019_H4692', 'P', 0., 0.2e9],
-                            ['Beyer2019_Z1699', 'P', 0., 0.2e9],
-                            ['Beyer2019_Z1700', 'P', 0., 0.2e9],
-                            ['Beyer2019_Z1782', 'P', 0., 0.2e9],
-                            ['Beyer2019_Z1785', 'P', 0., 0.2e9],
-                            ['Beyer2019_Z1786', 'P', 0., 0.2e9]]
-
+                            ['Frost_2003_V179', 'P', 0., 0.5e9]]
+"""
+#,
+                            ['Beyer2019_H4321', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4556', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4557', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4560', 'P', 0., 0.5e9],
+                            ['Beyer2019_H4692', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1699', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1700', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1782', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1785', 'P', 0., 0.5e9],
+                            ['Beyer2019_Z1786', 'P', 0., 0.5e9]]
+"""
 
 
 # Make dictionaries
@@ -440,6 +451,7 @@ from Seckendorff_ONeill_1992_ol_opx import Seckendorff_ONeill_1992_assemblages
 from ONeill_Wood_1979_ol_gt import ONeill_Wood_1979_assemblages
 from Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
 from Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
+from Tange_TNFS_2009_bdg_fper_stv import Tange_TNFS_2009_FMS_assemblages
 
 # MAS
 from Gasparik_1992_MAS_px_gt import Gasparik_1992_MAS_assemblages
@@ -472,6 +484,7 @@ from Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
 
 # from Frost_2003_CFMASO_garnet import Frost_2003_CFMASO_gt_assemblages # lousy Fe3+ estimates
 
+# 3.635
 assemblages = [assemblage for assemblage_list in
                [endmember_reaction_assemblages,
                 ONeill_1987_QFI_assemblages,
@@ -481,6 +494,7 @@ assemblages = [assemblage for assemblage_list in
                 Matsuzaka_2000_assemblages,
                 ONeill_Wood_1979_assemblages,
                 Nakajima_FR_2012_assemblages,
+                Tange_TNFS_2009_FMS_assemblages,
                 Gasparik_1992_MAS_assemblages,
                 Gasparik_Newton_1984_MAS_assemblages,
                 Gasparik_Newton_1984_MAS_univariant_assemblages,
@@ -488,11 +502,9 @@ assemblages = [assemblage for assemblage_list in
                 Carlson_Lindsley_1988_CMS_assemblages,
                 Perkins_Newton_1980_CMAS_assemblages,
                 Klemme_ONeill_2000_CMAS_assemblages,
-                Perkins_Vielzeuf_1992_CFMS_assemblages,
-                Woodland_ONeill_1993_FASO_assemblages,
-                Frost_2003_FMASO_gt_assemblages,
-                Rohrbach_et_al_2007_NCFMASO_assemblages,
-                Beyer_et_al_2019_NCFMASO_assemblages
+                Perkins_Vielzeuf_1992_CFMS_assemblages # Woodland_ONeill_1993_FASO_assemblages, # 3.41 w/out NOOOO!
+                # Frost_2003_FMASO_gt_assemblages, # 3.52 w/out
+                #Rohrbach_et_al_2007_NCFMASO_assemblages #,Beyer_et_al_2019_NCFMASO_assemblages
                ]
                for assemblage in assemblage_list]
 
@@ -507,7 +519,22 @@ assemblages = [assemblage for assemblage_list in
 ### PUT PARAMS HERE ###
 #######################
 
-set_params([-264.8590, -2171.1322, -1476.7143, -2145.0354, -2299.3211, -1951.1258, -1117.0178, -2134.4839, -1464.1772, -5260.5125, -6638.9537, -5770.3972, -6035.7907, -5983.7552, -3090.0788, -2389.8929, -3196.2456, -2843.5913, -3094.7536, -2387.1188, -3312.3619, -2575.1535, -3083.0679, -2382.1476, -906.3264, -875.1409, -1441.8479, -1082.9593, 28.9589, 60.0499, 94.9440, 152.5899, 87.4312, 84.0193, 136.8574, 339.6674, 247.1241, 318.6356, 250.8190, 133.0690, 193.0016, 130.8203, 131.9638, 190.2362, 61.6525, 40.2854, 19.3926, 4.2143, 1.7075, 1.9632, 3.2640, 3.2232, 2.4526, 2.3120, 2.2123, 1.8267, 2.2876, 1.1733, 10.4738, 6.5784, 16.4250, 0.8667, 0.7085, 3.2665, 6.5015, 4.2767, 13.4740, 29.0828, 10.3483, 24.8079, 75.2820, 14.9951, 22.0473, 4.3272, 28.1915, 29.7703, 10.8906, 2.1849, 45.7858, 37.9940, 60.4635, 25.0907, 23.7952, 52.2650, 2.9603, 15.1396, 5.9483, 2.9956, -0.2981, 1.4972, 57.8678, -1.0706, 0.5560, 7.3542, -3.2149, 2.0710, 4.9917, -1.7866, 0.1852, -0.0268, -0.0074, -0.0497, -0.0142, -0.0079, -0.0593, -0.0162, -0.0061, -0.0152, -0.0674, 0.0252, -0.0042, 0.1124, 1.9488, -0.0474, -0.3210, -0.0583, 0.4328, 0.9290, 0.8674, 0.5254, -0.0030, 1.1444, -0.0494, -0.1139, -0.1089, -0.0823, 0.0151, -0.3029, -0.5707, -0.2868, -0.0825, 0.0002, -0.0000, -0.0001, -0.0008, -0.0013, 0.0000, -0.0002, -0.0029, -0.0004, -0.0009])
+#set_params([-258.6334, -2172.7791, -1476.1482, -2147.8093, -2300.0162, -1923.1474, -1113.5844, -2135.6427, -1461.7924, -5272.7414, -6647.4507, -5766.0485, -6028.2808, -5985.1956, -3096.1281, -2379.6719, -3197.2114, -2841.8830, -3091.5093, -2391.1193, -3309.9260, -2551.7336, -3089.1696, -2383.7452, -906.9684, -871.9589, -1442.2811, -1081.2619, 27.2352, 62.2168, 93.7257, 151.6148, 83.0185, 82.9211, 142.3422, 331.1561, 250.8390, 320.4519, 253.1366, 127.6332, 197.0430, 133.0175, 126.6716, 185.1650, 61.4759, 39.6529, 27.0361, 4.3006, 1.6829, 2.0827, 3.0536, 3.4329, 2.6897, 2.7510, 1.9699, 2.5633, 2.4157, 1.9778, 11.6730, 6.3195, 12.9999, 15.0510, 9.8875, 49.1149, 10.0628, -1.0299, 20.0401, 32.1096, 0.5955, 16.2819, 76.0582, 15.0687, 22.1191, 4.1420, 27.8614, 29.7154, 11.8466, 2.5555, 37.7894, 49.5514, 55.7723, 26.5647, 21.8332, 51.4779, -19.4905, 7.8802, 7.2577, 2.3317, -8.9231, -4.8503, 61.7627, -5.6207, 6.3445, 12.0913, -9.1585, 8.4383, 19.4491, -10.3532, 1.2239, -0.0022, -0.0007, -0.0083, -0.0008, 0.0012, -0.0069, 0.0078, -0.0012, -0.0033, -0.0060, 0.0046, 0.0026, 0.0156, 1.2351, -0.7430, -0.1287, 0.0003, -0.4095, -0.1177, 0.1012, -0.2947, -0.0010, 0.5855, -0.0003, -0.0000, -0.0003, -0.0000, -0.0003, -0.0000, -0.0003, -0.0000, -0.0003])
+
+
+
+"""
+['Beyer2019_H4321', 'P', 0.0002, 0.5e9],   # (Re)
+['Beyer2019_H4556', 'P', 0.4140, 0.5e9],   # Fe gt ol
+['Beyer2019_H4557', 'P', -10.8301, 0.5e9], # Fe gt cpx 
+['Beyer2019_H4560', 'P', -0.013, 0.5e9],   # (Re)
+['Beyer2019_H4692', 'P', -6.6531, 0.5e9],  # Mo opx ol cpx gt
+['Beyer2019_Z1699', 'P', -0.0008, 0.5e9],  # (Re)
+['Beyer2019_Z1700', 'P', -12.82, 0.5e9],   # Fe cpx gt
+['Beyer2019_Z1782', 'P', -10.2654, 0.5e9], # Mo gt wad hpx 
+['Beyer2019_Z1785', 'P', -3.3551, 0.5e9],  # Mo gt ring?
+['Beyer2019_Z1786', 'P', -10.8939, 0.5e9]] # Fe mw ring? hpx fcc_iron gt
+"""
 
 ########################
 # RUN THE MINIMIZATION #
@@ -658,6 +685,13 @@ for i in range(0, 8):
 plt.show()
 
 """
+
+# Mg2SiO4 phase diagram
+
+
+
+
+
 # FPER-OL POLYMORPH (OR GARNET) PARTITIONING
 def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):
     #G is deltaG = G_per + G_fa/2. - G_fper - G_fo/2.
@@ -967,11 +1001,12 @@ arrow_params = {'shape': 'full',
                 'length_includes_head': True,
                 'head_starts_at_zero': False}
 
+"""
 for m in ['ol', 'wad', 'ring']:
     pressures, pressure_shift, xs = np.array(zip(*P_Xmg_phase[m]))
     for i in range(len(xs)):
         plt.arrow(xs[i], pressures[i]/1.e9, 0., pressure_shift[i]/1.e9, **arrow_params)
     plt.scatter(xs, pressures/1.e9, s=80., label='data')
-    
+"""    
 plt.legend()
 plt.show()

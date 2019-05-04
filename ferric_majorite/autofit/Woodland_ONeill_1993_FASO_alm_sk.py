@@ -76,6 +76,10 @@ for i, run in enumerate(set_runs):
         else:
             raise Exception('{0} not recognised'.format(phase))
 
+    pressure = PGPa*1.e9
+    temperature = TK
+
+    sig_p = pressure/20. + 0.1e9
     
     # pick only experiments where one or more reactions are constrained
     if ((('sp' in phase_names) or ('hem' in phase_names)) and not
@@ -83,8 +87,8 @@ for i, run in enumerate(set_runs):
         run_id == 'u524'):
         assemblage = burnman.Composite(phases)
         assemblage.experiment_id = 'Woodland_ONeill_1993_FASO_{0}'.format(run_id)
-        assemblage.nominal_state = np.array([PGPa*1.e9, TK]) # CONVERT P TO Pa
-        assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
+        assemblage.nominal_state = np.array([pressure, temperature]) # CONVERT P TO Pa
+        assemblage.state_covariances = np.array([[sig_p*sig_p, 0.], [0., 100.]])
     
         burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
         

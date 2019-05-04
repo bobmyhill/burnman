@@ -25,9 +25,13 @@ for i, run in enumerate(set_runs):
         assemblage.experiment_id = 'Carlson_Lindsley_1988_CMS_{0}'.format(run)
 
         state = map(float, opx_cpx_data[run_indices[0]][1:3])
-        assemblage.nominal_state = np.array([state[0]*1.e8,
-                                             state[1]+273.15]) # CONVERT P TO PA, TC to TK
-        assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
+
+        pressure = state[0]*1.e8 # CONVERT P TO PA
+        temperature = state[1] + 273.15 # TC to TK
+        sig_p = pressure/20.
+        
+        assemblage.nominal_state = np.array([pressure, temperature])
+        assemblage.state_covariances = np.array([[sig_p*sig_p, 0.], [0., 100.]])
     
         assemblage.stored_compositions = ['composition not assigned']*2
     

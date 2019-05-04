@@ -24,7 +24,7 @@ for run_id, P, T, phase1, Fe1, Feerr1, phase2, Fe2, Feerr2 in ol_opx_data:
     
     assemblage.experiment_id = 'Seckendorff_ONeill_1992_{0}'.format(run_id)
     assemblage.nominal_state = np.array([float(P)*1.e9, float(T)]) # CONVERT PRESSURE TO GPA
-    assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
+    assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.], [0., 100.]])
 
     ol.set_composition(np.array([p_fo, 1. - p_fo]))
     child_solutions['oen_ofs'].set_composition(np.array([p_en, 1. - p_en]))

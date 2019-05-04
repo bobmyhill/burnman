@@ -59,7 +59,7 @@ for i, run in enumerate(set_runs):
     for j, chamber in enumerate(all_chambers[i]):
         chamber_indices = [run_idx for run_idx in run_indices
                            if (ds[run_idx][2] == chamber and
-                               ds[run_idx][1] != 'unwantedphase')]
+                               ds[run_idx][1] != 'cpx')] # don't include cpx for now.
       
         if len(chamber_indices) > 1 and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'):
                 phases = []

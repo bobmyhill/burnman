@@ -110,7 +110,7 @@
 23.43  	    0.25      	 1673.15  10.  	      mbdg per mrw
 22.86	    0.40	 1873.15  10.	      mbdg per mrw
 22.80	    0.30	 2023.15  10.	      mbdg per mrw
-22.82  	    0.37      	 2173.15  10.  	      mbdg per mrw mwd
+22.82  	    0.37      	 2173.15  100. 	      mbdg per mrw mwd
 
 # maj -> mbdg (Hirose et al., 2001, using Jamieson Au EoS)
 22.10 	    0.50         2273.15  10	      dmaj mbdg  

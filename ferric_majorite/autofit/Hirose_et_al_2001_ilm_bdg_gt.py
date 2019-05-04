@@ -23,7 +23,7 @@ for i, datum in enumerate(ilm_bdg_gt_data):
                         (phase2, ph1_Al2O3)]:
         Al = float(Al)
         c = np.array([(1. - Al)/2., Al, (1. - Al)/2.])
-        sig_c = np.array([float(0.005), float(0.005), float(0.005)])
+        sig_c = np.array([float(0.01), float(0.01), float(0.01)])
         
         if phase == 'gt':
             phases.append(child_solutions['py_dmaj_gt']) 

@@ -53,23 +53,26 @@ for i, run in enumerate(set_runs):
             d = ds[chamber_indices[k-1]]
             c = np.array(map(float, [d[5], d[7], d[9], d[11]]))
             sig_c = np.array([max(s, 0.01) for s in map(float, [d[6], d[8], d[10], d[12]])])
+
+            sig_c = sig_c*4. # make uncertainties larger
             
             # Assign elements and uncertainties
             phase.fitted_elements = ['Fe', 'Al', 'Si', 'Mg']
             phase.composition = c
             phase.compositional_uncertainties = sig_c
-                
-                    
+            
         burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
 
-        """
+        """        
         for phase in assemblage.phases:
-            if phase == child_solutions['FMASO_gt']:
+            if phase == child_solutions['FMASO_gt'] or phase == child_solutions['lp_FMASO_gt']:
                 print(pressure, (phase.molar_fractions[2]*2.)/(phase.molar_fractions[2]*2. + phase.molar_fractions[1]*3.))
-            if phase == child_solutions['lp_FMASO_gt']:
-                print(pressure, (phase.molar_fractions[2]*2.)/(phase.molar_fractions[2]*2. + phase.molar_fractions[1]*3.))
+                print(np.sqrt(phase.molar_fractions[1:3]))
+                print(np.sqrt(phase.molar_fraction_covariances[1][1]))
+                print(np.sqrt(phase.molar_fraction_covariances[2][2]))
+                #phase.molar_fraction_covariances[2][2]
         """
-        
+
         assemblage.stored_compositions = ['composition not assigned']*n_phases
         assemblage.stored_compositions[1:] = [(assemblage.phases[k].molar_fractions,
                                                assemblage.phases[k].molar_fraction_covariances)

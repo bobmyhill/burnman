@@ -56,7 +56,7 @@ for i, run in enumerate(set_runs):
     assemblage.experiment_id = 'Klemme_ONeill_2000_CMAS_{0}'.format(run_id)
     assemblage.nominal_state = np.array([Pkbar*1.e8,
                                          TC+273.15]) # CONVERT P TO PA, T to K
-    assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]])
+    assemblage.state_covariances = np.array([[1.e8*1.e8, 0.], [0., 100.]])
     
 
     burnman.processanalyses.compute_and_set_phase_compositions(assemblage)

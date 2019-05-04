@@ -27,10 +27,13 @@ for datum in opx_cpx_gt_data:
         raise Exception('Wrong number of columns')
 
 
+    pressure = float(datum[1])*1.e8 # CONVERT Pkbar TO Pa
+    temperature = float(datum[2]) + 273.15 #  TC to TK
+    sig_p = 0.1e9 + pressure/20.
+    
     assemblage.experiment_id = 'Perkins_et_al_1981_MAS_{0}'.format(datum[0])
-    assemblage.nominal_state = np.array([float(datum[1])*1.e8,
-                                         float(datum[2]) + 273.15]) # CONVERT Pkbar TO Pa, TC to TK
-    assemblage.state_covariances = np.array([[5.e7*5.e7, 0.],
+    assemblage.nominal_state = np.array([pressure, temperature]) 
+    assemblage.state_covariances = np.array([[sig_p*sig_p, 0.],
                                              [0., 100.]])
 
 
