@@ -28,7 +28,7 @@ for P, T, XMgOl, lnKD, lnKDerr in ol_gt_data:
     
     assemblage.experiment_id = 'ONeill_Wood_1979_{0}'.format(run_id)
     assemblage.nominal_state = np.array([P*1.e9, T]) # CONVERT PRESSURE TO GPA
-    assemblage.state_covariances = np.array([[1.e7*1.e7, 0.], [0., 100.]])
+    assemblage.state_covariances = np.array([[5.e7*5.e7, 0.], [0., 100.]]) # 0.5 kbar pressure uncertainty
 
     ol.fitted_elements = ['Mg', 'Fe']  
     ol.composition = np.array([XMgOl, 1. - XMgOl])

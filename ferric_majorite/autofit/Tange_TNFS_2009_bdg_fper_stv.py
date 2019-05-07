@@ -32,7 +32,7 @@ for i, datum in enumerate(bdg_fper_stv_data):
     
     assemblage.experiment_id = 'Tange_2009_FMS_{0}'.format(run_id)
     assemblage.nominal_state = np.array([pressure, temperature]) 
-    assemblage.state_covariances = np.array([[5.e8*5.e8, 0.], [0., 100.]])
+    assemblage.state_covariances = np.array([[1.e9*1.e9, 0.], [0., 100.]])
     
     assemblage.stored_compositions = [(pv_fractions, pv_covariances),
                                       (fper_fractions, fper_covariances),

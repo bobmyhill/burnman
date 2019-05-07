@@ -214,11 +214,19 @@ ofs.params['S_0_orig'] = [186.5, 0.5] # Cemic and Dachs, 2006
 py.params['S_0_orig'] = [265.94, 1.] # Dachs and Geiger, 2006; nominally 0.23, but sample dependent. HP2011_ds62 has 269.5, SLB has 244.55 (yeah, this what happens when you use a Debye model)
 alm.params['S_0_orig'] = [342.6, 2.] # Anovitz et al., 1993
 
-mbdg.params['S_0_orig'] = [57.2, 1.] # Akaogi and Ito (1993)
+mbdg.params['S_0_orig'] = [57.9, 0.3] # Akaogi et al. (2008), formal error is 0.3
+fbdg.params['S_0_orig'] = [fbdg.params['S_0'], 15.] # v. large uncertainties
 
+sp.params['S_0_orig'] = [80.9, 0.6] # Klemme and Ahrens, 2007; 10.1007/s00269-006-0128-4
 
-mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj]
+di.params['S_0_orig'] = [142.7, 0.2] # Krupke et al., 1985
+hed.params['S_0_orig'] = [174.3, 0.3] # Haselton et al., 1987
 
+# woll.params['S_0_orig'] = [81.69, 0.12] # Krupke et al., 1985
+
+mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, py, alm, gr, andr, dmaj, mbdg, fbdg, sp, di, hed]
+
+print()
 for m in mins:
     # Set entropies
     m.params['S_0'] = m.params['S_0_orig'][0]
@@ -550,6 +558,13 @@ child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
                                                                np.array([[1., 0., 0., 0., 0., 0.],
                                                                          [0., 0., 1., 0., 0., 0.]]),
                                                                solution_name='py-gr garnet'),
+                   
+                   'py_alm_gr_gt': transform_solution_to_new_basis(gt,
+                                                                   np.array([[1., 0., 0., 0., 0., 0.],
+                                                                             [0., 1., 0., 0., 0., 0.],
+                                                                             [0., 0., 1., 0., 0., 0.]]),
+                                                                   solution_name='py-alm-gr garnet'),
+                   
                    'alm_sk_gt': transform_solution_to_new_basis(gt,
                                                                 np.array([[0., 1.,  0., 0., 0., 0.],
                                                                           [0., 1., -1., 1., 0., 0.]]),
