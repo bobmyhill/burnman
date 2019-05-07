@@ -96,6 +96,7 @@ dmaj = burnman.minerals.HHPH_2013.maj()
 andr = burnman.minerals.HP_2011_ds62.andr()
 nagt = burnman.minerals.HHPH_2013.nagt()
 
+# dmaj properties
 # xpy, VA^3, err, cubic py-maj from Heinemann et al., 1997
 Heinemann_data = np.array([[0.2592, 0.4985, 0.7510, 0.9998],
                            [1511.167, 1509.386, 1506.802, 1503.654],
@@ -111,6 +112,15 @@ popt, pcov = curve_fit(quad,
 py.params['V_0'] = popt[0]
 dmaj.params['V_0'] = popt[1]
 py_dmaj_Vex = popt[2]
+
+# nagt properties from fitting of Dymshits et al. (2013, 2014) data, modified for 50:50 py:namaj composition
+# Holland et al estimate is way too small
+nagt.params['V_0'] = 112.1e-06 # (at 50% composition, (11.42 A^3)/8*1e-30*6.0223e23 = 112.1 cm^3/mol
+nagt.params['K_0'] = 177.83e9 
+nagt.params['Kprime_0'] = 4. # fixed, otherwise 3.8-ish
+nagt.params['Kdprime_0'] = -4./177.83e9
+nagt.params['a_0'] = 2.38345e-5
+
 
 """
 xs = np.linspace(0., 1., 101)
@@ -140,6 +150,9 @@ abdg = burnman.minerals.HHPH_2013.apv()
 fefbdg = burnman.minerals.HP_2011_ds62.hem()
 
 fabdg = burnman.CombinedMineral([fefbdg, abdg], [0.5, 0.5], [-6.6e3, 0., 0.], name='fabdg')
+
+# Ca-perovskite
+cpv = burnman.minerals.HHPH_2013.cpv()
 
 # Akimotoite
 mak = burnman.minerals.HHPH_2013.mak()
@@ -564,6 +577,17 @@ child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
                                                                               [0., 0., 1., 0., 0., 0.],
                                                                               [0., 0., 0., 0., 1., 0.]]),
                                                                     solution_name='py-gr-dmaj garnet'),
+                   'py_gr_nmaj_gt': transform_solution_to_new_basis(gt,
+                                                                    np.array([[1., 0., 0., 0., 0., 0.],
+                                                                              [0., 0., 1., 0., 0., 0.],
+                                                                              [0., 0., 0., 0., 0., 1.]]),
+                                                                    solution_name='py-gr-nmaj garnet'),
+                   'NCMAS_gt': transform_solution_to_new_basis(gt,
+                                                                    np.array([[1., 0., 0., 0., 0., 0.],
+                                                                              [0., 0., 1., 0., 0., 0.],
+                                                                              [0., 0., 0., 0., 1., 0.],
+                                                                              [0., 0., 0., 0., 0., 1.]]),
+                                                                    solution_name='NCMAS garnet'),
                    'ca-mg_dmaj_gt': transform_solution_to_new_basis(gt,
                                                                     np.array([[-1., 0., 1., 0., 1., 0.],
                                                                               [0., 0., 0., 0., 1., 0.]]),
@@ -690,6 +714,16 @@ child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
                                                                             [0., 0., 0., 0., 1., 0., 0.]]),
                                                                   solution_name='CMAS clinopyroxene'),
                    
+                   'di_jd': transform_solution_to_new_basis(cpx_od,
+                                                            np.array([[1., 0., 0., 0., 0., 0., 0.],
+                                                                      [0., 0., 0., 0., 0., 1., 0.]]),
+                                                            solution_name='di-jd clinopyroxene'),
+                   #'NCMAS_cpx': transform_solution_to_new_basis(cpx_od,
+                   #                                             np.array([[1., 0., 0., 0., 0., 0., 0.],
+                   #                                                       [0., 0., 1., 0., 0., 0., 0.],
+                   #                                                       [0., 0., 0., 0., 1., 0., 0.],
+                   #                                                       [0., 0., 0., 0., 0., 1., 0.]]),
+                   #                                              solution_name='NCMAS clinopyroxene'),
                    'cen_jd': transform_solution_to_new_basis(cpx_od,
                                                              np.array([[0., 0., 1., 0., 0., 0., 0.],
                                                                        [0., 0., 0., 0., 0., 1., 0.]]),
