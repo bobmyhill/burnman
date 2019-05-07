@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import warnings
 import numpy as np
 from scipy.optimize import curve_fit, minimize
+from collections import Counter
 
 from . import SolidSolution
 
@@ -24,7 +25,7 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties, f
     The composition and associated uncertainties in endmember *amounts*, not proportions. If normalize=True, then the endmember amounts are normalized to a total of one.
     """
 
-    if type(formulae[0]) is dict:
+    if type(formulae[0]) is dict or type(formulae[0]) is Counter:
         stoichiometric_matrix = np.array([[f[e] if e in f else 0. for e in fitted_elements] for f in formulae])
     else:
         stoichiometric_matrix = formulae
