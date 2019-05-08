@@ -115,7 +115,7 @@ py_dmaj_Vex = popt[2]
 
 # nagt properties from fitting of Dymshits et al. (2013, 2014) data, modified for 50:50 py:namaj composition
 # Holland et al estimate is way too small
-nagt.params['V_0'] = 112.1e-06 # (at 50% composition, (11.42 A^3)/8*1e-30*6.0223e23 = 112.1 cm^3/mol
+nagt.params['V_0'] = 112.1e-06 # (at 50:50 py:namaj composition, (11.42 A^3)/8*1e-30*6.0223e23 = 112.1 cm^3/mol)
 nagt.params['K_0'] = 177.83e9 
 nagt.params['Kprime_0'] = 4. # fixed, otherwise 3.8-ish
 nagt.params['Kdprime_0'] = -4./177.83e9

@@ -34,7 +34,7 @@ else:
 
 
 def set_params_from_special_constraints():
-    # Destabilise fwd
+    # 1) Destabilise fwd
     fa.set_state(6.25e9, 1673.15)
     frw.set_state(6.25e9, 1673.15)
     fwd.set_state(6.25e9, 1673.15)
@@ -45,6 +45,12 @@ def set_params_from_special_constraints():
     dS = dPdT*dV
     fwd.params['S_0'] += fa.S - fwd.S + dS
     fwd.params['H_0'] += frw.gibbs - fwd.gibbs + 100. # make fwd a little less stable than frw
+
+    # 2) Copy interaction parameters from opx to hpx:
+    hpx_od.alphas = opx_od.alphas
+    hpx_od.energy_interaction = opx_od.energy_interaction
+    hpx_od.entropy_interaction = opx_od.entropy_interaction
+    hpx_od.volume_interaction = opx_od.volume_interaction
     
 def minimize_func(params, assemblages):
     # Set parameters 

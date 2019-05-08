@@ -111,9 +111,7 @@ for i, run_id in enumerate(set_runs):
     """
     # py, alm, gt, andr, dmaj, nagt
     # di, hed, cen, cats, jd, aeg, cfs
-    print(run_id)
-    print(assemblage.phases[0].composition)
-    print(cpx_od.composition)
+    print(run_id, pressure)
     print('gt', assemblage.phases[0].molar_fractions)
     print('cpx', assemblage.phases[1].molar_fractions)
     """

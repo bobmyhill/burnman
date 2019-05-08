@@ -61,26 +61,38 @@ for i, run in enumerate(set_runs):
                            if (ds[run_idx][2] == chamber and
                                ds[run_idx][1] != 'unwanted phases')] # include all phases for now.
       
-        if len(chamber_indices) > 1 and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'):
+        if len(chamber_indices) > 1: # and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'):
                 phases = []
                 for idx in chamber_indices:
                     
                     if ds[idx][1] == 'ring?':
                         ds[idx][1] = 'ring'
 
-                    try:
-                        phases.append(endmembers[ds[idx][1]])
-                    except:
+                        
+                    if ds[idx][1] == 'gt':
+                        c = np.array([float(ds[idx][cidx]) for cidx in [7,9,11,15,17,19]])
+                        if c[-1] < 0.05: # Na < 0.05
+                            phases.append(child_solutions['xna_gt'])
+                        elif c[-1] > c[0] - 3. - 0.05: # Na > (Si - 3) - 0.05
+                            phases.append(child_solutions['xmj_gt'])
+                        else:
+                            phases.append(gt)
+                    elif ds[idx][1] == 'cpx':
+                        phases.append(cpx_od)
+                    else:
                         try:
-                            phases.append(solutions[ds[idx][1]])
+                            phases.append(endmembers[ds[idx][1]])
                         except:
-                            phases.append(child_solutions[ds[idx][1]])
+                            try:
+                                phases.append(solutions[ds[idx][1]])
+                            except:
+                                phases.append(child_solutions[ds[idx][1]])
 
                 assemblage = burnman.Composite(phases)
                 
                 assemblage.experiment_id = 'Beyer2019_{0}'.format(run)
                 assemblage.nominal_state = np.array([pressure, temperature])
-                assemblage.state_covariances = np.array([[1.e7*1.e7, 0.],[0., 10.*10]]) # pressure uncertainties v small. We'll add dP hyperparameters to deal with the multichamber nature of the experiments.
+                assemblage.state_covariances = np.array([[1.e7*1.e7, 0.],[0., 50.*50]]) # pressure uncertainties v small. We'll add dP hyperparameters to deal with the multichamber nature of the experiments.
 
                 
                 for k, idx in enumerate(chamber_indices):
@@ -117,7 +129,7 @@ for i, run in enumerate(set_runs):
 
                         assemblage.phases[k].compositional_uncertainties = np.zeros(6)
                         assemblage.phases[k].compositional_uncertainties[0:5] = sig_c[0:5]
-                        assemblage.phases[k].compositional_uncertainties[5] = 0.01
+                        assemblage.phases[k].compositional_uncertainties[5] = 0.1 # large uncertainty for Mg on A
 
                         
                         # The following adjusts compositions to reach equilibrium
@@ -145,7 +157,7 @@ for i, run in enumerate(set_runs):
                         sig_f = 0.05 
                         cpx_od.composition[2] = c[2]*(1. - f) # Fe2+
                         cpx_od.composition[6] = c[2]*f # Fe3+
-                        cpx_od.composition[7] = 0.01
+                        cpx_od.composition[7] = 0.1 # large uncertainty for Fe on A
                         
                         # Uncertainties
                         cpx_od.compositional_uncertainties = np.zeros((8, 8))
@@ -162,8 +174,9 @@ for i, run in enumerate(set_runs):
                         # we can build the Jacobian and transform the uncertainties:
                         J = np.array([[1.-f, -c[2]],
                                       [f,     c[2]]])
-                        sig = np.array([[np.power(sig_c[2], 2.)/1000., 0.],
-                                        [0., np.power(sig_f, 2.)/1000.]])
+                        
+                        sig = np.array([[np.power(sig_c[2], 2.), 0.],
+                                        [0., np.power(sig_f, 2.)]])
                         sig_prime = J.dot(sig).dot(J.T)
                         
                         cpx_od.compositional_uncertainties[2,2] = sig_prime[0][0]
@@ -177,7 +190,7 @@ for i, run in enumerate(set_runs):
                         a.set_state(pressure, temperature)
                         equilibrium_order(cpx_od)
                         cpx_od.composition[7] = cpx_od.molar_fractions[cpx_od.endmember_names.index('cfs')]
-
+                        
                     elif assemblage.phases[k] is gt:
                         gt.fitted_elements = ['Si', 'Al', 'Fe', 'Mg',
                                               'Ca', 'Na', 'Fef']
@@ -201,8 +214,8 @@ for i, run in enumerate(set_runs):
                         # we can build the Jacobian and transform the uncertainties:
                         J = np.array([[1.-f, -c[2]],
                                       [f,     c[2]]])
-                        sig = np.array([[np.power(sig_c[2], 2.)/1000., 0.],
-                                        [0., np.power(sig_f, 2.)/1000.]])
+                        sig = np.array([[np.power(sig_c[2], 2.), 0.],
+                                        [0., np.power(sig_f, 2.)]])
                         sig_prime = J.dot(sig).dot(J.T)
                         
                         gt.compositional_uncertainties[2,2] = sig_prime[0][0]
@@ -235,8 +248,8 @@ for i, run in enumerate(set_runs):
                         # we can build the Jacobian and transform the uncertainties:
                         J = np.array([[1.-f, -c[2]],
                                       [f,     c[2]]])
-                        sig = np.array([[np.power(sig_c[2], 2.)/1000., 0.],
-                                        [0., np.power(sig_f, 2.)/1000.]])
+                        sig = np.array([[np.power(sig_c[2], 2.), 0.],
+                                        [0., np.power(sig_f, 2.)]])
                         sig_prime = J.dot(sig).dot(J.T)
                         
                         assemblage.phases[k].compositional_uncertainties[2,2] = sig_prime[0][0]
@@ -259,6 +272,9 @@ for i, run in enumerate(set_runs):
                     print(run, chamber, child_solutions['xmj_gt'].molar_fractions) 
                 if gt in assemblage.phases:
                     print(run, chamber, gt.molar_fractions)
+                
+                if cpx_od in assemblage.phases:
+                    print(run, chamber, cpx_od.molar_fractions)
                 """
                 
                 assemblage.stored_compositions = ['composition not assigned']*len(chamber_indices)
