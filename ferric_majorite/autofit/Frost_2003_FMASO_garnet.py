@@ -62,8 +62,7 @@ for i, run in enumerate(set_runs):
             phase.compositional_uncertainties = sig_c
             
         burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
-
-        """        
+        """
         for phase in assemblage.phases:
             if phase == child_solutions['FMASO_gt'] or phase == child_solutions['lp_FMASO_gt']:
                 print(pressure, (phase.molar_fractions[2]*2.)/(phase.molar_fractions[2]*2. + phase.molar_fractions[1]*3.))

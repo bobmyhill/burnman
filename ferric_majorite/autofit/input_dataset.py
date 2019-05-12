@@ -529,15 +529,17 @@ hpx_od = Solution(name = 'high pressure clinopyroxene with order-disorder',
                                       [0.084e-5]])
 
 gt = Solution(name = 'garnet',
-              solution_type = 'symmetric',
+              #solution_type = 'symmetric',
+              solution_type ='asymmetric', # fake multiplicity of 1/2 (should be 2)
+              alphas = [1., 1., 2.7, 2.7, 1., 1.],
               endmembers = [[py, '[Mg]3[Al]2Si3O12'],
                             [alm, '[Fe]3[Al]2Si3O12'],
                             [gr, '[Ca]3[Al]2Si3O12'],
                             [andr, '[Ca]3[Fe]2Si3O12'],
                             [dmaj, '[Mg]3[Mg1/2Si1/2]2Si3O12'],
                             [nagt, '[Na1/3Mg2/3]3[Al1/2Si1/2]2Si3O12']],
-              energy_interaction=[[0.e3, 30.e3, 90.e3, 0., 0.], # py-.....
-                                  [0.e3, 60.e3, 0., 0.], # alm-....
+              energy_interaction=[[0.e3, 30.e3, 56.e3, 0., 0.], # py-.....
+                                  [0.e3, 40.4e3, 0., 0.], # alm-....
                                   [5.e3, 0., 0.], # gr-...
                                   [0., 0.], # andr-..
                                   [0.]], # dmaj-namaj
@@ -727,7 +729,15 @@ child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
                    'cen_jd': transform_solution_to_new_basis(cpx_od,
                                                              np.array([[0., 0., 1., 0., 0., 0., 0.],
                                                                        [0., 0., 0., 0., 0., 1., 0.]]),
-                                                             solution_name='cen-jd clinopyroxene')}
+                                                             solution_name='cen-jd clinopyroxene'),
+                   'nocfs_cpx': transform_solution_to_new_basis(cpx_od,
+                                                                np.array([[1., 0., 0., 0., 0., 0., 0.],
+                                                                          [0., 1., 0., 0., 0., 0., 0.],
+                                                                          [0., 0., 1., 0., 0., 0., 0.],
+                                                                          [0., 0., 0., 0., 1., 0., 0.],
+                                                                          [0., 0., 0., 0., 0., 1., 0.],
+                                                                          [0., 0., 0., 0., 0., 0., 1.]]),
+                                                                solution_name='nocfs clinopyroxene')}
 
 
 solutions = {'mw': fper,

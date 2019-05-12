@@ -61,7 +61,7 @@ for i, run in enumerate(set_runs):
                            if (ds[run_idx][2] == chamber and
                                ds[run_idx][1] != 'unwanted phases')] # include all phases for now.
       
-        if len(chamber_indices) > 1: # and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'):
+        if len(chamber_indices) > 1 and (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo'): # No Re runs (maybe not at eqm?)
                 phases = []
                 for idx in chamber_indices:
                     
@@ -77,7 +77,8 @@ for i, run in enumerate(set_runs):
                             phases.append(child_solutions['xmj_gt'])
                         else:
                             phases.append(gt)
-                    elif ds[idx][1] == 'cpx':
+                    elif (ds[idx][1] == 'cpx' and
+                          (ds[run_indices[0]][5] == 'Fe' or ds[run_indices[0]][5] == 'Mo')): # only include cpx for Fe-saturated runs
                         phases.append(cpx_od)
                     else:
                         try:
@@ -143,7 +144,7 @@ for i, run in enumerate(set_runs):
                         if assemblage.phases[k] is hpx_od:
                             hpx_od.composition[5] = hpx_od.molar_fractions[hpx_od.endmember_names.index('hfm')]
 
-                    elif assemblage.phases[k] is cpx_od: # NCFMASO
+                    elif (assemblage.phases[k] is cpx_od): # NCFMASO
                         
                         assemblage.phases[k].fitted_elements = ['Si', 'Al', 'Fe',
                                                                 'Mg', 'Ca', 'Na', 'Fef', 'Fea']
@@ -152,7 +153,7 @@ for i, run in enumerate(set_runs):
                         cpx_od.composition[0:6] = c
                         
                         # Fudge Fe3+ and sigma for now
-                        print('WARNING! Fudging Fe3+ (10%) in cpx')
+                        print('WARNING! Fudging Fe3+ (10%) in cpx in Fe-saturated runs')
                         f = 0.1
                         sig_f = 0.05 
                         cpx_od.composition[2] = c[2]*(1. - f) # Fe2+

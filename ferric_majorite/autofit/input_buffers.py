@@ -43,7 +43,7 @@ class rhenium_dioxide (burnman.Mineral):
         self.params = {'name': 'rhenium (IV) oxide',
                        'formula': {'Re': 1.0, 'O': 2.0},
                        'equation_of_state': 'hp_tmt',
-                       'H_0': -444.350e3, # Pownceby and O'Neill, 1994
+                       'H_0': -448.943e3, # Barin # -444.350e3, # Pownceby and O'Neill, 1994
                        'S_0': 47.83, # Stuve and Ferrante, Barin
                        'V_0': 8.8726e-6 + 9.944e-6,  # rough fit to Campbell, 2006
                        'Cp': [ 6.69551851e+01,  1.33883977e-02,

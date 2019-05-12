@@ -306,6 +306,8 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
                                    for idx in nonzero_indices],
                                   [vector[idx] for idx in nonzero_indices],
                                   ESV_modifiers[i])
+            mbr.params['formula'] = {key: value for (key, value) in mbr.params['formula'].iteritems()
+                                     if value > 1.e-12}
             endmembers.append([mbr, site_formulae[i]])
 
     if endmember_names is not None:

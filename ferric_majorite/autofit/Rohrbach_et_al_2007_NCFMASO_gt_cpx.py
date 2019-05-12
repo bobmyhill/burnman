@@ -103,7 +103,6 @@ for i, run_id in enumerate(set_runs):
     
     burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
 
-    
     assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
                                        assemblage.phases[k].molar_fraction_covariances)
                                       for k in range(2)]

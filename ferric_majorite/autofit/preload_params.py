@@ -549,7 +549,7 @@ def set_params(args):
     set_params_from_special_constraints()
     return None
 
-
+"""
 #######################
 # EXPERIMENTAL DATA ###
 #######################
@@ -579,7 +579,7 @@ assemblages = [assemblage for assemblage_list in
 
 
 #minimize_func(get_params(), assemblages)
-
+"""
 #######################
 ### PUT PARAMS HERE ###
 #######################
