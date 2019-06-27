@@ -9,19 +9,172 @@ import numpy as np
 from sympy import Matrix, Rational
 from fractions import Fraction
 from scipy.optimize import linprog
+from scipy.spatial import Delaunay
 from .processchemistry import dictionarize_formula, compositional_array, formula_to_string, site_occupancies_to_strings
 from . import CombinedMineral, SolidSolution
 
-def independent_row_indices(array):
-    m = Matrix(array.shape[0], array.shape[1], lambda i, j: Rational(array[i,j]).limit_denominator(1000))
-    _, pivots, swaps = m._row_reduce(iszerofunc=lambda x: x.is_zero,
-                                     simpfunc=lambda x: Rational(x).limit_denominator(1000))
-    indices = np.array(range(len(array)))
-    for swap in np.array(swaps):
-        indices[swap] = indices[swap[::-1]]
-    return indices[:len(pivots)]
+from itertools import product as iter_product
+from itertools import combinations
+from scipy.misc import comb
+from copy import copy
+from collections import Counter
 
-def feasible_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
+class gridded_simplex(object):
+    def __init__(self, vertices, points_per_edge):
+
+        assert vertices >= 2, 'need at least two vertices'
+        assert points_per_edge >= 2, 'need at least 2 points per edge'
+
+        self.vertices = vertices
+        self.points_per_edge = points_per_edge
+
+    def generate(self, generate_type='list'):
+        """
+        Generate the grid points of the simplex in lexicographic order.
+        Returns
+        -------
+        generator of ndarrays (int, ndim=1)
+            Grid points of the simplex.
+        """
+
+        if generate_type == 'list':
+            x = [0]*self.vertices
+        elif generate_type == 'array':
+            x = np.zeros(self.vertices, dtype=int)
+        else:
+            raise Exception('generate should create either lists or arrays of indices')
+
+        x[self.vertices-1] = self.points_per_edge-1
+
+        h = self.vertices
+        while True:
+            yield copy(x)
+
+            h -= 1
+            if h == 0:
+                return
+
+            val = x[h]
+            x[h] = 0
+            x[self.vertices-1] = val - 1
+            x[h-1] += 1
+            if val != 1:
+                h = self.vertices
+
+    def grid(self, generate_type='list'):
+        if generate_type == 'list':
+            return list(self.generate(generate_type))
+        else:
+            return np.array(list(self.generate(generate_type)))
+
+    def n_points(self):
+        return comb(self.vertices+self.points_per_edge-2, self.vertices-1, exact=True)
+
+
+class SolutionPolytope(object):
+    def __init__(self, equalities, return_fractions=False):
+        self.return_fractions = return_fractions
+        self.polytope_matrix = cdd.Matrix(equalities, linear=True, number_type='fraction')
+        self.polytope_matrix.rep_type = cdd.RepType.INEQUALITY
+        positivity_constraints = np.concatenate((np.zeros((len(equalities[0])-1, 1)),
+                                                 np.identity(len(equalities[0])-1)),
+                                                axis=1)
+        self.polytope_matrix.extend(positivity_constraints, linear=False)
+        self.polytope = cdd.Polyhedron(self.polytope_matrix)
+
+    def set_return_type(self, return_fractions=False):
+        self.return_fractions = return_fractions
+
+    @property
+    def raw_vertices(self):
+        return self.polytope.get_generators()
+
+    @property
+    def n_endmembers(self):
+        return len(self.raw_vertices)
+
+    @property
+    def endmember_occupancies(self):
+        if self.return_fractions:
+            v = np.array([map(Fraction, v) for v in self.raw_vertices])
+        else:
+            v = np.array([map(float, v) for v in self.raw_vertices])
+        return v[:,1:]/v[:,0,np.newaxis]
+
+
+    def _independent_row_indices(self, array):
+        m = Matrix(array.shape[0], array.shape[1], lambda i, j: Rational(array[i,j]).limit_denominator(1000))
+        _, pivots, swaps = m._row_reduce(iszerofunc=lambda x: x.is_zero,
+                                         simpfunc=lambda x: Rational(x).limit_denominator(1000))
+        indices = np.array(range(len(array)))
+        for swap in np.array(swaps):
+            indices[swap] = indices[swap[::-1]]
+        return indices[:len(pivots)]
+
+    @property
+    def independent_endmember_occupancies(self):
+        arr = self.endmember_occupancies
+        return arr[self._independent_row_indices(arr)]
+
+    def independent_endmember_proportions(self, endmember_occupancies):
+        ind = self.independent_endmember_occupancies
+        return np.array(Matrix(ind.T).pinv_solve(Matrix(endmember_occupancies.T)).T)
+
+    @property
+    def dependent_endmembers_as_independent_endmember_proportions(self):
+        ind = self.independent_endmember_occupancies
+        sol = np.linalg.lstsq(ind.T, self.endmember_occupancies.T, rcond=None)[0].round(decimals=12).T
+        #sol = np.array(Matrix(ind.T).pinv_solve(Matrix(self.endmember_occupancies.T)).T)
+        return sol
+
+    def _decompose_polytope_into_endmember_simplices(self):
+        all_endmember_proportions = self.dependent_endmembers_as_independent_endmember_proportions
+        if len(all_endmember_proportions) > 2: # Delaunay triangulation only works in dimensions > 1 and we remove the nullspace (sum(fractions) = 1)
+            nulls = np.repeat(all_endmember_proportions[:,-1],
+                              all_endmember_proportions.shape[1]).reshape(all_endmember_proportions.shape)
+            tri = Delaunay((all_endmember_proportions - nulls)[:,:-1])
+            return tri.simplices
+        else:
+            return [[0, 1]]
+
+    def grid(self, points_per_edge=2, unique_sorted=True, grid_type='independent endmember proportions'):
+        """
+        """
+        if grid_type == 'independent endmember proportions':
+            f_occ = self.dependent_endmembers_as_independent_endmember_proportions/(points_per_edge-1)
+        elif grid_type == 'site occupancies':
+            f_occ = self.independent_endmember_occupancies/(points_per_edge-1)
+        else:
+            raise Exception('grid type not recognised. Should be one of independent endmember proportions or site occupancies')
+        n_ind = f_occ.shape[1]
+
+        simplices = self._decompose_polytope_into_endmember_simplices()
+        n_simplices = len(simplices)
+
+        dim = len(simplices[0])
+        simplex_grid = gridded_simplex(dim, points_per_edge)
+        grid = simplex_grid.grid('array')
+        points_per_simplex = simplex_grid.n_points()
+        n_points = n_simplices*points_per_simplex
+
+        points = np.empty((n_points, n_ind))
+        idx = 0
+        for i in range(0, n_simplices):
+            points[idx:idx+points_per_simplex] = grid.dot(f_occ[simplices[i]])
+            idx += points_per_simplex
+
+        if unique_sorted:
+            points = np.unique(points, axis=0)
+        return points
+
+    @property
+    def minimal_polytope(self):
+        # TODO make polytope based on the independent endmembers,
+        # rather than the site-elements
+        raise Exception('not implemented yet')
+
+
+def polytope_from_charge_balance(charges, charge_total, return_fractions=False):
     n_sites = len(charges)
     all_charges = np.concatenate(charges)
     n_site_elements = len(all_charges)
@@ -29,36 +182,15 @@ def feasible_endmember_occupancies_from_charge_balance(charges, charge_total, as
     equalities[:-1,0] = -1
     i = 0
     for i_site, site_charges in enumerate(charges):
-        equalities[i_site,1:] = [1 if (j>=i and j<i+len(site_charges)) else 0 for j in range(n_site_elements)]
+        equalities[i_site,1:] = [1 if (j>=i and j<i+len(site_charges)) else 0
+                                 for j in range(n_site_elements)]
         i+=len(site_charges)
         
     equalities[-1,0] = -charge_total
     equalities[-1,1:] = all_charges
-    polytope = cdd.Matrix(equalities, linear=True, number_type='fraction')
-    
-    polytope.extend(np.concatenate((np.zeros((len(equalities[0])-1, 1)),
-                                    np.identity(len(equalities[0])-1)),
-                                   axis=1),
-                    linear=False)
-    P = cdd.Polyhedron(polytope)
-    if as_fractions:
-        V = np.array([map(Fraction, v) for v in P.get_generators()])
-    else:
-        V = np.array([map(float, v) for v in P.get_generators()])
-    vertices = V[:,1:]/V[:,0,np.newaxis]
-    
-    return vertices
+    return SolutionPolytope(equalities, return_fractions)
 
-
-def independent_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions=False):
-    a = feasible_endmember_occupancies_from_charge_balance(charges, charge_total, as_fractions)
-    return a[independent_row_indices(a)]
-
-def generate_complete_basis(incomplete_basis, complete_basis):
-    a = np.concatenate((incomplete_basis, complete_basis))
-    return a[independent_row_indices(a)]
-
-def dependent_endmember_site_occupancies(solution_model, as_fractions=False):
+def polytope_from_solution_model(solution_model, return_fractions=False):
     n_sites = len(solution_model.sites)
     nullspace = np.array(Matrix(solution_model.endmember_occupancies).nullspace(),
                          dtype=np.float)
@@ -69,40 +201,40 @@ def dependent_endmember_site_occupancies(solution_model, as_fractions=False):
 
     if len(nullspace) > 0:
         equalities[1:,1:] = nullspace
-    
-    polytope = cdd.Matrix(equalities, linear=True, number_type='fraction')
-    
-    polytope.extend(np.concatenate((np.zeros((len(equalities[0])-1, 1)),
-                                    np.identity(len(equalities[0])-1)),
-                                   axis=1),
-                    linear=False)
-    P = cdd.Polyhedron(polytope)
-    if as_fractions:
-        V = np.array([map(Fraction, v) for v in P.get_generators()])
-    else:
-        V = np.array([map(float, v) for v in P.get_generators()])
-    vertices = V[:,1:]/V[:,0,np.newaxis]
-    return vertices
+    return SolutionPolytope(equalities, return_fractions)
 
-def dependent_endmember_sums(solution_model, as_fractions=False):
-    vertices = dependent_endmember_site_occupancies(solution_model,
-                                                    as_fractions=as_fractions)
-    independent_sums = np.linalg.lstsq(solution_model.endmember_occupancies.T,
-                                       vertices.T,
-                                       rcond=None)[0].T.round(decimals=12)
-    
-    return independent_sums
+
+
+def independent_row_indices(array):
+    m = Matrix(array.shape[0], array.shape[1], lambda i, j: Rational(array[i,j]).limit_denominator(1000))
+    _, pivots, swaps = m._row_reduce(iszerofunc=lambda x: x.is_zero,
+                                     simpfunc=lambda x: Rational(x).limit_denominator(1000))
+    indices = np.array(range(len(array)))
+    for swap in np.array(swaps):
+        indices[swap] = indices[swap[::-1]]
+    return indices[:len(pivots)]
+
+def generate_complete_basis(incomplete_basis, complete_basis):
+    a = np.concatenate((incomplete_basis, complete_basis))
+    return a[independent_row_indices(a)]
+
+
 
 def feasible_solution_basis_in_component_space(solution, components):
     """
-    Note that this function finds the extreme endmembers and finds the subset within the components. Thus, starting with a solution with a disordered endmember and then restricting component range may produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], the extreme endmembers are [A] and [B]. A component space A--AB will result in only endmember [A] being valid!!
+    Note that this function finds the extreme endmembers and finds the subset within the components. 
+    Thus, starting with a solution with a disordered endmember and then restricting component range may 
+    produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], 
+    the extreme endmembers are [A] and [B]. 
+    A component space A--AB will result in only endmember [A] being valid!!
     """
 
     # 1) Convert components into a matrix
     component_array, component_elements = compositional_array([dictionarize_formula(c) for c in components])
 
     # 2) Get the full set of endmembers (dependent and otherwise)
-    dependent_sums = dependent_endmember_sums(solution.solution_model)
+    polytope = polytope_from_solution_model(solution.solution_model)
+    dependent_sums = polytope.dependent_endmembers_as_independent_endmember_proportions
     
     # 3) Get the endmember compositional array
     independent_endmember_array, endmember_elements = compositional_array(solution.endmember_formulae)
@@ -115,10 +247,12 @@ def feasible_solution_basis_in_component_space(solution, components):
     for el in component_elements:
         if el not in endmember_elements:
             endmember_elements.append(el)
-            all_endmember_array = np.concatenate((all_endmember_array, np.zeros((n_all,1))), axis=1)
+            all_endmember_array = np.concatenate((all_endmember_array, np.zeros((n_all,1))),
+                                                 axis=1)
 
     # 4b) Get rid of endmembers which have elements not in component_elements
-    element_indices_for_removal = [i for i, el in enumerate(endmember_elements) if el not in component_elements]
+    element_indices_for_removal = [i for i, el in enumerate(endmember_elements)
+                                   if el not in component_elements]
 
     endmember_indices_for_removal = []
     for idx in element_indices_for_removal:
@@ -134,9 +268,11 @@ def feasible_solution_basis_in_component_space(solution, components):
         element_indexing[i] = endmember_elements.index(component_elements[i])
 
     # 4d) Find independent endmember set
-    linear_solutions_exist = lambda A, B: [linprog(np.zeros(len(A)), A_eq=A.T, b_eq=b).success for b in B]
+    linear_solutions_exist = lambda A, B: [linprog(np.zeros(len(A)), A_eq=A.T, b_eq=b).success
+                                           for b in B]
     exist = linear_solutions_exist(component_array,
-                                   all_endmember_array[possible_endmember_indices[:, None],element_indexing])
+                                   all_endmember_array[possible_endmember_indices[:, None],
+                                                       element_indexing])
     endmember_indices = possible_endmember_indices[exist]
     independent_indices = endmember_indices[independent_row_indices(dependent_sums[endmember_indices])]
 
@@ -338,7 +474,11 @@ def feasible_solution_in_component_space(solution, components,
                                          solution_name=None, endmember_names=None,
                                          molar_fractions=None):
     """
-    Note that this function finds the extreme endmembers and finds the subset within the components. Thus, starting with a solution with a disordered endmember and then restricting component range may produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], the extreme endmembers are [A] and [B]. A component space A--AB will result in only endmember [A] being valid!!
+    Note that this function finds the extreme endmembers and finds the subset within the components. 
+    Thus, starting with a solution with a disordered endmember and then restricting component range 
+    may produce a smaller solution than intended. For example, with the endmembers [A] and [A1/2B1/2], 
+    the extreme endmembers are [A] and [B]. 
+    A component space A--AB will result in only endmember [A] being valid!!
     """
     new_basis = feasible_solution_basis_in_component_space(solution, components)
     return transform_solution_to_new_basis(solution, new_basis,
