@@ -90,6 +90,10 @@ class SolutionPolytope(object):
         return self.polytope.get_generators()
 
     @property
+    def site_occupancy_limits(self):
+        return np.array(self.polytope.get_inequalities(), dtype=float)
+
+    @property
     def n_endmembers(self):
         return len(self.raw_vertices)
 
@@ -127,30 +131,73 @@ class SolutionPolytope(object):
         #sol = np.array(Matrix(ind.T).pinv_solve(Matrix(self.endmember_occupancies.T)).T)
         return sol
 
-    def _decompose_polytope_into_endmember_simplices(self):
-        all_endmember_proportions = self.dependent_endmembers_as_independent_endmember_proportions
-        if len(all_endmember_proportions) > 2: # Delaunay triangulation only works in dimensions > 1 and we remove the nullspace (sum(fractions) = 1)
-            nulls = np.repeat(all_endmember_proportions[:,-1],
-                              all_endmember_proportions.shape[1]).reshape(all_endmember_proportions.shape)
-            tri = Delaunay((all_endmember_proportions - nulls)[:,:-1])
+    def _decompose_polytope_into_endmember_simplices(self, vertices):
+        if len(vertices) > 2: # Delaunay triangulation only works in dimensions > 1 and we remove the nullspace (sum(fractions) = 1)
+            nulls = np.repeat(vertices[:,-1],
+                              vertices.shape[1]).reshape(vertices.shape)
+            tri = Delaunay((vertices - nulls)[:,:-1])
             return tri.simplices
         else:
             return [[0, 1]]
 
-    def grid(self, points_per_edge=2, unique_sorted=True, grid_type='independent endmember proportions'):
+    @property
+    def independent_endmember_polytope(self):
+        """
+        The polytope involves the first n-1 independent endmembers.
+        The last endmember proportion makes the sum equal to one.
+        """
+        arr = self.dependent_endmembers_as_independent_endmember_proportions
+        arr = np.hstack((np.ones((len(arr),1)), arr[:,:-1]))
+        M = cdd.Matrix(arr, number_type='fraction')
+        M.rep_type = cdd.RepType.GENERATOR
+        return cdd.Polyhedron(M)
+
+    @property
+    def independent_endmember_limits(self):
+        return np.array(self.independent_endmember_polytope.get_inequalities(), dtype=float)
+
+    def subpolytope_from_independent_endmember_limits(self, limits):
+        modified_limits = self.independent_endmember_polytope.get_inequalities().copy()
+        modified_limits.extend(limits, linear=False)
+        return cdd.Polyhedron(modified_limits)
+
+    def subpolytope_from_site_occupancy_limits(self, limits):
+        modified_limits = self.polytope_matrix.copy()
+        modified_limits.extend(limits, linear=False)
+        return cdd.Polyhedron(modified_limits)
+
+    def grid(self, points_per_edge=2, unique_sorted=True, grid_type='independent endmember proportions', limits=None):
         """
         """
-        if grid_type == 'independent endmember proportions':
-            f_occ = self.dependent_endmembers_as_independent_endmember_proportions/(points_per_edge-1)
-        elif grid_type == 'site occupancies':
-            f_occ = self.independent_endmember_occupancies/(points_per_edge-1)
+        if limits is None:
+            if grid_type == 'independent endmember proportions':
+                f_occ = self.dependent_endmembers_as_independent_endmember_proportions/(points_per_edge-1)
+            elif grid_type == 'site occupancies':
+                f_occ = self.endmember_occupancies/(points_per_edge-1)
+            else:
+                raise Exception('grid type not recognised. Should be one of independent endmember proportions or site occupancies')
+
+            simplices = self._decompose_polytope_into_endmember_simplices(vertices = self.dependent_endmembers_as_independent_endmember_proportions)
         else:
-            raise Exception('grid type not recognised. Should be one of independent endmember proportions or site occupancies')
+            if grid_type == 'independent endmember proportions':
+                ppns = np.array(self.subpolytope_from_independent_endmember_limits(limits).get_generators()[:])[:,1:]
+                last_ppn = np.array([1. - sum(p) for p in ppns]).reshape((len(ppns), 1))
+                vertices_as_independent_endmember_proportions = np.hstack((ppns, last_ppn))
+                f_occ = vertices_as_independent_endmember_proportions/(points_per_edge-1)
+
+            elif grid_type == 'site occupancies':
+                occ = np.array(self.subpolytope_from_site_occupancy_limits(limits).get_generators()[:])[:,1:]
+                f_occ = occ/(points_per_edge-1)
+
+                ind = self.independent_endmember_occupancies
+                vertices_as_independent_endmember_proportions = np.linalg.lstsq(ind.T, occ.T, rcond=None)[0].round(decimals=12).T
+            else:
+                raise Exception('grid type not recognised. Should be one of independent endmember proportions or site occupancies')
+
+            simplices = self._decompose_polytope_into_endmember_simplices(vertices = vertices_as_independent_endmember_proportions)
+
         n_ind = f_occ.shape[1]
-
-        simplices = self._decompose_polytope_into_endmember_simplices()
         n_simplices = len(simplices)
-
         dim = len(simplices[0])
         simplex_grid = gridded_simplex(dim, points_per_edge)
         grid = simplex_grid.grid('array')
@@ -166,13 +213,6 @@ class SolutionPolytope(object):
         if unique_sorted:
             points = np.unique(points, axis=0)
         return points
-
-    @property
-    def minimal_polytope(self):
-        # TODO make polytope based on the independent endmembers,
-        # rather than the site-elements
-        raise Exception('not implemented yet')
-
 
 def polytope_from_charge_balance(charges, charge_total, return_fractions=False):
     n_sites = len(charges)
