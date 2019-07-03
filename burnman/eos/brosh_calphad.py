@@ -90,7 +90,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def _Cp_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
-        i = np.argmax(np.greater(zip(*params['gibbs_coefficients'])[0],temperature))
+        i = np.argmax([T > temperature for T in list(zip(*params['gibbs_coefficients']))[0]])
 
         # select the appropriate coefficients
         coeffs = params['gibbs_coefficients'][i][1]
@@ -109,7 +109,7 @@ class BroshCalphad(eos.EquationOfState):
 
     def _S_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
-        i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
+        i = np.argmax([T > temperature for T in list(zip(*params['gibbs_coefficients']))[0]])
 
         # select the appropriate coefficients
         coeffs = params['gibbs_coefficients'][i][1]
@@ -129,7 +129,7 @@ class BroshCalphad(eos.EquationOfState):
     
     def _gibbs_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
-        i = np.argmax(zip(*params['gibbs_coefficients'])[0] > temperature)
+        i = np.argmax([T > temperature for T in list(zip(*params['gibbs_coefficients']))[0]])
 
         # select the appropriate coefficients
         coeffs = params['gibbs_coefficients'][i][1]
@@ -315,7 +315,7 @@ class BroshCalphad(eos.EquationOfState):
                         if len(line) > 0 and line[0] != '#']}
         
         
-        nZs = [(n_at, float(Z[el])) for (el, n_at) in params['formula'].iteritems()]
+        nZs = [(n_at, float(Z[el])) for (el, n_at) in params['formula'].items()]
         
         
         X3_300TPa = [np.power(1. - params['a'][i-2] +

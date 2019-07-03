@@ -181,7 +181,7 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
             vals = sorted([(i, v) for i, v in enumerate(reduced_nullspace * c_vector)], key=lambda x: np.abs(x[1]))
             row_indices, values = zip(*vals)
             a = Matrix(values[:-1])/values[-1]
-            reduced_nullspace = reduced_nullspace[[row_indices[:-1]]] - np.outer(a, reduced_nullspace[[row_indices[-1]]])
+            reduced_nullspace = reduced_nullspace[tuple([row_indices[:-1]])] - np.outer(a, reduced_nullspace[tuple([row_indices[-1]])])
 
     # Convert stoichiometric matrix from endmember to the reduced site formalism using the raw constraint matrix R.
     # This allows us to use nonnegative least squares.
@@ -233,7 +233,7 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
                        method='COBYLA', constraints=cons, tol=1.e-16)
 
         #assert(sol.status==1)
-        assert(cons_fun(sol.x) > -eps)
+        assert(all([v > -eps for v in cons_fun(sol.x)]))
         
         # add the reaction vector
         baseline_endmember_amounts += reaction_vectors.dot(sol.x)
@@ -820,7 +820,7 @@ def equilibrate(composition, assemblage, equality_constraints,
 
     # Finally, make dimensions of sol_list equal the input dimensions 
     if len(sol_list[0]) == 1:
-        sol_list = list(zip(*sol_list)[0])
+        sol_list = list(zip(*sol_list))[0]
     if len(sol_list) == 1:
         sol_list = sol_list[0]
     return sol_list, prm

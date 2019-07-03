@@ -15,7 +15,7 @@ from . import CombinedMineral, SolidSolution
 
 from itertools import product as iter_product
 from itertools import combinations
-from scipy.misc import comb
+from scipy.special import comb
 from copy import copy
 from collections import Counter
 
@@ -482,7 +482,7 @@ def transform_solution_to_new_basis(solution, new_basis, n_mbrs = None,
                                    for idx in nonzero_indices],
                                   [vector[idx] for idx in nonzero_indices],
                                   ESV_modifiers[i])
-            mbr.params['formula'] = {key: value for (key, value) in mbr.params['formula'].iteritems()
+            mbr.params['formula'] = {key: value for (key, value) in mbr.params['formula'].items()
                                      if value > 1.e-12}
             endmembers.append([mbr, site_formulae[i]])
 

@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from os import path
 import numpy as np
 import scipy.optimize as opt
-from scipy.misc import factorial
+from scipy.special import factorial
 import warnings
 
 from . import equation_of_state as eos

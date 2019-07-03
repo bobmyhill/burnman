@@ -597,8 +597,7 @@ for assemblage in Frost_2003_assemblages:
                               x_ol, RTlnKD])
 
 
-
-pressures, x_ols, RTlnKDs = np.array(zip(*P_Xol_RTlnKDs))
+pressures, x_ols, RTlnKDs = np.array(P_Xol_RTlnKDs).T
 ax[0].scatter(x_ols, RTlnKDs, c=pressures, s=80., label='data',
               cmap=viridis, vmin=Pmin, vmax=Pmax)
 
@@ -645,7 +644,7 @@ for assemblage in Frost_2003_assemblages:
 
 
 
-pressures, x_wads, RTlnKDs = np.array(zip(*P_Xwad_RTlnKDs))
+pressures, x_wads, RTlnKDs = np.array(P_Xwad_RTlnKDs).T
 ax[1].scatter(x_wads, RTlnKDs, c=pressures, s=80., label='data',
               cmap=viridis, vmin=Pmin, vmax=Pmax)
 
@@ -686,7 +685,7 @@ for assemblage in Frost_2003_assemblages:
                             assemblage.stored_compositions[idx_mw][0][1]])
 
             
-pressures, x_rws, x_fpers = np.array(zip(*P_Xrw_Xfper))
+pressures, x_rws, x_fpers = np.array(P_Xrw_Xfper).T
 c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',
                   cmap=viridis, vmin=Pmin, vmax=Pmax)
 
@@ -737,16 +736,23 @@ for (T0, color) in [(1273.15, 'blue'),
         
         pressures = np.empty_like(x_m1s)
         x_m2s = np.empty_like(x_m1s)
+        m1.guess = np.array([1. - x_m1s[0], x_m1s[0]])
+        m2.guess = np.array([1. - x_m1s[0], x_m1s[0]])
         for i, x_m1 in enumerate(x_m1s):
             composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}
             assemblage = burnman.Composite([m1, m2])
-            assemblage.set_state(P1, T0)
-            m1.guess = np.array([1. - x_m1, x_m1])
-            m2.guess = np.array([1. - x_m1, x_m1])
+            assemblage.set_state(P1*(1 - x_m1) + P0*x_m1, T0)
+            m1.set_composition([1. - x_m1, x_m1])
+            m2.set_composition(m2.guess)
+            assemblage.n_moles = 1.
+            assemblage.set_fractions([1., 0.])
             equality_constraints = [('T', T0), ('phase_proportion', (m2, 0.0))]
             sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                            initial_state_from_assemblage=True,
+                                           initial_composition_from_assemblage=True,
                                            store_iterates=False)
+            
+            m2.guess = m2.molar_fractions
             x_m2s[i] = m2.molar_fractions[1]
             pressures[i] = assemblage.pressure
 
@@ -754,14 +760,13 @@ for (T0, color) in [(1273.15, 'blue'),
         plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color, label='{0} K'.format(T0))
     plt.plot([x_ol_inv, x_rw_inv], [P_inv/1.e9, P_inv/1.e9], linewidth=3., color=color)
 
-
+    """
     # bdg + fper 
     x_m1s = []
     pressures = []
     x_m2s = []
     for x_m1 in np.linspace(0.3, 0.5, 51):
         composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}
-        child_solutions['ring'].guess = np.array([1. - x_m1, x_m1])
         child_solutions['mg_fe_bdg'].guess = np.array([1. - x_m1, x_m1])
         fper.guess = np.array([1. - x_m1, x_m1])
         assemblage = burnman.Composite([child_solutions['mg_fe_bdg'], fper, stv])
@@ -779,23 +784,32 @@ for (T0, color) in [(1273.15, 'blue'),
     
     plt.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
     plt.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
-    
+    """
     
     # bdg + fper 
     x_m1s = []
     pressures = []
     x_m2s = []
-    for x_m1 in np.linspace(0.01, 0.3, 21):
+    x_m1_array = np.linspace(0.01, 0.3, 21)
+    
+    child_solutions['ring'].guess = np.array([1. - x_m1_array[0], x_m1_array[0]])
+    child_solutions['mg_fe_bdg'].guess = np.array([1. - x_m1_array[0], x_m1_array[0]])
+    fper.guess = np.array([1. - x_m1_array[0], x_m1_array[0]])
+    
+    for x_m1 in x_m1_array:
         composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}
-        child_solutions['ring'].guess = np.array([1. - x_m1, x_m1])
-        child_solutions['mg_fe_bdg'].guess = np.array([1. - x_m1, x_m1])
-        fper.guess = np.array([1. - x_m1, x_m1])
+        
+        child_solutions['ring'].set_composition([1. - x_m1, x_m1])
+        child_solutions['mg_fe_bdg'].set_composition(child_solutions['mg_fe_bdg'].guess)
+        fper.set_composition(fper.guess)
+        
         assemblage = burnman.Composite([child_solutions['ring'],
-                                        child_solutions['mg_fe_bdg'], fper])
+                                        child_solutions['mg_fe_bdg'], fper], [1., 0., 0.])
         assemblage.set_state(25.e9, T0)
         equality_constraints = [('T', T0),
                                 ('phase_proportion', (child_solutions['ring'], 1.0))]
         sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                       initial_composition_from_assemblage=True,
                                        initial_state_from_assemblage=True,
                                        store_iterates=False)
         if sol.success:
@@ -803,31 +817,47 @@ for (T0, color) in [(1273.15, 'blue'),
             x_m1s.append(x_m1)
             x_m2s.append((fper.molar_fractions[1] +
                           child_solutions['mg_fe_bdg'].molar_fractions[1])/2.)
+
+            child_solutions['mg_fe_bdg'].guess = child_solutions['mg_fe_bdg'].molar_fractions
+            fper.guess = fper.molar_fractions
+            
             pressures.append(assemblage.pressure)
     
     plt.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
     plt.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
+
     
     # rw -> fper + stv
-    x_m1s = np.linspace(0.2, 0.999, 21)
+    x_m1s = np.linspace(0.2, 0.99, 21)
     pressures = np.empty_like(x_m1s)
     x_m2s = np.empty_like(x_m1s)
+
+    
+    child_solutions['ring'].guess = np.array([1. - x_m1s[0], x_m1s[0]])
+    Pi = 22.e9
     for i, x_m1 in enumerate(x_m1s):
         composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}
-        assemblage = burnman.Composite([child_solutions['ring'], fper, stv])
-        assemblage.set_state(25.e9, T0)
-        child_solutions['ring'].guess = np.array([1. - x_m1, x_m1])
-        fper.guess = np.array([1. - x_m1, x_m1])
+        assemblage = burnman.Composite([child_solutions['ring'], fper, stv], [0., 2./3., 1./3.])
+        assemblage.set_state(Pi, T0)
+
+        fper.set_composition([1. - x_m1, x_m1])
+        child_solutions['ring'].set_composition(child_solutions['ring'].guess)
+
+        
         equality_constraints = [('T', T0), ('phase_proportion', (child_solutions['ring'], 0.0))]
         sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                       initial_composition_from_assemblage=True,
                                        initial_state_from_assemblage=True,
                                        store_iterates=False)
         x_m2s[i] = child_solutions['ring'].molar_fractions[1]
+        child_solutions['ring'].guess = child_solutions['ring'].molar_fractions
         pressures[i] = assemblage.pressure
+        Pi = assemblage.pressure
 
     plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
     plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
-
+    
+    
 P_rw_fper = []
 for assemblage in Matsuzaka_2000_assemblages:
     P_rw_fper.append([assemblage.nominal_state[0], assemblage.nominal_state[1],
@@ -867,7 +897,7 @@ arrow_params = {'shape': 'full',
                 'head_starts_at_zero': False}
 
 for m in ['ol', 'wad', 'ring']:
-    pressures, pressure_shift, xs = np.array(zip(*P_Xmg_phase[m]))
+    pressures, pressure_shift, xs = np.array(P_Xmg_phase[m]).T
     for i in range(len(xs)):
         plt.arrow(xs[i], pressures[i]/1.e9, 0., pressure_shift[i]/1.e9, **arrow_params)
     plt.scatter(xs, pressures/1.e9, s=80., label='data')
