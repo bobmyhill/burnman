@@ -1,0 +1,271 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+G	autofit_master_inversion_FMS_small.py	/^    G = (per.gibbs - wus.gibbs - fo.gibbs\/2. + fa.gibbs\/2.)$/;"	v
+G	autofit_master_inversion_FMS_small.py	/^    G = (per.gibbs - wus.gibbs - mrw.gibbs\/2. + frw.gibbs\/2.)$/;"	v
+G	autofit_master_inversion_FMS_small.py	/^    G = (per.gibbs - wus.gibbs - mwd.gibbs\/2. + fwd.gibbs\/2.)$/;"	v
+G	mcmc_master_inversion_FMS_small.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['fo'].gibbs\/2. + endmembers['fa'].gibbs\/2.)$/;"	v
+G	mcmc_master_inversion_FMS_small.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['mrw'].gibbs\/2. + endmembers['frw'].gibbs\/2.)$/;"	v
+G	mcmc_master_inversion_FMS_small.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['mwd'].gibbs\/2. + endmembers['fwd'].gibbs\/2.)$/;"	v
+KDs	autofit_master_inversion_FMS_small.py	/^    KDs = ((x_ols*(1. - x_fpers))\/$/;"	v
+KDs	autofit_master_inversion_FMS_small.py	/^    KDs = ((x_wads*(1. - x_fpers))\/$/;"	v
+KDs	mcmc_master_inversion_FMS_small.py	/^    KDs = ((x_ols*(1. - x_fpers))\/$/;"	v
+KDs	mcmc_master_inversion_FMS_small.py	/^    KDs = ((x_wads*(1. - x_fpers))\/$/;"	v
+P0	autofit_master_inversion_FMS_small.py	/^        P0 = assemblage.pressure$/;"	v
+P0	mcmc_master_inversion_FMS_small.py	/^        P0 = assemblage.pressure$/;"	v
+P1	autofit_master_inversion_FMS_small.py	/^        P1 = assemblage.pressure$/;"	v
+P1	mcmc_master_inversion_FMS_small.py	/^        P1 = assemblage.pressure$/;"	v
+P_Xmg_phase	autofit_master_inversion_FMS_small.py	/^P_Xmg_phase = {'ol': [], 'wad': [], 'ring': []}$/;"	v
+P_Xmg_phase	mcmc_master_inversion_FMS_small.py	/^P_Xmg_phase = {'ol': [], 'wad': [], 'ring': []}$/;"	v
+P_Xol_RTlnKDs	autofit_master_inversion_FMS_small.py	/^P_Xol_RTlnKDs = []$/;"	v
+P_Xol_RTlnKDs	mcmc_master_inversion_FMS_small.py	/^P_Xol_RTlnKDs = []$/;"	v
+P_Xrw_Xfper	autofit_master_inversion_FMS_small.py	/^P_Xrw_Xfper = []$/;"	v
+P_Xrw_Xfper	mcmc_master_inversion_FMS_small.py	/^P_Xrw_Xfper = []$/;"	v
+P_Xwad_RTlnKDs	autofit_master_inversion_FMS_small.py	/^P_Xwad_RTlnKDs = []$/;"	v
+P_Xwad_RTlnKDs	mcmc_master_inversion_FMS_small.py	/^P_Xwad_RTlnKDs = []$/;"	v
+P_inv	autofit_master_inversion_FMS_small.py	/^    P_inv = assemblage.pressure$/;"	v
+P_inv	mcmc_master_inversion_FMS_small.py	/^    P_inv = assemblage.pressure$/;"	v
+P_rw_fper	autofit_master_inversion_FMS_small.py	/^P_rw_fper = []$/;"	v
+P_rw_fper	mcmc_master_inversion_FMS_small.py	/^P_rw_fper = []$/;"	v
+P_shift	autofit_master_inversion_FMS_small.py	/^                        P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']$/;"	v
+P_shift	mcmc_master_inversion_FMS_small.py	/^                        P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']$/;"	v
+Pi	autofit_master_inversion_FMS_small.py	/^        Pi = assemblage.pressure$/;"	v
+Pi	autofit_master_inversion_FMS_small.py	/^    Pi = 22.e9$/;"	v
+Pi	mcmc_master_inversion_FMS_small.py	/^        Pi = assemblage.pressure$/;"	v
+Pi	mcmc_master_inversion_FMS_small.py	/^    Pi = 22.e9$/;"	v
+Pmax	autofit_master_inversion_FMS_small.py	/^Pmax = 15.e9$/;"	v
+Pmax	autofit_master_inversion_FMS_small.py	/^Pmax = 18.e9$/;"	v
+Pmax	autofit_master_inversion_FMS_small.py	/^Pmax = 24.e9$/;"	v
+Pmax	mcmc_master_inversion_FMS_small.py	/^Pmax = 15.e9$/;"	v
+Pmax	mcmc_master_inversion_FMS_small.py	/^Pmax = 18.e9$/;"	v
+Pmax	mcmc_master_inversion_FMS_small.py	/^Pmax = 24.e9$/;"	v
+Pmin	autofit_master_inversion_FMS_small.py	/^Pmin = 0.e9$/;"	v
+Pmin	autofit_master_inversion_FMS_small.py	/^Pmin = 10.e9$/;"	v
+Pmin	mcmc_master_inversion_FMS_small.py	/^Pmin = 0.e9$/;"	v
+Pmin	mcmc_master_inversion_FMS_small.py	/^Pmin = 10.e9$/;"	v
+RTlnKD	autofit_master_inversion_FMS_small.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_ol*(1. - x_fper))\/$/;"	v
+RTlnKD	autofit_master_inversion_FMS_small.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_wad*(1. - x_fper))\/$/;"	v
+RTlnKD	mcmc_master_inversion_FMS_small.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_ol*(1. - x_fper))\/$/;"	v
+RTlnKD	mcmc_master_inversion_FMS_small.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_wad*(1. - x_fper))\/$/;"	v
+T	autofit_master_inversion_FMS_small.py	/^        T = assemblage.nominal_state[1]$/;"	v
+T	autofit_master_inversion_FMS_small.py	/^T = 1673.15$/;"	v
+T	mcmc_master_inversion_FMS_small.py	/^        T = assemblage.nominal_state[1]$/;"	v
+T	mcmc_master_inversion_FMS_small.py	/^T = 1673.15$/;"	v
+W_fper	autofit_master_inversion_FMS_small.py	/^    W_fper = fper.solution_model.We[0][1] + fper.solution_model.Wv[0][1] * P$/;"	v
+W_fper	mcmc_master_inversion_FMS_small.py	/^    W_fper = solutions['mw'].solution_model.We[0][1] + solutions['mw'].solution_model.Wv[0][1] * P$/;"	v
+W_ol	autofit_master_inversion_FMS_small.py	/^    W_ol = (ol.solution_model.We[0][1] + ol.solution_model.Wv[0][1] * P) \/2. # 1 cation$/;"	v
+W_ol	mcmc_master_inversion_FMS_small.py	/^    W_ol = (solutions['ol'].solution_model.We[0][1] + solutions['ol'].solution_model.Wv[0][1] * P) \/2. # 1 cation$/;"	v
+W_rw	autofit_master_inversion_FMS_small.py	/^    W_rw = (child_solutions['ring'].solution_model.We[0][1]  + child_solutions['ring'].solution_model.Wv[0][1] * P)\/2. # 1 cation$/;"	v
+W_rw	mcmc_master_inversion_FMS_small.py	/^    W_rw = (child_solutions['ring'].solution_model.We[0][1]  + child_solutions['ring'].solution_model.Wv[0][1] * P)\/2. # 1 cation$/;"	v
+W_wad	autofit_master_inversion_FMS_small.py	/^    W_wad = (wad.solution_model.We[0][1] + wad.solution_model.Wv[0][1] * P)\/2. # 1 cation$/;"	v
+W_wad	mcmc_master_inversion_FMS_small.py	/^    W_wad = (solutions['wad'].solution_model.We[0][1] + solutions['wad'].solution_model.Wv[0][1] * P) \/2. # 1 cation$/;"	v
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:molybdenum
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:molybdenum_dioxide
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:rhenium
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:rhenium_dioxide
+affinity_ol_fper	autofit_master_inversion_FMS_small.py	/^def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):$/;"	f
+affinity_ol_fper	mcmc_master_inversion_FMS_small.py	/^def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):$/;"	f
+arrow_params	autofit_master_inversion_FMS_small.py	/^arrow_params = {'shape': 'full',$/;"	v
+arrow_params	mcmc_master_inversion_FMS_small.py	/^arrow_params = {'shape': 'full',$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^            assemblage = burnman.Composite([m1, m2])$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([child_solutions['ring'], fper, stv], [0., 2.\/3., 1.\/3.])$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([child_solutions['ring'],$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([m1.endmembers[0][0], m2.endmembers[0][0]])$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([m1.endmembers[1][0], m2.endmembers[1][0]])$/;"	v
+assemblage	autofit_master_inversion_FMS_small.py	/^    assemblage = burnman.Composite([ol, wad, child_solutions['ring']])$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^            assemblage = burnman.Composite([m1, m2])$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([child_solutions['ring'], solutions['mw'], endmembers['stv']], [0., 2.\/3., 1.\/3.])$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([child_solutions['ring'],$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([m1.endmembers[0][0], m2.endmembers[0][0]])$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^        assemblage = burnman.Composite([m1.endmembers[1][0], m2.endmembers[1][0]])$/;"	v
+assemblage	mcmc_master_inversion_FMS_small.py	/^    assemblage = burnman.Composite([solutions['ol'], solutions['wad'], child_solutions['ring']])$/;"	v
+assemblages	autofit_master_inversion_FMS_small.py	/^assemblages = [assemblage for assemblage_list in$/;"	v
+assemblages	mcmc_master_inversion_FMS_small.py	/^assemblages = [assemblage for assemblage_list in$/;"	v
+ax	autofit_master_inversion_FMS_small.py	/^ax = [fig.add_subplot(1, 3, i) for i in range(1, 4)]$/;"	v
+ax	mcmc_master_inversion_FMS_small.py	/^ax = [fig.add_subplot(1, 3, i) for i in range(1, 4)]$/;"	v
+base	mcmc_master_inversion_FMS_small.py	/^    base = os.path.splitext(thisfilename)[0]$/;"	v
+burnfile	mcmc_master_inversion_FMS_small.py	/^    burnfile = base+'_sampler_after_burn_in.pickle'$/;"	v
+c	autofit_master_inversion_FMS_small.py	/^c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',$/;"	v
+c	mcmc_master_inversion_FMS_small.py	/^c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',$/;"	v
+composition	autofit_master_inversion_FMS_small.py	/^            composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	autofit_master_inversion_FMS_small.py	/^        composition = {'Fe': 0., 'Mg': 2., 'Si': 1., 'O': 4.}$/;"	v
+composition	autofit_master_inversion_FMS_small.py	/^        composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	autofit_master_inversion_FMS_small.py	/^        composition = {'Fe': 2., 'Mg': 0., 'Si': 1., 'O': 4.}$/;"	v
+composition	autofit_master_inversion_FMS_small.py	/^    composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1.-x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMS_small.py	/^            composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMS_small.py	/^        composition = {'Fe': 0., 'Mg': 2., 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMS_small.py	/^        composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMS_small.py	/^        composition = {'Fe': 2., 'Mg': 0., 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMS_small.py	/^    composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1.-x_m1), 'Si': 1., 'O': 4.}$/;"	v
+create_minerals	input_dataset.py	/^def create_minerals():$/;"	f
+dict_endmember_args	autofit_master_inversion_FMS_small.py	/^dict_endmember_args = {a[0]: {} for a in endmember_args}$/;"	v
+dict_endmember_args	mcmc_master_inversion_FMS_small.py	/^dict_endmember_args = {a[0]: {} for a in endmember_args}$/;"	v
+dict_experiment_uncertainties	autofit_master_inversion_FMS_small.py	/^dict_experiment_uncertainties = {u[0] : {'P': 0., 'T': 0.} for u in experiment_uncertainties}$/;"	v
+dict_experiment_uncertainties	mcmc_master_inversion_FMS_small.py	/^dict_experiment_uncertainties = {u[0] : {'P': 0., 'T': 0.} for u in experiment_uncertainties}$/;"	v
+dict_solution_args	autofit_master_inversion_FMS_small.py	/^dict_solution_args = {a[0]: {} for a in solution_args}$/;"	v
+dict_solution_args	mcmc_master_inversion_FMS_small.py	/^dict_solution_args = {a[0]: {} for a in solution_args}$/;"	v
+endmember_args	autofit_master_inversion_FMS_small.py	/^endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3],$/;"	v
+endmember_args	mcmc_master_inversion_FMS_small.py	/^endmember_args = []$/;"	v
+endmember_priors	autofit_master_inversion_FMS_small.py	/^endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_orig'][1]],$/;"	v
+endmember_priors	mcmc_master_inversion_FMS_small.py	/^endmember_priors = []$/;"	v
+eqm_pressures	autofit_master_inversion_FMS_small.py	/^def eqm_pressures(m1, m2, temperatures):$/;"	f
+eqm_pressures	mcmc_master_inversion_FMS_small.py	/^def eqm_pressures(m1, m2, temperatures):$/;"	f
+equality_constraints	autofit_master_inversion_FMS_small.py	/^            equality_constraints = [('T', T0), ('phase_proportion', (m2, 0.0))]$/;"	v
+equality_constraints	autofit_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (child_solutions['ring'], 0.0))]$/;"	v
+equality_constraints	autofit_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[0][0], 0.0))]$/;"	v
+equality_constraints	autofit_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[1][0], 0.0))]$/;"	v
+equality_constraints	autofit_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0),$/;"	v
+equality_constraints	autofit_master_inversion_FMS_small.py	/^    equality_constraints = [('T', T0), ('phase_proportion', (ol, 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^            equality_constraints = [('T', T0), ('phase_proportion', (m2, 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (child_solutions['ring'], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[0][0], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[1][0], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^        equality_constraints = [('T', T0),$/;"	v
+equality_constraints	mcmc_master_inversion_FMS_small.py	/^    equality_constraints = [('T', T0), ('phase_proportion', (solutions['ol'], 0.0))]$/;"	v
+experiment_uncertainties	autofit_master_inversion_FMS_small.py	/^experiment_uncertainties = []$/;"	v
+experiment_uncertainties	mcmc_master_inversion_FMS_small.py	/^experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],$/;"	v
+fa_phase_diagram	autofit_master_inversion_FMS_small.py	/^fa_phase_diagram = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Yagi_1987.png')$/;"	v
+fa_phase_diagram	mcmc_master_inversion_FMS_small.py	/^fa_phase_diagram = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Yagi_1987.png')$/;"	v
+fa_phase_diagram2	autofit_master_inversion_FMS_small.py	/^fa_phase_diagram2 = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Jacobs_2001.png')$/;"	v
+fa_phase_diagram2	mcmc_master_inversion_FMS_small.py	/^fa_phase_diagram2 = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Jacobs_2001.png')$/;"	v
+fig	autofit_master_inversion_FMS_small.py	/^fig = plt.figure(figsize=(30,10))$/;"	v
+fig	mcmc_master_inversion_FMS_small.py	/^fig = plt.figure(figsize=(30,10))$/;"	v
+flat_samples	mcmc_master_inversion_FMS_small.py	/^    flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)$/;"	v
+fo_phase_diagram	autofit_master_inversion_FMS_small.py	/^fo_phase_diagram = mpimg.imread('frost_2003_figures\/Mg2SiO4_phase_diagram_Jacobs_2017.png')$/;"	v
+fo_phase_diagram	mcmc_master_inversion_FMS_small.py	/^fo_phase_diagram = mpimg.imread('frost_2003_figures\/Mg2SiO4_phase_diagram_Jacobs_2017.png')$/;"	v
+get_params	autofit_master_inversion_FMS_small.py	/^def get_params():$/;"	f
+get_params	mcmc_master_inversion_FMS_small.py	/^def get_params():$/;"	f
+half_steps	mcmc_master_inversion_FMS_small.py	/^    half_steps = n_steps_mcmc\/2$/;"	v
+idx_mw	autofit_master_inversion_FMS_small.py	/^        idx_mw = assemblage.phases.index(solutions['mw'])$/;"	v
+idx_mw	mcmc_master_inversion_FMS_small.py	/^        idx_mw = assemblage.phases.index(solutions['mw'])$/;"	v
+idx_ol	autofit_master_inversion_FMS_small.py	/^        idx_ol = assemblage.phases.index(solutions['ol'])$/;"	v
+idx_ol	mcmc_master_inversion_FMS_small.py	/^        idx_ol = assemblage.phases.index(solutions['ol'])$/;"	v
+idx_rw	autofit_master_inversion_FMS_small.py	/^        idx_rw = assemblage.phases.index(child_solutions['ring'])$/;"	v
+idx_rw	mcmc_master_inversion_FMS_small.py	/^        idx_rw = assemblage.phases.index(child_solutions['ring'])$/;"	v
+idx_wad	autofit_master_inversion_FMS_small.py	/^        idx_wad = assemblage.phases.index(solutions['wad'])$/;"	v
+idx_wad	mcmc_master_inversion_FMS_small.py	/^        idx_wad = assemblage.phases.index(solutions['wad'])$/;"	v
+initial_composition_from_assemblage	autofit_master_inversion_FMS_small.py	/^                                           initial_composition_from_assemblage=True,$/;"	v
+initial_composition_from_assemblage	autofit_master_inversion_FMS_small.py	/^                                       initial_composition_from_assemblage=True,$/;"	v
+initial_composition_from_assemblage	mcmc_master_inversion_FMS_small.py	/^                                           initial_composition_from_assemblage=True,$/;"	v
+initial_composition_from_assemblage	mcmc_master_inversion_FMS_small.py	/^                                       initial_composition_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	autofit_master_inversion_FMS_small.py	/^                                           initial_state_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	autofit_master_inversion_FMS_small.py	/^                                       initial_state_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	mcmc_master_inversion_FMS_small.py	/^                                           initial_state_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	mcmc_master_inversion_FMS_small.py	/^                                       initial_state_from_assemblage=True,$/;"	v
+jiggle_x0	mcmc_master_inversion_FMS_small.py	/^    jiggle_x0 = 1.e-3$/;"	v
+log_probability	mcmc_master_inversion_FMS_small.py	/^def log_probability(params, assemblages):$/;"	f
+mask	autofit_master_inversion_FMS_small.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1673.15) < 0.1]$/;"	v
+mask	autofit_master_inversion_FMS_small.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1873.15) < 0.1]$/;"	v
+mask	mcmc_master_inversion_FMS_small.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1673.15) < 0.1]$/;"	v
+mask	mcmc_master_inversion_FMS_small.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1873.15) < 0.1]$/;"	v
+mcmc_params	mcmc_master_inversion_FMS_small.py	/^    mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])$/;"	v
+mcmc_unc	mcmc_master_inversion_FMS_small.py	/^    mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84]) for i in range(ndim)])$/;"	v
+mcmcfile	mcmc_master_inversion_FMS_small.py	/^    mcmcfile = base+'_sampler_after_mcmc_run.pickle'$/;"	v
+minimize_func	autofit_master_inversion_FMS_small.py	/^def minimize_func(params, assemblages):$/;"	f
+minimize_func	mcmc_master_inversion_FMS_small.py	/^def minimize_func(params, assemblages):$/;"	f
+mins	mcmc_master_inversion_FMS_small.py	/^mins = [endmembers[m] for m in ['per', 'wus', 'fo', 'fa', 'mwd', 'fwd', 'mrw', 'frw']]$/;"	v
+molybdenum	input_buffers.py	/^class molybdenum (burnman.Mineral):$/;"	c
+molybdenum_dioxide	input_buffers.py	/^class molybdenum_dioxide (burnman.Mineral):$/;"	c
+n_discard	mcmc_master_inversion_FMS_small.py	/^    n_discard = 0 # discard this number of steps from the full mcmc run$/;"	v
+n_steps_burn_in	mcmc_master_inversion_FMS_small.py	/^    n_steps_burn_in = 0 # number of steps in the burn in period (not used)$/;"	v
+n_steps_mcmc	mcmc_master_inversion_FMS_small.py	/^    n_steps_mcmc = 800 # number of steps in the full mcmc run$/;"	v
+ndim	mcmc_master_inversion_FMS_small.py	/^    ndim = len(x0)$/;"	v
+nwalkers	mcmc_master_inversion_FMS_small.py	/^    nwalkers = ndim*walker_multiplication_factor$/;"	v
+ol_fper_img	autofit_master_inversion_FMS_small.py	/^ol_fper_img = mpimg.imread('frost_2003_figures\/ol_fper_RTlnKD.png')$/;"	v
+ol_fper_img	mcmc_master_inversion_FMS_small.py	/^ol_fper_img = mpimg.imread('frost_2003_figures\/ol_fper_RTlnKD.png')$/;"	v
+ol_polymorph_img	autofit_master_inversion_FMS_small.py	/^ol_polymorph_img = mpimg.imread('frost_2003_figures\/ol_polymorphs.png')$/;"	v
+ol_polymorph_img	mcmc_master_inversion_FMS_small.py	/^ol_polymorph_img = mpimg.imread('frost_2003_figures\/ol_polymorphs.png')$/;"	v
+ol_polymorph_img_1000C	autofit_master_inversion_FMS_small.py	/^ol_polymorph_img_1000C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1000C.png')$/;"	v
+ol_polymorph_img_1000C	mcmc_master_inversion_FMS_small.py	/^ol_polymorph_img_1000C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1000C.png')$/;"	v
+ol_polymorph_img_1200C	autofit_master_inversion_FMS_small.py	/^ol_polymorph_img_1200C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1200C.png')$/;"	v
+ol_polymorph_img_1200C	mcmc_master_inversion_FMS_small.py	/^ol_polymorph_img_1200C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1200C.png')$/;"	v
+ol_polymorph_img_800C	autofit_master_inversion_FMS_small.py	/^ol_polymorph_img_800C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_800C.png')$/;"	v
+ol_polymorph_img_800C	mcmc_master_inversion_FMS_small.py	/^ol_polymorph_img_800C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_800C.png')$/;"	v
+p0	mcmc_master_inversion_FMS_small.py	/^    p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)$/;"	v
+pressures	autofit_master_inversion_FMS_small.py	/^        pressures = np.empty_like(x_m1s)$/;"	v
+pressures	autofit_master_inversion_FMS_small.py	/^    pressures = []$/;"	v
+pressures	autofit_master_inversion_FMS_small.py	/^    pressures = np.empty_like(x_m1s)$/;"	v
+pressures	mcmc_master_inversion_FMS_small.py	/^        pressures = np.empty_like(x_m1s)$/;"	v
+pressures	mcmc_master_inversion_FMS_small.py	/^    pressures = []$/;"	v
+pressures	mcmc_master_inversion_FMS_small.py	/^    pressures = np.empty_like(x_m1s)$/;"	v
+rhenium	input_buffers.py	/^class rhenium (burnman.Mineral):$/;"	c
+rhenium_dioxide	input_buffers.py	/^class rhenium_dioxide (burnman.Mineral):$/;"	c
+run_inversion	autofit_master_inversion_FMS_small.py	/^        run_inversion = False$/;"	v
+run_inversion	autofit_master_inversion_FMS_small.py	/^        run_inversion = True$/;"	v
+run_inversion	autofit_master_inversion_FMS_small.py	/^    run_inversion = False$/;"	v
+run_inversion	mcmc_master_inversion_FMS_small.py	/^        run_inversion = False$/;"	v
+run_inversion	mcmc_master_inversion_FMS_small.py	/^        run_inversion = True$/;"	v
+run_inversion	mcmc_master_inversion_FMS_small.py	/^    run_inversion = False$/;"	v
+rw_fper_img	autofit_master_inversion_FMS_small.py	/^rw_fper_img = mpimg.imread('frost_2003_figures\/ring_fper_gt_KD.png')$/;"	v
+rw_fper_img	mcmc_master_inversion_FMS_small.py	/^rw_fper_img = mpimg.imread('frost_2003_figures\/ring_fper_gt_KD.png')$/;"	v
+rw_fper_part_img	autofit_master_inversion_FMS_small.py	/^rw_fper_part_img = mpimg.imread('frost_2003_figures\/ring_fper_partitioning.png')$/;"	v
+rw_fper_part_img	mcmc_master_inversion_FMS_small.py	/^rw_fper_part_img = mpimg.imread('frost_2003_figures\/ring_fper_partitioning.png')$/;"	v
+sampler	mcmc_master_inversion_FMS_small.py	/^    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,$/;"	v
+set_params	autofit_master_inversion_FMS_small.py	/^def set_params(args):$/;"	f
+set_params	mcmc_master_inversion_FMS_small.py	/^def set_params(args):$/;"	f
+set_params_from_special_constraints	autofit_master_inversion_FMS_small.py	/^def set_params_from_special_constraints():$/;"	f
+set_params_from_special_constraints	mcmc_master_inversion_FMS_small.py	/^def set_params_from_special_constraints():$/;"	f
+solution_args	autofit_master_inversion_FMS_small.py	/^solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],$/;"	v
+solution_args	mcmc_master_inversion_FMS_small.py	/^solution_args = [['mw', 'E', 0, 0, solutions['mw'].energy_interaction[0][0], 1.e3],$/;"	v
+solution_priors	autofit_master_inversion_FMS_small.py	/^solution_priors = []$/;"	v
+solution_priors	mcmc_master_inversion_FMS_small.py	/^solution_priors = []$/;"	v
+state	mcmc_master_inversion_FMS_small.py	/^        state = p0$/;"	v
+state	mcmc_master_inversion_FMS_small.py	/^        state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)$/;"	v
+state	mcmc_master_inversion_FMS_small.py	/^    state = sampler.run_mcmc(state, half_steps, progress=True)$/;"	v
+store_iterates	autofit_master_inversion_FMS_small.py	/^                                           store_iterates=False)$/;"	v
+store_iterates	autofit_master_inversion_FMS_small.py	/^                                       store_iterates=False)$/;"	v
+store_iterates	mcmc_master_inversion_FMS_small.py	/^                                           store_iterates=False)$/;"	v
+store_iterates	mcmc_master_inversion_FMS_small.py	/^                                       store_iterates=False)$/;"	v
+thin	mcmc_master_inversion_FMS_small.py	/^    thin = 1 # thin the number of steps by this factor when calling get_chain (so 10 reduces by a factor of 10)$/;"	v
+thisfilename	mcmc_master_inversion_FMS_small.py	/^    thisfilename = os.path.basename(__file__)$/;"	v
+viridis	autofit_master_inversion_FMS_small.py	/^viridis = cm.get_cmap('viridis', 101)$/;"	v
+viridis	mcmc_master_inversion_FMS_small.py	/^viridis = cm.get_cmap('viridis', 101)$/;"	v
+wad_fper_img	autofit_master_inversion_FMS_small.py	/^wad_fper_img = mpimg.imread('frost_2003_figures\/wad_fper_RTlnKD.png')$/;"	v
+wad_fper_img	mcmc_master_inversion_FMS_small.py	/^wad_fper_img = mpimg.imread('frost_2003_figures\/wad_fper_RTlnKD.png')$/;"	v
+walker_multiplication_factor	mcmc_master_inversion_FMS_small.py	/^    walker_multiplication_factor = 3 # this number must be greater than 2!$/;"	v
+x0	mcmc_master_inversion_FMS_small.py	/^    x0 = get_params()$/;"	v
+x_fper	autofit_master_inversion_FMS_small.py	/^        x_fper = assemblage.stored_compositions[idx_mw][0][1]$/;"	v
+x_fper	mcmc_master_inversion_FMS_small.py	/^        x_fper = assemblage.stored_compositions[idx_mw][0][1]$/;"	v
+x_fpers	autofit_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_ol], args=(x_ol, G, T, W_ol, W_fper))[0]$/;"	v
+x_fpers	autofit_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_rw], args=(x_rw, G, T, W_rw, W_fper))[0]$/;"	v
+x_fpers	autofit_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_wad], args=(x_wad, G, T, W_wad, W_fper))[0]$/;"	v
+x_fpers	mcmc_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_ol], args=(x_ol, G, T, W_ol, W_fper))[0]$/;"	v
+x_fpers	mcmc_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_rw], args=(x_rw, G, T, W_rw, W_fper))[0]$/;"	v
+x_fpers	mcmc_master_inversion_FMS_small.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_wad], args=(x_wad, G, T, W_wad, W_fper))[0]$/;"	v
+x_m1	autofit_master_inversion_FMS_small.py	/^    x_m1 = 0.3$/;"	v
+x_m1	mcmc_master_inversion_FMS_small.py	/^    x_m1 = 0.3$/;"	v
+x_m1_array	autofit_master_inversion_FMS_small.py	/^    x_m1_array = np.linspace(0.01, 0.3, 21)$/;"	v
+x_m1_array	mcmc_master_inversion_FMS_small.py	/^    x_m1_array = np.linspace(0.01, 0.3, 21)$/;"	v
+x_m1s	autofit_master_inversion_FMS_small.py	/^            x_m1s = np.linspace(0.001, x_wad_inv, 21)$/;"	v
+x_m1s	autofit_master_inversion_FMS_small.py	/^            x_m1s = np.linspace(x_ol_inv, 0.999, 21)$/;"	v
+x_m1s	autofit_master_inversion_FMS_small.py	/^    x_m1s = []$/;"	v
+x_m1s	autofit_master_inversion_FMS_small.py	/^    x_m1s = np.linspace(0.2, 0.99, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMS_small.py	/^            x_m1s = np.linspace(0.001, x_wad_inv, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMS_small.py	/^            x_m1s = np.linspace(x_ol_inv, 0.999, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMS_small.py	/^    x_m1s = []$/;"	v
+x_m1s	mcmc_master_inversion_FMS_small.py	/^    x_m1s = np.linspace(0.2, 0.99, 21)$/;"	v
+x_m2s	autofit_master_inversion_FMS_small.py	/^        x_m2s = np.empty_like(x_m1s)$/;"	v
+x_m2s	autofit_master_inversion_FMS_small.py	/^    x_m2s = []$/;"	v
+x_m2s	autofit_master_inversion_FMS_small.py	/^    x_m2s = np.empty_like(x_m1s)$/;"	v
+x_m2s	mcmc_master_inversion_FMS_small.py	/^        x_m2s = np.empty_like(x_m1s)$/;"	v
+x_m2s	mcmc_master_inversion_FMS_small.py	/^    x_m2s = []$/;"	v
+x_m2s	mcmc_master_inversion_FMS_small.py	/^    x_m2s = np.empty_like(x_m1s)$/;"	v
+x_ol	autofit_master_inversion_FMS_small.py	/^        x_ol = assemblage.stored_compositions[idx_ol][0][1]$/;"	v
+x_ol	mcmc_master_inversion_FMS_small.py	/^        x_ol = assemblage.stored_compositions[idx_ol][0][1]$/;"	v
+x_ol_inv	autofit_master_inversion_FMS_small.py	/^    x_ol_inv = assemblage.phases[0].molar_fractions[1]$/;"	v
+x_ol_inv	mcmc_master_inversion_FMS_small.py	/^    x_ol_inv = assemblage.phases[0].molar_fractions[1]$/;"	v
+x_ols	autofit_master_inversion_FMS_small.py	/^    x_ols = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_ols	mcmc_master_inversion_FMS_small.py	/^    x_ols = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_rw_inv	autofit_master_inversion_FMS_small.py	/^    x_rw_inv = assemblage.phases[2].molar_fractions[1]$/;"	v
+x_rw_inv	mcmc_master_inversion_FMS_small.py	/^    x_rw_inv = assemblage.phases[2].molar_fractions[1]$/;"	v
+x_rws	autofit_master_inversion_FMS_small.py	/^    x_rws = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_rws	mcmc_master_inversion_FMS_small.py	/^    x_rws = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_wad	autofit_master_inversion_FMS_small.py	/^        x_wad = assemblage.stored_compositions[idx_wad][0][1]$/;"	v
+x_wad	mcmc_master_inversion_FMS_small.py	/^        x_wad = assemblage.stored_compositions[idx_wad][0][1]$/;"	v
+x_wad_inv	autofit_master_inversion_FMS_small.py	/^    x_wad_inv = assemblage.phases[1].molar_fractions[1]$/;"	v
+x_wad_inv	mcmc_master_inversion_FMS_small.py	/^    x_wad_inv = assemblage.phases[1].molar_fractions[1]$/;"	v
+x_wads	autofit_master_inversion_FMS_small.py	/^    x_wads = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_wads	mcmc_master_inversion_FMS_small.py	/^    x_wads = np.linspace(0.00001, 0.99999, 101)$/;"	v

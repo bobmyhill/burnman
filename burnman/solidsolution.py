@@ -56,14 +56,7 @@ class SolidSolution(Mineral):
         Mineral.__init__(self)
 
 
-        class SolidSolutionMethod(object):
-
-            """Dummy class because SolidSolution needs a method to call
-            Mineral.set_state(), but should never have a method that
-            is used for minerals. Note that set_method() below will
-            not change self.method"""
-            pass
-        self.method = SolidSolutionMethod()
+        self.method = "SolidSolutionMethod"
 
         if name is not None:
             self.name = name
@@ -85,7 +78,7 @@ class SolidSolution(Mineral):
         if hasattr(self, 'endmembers') == False:
             raise Exception(
                 "'endmembers' attribute missing from solid solution")
-        
+
         try:
             self.endmember_formulae = [mbr[0].formula for mbr in self.endmembers]
         except:
@@ -157,10 +150,10 @@ class SolidSolution(Mineral):
         if self.solution_type != 'mechanical':
             assert(sum(molar_fractions) > 0.9999)
             assert(sum(molar_fractions) < 1.0001)
-            
+
         self.reset()
         self.molar_fractions = molar_fractions
-        
+
     def set_method(self, method):
         for i in range(self.n_endmembers):
             self.endmembers[i][0].set_method(method)
@@ -179,7 +172,7 @@ class SolidSolution(Mineral):
         Returns molar chemical formula of the solid solution
         """
         return sum_formulae(self.endmember_formulae, self.molar_fractions)
-    
+
     @material_property
     def activities(self):
         """
@@ -209,7 +202,7 @@ class SolidSolution(Mineral):
         Property specific to solid solutions.
         """
         return self.solution_model.excess_partial_gibbs_free_energies(self.pressure, self.temperature, self.molar_fractions)
-    
+
     @material_property
     def excess_partial_volumes(self):
         """
@@ -217,7 +210,7 @@ class SolidSolution(Mineral):
         Property specific to solid solutions.
         """
         return self.solution_model.excess_partial_volumes(self.pressure, self.temperature, self.molar_fractions)
-    
+
     @material_property
     def excess_partial_entropies(self):
         """

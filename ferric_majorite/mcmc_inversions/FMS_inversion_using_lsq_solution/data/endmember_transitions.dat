@@ -1,0 +1,55 @@
+# P(GPa)    Perr(est)	  T(K)	  Terr(est)   phases
+
+# Mg2SiO4 composition
+# fo -> mwd (Stixrude diagrams / compilation from Jacobs et al., 2001)
+12.50  	    0.1	  	  1050	  10.	      fo mwd
+13.04  	    0.1 	  1230 	  10. 	      fo mwd
+14.14  	    0.1 	  1485 	  10. 	      fo mwd
+14.60  	    0.2 	  1773 	  10. 	      fo mwd
+15.00  	    0.7 	  1873 	  10. 	      fo mwd
+
+# mwd -> mrw (Stixrude diagrams / compilation from Jacobs et al., 2001)
+15.86  	    0.1  	  975     10. 	      mwd mrw
+16.88  	    0.1 	  1115    10. 	      mwd mrw
+17.84  	    0.1 	  1300    10. 	      mwd mrw 
+18.99  	    0.1 	  1465    10. 	      mwd mrw
+23.29  	    0.5 	  2100 	  10. 	      mwd mrw
+
+
+# Fe2SiO4 composition
+# fa -> frw (Stixrude diagrams / compilation from Jacobs et al., 2001)
+4.8    	    0.1 	  1073.   10. 	      fa frw
+5.25   	    0.1 	  1273.   10. 	      fa frw
+5.8    	    0.1 	  1473.   10. 	      fa frw
+6.5    	    0.1 	  1815.   10. 	      fa frw
+
+# frw -> wus + stv (with iron, and FeCl as flux; Katsura et al., 1998)
+17.45 	    0.2	   	  1000.00 10. 	      frw wus stv
+17.25 	    0.2	   	  1200.00 10. 	      frw wus stv
+17.45 	    0.2	   	  1400.00 10. 	      frw wus stv
+17.05 	    0.4	   	  1600.00 10. 	      frw wus stv
+
+
+# SiO2 composition
+# qtz -> coe (Mirwald and Massonne, 1980)
+2.85  	    0.05      	 1075.    5.	      qtz coe
+3.05  	    0.05      	 1275.    5.	      qtz coe
+3.12  	    0.05      	 1336.    5.	      qtz coe
+3.14  	    0.05      	 1375.    5.	      qtz coe
+3.25  	    0.05      	 1475.    5.	      qtz coe
+3.36  	    0.05      	 1576.    5.	      qtz coe
+3.47  	    0.05      	 1675.    5.	      qtz coe
+3.63  	    0.05      	 1778.    5.	      qtz coe
+3.73  	    0.05      	 1874.    5.	      qtz coe
+
+# coe -> stv (Zhang et al., 1996)
+8.9         0.2	         1373.15  10.	      coe stv
+9.19	    0.15	 1481.15  10.	      coe stv
+9.46	    0.15	 1573.15  10.	      coe stv
+10.15	    0.10	 1803.15  10.	      coe stv
+
+# rw (+ wad) -> mbdg + per (Fei et al., 2004; Speziale MgO scale)
+23.43  	    0.25      	 1673.15  10.  	      mbdg per mrw
+22.86	    0.40	 1873.15  10.	      mbdg per mrw
+22.80	    0.30	 2023.15  10.	      mbdg per mrw
+22.82  	    0.37      	 2173.15  10. 	      mbdg per mrw mwd

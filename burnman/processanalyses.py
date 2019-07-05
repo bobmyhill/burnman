@@ -106,8 +106,16 @@ def compute_and_set_phase_compositions(assemblage, verbose=False):
                 for i in range(n_mbrs):
                     print('{0}: {1:.3f} +/- {2:.3f}'.format(phase.endmember_names[i], popt[i], np.sqrt(Cov_p[i][i])))
 
-def assemblage_affinity_misfit(assemblage):
-    reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
+def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
+    if reuse_reaction_matrix == True:
+        try:
+            reaction_matrix = assemblage.stored_reaction_matrix
+        except:
+            reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
+            assemblage.stored_reaction_matrix = reaction_matrix
+    else:
+        reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
+            
     if len(reaction_matrix) == 0:
         print('No reactions between the phases'
               ' in this assemblage: {0}'.format([ph.name for ph in assemblage.phases]))

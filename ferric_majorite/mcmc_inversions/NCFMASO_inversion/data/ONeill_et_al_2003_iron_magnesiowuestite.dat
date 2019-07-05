@@ -1,0 +1,9 @@
+# Run no.   P (Pa)    T (K)     EMF(mV)	    X_MgO	Fe3+ / Fe
+18a   	    9.7e4       1473    920.1 0.2   0.895 0.002	0.022 0.006
+26a   	    9.7e4       1473    875.4 0.3   0.733 0.003	0.046 0.006
+27b   	    9.7e4       1473    864.5 0.2   0.649 0.001	0.035 0.006
+28a   	    9.7e4       1473    854.4 0.2   0.539 0.002	0.043 0.004
+31b   	    9.7e4       1473    837.2 0.2   0.261 0.003	0.053 0.006
+# EMF does not include "zero point" EMF from air vs. air readings of -1.1 mV (i.e., 1.1 mV to be added to tabulated values)
+# muO2 = -4F(E + E_0) + RT*ln(0.20946*P_air)
+# where F is the Faraday constant (96.48456 kCoulomb/mol electrons), E is the EMF in millivolts, E_0 is the correction for the "zero-point" EMF obtained from the air vs. air readings, and P air is the pressure of air, corrected for water vapour pressure, at the inside of the sensor. Note that muO2 is equivalent to RTlnfO_2, where fO_2 is the oxygen fugacity. The pressure of the air in the laboratory and the relative humidity were monitored during the experimental campaign using a mercury barometer and a psychrometer (see O’Neill 1988), and gave corrected pressures within a few millibars of 0.97 bar. Since air was pumped to the inside of the sensor under a small positive pressure, the true reference pressure at the sensor may be somewhat larger, but any such correction is included implicitly in the value of E_0.
