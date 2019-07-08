@@ -341,7 +341,6 @@ if run_inversion:
 
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
 
-    """
     if n_steps_burn_in > 0:
         print('Starting burn-in')
         state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)
@@ -363,11 +362,10 @@ if run_inversion:
 
     print('100% complete. Pickling')
     pickle.dump(sampler, open(mcmcfile,'wb'))
-    """
 
 
 
-    sampler = pickle.load(open(mcmcfile+'int','rb'))
+    #sampler = pickle.load(open(mcmcfile+'int','rb'))
     flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 

@@ -1,0 +1,10 @@
+# P(GPa) T(C)  phase1	phase2	mol fraction Al2O3
+# 20.1	1750   ilm	gt	0.008  0.151 # Not inverting for ilmenite yet 
+21.0	1750   bdg	gt	0.014  0.171  
+21.8 	1750   bdg	gt	0.034  0.198
+
+20.4	2000   bdg	gt	0.011  0.058
+20.8	2000   bdg	gt	0.015  0.081
+22.0	2000   bdg	gt	0.022  0.140
+
+# This study uses Anderson Au EoS as standard. Add ~2 GPa to get to Jamieson's EoS
