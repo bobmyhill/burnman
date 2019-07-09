@@ -323,7 +323,7 @@ log_probability(get_params(storage), dataset, storage)
 ### PUT PARAMS HERE ###
 #######################
 
-#set_params([-266.9161, -2179.0077, -1477.1425, -2151.2877, -2140.7594, -1472.2104, -906.908, -872.5526, -1452.2167, -1102.5466, 27.5308, 55.5112, 94.2128, 151.2863, 85.2069, 82.215, 136.4079, 39.7045, 27.4847, 57.012, 77.5785, 4.3185, 1.7593, 1.6219, 2.0216, 3.0612000000000004, 3.1691, 2.8199, 2.8124, 2.0903, 1.906, 2.2503, 2.2513, 1.7909, 1.5437, 11.5941, 6.3214, 17.1623, 8.494, -1.3476, -0.2854, -3.1367, -0.3725, 1.2365, -4.5535, -2.1066, -0.3494, -0.9961, -0.0127, -0.0531, 1.1841, 0.6849, 1.6172, -1.0845, -1.0535, -1.0486, -0.6308, -0.1474, 0.3205, 0.0213, -0.1783, 0.9166])
+set_params([-266.9161, -2179.0077, -1477.1425, -2151.2877, -2140.7594, -1472.2104, -906.908, -872.5526, -1452.2167, -1102.5466, 27.5308, 55.5112, 94.2128, 151.2863, 85.2069, 82.215, 136.4079, 39.7045, 27.4847, 57.012, 77.5785, 4.3185, 1.7593, 1.6219, 2.0216, 3.0612000000000004, 3.1691, 2.8199, 2.8124, 2.0903, 1.906, 2.2503, 2.2513, 1.7909, 1.5437, 11.5941, 6.3214, 17.1623, 8.494, -1.3476, -0.2854, -3.1367, -0.3725, 1.2365, -4.5535, -2.1066, -0.3494, -0.9961, -0.0127, -0.0531, 1.1841, 0.6849, 1.6172, -1.0845, -1.0535, -1.0486, -0.6308, -0.1474, 0.3205, 0.0213, -0.1783, 0.9166], dataset, storage)
 
 ########################
 # RUN THE MINIMIZATION #
@@ -336,7 +336,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 3 # this number must be greater than 2!
     n_steps_burn_in = 0 # number of steps in the burn in period (not used)
-    n_steps_mcmc = 800 # number of steps in the full mcmc run
+    n_steps_mcmc = 5000 # number of steps in the full mcmc run
     n_discard = 0 # discard this number of steps from the full mcmc run
     thin = 1 # thin the number of steps by this factor when calling get_chain (so 10 reduces by a factor of 10)
 
@@ -359,7 +359,7 @@ if run_inversion:
 
     print('using n threads')
 
-
+    """
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
     with Pool() as pool:
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
@@ -377,23 +377,17 @@ if run_inversion:
             state = p0
 
         print('Burn-in complete. Starting MCMC run.')
-
-        half_steps = n_steps_mcmc/2
-        state = sampler.run_mcmc(state, half_steps, progress=True)
-
-        print('50% complete. Pickling intermediate')
-        pickle.dump(sampler, open(mcmcfile+'int','wb'))
-
-        state = sampler.run_mcmc(state, half_steps, progress=True)
+        
+        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
         print('100% complete. Pickling')
         pickle.dump(sampler, open(mcmcfile,'wb'))
 
+    """
 
 
-
-    #sampler = pickle.load(open(mcmcfile+'int','rb'))
-    flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
+    sampler = pickle.load(open(mcmcfile,'rb'))
+    flat_samples = sampler.get_chain(discard=500, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
@@ -406,12 +400,12 @@ if run_inversion:
         txt = txt.format(mcmc_i[1], q[0], q[1], labels[i])
         print(txt)
 
-    set_params(mcmc_params) # use the 50th percentile for the preferred params (might not represent the best fit if the distribution is strongly non-Gaussian...)
+    set_params(mcmc_params, dataset, storage) # use the 50th percentile for the preferred params (might not represent the best fit if the distribution is strongly non-Gaussian...)
 
     #print(minimize(minimize_func, get_params(), args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
 # Print the current parameters
-print(get_params())
+print(get_params(storage))
 
 ####################
 ### A few images ###
@@ -599,6 +593,7 @@ for P in [1.e5, 5.e9, 10.e9, 15.e9]:
     ax[0].plot(x_ols, burnman.constants.gas_constant*T*np.log(KDs), color = viridis((P-Pmin)/(Pmax-Pmin)), linewidth=3., label='{0} GPa'.format(P/1.e9))
 
 
+Frost_2003_assemblages = Frost_2003_fper_ol_wad_rw.get_assemblages(dataset)
 P_Xol_RTlnKDs = []
 for assemblage in Frost_2003_assemblages:
     if solutions['ol'] in assemblage.phases:
@@ -876,6 +871,8 @@ for (T0, color) in [(1273.15, 'blue'),
     plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
 
 
+Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)
+                               
 P_rw_fper = []
 for assemblage in Matsuzaka_2000_assemblages:
     P_rw_fper.append([assemblage.nominal_state[0], assemblage.nominal_state[1],
