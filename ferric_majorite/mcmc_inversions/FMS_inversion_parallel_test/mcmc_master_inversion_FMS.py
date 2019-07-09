@@ -22,6 +22,9 @@ import pickle
 import emcee
 from multiprocessing import Pool
 
+import pandas as pd
+import seaborn as sns
+
 if len(sys.argv) == 2:
     if sys.argv[1] == '--fit':
         run_inversion = True
@@ -377,7 +380,7 @@ if run_inversion:
             state = p0
 
         print('Burn-in complete. Starting MCMC run.')
-        
+
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
         print('100% complete. Pickling')
@@ -387,11 +390,44 @@ if run_inversion:
 
 
     sampler = pickle.load(open(mcmcfile,'rb'))
+
+    try:
+        tau = sampler.get_autocorr_time()
+        print(tau)
+    except emcee.autocorr.AutocorrError as e:
+        print(e)
+
+
+        samples = sampler.get_chain()
+        n_params = samples.shape[2]
+        n_params_per_plot = 10
+        for j in range(int(np.ceil(n_params/n_params_per_plot))):
+            if j == int(np.ceil(n_params/n_params_per_plot) - 1):
+                n_plots = n_params - n_params_per_plot*j
+            else:
+                n_plots = n_params_per_plot
+            fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
+            for i in range(n_plots):
+                ax = axes[i]
+                ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
+                ax.set_xlim(0, len(samples))
+                ax.set_ylabel(labels[j*n_params_per_plot + i])
+                ax.yaxis.set_label_coords(-0.1, 0.5)
+
+            axes[-1].set_xlabel("step number")
+            plt.show()
+
+        #print('Plotting autocorrelation functions')
+        #from autocorr import plot_autocorr
+        #plot_autocorr(sampler.get_chain()[:, :, 0].T)  # arbitrarily pick the 1st chain
+        #print('Average autocorrelation time: {0}'.format(np.mean(tau)))
+
     flat_samples = sampler.get_chain(discard=500, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
     mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84]) for i in range(ndim)])
+
 
     for i in range(ndim):
         mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])
@@ -399,6 +435,30 @@ if run_inversion:
         txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
         txt = txt.format(mcmc_i[1], q[0], q[1], labels[i])
         print(txt)
+
+
+    Mcorr = np.corrcoef(flat_samples.T)
+    triu_Mcorr = np.triu(m=Mcorr, k=1)
+    abs_Mcorr_sorted_indices = np.unravel_index(np.argsort(np.abs(triu_Mcorr),
+                                                           axis=None)[::-1],
+                                                triu_Mcorr.shape)
+    Mcov = np.cov(flat_samples.T) # each row corresponds to a different variable
+    #import corner
+    #fig = corner.corner(flat_samples, labels=labels);
+    #fig.savefig('corner_plot.pdf')
+    #plt.show()
+
+    fig, ax = plt.subplots(figsize=(20,20))
+    cmap = sns.diverging_palette(250, 10, as_cmap=True)
+    ax = sns.heatmap(pd.DataFrame(Mcorr),
+                     xticklabels=labels,
+                     yticklabels=labels,
+                     cmap=cmap,
+                     vmin=-1.,
+                     center=0.,
+                     vmax=1.)
+    fig.savefig('parameter_correlations.pdf')
+    plt.show()
 
     set_params(mcmc_params, dataset, storage) # use the 50th percentile for the preferred params (might not represent the best fit if the distribution is strongly non-Gaussian...)
 
@@ -872,7 +932,7 @@ for (T0, color) in [(1273.15, 'blue'),
 
 
 Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)
-                               
+
 P_rw_fper = []
 for assemblage in Matsuzaka_2000_assemblages:
     P_rw_fper.append([assemblage.nominal_state[0], assemblage.nominal_state[1],
