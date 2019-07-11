@@ -9,7 +9,6 @@ from . import equation_of_state as eos
 from ..tools import bracket
 import warnings
 import pkgutil
-from scipy.linalg import solve
 from scipy.special import binom
 from ..constants import gas_constant
 
@@ -38,7 +37,7 @@ class BroshCalphad(eos.EquationOfState):
                     self._theta(pressure-dP/2., params))/dP
         V_qh = 3.*params['n']*gas_constant*np.exp(-nu)/(1. - np.exp(-nu))*dthetadP # eq. 6
 
-        
+
         f = np.sqrt(1. + 2.*params['b'][1] *
                     (1. + params['delta'][1])*pressure/params['K_0'])
         dIdP = ( (1. + params['delta'][1])/(params['K_0']*(1. + params['b'][1])) *
@@ -47,7 +46,7 @@ class BroshCalphad(eos.EquationOfState):
 
         #V = dG_c/dP + dG_qh/dP - C_T*(dI_P/dP)
         return V_c + V_qh + V_th
-        
+
 
     def pressure(self, temperature, volume, params):
         return 0.
@@ -78,12 +77,12 @@ class BroshCalphad(eos.EquationOfState):
         Returns shear modulus :math:`G` of the mineral. :math:`[Pa]`
         """
         return 0.
-    
+
     def molar_internal_energy(self, pressure, temperature, volume, params):
         """
         Returns the internal energy :math:`\mathcal{E}` of the mineral. :math:`[J/mol]`
         """
-        
+
         return (self.gibbs_free_energy(pressure, temperature, volume, params) -
                 pressure * self.volume(pressure, temperature, params) +
                 temperature * self.entropy(pressure, temperature, volume, params))
@@ -126,7 +125,7 @@ class BroshCalphad(eos.EquationOfState):
               coeffs[12]/temperature)
         return S
 
-    
+
     def _gibbs_1bar(self, temperature, params):
         # first, identify which of the piecewise segments we're in
         i = np.argmax([T > temperature for T in list(zip(*params['gibbs_coefficients']))[0]])
@@ -152,10 +151,10 @@ class BroshCalphad(eos.EquationOfState):
                 for n in range(2, 6)] # eq. A2
 
     def _Gamma(self, n, an, Xn):
-        
+
         d = lambda k, Xn: (np.power(Xn, 3. - float(k)) * float(k) / (float(k) - 3.) if k != 3
                            else -3.*np.log(Xn))  # eq. A9
-        
+
         return (3.*np.power(an, 1. - float(n)) / float(n) *
                 np.sum([binom(n, k) *
                         np.power(an - 1., float(n-k)) *
@@ -169,7 +168,7 @@ class BroshCalphad(eos.EquationOfState):
         XT2 = 1./(1. - ab2 + ab2 *
                   np.power(1. + 2./(3.*ab2) *
                            pressure/K0b, 0.5)) # eq. 6 b of SE2015
-        
+
         return (params['theta_0'] *
                 np.exp(params['grueneisen_0'] /
                        (1. + params['delta'][0]) *
@@ -179,7 +178,7 @@ class BroshCalphad(eos.EquationOfState):
     def _interpolating_function(self, pressure, params):
         f = np.sqrt(1. + 2.*params['b'][1] *
                     (1. + params['delta'][1])*pressure/params['K_0']) # CHECKED
-    
+
         return (1. / (1. + params['b'][1]) *
                 (params['b'][1] + f) *
                 np.exp((1. - f)/params['b'][1])) # eq. D2, or eq. 9 of SE2015, CHECKED
@@ -201,20 +200,20 @@ class BroshCalphad(eos.EquationOfState):
         if temperature < params['T_0']:
             C_T = ( temperature * temperature /
                     (2.*params['T_0']) * params['delta_Cpr'] )
-        
+
         else:
             C_T = ( (G_qh0 - G_SGTE) + params['delta_Gr'] -
-                    (temperature - params['T_0'])*params['delta_Sr'] + 
+                    (temperature - params['T_0'])*params['delta_Sr'] +
                     (temperature - params['T_0']/2.)*params['delta_Cpr'] )
-            
+
         return C_T
-            
+
     def gibbs_free_energy(self, pressure, temperature, volume, params):
         """
         Returns the Gibbs free energy :math:`\mathcal{G}` of the mineral. :math:`[J/mol]`
         """
-    
-    
+
+
         # Cold compression term
         X = self._X(pressure, params)
         G_c = (params['K_0']*params['V_0'] *
@@ -229,17 +228,17 @@ class BroshCalphad(eos.EquationOfState):
         theta = self._theta(pressure, params)
         G_qh = self._gibbs_qh(temperature, theta, params['n'])
         G_qh0 = self._gibbs_qh(temperature, params['theta_0'], params['n'])
-        
+
         C_T = self._C_T(temperature, params)
         I_P = self._interpolating_function(pressure, params)
         return G_SGTE + G_c + G_qh - G_qh0 + C_T*(1. - I_P)
 
-    
+
     def entropy(self, pressure, temperature, volume, params):
         """
         Returns the molar entropy :math:`\mathcal{S}` of the mineral. :math:`[J/K/mol]`
         """
-        
+
         S_SGTE = self._S_1bar(temperature, params)
 
         # S_qh
@@ -252,11 +251,11 @@ class BroshCalphad(eos.EquationOfState):
         if temperature < params['T_0']:
             dC_TdT = ( temperature / params['T_0'] *
                        params['delta_Cpr'] )
-        
+
         else:
             dC_TdT = ( -(S_qh0 - S_SGTE) -
                        params['delta_Sr'] + params['delta_Cpr'] )
-            
+
         I_P = self._interpolating_function(pressure, params)
         return S_SGTE + S_qh - S_qh0 - dC_TdT*(1. - I_P)
 
@@ -307,17 +306,17 @@ class BroshCalphad(eos.EquationOfState):
                     self.volume(pressure, temperature, params))/Cv
 
     def calculate_transformed_parameters(self, params):
-        
+
         Z = {str(sl[0]): int(sl[1])
              for sl in [line.split() for line
                         in pkgutil.get_data('burnman',
                                             'data/input_masses/atomic_numbers.dat').decode('ascii').split('\n')
                         if len(line) > 0 and line[0] != '#']}
-        
-        
+
+
         nZs = [(n_at, float(Z[el])) for (el, n_at) in params['formula'].items()]
-        
-        
+
+
         X3_300TPa = [np.power(1. - params['a'][i-2] +
                               params['a'][i-2]*np.power((1. + float(i)/(3.*params['a'][i-2]) *
                                                          300.e12/params['K_0']), 1./float(i)), -3.)
@@ -326,31 +325,31 @@ class BroshCalphad(eos.EquationOfState):
                               params['a'][i-2]*np.power((1. + float(i)/(3.*params['a'][i-2]) *
                                                          330.e12/params['K_0']), 1./float(i)), -3.)
                      for i in range(2, 6)] # eq. A2
-        
+
         V_QSM_300TPa = np.sum([n_at *
                                ( 0.02713 *
                                  np.exp(0.97626*np.log(Zi) -
                                         0.057848*np.log(Zi)*np.log(Zi))
                                )
                                for (n_at, Zi) in nZs])*1.e-6 # eq. A6a, m^3/mol
-        
+
         V_QSM_330TPa = np.sum([n_at *
                                ( 0.025692 *
                                  np.exp(0.97914*np.log(Zi) -
                                         0.057741*np.log(Zi)*np.log(Zi))
                                )
                                for (n_at, Zi) in nZs])*1.e-6 # eq. A6b, m^3/mol
-        
+
         A = np.array([[1., 1., 1., 1.], # eq A3
                       [0., 6., 8., 9.], # eq A4
                       X3_300TPa, # eq A5a
                       X3_330TPa]) # eq A5b
-        
-        b = np.array([1., 8., V_QSM_300TPa/params['V_0'], V_QSM_330TPa/params['V_0']])
-    
-        return solve(A, b) # does not quite reproduce the published values of c; A.c consistently gives b[2], b[3] ~1% larger than Brosh
 
-    
+        b = np.array([1., 8., V_QSM_300TPa/params['V_0'], V_QSM_330TPa/params['V_0']])
+
+        return np.linalg.solve(A, b) # does not quite reproduce the published values of c; A.c consistently gives b[2], b[3] ~1% larger than Brosh
+
+
     def validate_parameters(self, params):
         """
         Check for existence and validity of the parameters
@@ -363,7 +362,7 @@ class BroshCalphad(eos.EquationOfState):
         if 'a' not in params:
             params['a'] =  [(float(i)-1.)/(3.*params['Kprime_0'] - 1.)
                             for i in range(2, 6)] # eq. A2
-    
+
         if 'c' not in params:
             params['c'] = self.calculate_transformed_parameters(params)
 
@@ -374,7 +373,7 @@ class BroshCalphad(eos.EquationOfState):
         Cp_qhr = (3. * params['n'] * gas_constant *
                   nur * nur * np.exp(nur) /
                   np.power( np.exp(nur) - 1., 2.) )
-        
+
         G_SGTEr = self._gibbs_1bar(params['T_0'], params)
         S_SGTEr = self._S_1bar(params['T_0'], params)
         Cp_SGTEr = self._Cp_1bar(params['T_0'], params)
@@ -382,7 +381,7 @@ class BroshCalphad(eos.EquationOfState):
         params['delta_Cpr'] = (Cp_SGTEr - Cp_qhr)
         params['delta_Gr'] = (G_SGTEr - G_qhr)
         params['delta_Sr'] = (S_SGTEr - S_qhr)
-            
+
         # Check that all the required keys are in the dictionary
         expected_keys = ['gibbs_coefficients',
                          'V_0', 'K_0', 'Kprime_0',
@@ -400,4 +399,3 @@ class BroshCalphad(eos.EquationOfState):
             warnings.warn('Unusual value for K_0', stacklevel=2)
         if params['Kprime_0'] < 0. or params['Kprime_0'] > 10.:
             warnings.warn('Unusual value for Kprime_0', stacklevel=2)
-            

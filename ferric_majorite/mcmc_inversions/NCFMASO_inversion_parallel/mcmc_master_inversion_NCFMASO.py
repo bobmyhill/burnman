@@ -91,7 +91,7 @@ def set_params(args, dataset, storage):
                                                            ss.basis).__dict__)
 
     # Experimental uncertainties
-    for j, u in enumerate(experiment_uncertainties):
+    for j, u in enumerate(storage['experiment_uncertainties']):
         storage['dict_experiment_uncertainties'][u[0]][u[1]] = args[i]*u[3]
         storage['experiment_uncertainties'][j][2] = args[i]*u[3]
         i += 1
@@ -511,7 +511,6 @@ from datasets import Woodland_ONeill_1993_FASO_alm_sk
 from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
 from datasets import Beyer_et_al_2019_NCFMASO
 
-
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
                 for module in [endmember_reactions,
@@ -547,9 +546,19 @@ dataset = {'endmembers': mineral_dataset['endmembers'],
            'child_solutions': mineral_dataset['child_solutions'],
            'assemblages': assemblages}
 
+def initialise_params():
+    from import_params import FMS_storage, transfer_storage
+    transfer_storage(from_storage=FMS_storage,
+                     to_storage=storage)
+    set_params(get_params(storage), dataset, storage)
+    print('Appropriate parameters have been initialised from FMS output')
+    return None
+initialise_params()
+
 # Prepare internal arrays using minimize_func
 # This should speed things up after depickling
-log_probability(get_params(storage), dataset, storage)
+lnprob = log_probability(get_params(storage), dataset, storage)
+print('Initial ln(p) = {0}'.format(lnprob))
 
 ###################
 # PUT PARAMS HERE #
@@ -567,9 +576,9 @@ if run_inversion:
     np.random.seed(1234)
 
     jiggle_x0 = 1.e-3
-    walker_multiplication_factor = 3  # this number must be greater than 2!
+    walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 800  # number of steps in the full mcmc run
+    n_steps_mcmc = 1000  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -591,7 +600,6 @@ if run_inversion:
     print(mcmcfile)
 
     print('using n threads')
-
 
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
     with Pool() as pool:
@@ -618,8 +626,40 @@ if run_inversion:
         print('100% complete. Pickling')
         pickle.dump(sampler, open(mcmcfile,'wb'))
 
+    print('Mean acceptance fraction: {0:.2f}'
+          ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
 
-    # sampler = pickle.load(open(mcmcfile+'int','rb'))
+    if np.mean(sampler.acceptance_fraction) < 0.15:
+        print(sampler.get_chain().shape)
+        print(sampler.acceptance_fraction)
+    exit()
+
+    try:
+        tau = sampler.get_autocorr_time()
+        print(tau)
+    except emcee.autocorr.AutocorrError as e:
+        print(e)
+
+
+        samples = sampler.get_chain()
+        n_params = samples.shape[2]
+        n_params_per_plot = 10
+        for j in range(int(np.ceil(n_params/n_params_per_plot))):
+            if j == int(np.ceil(n_params/n_params_per_plot) - 1):
+                n_plots = n_params - n_params_per_plot*j
+            else:
+                n_plots = n_params_per_plot
+            fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
+            for i in range(n_plots):
+                ax = axes[i]
+                ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
+                ax.set_xlim(0, len(samples))
+                ax.set_ylabel(labels[j*n_params_per_plot + i])
+                ax.yaxis.set_label_coords(-0.1, 0.5)
+
+            axes[-1].set_xlabel("step number")
+            plt.show()
+
     # flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
     flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
