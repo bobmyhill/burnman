@@ -11,7 +11,7 @@
 # mwd -> mrw (Stixrude diagrams / compilation from Jacobs et al., 2001)
 15.86  	    0.1  	  975     10. 	      mwd mrw
 16.88  	    0.1 	  1115    10. 	      mwd mrw
-17.84  	    0.1 	  1300    10. 	      mwd mrw 
+17.84  	    0.1 	  1300    10. 	      mwd mrw
 18.99  	    0.1 	  1465    10. 	      mwd mrw
 23.29  	    0.5 	  2100 	  10. 	      mwd mrw
 
@@ -113,4 +113,10 @@
 22.82  	    0.37      	 2173.15  10. 	      mbdg per mrw mwd
 
 # maj -> mbdg (Hirose et al., 2001, using Jamieson Au EoS)
-22.10 	    1.00         2273.15  10	      dmaj mbdg  
+22.10 	    1.00         2273.15  10	      dmaj mbdg
+
+# di and cpv transitions (Akaogi et al., 2004)
+17.25       0.25          1273.15 10.   mwd stv cpv di
+17.75       0.25          1473.15 10.   mwd stv cpv di
+17.75       0.25          1873.15 10.   dmaj cpv di
+18.00       0.25          2073.15 10.   dmaj cpv di

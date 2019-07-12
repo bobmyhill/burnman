@@ -689,6 +689,10 @@ def create_minerals():
                                                                                     [0., 0., 0., 0., 1., 0.],
                                                                                     [0., 0., 0., 0., 0., 1.]]),
                                                                           solution_name='py-dmaj-nmaj garnet'),
+                       'sp_herc': transform_solution_to_new_basis(spinel,
+                                                                  np.array([[1., 0., 0., 0., 0.],
+                                                                            [0., 1., 0., 0., 0.]]),
+                                                                  solution_name='spinel-hercynite'),
 
                        'ring': transform_solution_to_new_basis(spinel,
                                                                np.array([[0., 0., 0., 1., 0.],
@@ -824,7 +828,7 @@ def create_minerals():
                   'qtz':      qtz,      # SiO2 polymorphs
                   'coe':      coe,
                   'stv':      stv,
-                  'hem':      hem}
+                  'hem':      hem}  # hem only in Woodland
 
     mineral_dataset = {'endmembers': endmembers,
                        'solutions': solutions,

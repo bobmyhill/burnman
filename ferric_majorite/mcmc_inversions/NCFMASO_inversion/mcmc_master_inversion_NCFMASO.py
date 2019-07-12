@@ -22,6 +22,8 @@ import pickle
 import emcee
 from multiprocessing import Pool
 
+print('TODO!! Check endmembers and priors, add solution parameters and priors,'
+      'check datasets that have very low probabilities.')
 if len(sys.argv) == 2:
     if sys.argv[1] == '--fit':
         run_inversion = True
@@ -125,7 +127,12 @@ def set_params_from_special_constraints(dataset, storage):
                                         - endmembers['fwd'].gibbs
                                         + 100.)  # fwd less stable than frw
 
-    # 2) Copy interaction parameters from opx to hpx:
+    # 2) Fix odi (just in case)
+    endmembers['odi'].params['H_0'] = endmembers['di'].params['H_0'] - 0.1e3
+    endmembers['odi'].params['S_0'] = endmembers['di'].params['S_0'] - 0.211
+    endmembers['odi'].params['V_0'] = endmembers['di'].params['V_0'] + 0.005e-5
+
+    # 3) Copy interaction parameters from opx to hpx:
     solutions['hpx'].alphas = solutions['opx'].alphas
     solutions['hpx'].energy_interaction = solutions['opx'].energy_interaction
     solutions['hpx'].entropy_interaction = solutions['opx'].entropy_interaction
@@ -230,28 +237,28 @@ endmember_args.extend([[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
                                    'fo', 'fa',
                                    'mwd',
                                    'mrw', 'frw',
-                                   'mt',
+                                   'herc', 'sp', 'mt',
                                    'alm', 'gr', 'andr', 'dmaj', 'nagt',
                                    'coe', 'stv',
                                    'hed', 'cen', 'cfs', 'cats', 'aeg',
                                    'oen', 'ofs', 'mgts',
                                    'hen', 'hfs',
                                    'mbdg', 'fbdg',
-                                   'sp']])
+                                   'cpv']])
 
 endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
                        for mbr in ['per', 'wus',
                                    'fo', 'fa',
                                    'mwd',
                                    'mrw', 'frw',
-                                   'mt',
+                                   'herc', 'sp', 'mt',
                                    'alm', 'gr', 'andr', 'dmaj', 'nagt',
                                    'coe', 'stv',
                                    'di', 'hed',  # 'cen', 'cfs', 'cats', 'aeg',
                                    'oen', 'ofs', 'mgts',
                                    'hen', 'hfs',
                                    'mbdg', 'fbdg',
-                                   'sp']])
+                                   'cpv']])
 
 endmember_args.extend([[mbr, 'V_0', endmembers[mbr].params['V_0'], 1.e-5]
                        for mbr in ['fwd']])
@@ -271,6 +278,8 @@ solution_args = [['mw', 'E', 0, 0,
                   solutions['ol'].energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0,
                   solutions['wad'].energy_interaction[0][0], 1.e3],
+                 ['sp', 'E', 0, 0,
+                  solutions['sp'].energy_interaction[0][0], 1.e3],
                  ['sp', 'E', 3, 0,
                   solutions['sp'].energy_interaction[3][0], 1.e3],
 
@@ -467,6 +476,7 @@ labels.extend(['{0}_{1}'.format(a[0], a[1]) for a in experiment_uncertainties])
 #######################
 
 from datasets import Frost_2003_fper_ol_wad_rw
+from datasets import Jamieson_Roeder_1984_FMAS_ol_sp
 from datasets import Seckendorff_ONeill_1992_ol_opx
 from datasets import ONeill_Wood_1979_ol_gt
 from datasets import ONeill_Wood_1979_CFMAS_ol_gt
@@ -513,34 +523,37 @@ from datasets import Woodland_ONeill_1993_FASO_alm_sk
 from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
 from datasets import Beyer_et_al_2019_NCFMASO
 
+
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
-                for module in [endmember_reactions,
-                               Frost_2003_fper_ol_wad_rw,
-                               Seckendorff_ONeill_1992_ol_opx,
-                               ONeill_Wood_1979_ol_gt,
-                               ONeill_Wood_1979_CFMAS_ol_gt,
-                               Matsuzaka_et_al_2000_rw_wus_stv, # assume all Fe as Fe2+
-                               ONeill_1987_QFI,
-                               ONeill_1987_QFM,
-                               Nakajima_FR_2012_bdg_fper,
-                               Tange_TNFS_2009_bdg_fper_stv,
-                               Frost_2003_FMASO_garnet,
-                               Gasparik_1989_MAS_px_gt,
-                               Gasparik_1992_MAS_px_gt,
-                               Gasparik_Newton_1984_MAS_opx_sp_fo,
-                               Gasparik_Newton_1984_MAS_py_opx_sp_fo,
-                               Perkins_et_al_1981_MAS_py_opx,
-                               Carlson_Lindsley_1988_CMS_opx_cpx,
-                               Perkins_Newton_1980_CMAS_opx_cpx_gt,
-                               Gasparik_1989_CMAS_px_gt,
-                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,
-                               Gasparik_1989_NMAS_px_gt,
-                               Gasparik_1989_NCMAS_px_gt,
-                               Perkins_Vielzeuf_1992_CFMS_ol_cpx,
-                               #Woodland_ONeill_1993_FASO_alm_sk, # I don't think we have a good enough spinel model yet
-                               Rohrbach_et_al_2007_NCFMASO_gt_cpx,
-                               Beyer_et_al_2019_NCFMASO]]
+                for module in [endmember_reactions,  # 73, 2713
+                               Frost_2003_fper_ol_wad_rw, # 143, 512
+                               Seckendorff_ONeill_1992_ol_opx, # 46, 2804
+                               Jamieson_Roeder_1984_FMAS_ol_sp, # 18, 15367
+                               ONeill_Wood_1979_ol_gt, # 54, 6844
+                               ONeill_Wood_1979_CFMAS_ol_gt, # 20, 328
+                               Matsuzaka_et_al_2000_rw_wus_stv, # 19, 200 assume all Fe as Fe2+
+                               ONeill_1987_QFI, # 103, 202
+                               ONeill_1987_QFM, # 38, 201
+                               Nakajima_FR_2012_bdg_fper, # 10, 225
+                               Tange_TNFS_2009_bdg_fper_stv, # 8, 481
+                               Frost_2003_FMASO_garnet, # 36, 391
+                               Gasparik_1989_MAS_px_gt, # 9, 234
+                               Gasparik_1992_MAS_px_gt, # 12, 232
+                               Gasparik_Newton_1984_MAS_opx_sp_fo, # 14 634
+                               Gasparik_Newton_1984_MAS_py_opx_sp_fo, # 2, 230
+                               Perkins_et_al_1981_MAS_py_opx, # 91, 553
+                               Carlson_Lindsley_1988_CMS_opx_cpx, # 40, 4676
+                               Perkins_Newton_1980_CMAS_opx_cpx_gt, # 12, 926
+                               Gasparik_1989_CMAS_px_gt, # 18, 1736
+                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp, # 14 16059
+                               Gasparik_1989_NMAS_px_gt, # 12 1708
+                               Gasparik_1989_NCMAS_px_gt, # 5, 2014
+                               Perkins_Vielzeuf_1992_CFMS_ol_cpx, # 15, 268
+                               # ?Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
+                               Rohrbach_et_al_2007_NCFMASO_gt_cpx, # 5, 464
+                               Beyer_et_al_2019_NCFMASO # 12, 24611
+                               ]]
                for assemblage in assemblage_list]
 
 dataset = {'endmembers': mineral_dataset['endmembers'],
@@ -559,9 +572,10 @@ initialise_params()
 
 # Prepare internal arrays using minimize_func
 # This should speed things up after depickling
+print('Fitting {0} assemblages'.format(len(dataset['assemblages'])))
 lnprob = log_probability(get_params(storage), dataset, storage)
 print('Initial ln(p) = {0}'.format(lnprob))
-
+exit()
 ###################
 # PUT PARAMS HERE #
 ###################
