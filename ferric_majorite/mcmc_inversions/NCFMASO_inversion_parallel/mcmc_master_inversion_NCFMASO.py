@@ -518,7 +518,7 @@ assemblages = [assemblage for assemblage_list in
                                Seckendorff_ONeill_1992_ol_opx,
                                ONeill_Wood_1979_ol_gt,
                                ONeill_Wood_1979_CFMAS_ol_gt,
-                               Matsuzaka_et_al_2000_rw_wus_stv,
+                               Matsuzaka_et_al_2000_rw_wus_stv, # assume all Fe as Fe2+
                                ONeill_1987_QFI,
                                ONeill_1987_QFM,
                                Nakajima_FR_2012_bdg_fper,
@@ -536,7 +536,7 @@ assemblages = [assemblage for assemblage_list in
                                Gasparik_1989_NMAS_px_gt,
                                Gasparik_1989_NCMAS_px_gt,
                                Perkins_Vielzeuf_1992_CFMS_ol_cpx,
-                               Woodland_ONeill_1993_FASO_alm_sk,
+                               #Woodland_ONeill_1993_FASO_alm_sk, # I don't think we have a good enough spinel model yet
                                Rohrbach_et_al_2007_NCFMASO_gt_cpx,
                                Beyer_et_al_2019_NCFMASO]]
                for assemblage in assemblage_list]
@@ -578,7 +578,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 1000  # number of steps in the full mcmc run
+    n_steps_mcmc = 1200  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -617,11 +617,12 @@ if run_inversion:
             state = p0
 
 
-        # sampler_2 = pickle.load(open(mcmcfile+'int','rb'))
-        # state = sampler_2._previous_state
+        sampler = pickle.load(open(mcmcfile+'int','rb'))
 
         print('Burn-in complete. Starting MCMC run.')
-        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+
+        #state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
         print('100% complete. Pickling')
         pickle.dump(sampler, open(mcmcfile,'wb'))
@@ -632,7 +633,7 @@ if run_inversion:
     if np.mean(sampler.acceptance_fraction) < 0.15:
         print(sampler.get_chain().shape)
         print(sampler.acceptance_fraction)
-    exit()
+        exit()
 
     try:
         tau = sampler.get_autocorr_time()
@@ -640,7 +641,7 @@ if run_inversion:
     except emcee.autocorr.AutocorrError as e:
         print(e)
 
-
+        """
         samples = sampler.get_chain()
         n_params = samples.shape[2]
         n_params_per_plot = 10
@@ -659,7 +660,7 @@ if run_inversion:
 
             axes[-1].set_xlabel("step number")
             plt.show()
-
+        """
     # flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
     flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 

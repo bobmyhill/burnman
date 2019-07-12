@@ -390,8 +390,6 @@ if run_inversion:
 
     sampler = pickle.load(open(mcmcfile,'rb'))
 
-    print(storage)
-    exit()
     print('Mean acceptance fraction: {0:.2f}'
           ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
 
