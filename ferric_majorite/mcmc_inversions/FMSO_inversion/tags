@@ -1,0 +1,181 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Frost_2003_assemblages	mcmc_master_inversion_FMSO.py	/^Frost_2003_assemblages = Frost_2003_fper_ol_wad_rw.get_assemblages(dataset)$/;"	v
+G	mcmc_master_inversion_FMSO.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['fo'].gibbs\/2. + endmembers['fa'].gibbs\/2.)$/;"	v
+G	mcmc_master_inversion_FMSO.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['mrw'].gibbs\/2. + endmembers['frw'].gibbs\/2.)$/;"	v
+G	mcmc_master_inversion_FMSO.py	/^    G = (endmembers['per'].gibbs - endmembers['wus'].gibbs - endmembers['mwd'].gibbs\/2. + endmembers['fwd'].gibbs\/2.)$/;"	v
+KDs	mcmc_master_inversion_FMSO.py	/^    KDs = ((x_ols*(1. - x_fpers))\/$/;"	v
+KDs	mcmc_master_inversion_FMSO.py	/^    KDs = ((x_wads*(1. - x_fpers))\/$/;"	v
+Matsuzaka_2000_assemblages	mcmc_master_inversion_FMSO.py	/^Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)$/;"	v
+P0	mcmc_master_inversion_FMSO.py	/^        P0 = assemblage.pressure$/;"	v
+P1	mcmc_master_inversion_FMSO.py	/^        P1 = assemblage.pressure$/;"	v
+P_Xmg_phase	mcmc_master_inversion_FMSO.py	/^P_Xmg_phase = {'ol': [], 'wad': [], 'ring': []}$/;"	v
+P_Xol_RTlnKDs	mcmc_master_inversion_FMSO.py	/^P_Xol_RTlnKDs = []$/;"	v
+P_Xrw_Xfper	mcmc_master_inversion_FMSO.py	/^P_Xrw_Xfper = []$/;"	v
+P_Xwad_RTlnKDs	mcmc_master_inversion_FMSO.py	/^P_Xwad_RTlnKDs = []$/;"	v
+P_inv	mcmc_master_inversion_FMSO.py	/^    P_inv = assemblage.pressure$/;"	v
+P_rw_fper	mcmc_master_inversion_FMSO.py	/^P_rw_fper = []$/;"	v
+P_shift	mcmc_master_inversion_FMSO.py	/^                        P_shift = dict_experiment_uncertainties[assemblage.experiment_id]['P']$/;"	v
+Pi	mcmc_master_inversion_FMSO.py	/^        Pi = assemblage.pressure$/;"	v
+Pi	mcmc_master_inversion_FMSO.py	/^    Pi = 22.e9$/;"	v
+Pmax	mcmc_master_inversion_FMSO.py	/^Pmax = 15.e9$/;"	v
+Pmax	mcmc_master_inversion_FMSO.py	/^Pmax = 18.e9$/;"	v
+Pmax	mcmc_master_inversion_FMSO.py	/^Pmax = 24.e9$/;"	v
+Pmin	mcmc_master_inversion_FMSO.py	/^Pmin = 0.e9$/;"	v
+Pmin	mcmc_master_inversion_FMSO.py	/^Pmin = 10.e9$/;"	v
+RTlnKD	mcmc_master_inversion_FMSO.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_ol*(1. - x_fper))\/$/;"	v
+RTlnKD	mcmc_master_inversion_FMSO.py	/^        RTlnKD = burnman.constants.gas_constant*T*np.log((x_wad*(1. - x_fper))\/$/;"	v
+T	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        T = 1173.15$/;"	v
+T	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        T = 1273.15$/;"	v
+T	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        T = 1473.15$/;"	v
+T	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        T = 1673.15$/;"	v
+T	mcmc_master_inversion_FMSO.py	/^        T = assemblage.nominal_state[1]$/;"	v
+T	mcmc_master_inversion_FMSO.py	/^T = 1673.15$/;"	v
+W_fper	mcmc_master_inversion_FMSO.py	/^    W_fper = solutions['mw'].solution_model.We[0][1] + solutions['mw'].solution_model.Wv[0][1] * P$/;"	v
+W_ol	mcmc_master_inversion_FMSO.py	/^    W_ol = (solutions['ol'].solution_model.We[0][1] + solutions['ol'].solution_model.Wv[0][1] * P) \/2. # 1 cation$/;"	v
+W_rw	mcmc_master_inversion_FMSO.py	/^    W_rw = (child_solutions['ring'].solution_model.We[0][1]  + child_solutions['ring'].solution_model.Wv[0][1] * P)\/2. # 1 cation$/;"	v
+W_wad	mcmc_master_inversion_FMSO.py	/^    W_wad = (solutions['wad'].solution_model.We[0][1] + solutions['wad'].solution_model.Wv[0][1] * P) \/2. # 1 cation$/;"	v
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:molybdenum
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:molybdenum_dioxide
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:rhenium
+__init__	input_buffers.py	/^    def __init__(self):$/;"	m	class:rhenium_dioxide
+affinity_ol_fper	mcmc_master_inversion_FMSO.py	/^def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):$/;"	f
+arrow_params	mcmc_master_inversion_FMSO.py	/^arrow_params = {'shape': 'full',$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^            assemblage = burnman.Composite([m1, m2])$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^        assemblage = burnman.Composite([child_solutions['ring'], solutions['mw'], endmembers['stv']], [0., 2.\/3., 1.\/3.])$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^        assemblage = burnman.Composite([child_solutions['ring'],$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^        assemblage = burnman.Composite([m1.endmembers[0][0], m2.endmembers[0][0]])$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^        assemblage = burnman.Composite([m1.endmembers[1][0], m2.endmembers[1][0]])$/;"	v
+assemblage	mcmc_master_inversion_FMSO.py	/^    assemblage = burnman.Composite([solutions['ol'], solutions['wad'], child_solutions['ring']])$/;"	v
+assemblages	mcmc_master_inversion_FMSO.py	/^assemblages = [assemblage for assemblage_list in$/;"	v
+auto_window	autocorr.py	/^def auto_window(taus, c):$/;"	f
+autocorr_func_1d	autocorr.py	/^def autocorr_func_1d(x, norm=True):$/;"	f
+autocorr_gw2010	autocorr.py	/^def autocorr_gw2010(y, c=5.0):$/;"	f
+autocorr_ml	autocorr.py	/^def autocorr_ml(y, thin=1, c=5.0):$/;"	f
+autocorr_new	autocorr.py	/^def autocorr_new(y, c=5.0):$/;"	f
+ax	mcmc_master_inversion_FMSO.py	/^ax = [fig.add_subplot(1, 3, i) for i in range(1, 4)]$/;"	v
+c	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        c='blue'$/;"	v
+c	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        c='green'$/;"	v
+c	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        c='k'$/;"	v
+c	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^        c='red'$/;"	v
+c	mcmc_master_inversion_FMSO.py	/^c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',$/;"	v
+child_solutions	mcmc_master_inversion_FMSO.py	/^child_solutions = mineral_dataset['child_solutions']$/;"	v
+comp	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^def comp(prms, xMg_bulk, xCa_gt, lnKD):$/;"	f
+composition	mcmc_master_inversion_FMSO.py	/^            composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMSO.py	/^        composition = {'Fe': 0., 'Mg': 2., 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMSO.py	/^        composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1. - x_m1), 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMSO.py	/^        composition = {'Fe': 2., 'Mg': 0., 'Si': 1., 'O': 4.}$/;"	v
+composition	mcmc_master_inversion_FMSO.py	/^    composition = {'Fe': 2.*x_m1, 'Mg': 2.*(1.-x_m1), 'Si': 1., 'O': 4.}$/;"	v
+create_minerals	input_dataset.py	/^def create_minerals():$/;"	f
+d	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^d = np.loadtxt('ONeill_Wood_1979_Mg_Ca_KD_ol_gt.png.dat')$/;"	v
+dataset	mcmc_master_inversion_FMSO.py	/^dataset = {'endmembers': mineral_dataset['endmembers'],$/;"	v
+dict_endmember_args	mcmc_master_inversion_FMSO.py	/^dict_endmember_args = {a[0]: {} for a in endmember_args}$/;"	v
+dict_experiment_uncertainties	mcmc_master_inversion_FMSO.py	/^dict_experiment_uncertainties = {u[0] : {'P': 0., 'T': 0.} for u in experiment_uncertainties}$/;"	v
+dict_solution_args	mcmc_master_inversion_FMSO.py	/^dict_solution_args = {a[0]: {} for a in solution_args}$/;"	v
+dx	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dx = [(d[i0+4][0] - d[i0+3][0])\/2., (d[i0+2][1] - d[i0+1][1])\/2.]$/;"	v
+dxCa_gt	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dxCa_gt = dx[0]$/;"	v
+dxFe_gt	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dxFe_gt = dxCa_gt$/;"	v
+dxFe_ol	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dxFe_ol = 0.005$/;"	v
+dxMg_gt	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dxMg_gt = dxCa_gt$/;"	v
+dxMg_ol	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    dxMg_ol = 0.005$/;"	v
+endmember_args	mcmc_master_inversion_FMSO.py	/^endmember_args = []$/;"	v
+endmember_priors	mcmc_master_inversion_FMSO.py	/^endmember_priors = []$/;"	v
+endmembers	mcmc_master_inversion_FMSO.py	/^endmembers = mineral_dataset['endmembers']$/;"	v
+eqm_pressures	mcmc_master_inversion_FMSO.py	/^def eqm_pressures(m1, m2, temperatures):$/;"	f
+equality_constraints	mcmc_master_inversion_FMSO.py	/^            equality_constraints = [('T', T0), ('phase_proportion', (m2, 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMSO.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (child_solutions['ring'], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMSO.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[0][0], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMSO.py	/^        equality_constraints = [('T', T0), ('phase_proportion', (m1.endmembers[1][0], 0.0))]$/;"	v
+equality_constraints	mcmc_master_inversion_FMSO.py	/^        equality_constraints = [('T', T0),$/;"	v
+equality_constraints	mcmc_master_inversion_FMSO.py	/^    equality_constraints = [('T', T0), ('phase_proportion', (solutions['ol'], 0.0))]$/;"	v
+experiment_uncertainties	mcmc_master_inversion_FMSO.py	/^experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],$/;"	v
+fa_phase_diagram	mcmc_master_inversion_FMSO.py	/^fa_phase_diagram = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Yagi_1987.png')$/;"	v
+fa_phase_diagram2	mcmc_master_inversion_FMSO.py	/^fa_phase_diagram2 = mpimg.imread('frost_2003_figures\/Fe2SiO4_phase_diagram_Jacobs_2001.png')$/;"	v
+fig	mcmc_master_inversion_FMSO.py	/^fig = plt.figure(figsize=(30,10))$/;"	v
+fo_phase_diagram	mcmc_master_inversion_FMSO.py	/^fo_phase_diagram = mpimg.imread('frost_2003_figures\/Mg2SiO4_phase_diagram_Jacobs_2017.png')$/;"	v
+get_assemblages	datasets/Frost_2003_fper_ol_wad_rw.py	/^def get_assemblages(mineral_dataset):$/;"	f
+get_assemblages	datasets/Matsuzaka_et_al_2000_rw_wus_stv.py	/^def get_assemblages(mineral_dataset):$/;"	f
+get_assemblages	datasets/Nakajima_FR_2012_bdg_fper.py	/^def get_assemblages(mineral_dataset):$/;"	f
+get_assemblages	datasets/Tange_TNFS_2009_bdg_fper_stv.py	/^def get_assemblages(mineral_dataset):$/;"	f
+get_assemblages	datasets/endmember_reactions.py	/^def get_assemblages(mineral_dataset):$/;"	f
+get_params	mcmc_master_inversion_FMSO.py	/^def get_params(storage):$/;"	f
+header	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^           header='P(GPa) T(K)    xMgol  dxMgol xFeol  dxFeol xMggt  dxMggt xFegt  dxFegt xCagt  dxCagt')$/;"	v
+i0	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    i0 = i*5$/;"	v
+idx_mw	mcmc_master_inversion_FMSO.py	/^        idx_mw = assemblage.phases.index(solutions['mw'])$/;"	v
+idx_ol	mcmc_master_inversion_FMSO.py	/^        idx_ol = assemblage.phases.index(solutions['ol'])$/;"	v
+idx_rw	mcmc_master_inversion_FMSO.py	/^        idx_rw = assemblage.phases.index(child_solutions['ring'])$/;"	v
+idx_wad	mcmc_master_inversion_FMSO.py	/^        idx_wad = assemblage.phases.index(solutions['wad'])$/;"	v
+initial_composition_from_assemblage	mcmc_master_inversion_FMSO.py	/^                                           initial_composition_from_assemblage=True,$/;"	v
+initial_composition_from_assemblage	mcmc_master_inversion_FMSO.py	/^                                       initial_composition_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	mcmc_master_inversion_FMSO.py	/^                                           initial_state_from_assemblage=True,$/;"	v
+initial_state_from_assemblage	mcmc_master_inversion_FMSO.py	/^                                       initial_state_from_assemblage=True,$/;"	v
+labels	mcmc_master_inversion_FMSO.py	/^labels = []$/;"	v
+log_probability	mcmc_master_inversion_FMSO.py	/^def log_probability(params, dataset, storage):$/;"	f
+mask	mcmc_master_inversion_FMSO.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1673.15) < 0.1]$/;"	v
+mask	mcmc_master_inversion_FMSO.py	/^mask = [i for i, T in enumerate(Ts) if np.abs(T - 1873.15) < 0.1]$/;"	v
+mineral_dataset	mcmc_master_inversion_FMSO.py	/^mineral_dataset = create_minerals()$/;"	v
+minimize_func	mcmc_master_inversion_FMSO.py	/^def minimize_func(params, dataset, storage):$/;"	f
+mins	mcmc_master_inversion_FMSO.py	/^mins = [endmembers[m] for m in ['per', 'wus', 'fo', 'fa', 'mwd', 'fwd', 'mrw', 'frw']]$/;"	v
+molybdenum	input_buffers.py	/^class molybdenum (burnman.Mineral):$/;"	c
+molybdenum_dioxide	input_buffers.py	/^class molybdenum_dioxide (burnman.Mineral):$/;"	c
+next_pow_two	autocorr.py	/^def next_pow_two(n):$/;"	f
+nll	autocorr.py	/^    def nll(p):$/;"	f	function:autocorr_ml
+ol_fper_img	mcmc_master_inversion_FMSO.py	/^ol_fper_img = mpimg.imread('frost_2003_figures\/ol_fper_RTlnKD.png')$/;"	v
+ol_gt_ratio	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^ol_gt_ratio = 2. # as given in experimental methods, assume molar$/;"	v
+ol_polymorph_img	mcmc_master_inversion_FMSO.py	/^ol_polymorph_img = mpimg.imread('frost_2003_figures\/ol_polymorphs.png')$/;"	v
+ol_polymorph_img_1000C	mcmc_master_inversion_FMSO.py	/^ol_polymorph_img_1000C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1000C.png')$/;"	v
+ol_polymorph_img_1200C	mcmc_master_inversion_FMSO.py	/^ol_polymorph_img_1200C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_1200C.png')$/;"	v
+ol_polymorph_img_800C	mcmc_master_inversion_FMSO.py	/^ol_polymorph_img_800C = mpimg.imread('frost_2003_figures\/Akimoto_1987_fo_fa_phase_diagram_800C.png')$/;"	v
+output	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^output = []$/;"	v
+output	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^output = np.array(output)[::-1]$/;"	v
+plot_autocorr	autocorr.py	/^def plot_autocorr(chain):$/;"	f
+pressures	mcmc_master_inversion_FMSO.py	/^        pressures = np.empty_like(x_m1s)$/;"	v
+pressures	mcmc_master_inversion_FMSO.py	/^    pressures = []$/;"	v
+pressures	mcmc_master_inversion_FMSO.py	/^    pressures = np.empty_like(x_m1s)$/;"	v
+rhenium	input_buffers.py	/^class rhenium (burnman.Mineral):$/;"	c
+rhenium_dioxide	input_buffers.py	/^class rhenium_dioxide (burnman.Mineral):$/;"	c
+run_inversion	mcmc_master_inversion_FMSO.py	/^        run_inversion = False$/;"	v
+run_inversion	mcmc_master_inversion_FMSO.py	/^        run_inversion = True$/;"	v
+run_inversion	mcmc_master_inversion_FMSO.py	/^    run_inversion = False$/;"	v
+rw_fper_img	mcmc_master_inversion_FMSO.py	/^rw_fper_img = mpimg.imread('frost_2003_figures\/ring_fper_gt_KD.png')$/;"	v
+rw_fper_part_img	mcmc_master_inversion_FMSO.py	/^rw_fper_part_img = mpimg.imread('frost_2003_figures\/ring_fper_partitioning.png')$/;"	v
+set_params	mcmc_master_inversion_FMSO.py	/^def set_params(args, dataset, storage):$/;"	f
+set_params_from_special_constraints	mcmc_master_inversion_FMSO.py	/^def set_params_from_special_constraints(dataset, storage):$/;"	f
+solution_args	mcmc_master_inversion_FMSO.py	/^solution_args = [['mw', 'E', 0, 0, solutions['mw'].energy_interaction[0][0], 1.e3],$/;"	v
+solution_priors	mcmc_master_inversion_FMSO.py	/^solution_priors = []$/;"	v
+solutions	mcmc_master_inversion_FMSO.py	/^solutions = mineral_dataset['solutions']$/;"	v
+storage	mcmc_master_inversion_FMSO.py	/^storage = {'endmember_args': endmember_args,$/;"	v
+store_iterates	mcmc_master_inversion_FMSO.py	/^                                           store_iterates=False)$/;"	v
+store_iterates	mcmc_master_inversion_FMSO.py	/^                                       store_iterates=False)$/;"	v
+viridis	mcmc_master_inversion_FMSO.py	/^viridis = cm.get_cmap('viridis', 101)$/;"	v
+wad_fper_img	mcmc_master_inversion_FMSO.py	/^wad_fper_img = mpimg.imread('frost_2003_figures\/wad_fper_RTlnKD.png')$/;"	v
+x	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    x = d[i0]$/;"	v
+xCa_gt	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    xCa_gt = x[0]$/;"	v
+xMg_bulk	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^xMg_bulk = 0.9$/;"	v
+xMg_gt	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    xMg_gt = 1. - xFe_gt - xCa_gt$/;"	v
+xMg_ol	data/process_ONeill_Wood_1979_Mg_Ca_KD_ol_gt.py	/^    xMg_ol = 1. - xFe_ol$/;"	v
+x_fper	mcmc_master_inversion_FMSO.py	/^        x_fper = assemblage.stored_compositions[idx_mw][0][1]$/;"	v
+x_fpers	mcmc_master_inversion_FMSO.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_ol], args=(x_ol, G, T, W_ol, W_fper))[0]$/;"	v
+x_fpers	mcmc_master_inversion_FMSO.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_rw], args=(x_rw, G, T, W_rw, W_fper))[0]$/;"	v
+x_fpers	mcmc_master_inversion_FMSO.py	/^    x_fpers = np.array([fsolve(affinity_ol_fper, [x_wad], args=(x_wad, G, T, W_wad, W_fper))[0]$/;"	v
+x_m1	mcmc_master_inversion_FMSO.py	/^    x_m1 = 0.3$/;"	v
+x_m1_array	mcmc_master_inversion_FMSO.py	/^    x_m1_array = np.linspace(0.01, 0.3, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMSO.py	/^            x_m1s = np.linspace(0.001, x_wad_inv, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMSO.py	/^            x_m1s = np.linspace(x_ol_inv, 0.999, 21)$/;"	v
+x_m1s	mcmc_master_inversion_FMSO.py	/^    x_m1s = []$/;"	v
+x_m1s	mcmc_master_inversion_FMSO.py	/^    x_m1s = np.linspace(0.2, 0.99, 21)$/;"	v
+x_m2s	mcmc_master_inversion_FMSO.py	/^        x_m2s = np.empty_like(x_m1s)$/;"	v
+x_m2s	mcmc_master_inversion_FMSO.py	/^    x_m2s = []$/;"	v
+x_m2s	mcmc_master_inversion_FMSO.py	/^    x_m2s = np.empty_like(x_m1s)$/;"	v
+x_ol	mcmc_master_inversion_FMSO.py	/^        x_ol = assemblage.stored_compositions[idx_ol][0][1]$/;"	v
+x_ol_inv	mcmc_master_inversion_FMSO.py	/^    x_ol_inv = assemblage.phases[0].molar_fractions[1]$/;"	v
+x_ols	mcmc_master_inversion_FMSO.py	/^    x_ols = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_rw_inv	mcmc_master_inversion_FMSO.py	/^    x_rw_inv = assemblage.phases[2].molar_fractions[1]$/;"	v
+x_rws	mcmc_master_inversion_FMSO.py	/^    x_rws = np.linspace(0.00001, 0.99999, 101)$/;"	v
+x_wad	mcmc_master_inversion_FMSO.py	/^        x_wad = assemblage.stored_compositions[idx_wad][0][1]$/;"	v
+x_wad_inv	mcmc_master_inversion_FMSO.py	/^    x_wad_inv = assemblage.phases[1].molar_fractions[1]$/;"	v
+x_wads	mcmc_master_inversion_FMSO.py	/^    x_wads = np.linspace(0.00001, 0.99999, 101)$/;"	v

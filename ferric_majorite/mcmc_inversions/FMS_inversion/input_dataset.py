@@ -106,7 +106,6 @@ def create_minerals():
 
     mins = [per, wus, fo, fa, mwd, fwd, mrw, frw, mbdg, fbdg]
 
-    print()
     for m in mins:
         # Set entropies
         m.params['S_0'] = m.params['S_0_orig'][0]
@@ -281,9 +280,7 @@ def create_minerals():
                                                                          [0., 0., 0., 0., 1.]]),
                                                                solution_name='ringwoodite')}
 
-    return (endmembers, solutions, child_solutions)
-
-
-
-# Now create the minerals
-endmembers, solutions, child_solutions = create_minerals()
+    mineral_dataset = {'endmembers': endmembers,
+                       'solutions': solutions,
+                       'child_solutions': child_solutions}
+    return mineral_dataset

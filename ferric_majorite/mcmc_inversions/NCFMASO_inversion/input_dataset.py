@@ -826,8 +826,7 @@ def create_minerals():
                   'stv':      stv,
                   'hem':      hem}
 
-    return (endmembers, solutions, child_solutions)
-
-
-# Now create the minerals
-endmembers, solutions, child_solutions = create_minerals()
+    mineral_dataset = {'endmembers': endmembers,
+                       'solutions': solutions,
+                       'child_solutions': child_solutions}
+    return mineral_dataset

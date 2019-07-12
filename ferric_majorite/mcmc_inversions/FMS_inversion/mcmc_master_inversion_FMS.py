@@ -15,9 +15,15 @@ import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.processanalyses import compute_and_set_phase_compositions, assemblage_affinity_misfit
 from burnman.equilibrate import equilibrate
+from burnman.solutionbases import transform_solution_to_new_basis
 
-from input_dataset import *
+from input_dataset import create_minerals
 import pickle
+import emcee
+from multiprocessing import Pool
+
+import pandas as pd
+import seaborn as sns
 
 if len(sys.argv) == 2:
     if sys.argv[1] == '--fit':
@@ -30,9 +36,68 @@ else:
     run_inversion = False
     print('Not running inversion. Use --fit as command line argument to invert parameters')
 
+def get_params(storage):
+    """
+    This function gets the parameters from the parameter lists
+    """
 
-def set_params_from_special_constraints():
+    # Endmember parameters
+    args = [a[2]/a[3] for a in storage['endmember_args']]
+
+    # Solution parameters
+    args.extend([a[4]/a[5] for a in storage['solution_args']])
+
+    # Experimental uncertainties
+    args.extend([u[2]/u[3] for u in storage['experiment_uncertainties']])
+    return args
+
+def set_params(args, dataset, storage):
+    """
+    This function sets the parameters *both* in the parameter lists,
+    the parameter dictionaries and also in the minerals / solutions.
+    """
+
+    i=0
+
+    # Endmember parameters
+    for j, a in enumerate(storage['endmember_args']):
+        storage['dict_endmember_args'][a[0]][a[1]] = args[i]*a[3]
+        storage['endmember_args'][j][2] = args[i]*a[3]
+        dataset['endmembers'][a[0]].params[a[1]] = args[i]*a[3]
+        i+=1
+
+    # Solution parameters
+    for j, a in enumerate(storage['solution_args']):
+        storage['dict_solution_args'][a[0]][a[1]] = args[i]*a[5]
+        storage['solution_args'][j][4] = args[i]*a[5]
+        if a[1] == 'E':
+            dataset['solutions'][a[0]].energy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
+        else:
+            raise Exception('Not implemented')
+        i+=1
+
+    # Reinitialize solutions
+    for name in dataset['solutions']:
+        burnman.SolidSolution.__init__(dataset['solutions'][name])
+
+    # Reset dictionary of child solutions
+    for k, ss in dataset['child_solutions'].items():
+        ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
+                                                           ss.basis).__dict__)
+
+    # Experimental uncertainties
+    for j, u in enumerate(storage['experiment_uncertainties']):
+        storage['dict_experiment_uncertainties'][u[0]][u[1]] = args[i]*u[3]
+        storage['experiment_uncertainties'][j][2] = args[i]*u[3]
+        i+=1
+
+    # Special one-off constraints
+    set_params_from_special_constraints(dataset, storage)
+    return None
+
+def set_params_from_special_constraints(dataset, storage):
     # Destabilise fwd
+    endmembers = dataset['endmembers']
     endmembers['fa'].set_state(6.25e9, 1673.15)
     endmembers['frw'].set_state(6.25e9, 1673.15)
     endmembers['fwd'].set_state(6.25e9, 1673.15)
@@ -44,14 +109,14 @@ def set_params_from_special_constraints():
     endmembers['fwd'].params['S_0'] += endmembers['fa'].S - endmembers['fwd'].S + dS
     endmembers['fwd'].params['H_0'] += endmembers['frw'].gibbs - endmembers['fwd'].gibbs + 100. # make fwd a little less stable than frw
 
-def minimize_func(params, assemblages):
+def minimize_func(params, dataset, storage):
     # Set parameters
-    set_params(params)
+    set_params(params, dataset, storage)
 
     chisqr = []
     # Run through all assemblages for affinity misfit
     # This is what takes most of the time
-    for i, assemblage in enumerate(assemblages):
+    for i, assemblage in enumerate(dataset['assemblages']):
         #print(i, assemblage.experiment_id, [phase.name for phase in assemblage.phases])
         # Assign compositions and uncertainties to solid solutions
         for j, phase in enumerate(assemblage.phases):
@@ -62,8 +127,8 @@ def minimize_func(params, assemblages):
         # Assign a state to the assemblage
         P, T = np.array(assemblage.nominal_state)
         try:
-             P += dict_experiment_uncertainties[assemblage.experiment_id]['P']
-             T += dict_experiment_uncertainties[assemblage.experiment_id]['T']
+             P += storage['dict_experiment_uncertainties'][assemblage.experiment_id]['P']
+             T += storage['dict_experiment_uncertainties'][assemblage.experiment_id]['T']
         except:
             pass
 
@@ -76,20 +141,20 @@ def minimize_func(params, assemblages):
         chisqr.append(assemblage.chisqr)
 
     # Endmember priors
-    for p in endmember_priors:
-        c = np.power(((dict_endmember_args[p[0]][p[1]] - p[2])/p[3]), 2.)
+    for p in storage['endmember_priors']:
+        c = np.power(((storage['dict_endmember_args'][p[0]][p[1]] - p[2])/p[3]), 2.)
         #print('endmember_prior', p[0], p[1], dict_endmember_args[p[0]][p[1]], p[2], p[3], c)
         chisqr.append(c)
 
     # Solution priors
-    for p in solution_priors:
-        c = np.power(((dict_solution_args[p[0]]['{0}{1}{2}'.format(p[1], p[2], p[3])] -
+    for p in storage['solution_priors']:
+        c = np.power(((storage['dict_solution_args'][p[0]]['{0}{1}{2}'.format(p[1], p[2], p[3])] -
                        p[4])/p[5]), 2.)
         #print('solution_prior', c)
         chisqr.append(c)
 
     # Experiment uncertainties
-    for u in experiment_uncertainties:
+    for u in storage['experiment_uncertainties']:
         c = np.power(u[2]/u[3], 2.)
         #print('pressure uncertainty', c)
         chisqr.append(c)
@@ -117,8 +182,13 @@ def minimize_func(params, assemblages):
         return half_sqr_misfit
 
 
-def log_probability(params, assemblages):
-    return -minimize_func(params, assemblages)
+def log_probability(params, dataset, storage):
+    return -minimize_func(params, dataset, storage)
+
+mineral_dataset = create_minerals()
+endmembers = mineral_dataset['endmembers']
+solutions = mineral_dataset['solutions']
+child_solutions = mineral_dataset['child_solutions']
 
 endmember_args = []
 endmember_args.extend([[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
@@ -131,7 +201,6 @@ endmember_args.extend([[mbr, 'K_0', endmembers[mbr].params['K_0'], 1.e11]
                        for mbr in ['wus', 'fwd', 'frw']])
 endmember_args.extend([[mbr, 'a_0', endmembers[mbr].params['a_0'], 1.e-5]
                        for mbr in ['per', 'wus', 'fo', 'fa', 'mwd', 'fwd', 'mrw', 'frw', 'mbdg', 'fbdg']])
-
 
 solution_args = [['mw', 'E', 0, 0, solutions['mw'].energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0, solutions['ol'].energy_interaction[0][0], 1.e3],
@@ -168,6 +237,7 @@ endmember_priors.extend([['per', 'a_0', endmembers['per'].params['a_0_orig'], 2.
                          ['fbdg', 'a_0', endmembers['fbdg'].params['a_0_orig'], 5.e-7]])
 
 solution_priors = []
+
 # Uncertainties from Frost data
 experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
                             ['50Fe', 'P', 0., 0.5e9],
@@ -206,90 +276,48 @@ dict_experiment_uncertainties = {u[0] : {'P': 0., 'T': 0.} for u in experiment_u
 for u in experiment_uncertainties:
     dict_experiment_uncertainties[u[0]][u[1]] = u[2]
 
+storage = {'endmember_args': endmember_args,
+           'solution_args': solution_args,
+           'endmember_priors': endmember_priors,
+           'solution_priors': solution_priors,
+           'experiment_uncertainties': experiment_uncertainties,
+           'dict_endmember_args': dict_endmember_args,
+           'dict_solution_args': dict_solution_args,
+           'dict_experiment_uncertainties': dict_experiment_uncertainties}
+
 labels = []
 labels.extend([a[0]+'_'+a[1] for a in endmember_args])
 labels.extend([a[0]+'_'+a[1]+'['+str(a[2])+','+str(a[3])+']' for a in solution_args])
 labels.extend([a[0]+'_'+a[1] for a in experiment_uncertainties])
-
-def get_params():
-    """
-    This function gets the parameters from the parameter lists
-    """
-
-    # Endmember parameters
-    args = [a[2]/a[3] for a in endmember_args]
-
-    # Solution parameters
-    args.extend([a[4]/a[5] for a in solution_args])
-
-    # Experimental uncertainties
-    args.extend([u[2]/u[3] for u in experiment_uncertainties])
-    return args
-
-def set_params(args):
-    """
-    This function sets the parameters *both* in the parameter lists,
-    the parameter dictionaries and also in the minerals / solutions.
-    """
-
-    i=0
-
-    # Endmember parameters
-    for j, a in enumerate(endmember_args):
-        dict_endmember_args[a[0]][a[1]] = args[i]*a[3]
-        endmember_args[j][2] = args[i]*a[3]
-        endmembers[a[0]].params[a[1]] = args[i]*a[3]
-        i+=1
-
-    # Solution parameters
-    for j, a in enumerate(solution_args):
-        dict_solution_args[a[0]][a[1]] = args[i]*a[5]
-        solution_args[j][4] = args[i]*a[5]
-        if a[1] == 'E':
-            solutions[a[0]].energy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
-        else:
-            raise Exception('Not implemented')
-        i+=1
-
-    # Reinitialize solutions
-    for name in solutions:
-        burnman.SolidSolution.__init__(solutions[name])
-
-    # Reset dictionary of child solutions
-    for k, ss in child_solutions.items():
-        ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
-                                                           ss.basis).__dict__)
-
-    # Experimental uncertainties
-    for j, u in enumerate(experiment_uncertainties):
-        dict_experiment_uncertainties[u[0]][u[1]] = args[i]*u[3]
-        experiment_uncertainties[j][2] = args[i]*u[3]
-        i+=1
-
-    # Special one-off constraints
-    set_params_from_special_constraints()
-    return None
 
 
 #######################
 # EXPERIMENTAL DATA ###
 #######################
 
-from datasets.Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
-from datasets.endmember_reactions import endmember_reaction_assemblages
-from datasets.Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
-from datasets.Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
-from datasets.Tange_TNFS_2009_bdg_fper_stv import Tange_TNFS_2009_FMS_assemblages
+from datasets import Frost_2003_fper_ol_wad_rw
+from datasets import endmember_reactions
+from datasets import Matsuzaka_et_al_2000_rw_wus_stv
+from datasets import Nakajima_FR_2012_bdg_fper
+from datasets import Tange_TNFS_2009_bdg_fper_stv
 
 assemblages = [assemblage for assemblage_list in
-               [endmember_reaction_assemblages,
-                Frost_2003_assemblages,
-                Matsuzaka_2000_assemblages,
-                Nakajima_FR_2012_assemblages,
-                Tange_TNFS_2009_FMS_assemblages
-               ]
+               [module.get_assemblages(mineral_dataset)
+                for module in [Frost_2003_fper_ol_wad_rw,
+                               endmember_reactions,
+                               Matsuzaka_et_al_2000_rw_wus_stv,
+                               Nakajima_FR_2012_bdg_fper,
+                               Tange_TNFS_2009_bdg_fper_stv]]
                for assemblage in assemblage_list]
 
+dataset = {'endmembers': mineral_dataset['endmembers'],
+           'solutions': mineral_dataset['solutions'],
+           'child_solutions': mineral_dataset['child_solutions'],
+           'assemblages': assemblages}
+
+# Prepare internal arrays using minimize_func
+# This should speed things up after depickling
+log_probability(get_params(storage), dataset, storage)
 
 
 #minimize_func(get_params(), assemblages)
@@ -298,14 +326,12 @@ assemblages = [assemblage for assemblage_list in
 ### PUT PARAMS HERE ###
 #######################
 
-#set_params([-266.9161, -2179.0077, -1477.1425, -2151.2877, -2140.7594, -1472.2104, -906.908, -872.5526, -1452.2167, -1102.5466, 27.5308, 55.5112, 94.2128, 151.2863, 85.2069, 82.215, 136.4079, 39.7045, 27.4847, 57.012, 77.5785, 4.3185, 1.7593, 1.6219, 2.0216, 3.0612000000000004, 3.1691, 2.8199, 2.8124, 2.0903, 1.906, 2.2503, 2.2513, 1.7909, 1.5437, 11.5941, 6.3214, 17.1623, 8.494, -1.3476, -0.2854, -3.1367, -0.3725, 1.2365, -4.5535, -2.1066, -0.3494, -0.9961, -0.0127, -0.0531, 1.1841, 0.6849, 1.6172, -1.0845, -1.0535, -1.0486, -0.6308, -0.1474, 0.3205, 0.0213, -0.1783, 0.9166])
+set_params([-266.9161, -2179.0077, -1477.1425, -2151.2877, -2140.7594, -1472.2104, -906.908, -872.5526, -1452.2167, -1102.5466, 27.5308, 55.5112, 94.2128, 151.2863, 85.2069, 82.215, 136.4079, 39.7045, 27.4847, 57.012, 77.5785, 4.3185, 1.7593, 1.6219, 2.0216, 3.0612000000000004, 3.1691, 2.8199, 2.8124, 2.0903, 1.906, 2.2503, 2.2513, 1.7909, 1.5437, 11.5941, 6.3214, 17.1623, 8.494, -1.3476, -0.2854, -3.1367, -0.3725, 1.2365, -4.5535, -2.1066, -0.3494, -0.9961, -0.0127, -0.0531, 1.1841, 0.6849, 1.6172, -1.0845, -1.0535, -1.0486, -0.6308, -0.1474, 0.3205, 0.0213, -0.1783, 0.9166], dataset, storage)
 
 ########################
 # RUN THE MINIMIZATION #
 ########################
 if run_inversion:
-
-    import emcee
 
     # Make sure we always get the same walker starting points (good for bug checking)
     np.random.seed(1234)
@@ -313,11 +339,11 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 3 # this number must be greater than 2!
     n_steps_burn_in = 0 # number of steps in the burn in period (not used)
-    n_steps_mcmc = 800 # number of steps in the full mcmc run
+    n_steps_mcmc = 5000 # number of steps in the full mcmc run
     n_discard = 0 # discard this number of steps from the full mcmc run
     thin = 1 # thin the number of steps by this factor when calling get_chain (so 10 reduces by a factor of 10)
 
-    x0 = get_params()
+    x0 = get_params(storage)
     ndim = len(x0)
     nwalkers = ndim*walker_multiplication_factor
 
@@ -334,43 +360,77 @@ if run_inversion:
     print(burnfile)
     print(mcmcfile)
 
-    # Currently the minerals are global objects, so multithreading is not possible
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
-                                    args=[assemblages], threads=1)
+    print('using n threads')
 
-
+    """
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
-
-    if n_steps_burn_in > 0:
-        print('Starting burn-in')
-        state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)
-        pickle.dump(sampler, open(burnfile,'wb'))
-
-        sampler.reset()
-    else:
-        state = p0
-
-    print('Burn-in complete. Starting MCMC run.')
-
-    half_steps = n_steps_mcmc/2
-    state = sampler.run_mcmc(state, half_steps, progress=True)
-
-    print('50% complete. Pickling intermediate')
-    pickle.dump(sampler, open(mcmcfile+'int','wb'))
-
-    state = sampler.run_mcmc(state, half_steps, progress=True)
-
-    print('100% complete. Pickling')
-    pickle.dump(sampler, open(mcmcfile,'wb'))
+    with Pool() as pool:
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+                                        args=[dataset, storage],
+                                        pool=pool)
 
 
+        if n_steps_burn_in > 0:
+            print('Starting burn-in')
+            state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)
+            pickle.dump(sampler, open(burnfile,'wb'))
 
-    #sampler = pickle.load(open(mcmcfile+'int','rb'))
-    flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
+            sampler.reset()
+        else:
+            state = p0
+
+        print('Burn-in complete. Starting MCMC run.')
+
+        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+
+        print('100% complete. Pickling')
+        pickle.dump(sampler, open(mcmcfile,'wb'))
+
+    """
+
+    sampler = pickle.load(open(mcmcfile,'rb'))
+    sampler.pool = pool # deal with change in pool!
+
+    print('Mean acceptance fraction: {0:.2f}'
+          ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
+
+    try:
+        tau = sampler.get_autocorr_time()
+        print(tau)
+    except emcee.autocorr.AutocorrError as e:
+        print(e)
+
+
+        samples = sampler.get_chain()
+        n_params = samples.shape[2]
+        n_params_per_plot = 10
+        for j in range(int(np.ceil(n_params/n_params_per_plot))):
+            if j == int(np.ceil(n_params/n_params_per_plot) - 1):
+                n_plots = n_params - n_params_per_plot*j
+            else:
+                n_plots = n_params_per_plot
+            fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
+            for i in range(n_plots):
+                ax = axes[i]
+                ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
+                ax.set_xlim(0, len(samples))
+                ax.set_ylabel(labels[j*n_params_per_plot + i])
+                ax.yaxis.set_label_coords(-0.1, 0.5)
+
+            axes[-1].set_xlabel("step number")
+            plt.show()
+
+        #print('Plotting autocorrelation functions')
+        #from autocorr import plot_autocorr
+        #plot_autocorr(sampler.get_chain()[:, :, 0].T)  # arbitrarily pick the 1st chain
+        #print('Average autocorrelation time: {0}'.format(np.mean(tau)))
+
+    flat_samples = sampler.get_chain(discard=500, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
     mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84]) for i in range(ndim)])
+
 
     for i in range(ndim):
         mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])
@@ -379,12 +439,36 @@ if run_inversion:
         txt = txt.format(mcmc_i[1], q[0], q[1], labels[i])
         print(txt)
 
-    set_params(mcmc_params) # use the 50th percentile for the preferred params (might not represent the best fit if the distribution is strongly non-Gaussian...)
+
+    Mcorr = np.corrcoef(flat_samples.T)
+    triu_Mcorr = np.triu(m=Mcorr, k=1)
+    abs_Mcorr_sorted_indices = np.unravel_index(np.argsort(np.abs(triu_Mcorr),
+                                                           axis=None)[::-1],
+                                                triu_Mcorr.shape)
+    Mcov = np.cov(flat_samples.T) # each row corresponds to a different variable
+    #import corner
+    #fig = corner.corner(flat_samples, labels=labels);
+    #fig.savefig('corner_plot.pdf')
+    #plt.show()
+
+    fig, ax = plt.subplots(figsize=(20,20))
+    cmap = sns.diverging_palette(250, 10, as_cmap=True)
+    ax = sns.heatmap(pd.DataFrame(Mcorr),
+                     xticklabels=labels,
+                     yticklabels=labels,
+                     cmap=cmap,
+                     vmin=-1.,
+                     center=0.,
+                     vmax=1.)
+    fig.savefig('parameter_correlations.pdf')
+    plt.show()
+
+    set_params(mcmc_params, dataset, storage) # use the 50th percentile for the preferred params (might not represent the best fit if the distribution is strongly non-Gaussian...)
 
     #print(minimize(minimize_func, get_params(), args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
 # Print the current parameters
-print(get_params())
+print(get_params(storage))
 
 ####################
 ### A few images ###
@@ -572,6 +656,7 @@ for P in [1.e5, 5.e9, 10.e9, 15.e9]:
     ax[0].plot(x_ols, burnman.constants.gas_constant*T*np.log(KDs), color = viridis((P-Pmin)/(Pmax-Pmin)), linewidth=3., label='{0} GPa'.format(P/1.e9))
 
 
+Frost_2003_assemblages = Frost_2003_fper_ol_wad_rw.get_assemblages(dataset)
 P_Xol_RTlnKDs = []
 for assemblage in Frost_2003_assemblages:
     if solutions['ol'] in assemblage.phases:
@@ -848,6 +933,8 @@ for (T0, color) in [(1273.15, 'blue'),
     plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
     plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
 
+
+Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)
 
 P_rw_fper = []
 for assemblage in Matsuzaka_2000_assemblages:

@@ -17,8 +17,10 @@ from burnman.processanalyses import compute_and_set_phase_compositions, assembla
 from burnman.equilibrate import equilibrate
 from burnman.solutionbases import transform_solution_to_new_basis
 
-from input_dataset import endmembers, solutions, child_solutions
+from input_dataset import create_minerals
 import pickle
+import emcee
+from multiprocessing import Pool
 
 if len(sys.argv) == 2:
     if sys.argv[1] == '--fit':
@@ -34,7 +36,76 @@ else:
           ' to invert parameters')
 
 
-def set_params_from_special_constraints():
+def get_params(storage):
+    """
+    This function gets the parameters from the parameter lists
+    """
+
+    # Endmember parameters
+    args = [a[2]/a[3] for a in storage['endmember_args']]
+
+    # Solution parameters
+    args.extend([a[4]/a[5] for a in storage['solution_args']])
+
+    # Experimental uncertainties
+    args.extend([u[2]/u[3] for u in storage['experiment_uncertainties']])
+    return args
+
+
+def set_params(args, dataset, storage):
+    """
+    This function sets the parameters *both* in the parameter lists,
+    the parameter dictionaries and also in the minerals / solutions.
+    """
+
+    i = 0
+
+    # Endmember parameters
+    for j, a in enumerate(storage['endmember_args']):
+        storage['dict_endmember_args'][a[0]][a[1]] = args[i]*a[3]
+        storage['endmember_args'][j][2] = args[i]*a[3]
+        dataset['endmembers'][a[0]].params[a[1]] = args[i]*a[3]
+        i += 1
+
+    # Solution parameters
+    for j, a in enumerate(storage['solution_args']):
+        storage['dict_solution_args'][a[0]][a[1]] = args[i]*a[5]
+        storage['solution_args'][j][4] = args[i]*a[5]
+        if a[1] == 'E':
+            dataset['solutions'][a[0]].energy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
+        elif a[1] == 'S':
+            dataset['solutions'][a[0]].entropy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
+        elif a[1] == 'V':
+            dataset['solutions'][a[0]].volume_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
+        else:
+            raise Exception('Not implemented')
+        i += 1
+
+    # Reinitialize solutions
+    for name in solutions:
+        burnman.SolidSolution.__init__(dataset['solutions'][name])
+
+    # Reset dictionary of child solutions
+    for k, ss in dataset['child_solutions'].items():
+        ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
+                                                           ss.basis).__dict__)
+
+    # Experimental uncertainties
+    for j, u in enumerate(storage['experiment_uncertainties']):
+        storage['dict_experiment_uncertainties'][u[0]][u[1]] = args[i]*u[3]
+        storage['experiment_uncertainties'][j][2] = args[i]*u[3]
+        i += 1
+
+    # Special one-off constraints
+    set_params_from_special_constraints(dataset, storage)
+    return None
+
+
+def set_params_from_special_constraints(dataset, storage):
+
+    endmembers = dataset['endmembers']
+    solutions = dataset['solutions']
+
     # 1) Destabilise fwd
     endmembers['fa'].set_state(6.25e9, 1673.15)
     endmembers['frw'].set_state(6.25e9, 1673.15)
@@ -61,14 +132,14 @@ def set_params_from_special_constraints():
     solutions['hpx'].volume_interaction = solutions['opx'].volume_interaction
 
 
-def minimize_func(params, assemblages):
+def minimize_func(params, dataset, storage):
     # Set parameters
-    set_params(params)
+    set_params(params, dataset, storage)
 
     chisqr = []
     # Run through all assemblages for affinity misfit
     # This is what takes most of the time
-    for i, assemblage in enumerate(assemblages):
+    for i, assemblage in enumerate(dataset['assemblages']):
         # print(i, assemblage.experiment_id,
         # [phase.name for phase in assemblage.phases])
         # Assign compositions and uncertainties to solid solutions
@@ -80,8 +151,8 @@ def minimize_func(params, assemblages):
         # Assign a state to the assemblage
         P, T = np.array(assemblage.nominal_state)
         try:
-            P += dict_experiment_uncertainties[assemblage.experiment_id]['P']
-            T += dict_experiment_uncertainties[assemblage.experiment_id]['T']
+            P += storage['dict_experiment_uncertainties'][assemblage.experiment_id]['P']
+            T += storage['dict_experiment_uncertainties'][assemblage.experiment_id]['T']
         except:
             pass
 
@@ -94,15 +165,15 @@ def minimize_func(params, assemblages):
         chisqr.append(assemblage.chisqr)
 
     # Endmember priors
-    for p in endmember_priors:
-        c = np.power(((dict_endmember_args[p[0]][p[1]] - p[2])/p[3]), 2.)
+    for p in storage['endmember_priors']:
+        c = np.power(((storage['dict_endmember_args'][p[0]][p[1]] - p[2])/p[3]), 2.)
         # print('endmember_prior', p[0], p[1], dict_endmember_args[p[0]][p[1]],
         # p[2], p[3], c)
         chisqr.append(c)
 
     # Solution priors
-    for p in solution_priors:
-        c = np.power(((dict_solution_args[p[0]]['{0}{1}{2}'.format(p[1],
+    for p in storage['solution_priors']:
+        c = np.power(((storage['dict_solution_args'][p[0]]['{0}{1}{2}'.format(p[1],
                                                                    p[2],
                                                                    p[3])]
                        - p[4])/p[5]), 2.)
@@ -110,7 +181,7 @@ def minimize_func(params, assemblages):
         chisqr.append(c)
 
     # Experiment uncertainties
-    for u in experiment_uncertainties:
+    for u in storage['experiment_uncertainties']:
         c = np.power(u[2]/u[3], 2.)
         # print('pressure uncertainty', c)
         chisqr.append(c)
@@ -135,8 +206,8 @@ def minimize_func(params, assemblages):
         return half_sqr_misfit
 
 
-def log_probability(params, assemblages):
-    return -minimize_func(params, assemblages)
+def log_probability(params, dataset, storage):
+    return -minimize_func(params, dataset, storage)
 
 # Component defining endmembers (for H_0 and S_0) are:
 # Fe: Fe metal (BCC, FCC, HCP)
@@ -147,12 +218,19 @@ def log_probability(params, assemblages):
 # Ca: CaMgSi2O6 diopside
 # Na: NaAlSi2O6 jadeite
 
+
+mineral_dataset = create_minerals()
+endmembers = mineral_dataset['endmembers']
+solutions = mineral_dataset['solutions']
+child_solutions = mineral_dataset['child_solutions']
+
 endmember_args = []
 endmember_args.extend([[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
                        for mbr in ['wus',
                                    'fo', 'fa',
                                    'mwd',
                                    'mrw', 'frw',
+                                   'mt',
                                    'alm', 'gr', 'andr', 'dmaj', 'nagt',
                                    'coe', 'stv',
                                    'hed', 'cen', 'cfs', 'cats', 'aeg',
@@ -166,6 +244,7 @@ endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
                                    'fo', 'fa',
                                    'mwd',
                                    'mrw', 'frw',
+                                   'mt',
                                    'alm', 'gr', 'andr', 'dmaj', 'nagt',
                                    'coe', 'stv',
                                    'di', 'hed',  # 'cen', 'cfs', 'cats', 'aeg',
@@ -367,6 +446,15 @@ dict_experiment_uncertainties = {u[0]: {'P': 0., 'T': 0.}
 for u in experiment_uncertainties:
     dict_experiment_uncertainties[u[0]][u[1]] = u[2]
 
+storage = {'endmember_args': endmember_args,
+           'solution_args': solution_args,
+           'endmember_priors': endmember_priors,
+           'solution_priors': solution_priors,
+           'experiment_uncertainties': experiment_uncertainties,
+           'dict_endmember_args': dict_endmember_args,
+           'dict_solution_args': dict_solution_args,
+           'dict_experiment_uncertainties': dict_experiment_uncertainties}
+
 labels = []
 labels.extend([a[0]+'_'+a[1] for a in endmember_args])
 labels.extend(['{0}_{1}[{2},{3}]'.format(a[0], a[1], a[2], a[3])
@@ -374,149 +462,105 @@ labels.extend(['{0}_{1}[{2},{3}]'.format(a[0], a[1], a[2], a[3])
 labels.extend(['{0}_{1}'.format(a[0], a[1]) for a in experiment_uncertainties])
 
 
-def get_params():
-    """
-    This function gets the parameters from the parameter lists
-    """
-
-    # Endmember parameters
-    args = [a[2]/a[3] for a in endmember_args]
-
-    # Solution parameters
-    args.extend([a[4]/a[5] for a in solution_args])
-
-    # Experimental uncertainties
-    args.extend([u[2]/u[3] for u in experiment_uncertainties])
-    return args
-
-
-def set_params(args):
-    """
-    This function sets the parameters *both* in the parameter lists,
-    the parameter dictionaries and also in the minerals / solutions.
-    """
-
-    i = 0
-
-    # Endmember parameters
-    for j, a in enumerate(endmember_args):
-        dict_endmember_args[a[0]][a[1]] = args[i]*a[3]
-        endmember_args[j][2] = args[i]*a[3]
-        endmembers[a[0]].params[a[1]] = args[i]*a[3]
-        i += 1
-
-    # Solution parameters
-    for j, a in enumerate(solution_args):
-        dict_solution_args[a[0]][a[1]] = args[i]*a[5]
-        solution_args[j][4] = args[i]*a[5]
-        if a[1] == 'E':
-            solutions[a[0]].energy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
-        elif a[1] == 'S':
-            solutions[a[0]].entropy_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
-        elif a[1] == 'V':
-            solutions[a[0]].volume_interaction[int(a[2])][int(a[3])] = args[i]*a[5]
-        else:
-            raise Exception('Not implemented')
-        i += 1
-
-    # Reinitialize solutions
-    for name in solutions:
-        burnman.SolidSolution.__init__(solutions[name])
-
-    # Reset dictionary of child solutions
-    for k, ss in child_solutions.items():
-        ss.__dict__.update(transform_solution_to_new_basis(ss.parent,
-                                                           ss.basis).__dict__)
-
-    # Experimental uncertainties
-    for j, u in enumerate(experiment_uncertainties):
-        dict_experiment_uncertainties[u[0]][u[1]] = args[i]*u[3]
-        experiment_uncertainties[j][2] = args[i]*u[3]
-        i += 1
-
-    # Special one-off constraints
-    set_params_from_special_constraints()
-    return None
-
-
 #######################
 # EXPERIMENTAL DATA ###
 #######################
 
-from datasets.Frost_2003_fper_ol_wad_rw import Frost_2003_assemblages
-from datasets.Seckendorff_ONeill_1992_ol_opx import Seckendorff_ONeill_1992_assemblages
-from datasets.ONeill_Wood_1979_ol_gt import ONeill_Wood_1979_assemblages
-from datasets.ONeill_Wood_1979_CFMAS_ol_gt import ONeill_Wood_1979_CFMAS_assemblages
-from datasets.endmember_reactions import endmember_reaction_assemblages
-from datasets.Matsuzaka_et_al_2000_rw_wus_stv import Matsuzaka_2000_assemblages
-from datasets.ONeill_1987_QFI import ONeill_1987_QFI_assemblages
-from datasets.ONeill_1987_QFM import ONeill_1987_QFM_assemblages
-from datasets.Nakajima_FR_2012_bdg_fper import Nakajima_FR_2012_assemblages
-from datasets.Tange_TNFS_2009_bdg_fper_stv import Tange_TNFS_2009_FMS_assemblages
-from datasets.Frost_2003_FMASO_garnet import Frost_2003_FMASO_gt_assemblages
+from datasets import Frost_2003_fper_ol_wad_rw
+from datasets import Seckendorff_ONeill_1992_ol_opx
+from datasets import ONeill_Wood_1979_ol_gt
+from datasets import ONeill_Wood_1979_CFMAS_ol_gt
+from datasets import endmember_reactions
+from datasets import Matsuzaka_et_al_2000_rw_wus_stv
+from datasets import ONeill_1987_QFI
+from datasets import ONeill_1987_QFM
+from datasets import Nakajima_FR_2012_bdg_fper
+from datasets import Tange_TNFS_2009_bdg_fper_stv
+from datasets import Frost_2003_FMASO_garnet
 
 
 # MAS
-from datasets.Gasparik_1989_MAS_px_gt import Gasparik_1989_MAS_assemblages
-from datasets.Gasparik_1992_MAS_px_gt import Gasparik_1992_MAS_assemblages
-from datasets.Gasparik_Newton_1984_MAS_opx_sp_fo import Gasparik_Newton_1984_MAS_assemblages
-from datasets.Gasparik_Newton_1984_MAS_py_opx_sp_fo import Gasparik_Newton_1984_MAS_univariant_assemblages
-from datasets.Perkins_et_al_1981_MAS_py_opx import Perkins_et_al_1981_MAS_assemblages
-#from datasets.Liu_et_al_2016_gt_bdg_cor import Liu_et_al_2016_MAS_assemblages
-#from datasets.Liu_et_al_2017_bdg_cor import Liu_et_al_2017_MAS_assemblages
-#from datasets.Hirose_et_al_2001_ilm_bdg_gt import Hirose_et_al_2001_MAS_assemblages
+from datasets import Gasparik_1989_MAS_px_gt
+from datasets import Gasparik_1992_MAS_px_gt
+from datasets import Gasparik_Newton_1984_MAS_opx_sp_fo
+from datasets import Gasparik_Newton_1984_MAS_py_opx_sp_fo
+from datasets import Perkins_et_al_1981_MAS_py_opx
+#from datasets import Liu_et_al_2016_gt_bdg_cor
+#from datasets import Liu_et_al_2017_bdg_cor
+#from datasets import Hirose_et_al_2001_ilm_bdg_gt
 
 # CMS
-from datasets.Carlson_Lindsley_1988_CMS_opx_cpx import Carlson_Lindsley_1988_CMS_assemblages
+from datasets import Carlson_Lindsley_1988_CMS_opx_cpx
 
 # CMAS
-from datasets.Perkins_Newton_1980_CMAS_opx_cpx_gt import Perkins_Newton_1980_CMAS_assemblages
-from datasets.Gasparik_1989_CMAS_px_gt import Gasparik_1989_CMAS_assemblages
-from datasets.Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp import Klemme_ONeill_2000_CMAS_assemblages
+from datasets import Perkins_Newton_1980_CMAS_opx_cpx_gt
+from datasets import Gasparik_1989_CMAS_px_gt
+from datasets import Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp
 
 # NMAS
-from datasets.Gasparik_1989_NMAS_px_gt import Gasparik_1989_NMAS_assemblages
+from datasets import Gasparik_1989_NMAS_px_gt
 
 # NCMAS
-from datasets.Gasparik_1989_NCMAS_px_gt import Gasparik_1989_NCMAS_assemblages
+from datasets import Gasparik_1989_NCMAS_px_gt
 
 # CFMS
-from datasets.Perkins_Vielzeuf_1992_CFMS_ol_cpx import Perkins_Vielzeuf_1992_CFMS_assemblages
+from datasets import Perkins_Vielzeuf_1992_CFMS_ol_cpx
 
 # FASO
-from datasets.Woodland_ONeill_1993_FASO_alm_sk import Woodland_ONeill_1993_FASO_assemblages
+from datasets import Woodland_ONeill_1993_FASO_alm_sk
 
 # NCFMASO
-from datasets.Rohrbach_et_al_2007_NCFMASO_gt_cpx import Rohrbach_et_al_2007_NCFMASO_assemblages
-from datasets.Beyer_et_al_2019_NCFMASO import Beyer_et_al_2019_NCFMASO_assemblages
+from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
+from datasets import Beyer_et_al_2019_NCFMASO
 
-assemblages = [assemblage for assemblage_list in # NOT Woodland and ONeill.
-               [endmember_reaction_assemblages,
-                ONeill_1987_QFI_assemblages,
-                ONeill_1987_QFM_assemblages,
-                Frost_2003_assemblages,
-                Seckendorff_ONeill_1992_assemblages,
-                Matsuzaka_2000_assemblages,
-                ONeill_Wood_1979_assemblages,
-                ONeill_Wood_1979_CFMAS_assemblages,
-                Nakajima_FR_2012_assemblages,
-                Tange_TNFS_2009_FMS_assemblages,
-                Frost_2003_FMASO_gt_assemblages,
-                Perkins_Vielzeuf_1992_CFMS_assemblages,  # need ol, di-hed
-                Gasparik_Newton_1984_MAS_assemblages,  # need sp, oen-mgts
-                Gasparik_Newton_1984_MAS_univariant_assemblages,  # need sp, oen-mgts
-                Perkins_Newton_1980_CMAS_assemblages,  # need oen_mgts_odi, di_cen_cats, py_gr
-                Klemme_ONeill_2000_CMAS_assemblages,  # need sp, oen_mgts_odi, di_cen_cats, py_gr
-                Gasparik_1992_MAS_assemblages,  # need oen-mgts, py-dmaj
-                Gasparik_1989_MAS_assemblages,
-                Gasparik_1989_CMAS_assemblages,
-                Gasparik_1989_NMAS_assemblages,
-                Gasparik_1989_NCMAS_assemblages,
-                Rohrbach_et_al_2007_NCFMASO_assemblages,
-                Beyer_et_al_2019_NCFMASO_assemblages]
+assemblages = [assemblage for assemblage_list in
+               [module.get_assemblages(mineral_dataset)
+                for module in [endmember_reactions,
+                               Frost_2003_fper_ol_wad_rw,
+                               Seckendorff_ONeill_1992_ol_opx,
+                               ONeill_Wood_1979_ol_gt,
+                               ONeill_Wood_1979_CFMAS_ol_gt,
+                               Matsuzaka_et_al_2000_rw_wus_stv, # assume all Fe as Fe2+
+                               ONeill_1987_QFI,
+                               ONeill_1987_QFM,
+                               Nakajima_FR_2012_bdg_fper,
+                               Tange_TNFS_2009_bdg_fper_stv,
+                               Frost_2003_FMASO_garnet,
+                               Gasparik_1989_MAS_px_gt,
+                               Gasparik_1992_MAS_px_gt,
+                               Gasparik_Newton_1984_MAS_opx_sp_fo,
+                               Gasparik_Newton_1984_MAS_py_opx_sp_fo,
+                               Perkins_et_al_1981_MAS_py_opx,
+                               Carlson_Lindsley_1988_CMS_opx_cpx,
+                               Perkins_Newton_1980_CMAS_opx_cpx_gt,
+                               Gasparik_1989_CMAS_px_gt,
+                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,
+                               Gasparik_1989_NMAS_px_gt,
+                               Gasparik_1989_NCMAS_px_gt,
+                               Perkins_Vielzeuf_1992_CFMS_ol_cpx,
+                               #Woodland_ONeill_1993_FASO_alm_sk, # I don't think we have a good enough spinel model yet
+                               Rohrbach_et_al_2007_NCFMASO_gt_cpx,
+                               Beyer_et_al_2019_NCFMASO]]
                for assemblage in assemblage_list]
 
-# minimize_func(get_params(), assemblages)
+dataset = {'endmembers': mineral_dataset['endmembers'],
+           'solutions': mineral_dataset['solutions'],
+           'child_solutions': mineral_dataset['child_solutions'],
+           'assemblages': assemblages}
+
+def initialise_params():
+    from import_params import FMS_storage, transfer_storage
+    transfer_storage(from_storage=FMS_storage,
+                     to_storage=storage)
+    set_params(get_params(storage), dataset, storage)
+    print('Appropriate parameters have been initialised from FMS output')
+    return None
+initialise_params()
+
+# Prepare internal arrays using minimize_func
+# This should speed things up after depickling
+lnprob = log_probability(get_params(storage), dataset, storage)
+print('Initial ln(p) = {0}'.format(lnprob))
 
 ###################
 # PUT PARAMS HERE #
@@ -534,13 +578,13 @@ if run_inversion:
     np.random.seed(1234)
 
     jiggle_x0 = 1.e-3
-    walker_multiplication_factor = 3  # this number must be greater than 2!
+    walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 800  # number of steps in the full mcmc run
+    n_steps_mcmc = 1200  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
-    x0 = get_params()
+    x0 = get_params(storage)
     ndim = len(x0)
     nwalkers = ndim*walker_multiplication_factor
 
@@ -557,36 +601,69 @@ if run_inversion:
     print(burnfile)
     print(mcmcfile)
 
-    # Currently the minerals are global objects,
-    # so multithreading is not possible
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
-                                    args=[assemblages], threads=1)
+    print('using n threads')
 
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
+    with Pool() as pool:
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+                                        args=[dataset, storage],
+                                        pool=pool)
 
-    if n_steps_burn_in > 0:
-        print('Starting burn-in')
-        state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)
-        pickle.dump(sampler, open(burnfile, 'wb'))
+        if n_steps_burn_in > 0:
+            print('Starting burn-in')
+            state = sampler.run_mcmc(p0, n_steps_burn_in, progress=True)
+            pickle.dump(sampler, open(burnfile,'wb'))
 
-        sampler.reset()
-    else:
-        state = p0
+            sampler.reset()
+        else:
+            state = p0
 
-    print('Burn-in complete. Starting MCMC run.')
 
-    half_steps = n_steps_mcmc/2
-    state = sampler.run_mcmc(state, half_steps, progress=True)
+        sampler = pickle.load(open(mcmcfile+'int','rb'))
+        sampler.pool = pool  # deal with change in pool!
 
-    print('50% complete. Pickling intermediate')
-    pickle.dump(sampler, open(mcmcfile+'int', 'wb'))
+        print('Burn-in complete. Starting MCMC run.')
+        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
 
-    state = sampler.run_mcmc(state, half_steps, progress=True)
+        #state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
-    print('100% complete. Pickling')
-    pickle.dump(sampler, open(mcmcfile, 'wb'))
+        print('100% complete. Pickling')
+        pickle.dump(sampler, open(mcmcfile,'wb'))
 
-    # sampler = pickle.load(open(mcmcfile+'int','rb'))
+    print('Mean acceptance fraction: {0:.2f}'
+          ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
+
+    if np.mean(sampler.acceptance_fraction) < 0.15:
+        print(sampler.get_chain().shape)
+        print(sampler.acceptance_fraction)
+        exit()
+
+    try:
+        tau = sampler.get_autocorr_time()
+        print(tau)
+    except emcee.autocorr.AutocorrError as e:
+        print(e)
+
+        """
+        samples = sampler.get_chain()
+        n_params = samples.shape[2]
+        n_params_per_plot = 10
+        for j in range(int(np.ceil(n_params/n_params_per_plot))):
+            if j == int(np.ceil(n_params/n_params_per_plot) - 1):
+                n_plots = n_params - n_params_per_plot*j
+            else:
+                n_plots = n_params_per_plot
+            fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
+            for i in range(n_plots):
+                ax = axes[i]
+                ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
+                ax.set_xlim(0, len(samples))
+                ax.set_ylabel(labels[j*n_params_per_plot + i])
+                ax.yaxis.set_label_coords(-0.1, 0.5)
+
+            axes[-1].set_xlabel("step number")
+            plt.show()
+        """
     # flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
     flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
@@ -605,12 +682,12 @@ if run_inversion:
                             for i in range(ndim)])
     mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84])
                          for i in range(ndim)])
-    set_params(mcmc_params)
+    set_params(mcmc_params, dataset, storage)
     # print(minimize(minimize_func, get_params(),
     # args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
 # Print the current parameters
-print(get_params())
+print(get_params(storage))
 
 ################
 # A few images #
@@ -812,6 +889,7 @@ for P in [1.e5, 5.e9, 10.e9, 15.e9]:
                linewidth=3., label='{0} GPa'.format(P/1.e9))
 
 
+Frost_2003_assemblages = Frost_2003_fper_ol_wad_rw.get_assemblages(dataset)
 P_Xol_RTlnKDs = []
 for assemblage in Frost_2003_assemblages:
     if solutions['ol'] in assemblage.phases:
@@ -1130,6 +1208,8 @@ for (T0, color) in [(1273.15, 'blue'),
     plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
     plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
 
+
+Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)
 
 P_rw_fper = []
 for assemblage in Matsuzaka_2000_assemblages:
