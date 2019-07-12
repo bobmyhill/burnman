@@ -134,56 +134,53 @@ def minimize_func(params, dataset, storage):
 
         assemblage.set_state(P, T)
 
-
         # Calculate the misfit and store it
         assemblage.chisqr = assemblage_affinity_misfit(assemblage)
-        #print('assemblage chisqr', assemblage.experiment_id, [phase.name for phase in assemblage.phases], assemblage.chisqr)
         chisqr.append(assemblage.chisqr)
 
     # Endmember priors
     for p in storage['endmember_priors']:
-        c = np.power(((storage['dict_endmember_args'][p[0]][p[1]] - p[2])/p[3]), 2.)
-        #print('endmember_prior', p[0], p[1], dict_endmember_args[p[0]][p[1]], p[2], p[3], c)
+        c = np.power(((storage['dict_endmember_args'][p[0]][p[1]]
+                       - p[2])/p[3]), 2.)
         chisqr.append(c)
 
     # Solution priors
     for p in storage['solution_priors']:
         c = np.power(((storage['dict_solution_args'][p[0]]['{0}{1}{2}'.format(p[1], p[2], p[3])] -
                        p[4])/p[5]), 2.)
-        #print('solution_prior', c)
+        # print('solution_prior', c)
         chisqr.append(c)
 
     # Experiment uncertainties
     for u in storage['experiment_uncertainties']:
         c = np.power(u[2]/u[3], 2.)
-        #print('pressure uncertainty', c)
+        # print('pressure uncertainty', c)
         chisqr.append(c)
 
-    # calculate the mean square misfit.
-    # we don't take the root here, because we are treating this value as a (scaled) negative log probability
-    sqr_misfit = np.sum(chisqr)/float(len(chisqr))
-
-    # calculate the squared misfit.
+    # calculate half the squared misfit.
     # this is an approximation to the negative log probability
-    # see http://www.physics.utah.edu/~detar/phys6720/handouts/curve_fit/curve_fit/node2.html
+    # see http://www.physics.utah.edu/~detar/phys6720
+    # handouts/curve_fit/curve_fit/node2.html
     half_sqr_misfit = np.sum(chisqr)/2.
-    #print(rms_misfit)
+    # print(rms_misfit)
     string = '['
     for i, p in enumerate(params):
         string += '{0:.4f}'.format(p)
         if i < len(params) - 1:
             string += ', '
-    string+=']'
-    #print(string)
+    string += ']'
+    # print(string)
 
+    # catches the cases where we entered areas where one or more EoSes fail
     if np.isnan(half_sqr_misfit) or not np.isfinite(half_sqr_misfit):
-        return np.inf # catches the cases where we entered areas where one or more EoSes fail
+        return np.inf
     else:
         return half_sqr_misfit
 
 
 def log_probability(params, dataset, storage):
     return -minimize_func(params, dataset, storage)
+
 
 mineral_dataset = create_minerals()
 endmembers = mineral_dataset['endmembers']
@@ -235,16 +232,30 @@ solutions['bdg'].energy_interaction[0][0] = 0. # make bdg ideal
 
 endmember_priors = []
 endmember_priors.extend([[mbr, 'S_0', endmembers[mbr].params['S_0_orig'][0], endmembers[mbr].params['S_0_orig'][1]]
-                         for mbr in ['per', 'wus', 'fo', 'fa', 'mwd', 'mrw', 'frw', 'mbdg', 'fbdg']]) # note that fwd S_0 dictated by special priors
+                         for mbr in ['per', 'wus',
+                                     'fo', 'fa',
+                                     'mwd',
+                                     'mrw', 'frw',
+                                     'mbdg', 'fbdg']]) # note that fwd S_0 dictated by special priors
 
-endmembers['fwd'].params['V_0_orig'] = [endmembers['fwd'].params['V_0'], endmembers['fwd'].params['V_0']/100.*0.5] # 0.5% uncertainty, somewhat arbitrary
-endmember_priors.extend([[mbr, 'V_0', endmembers[mbr].params['V_0_orig'][0], endmembers[mbr].params['V_0_orig'][1]]
+endmembers['fwd'].params['V_0_orig'] = [endmembers['fwd'].params['V_0'],
+                                        endmembers['fwd'].params['V_0']/100.*0.5] # 0.5% uncertainty, somewhat arbitrary
+
+endmember_priors.extend([[mbr, 'V_0',
+                          endmembers[mbr].params['V_0_orig'][0],
+                          endmembers[mbr].params['V_0_orig'][1]]
                          for mbr in ['fwd']])
 
-endmembers['fwd'].params['K_0_orig'] = [endmembers['fwd'].params['K_0'], endmembers['fwd'].params['K_0']/100.*2.] # 2% uncertainty, somewhat arbitrary
-endmembers['frw'].params['K_0_orig'] = [endmembers['frw'].params['K_0'], endmembers['frw'].params['K_0']/100.*0.5] # 0.5% uncertainty, somewhat arbitrary
-endmembers['wus'].params['K_0_orig'] = [endmembers['wus'].params['K_0'], endmembers['wus'].params['K_0']/100.*2.] # 2% uncertainty, somewhat arbitrary
-endmember_priors.extend([[mbr, 'K_0', endmembers[mbr].params['K_0_orig'][0], endmembers[mbr].params['K_0_orig'][1]]
+endmembers['fwd'].params['K_0_orig'] = [endmembers['fwd'].params['K_0'],
+                                        endmembers['fwd'].params['K_0']/100.*2.] # 2% uncertainty, somewhat arbitrary
+endmembers['frw'].params['K_0_orig'] = [endmembers['frw'].params['K_0'],
+                                        endmembers['frw'].params['K_0']/100.*0.5] # 0.5% uncertainty, somewhat arbitrary
+endmembers['wus'].params['K_0_orig'] = [endmembers['wus'].params['K_0'],
+                                        endmembers['wus'].params['K_0']/100.*2.] # 2% uncertainty, somewhat arbitrary
+
+endmember_priors.extend([[mbr, 'K_0',
+                          endmembers[mbr].params['K_0_orig'][0],
+                          endmembers[mbr].params['K_0_orig'][1]]
                          for mbr in ['fwd', 'frw', 'wus']])
 
 endmember_priors.extend([['per', 'a_0', endmembers['per'].params['a_0_orig'], 2.e-7],
@@ -352,6 +363,7 @@ initialise_params()
 
 # Prepare internal arrays using minimize_func
 # This should speed things up after depickling
+print('Fitting {0} assemblages'.format(len(dataset['assemblages'])))
 lnprob = log_probability(get_params(storage), dataset, storage)
 print(lnprob)
 
@@ -373,7 +385,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4 # this number must be greater than 2! 4 ok
     n_steps_burn_in = 0 # number of steps in the burn in period (not used)
-    n_steps_mcmc = 1200 # number of steps in the full mcmc run
+    n_steps_mcmc = 5000 # number of steps in the full mcmc run
     n_discard = 0 # discard this number of steps from the full mcmc run
     thin = 1 # thin the number of steps by this factor when calling get_chain (so 10 reduces by a factor of 10)
 
@@ -396,9 +408,9 @@ if run_inversion:
 
     print('using n threads')
 
-
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
     with Pool() as pool:
+        """
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
                                         args=[dataset, storage],
                                         pool=pool)
@@ -416,17 +428,19 @@ if run_inversion:
         print('Burn-in complete. Starting MCMC run.')
 
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+        """
+
+        sampler = pickle.load(open(mcmcfile+'int', 'rb'))
+        sampler.pool = pool  # deal with change in pool!
+        state = sampler.run_mcmc(sampler._previous_state,
+                                 n_steps_mcmc,
+                                 progress=True)
 
         print('100% complete. Pickling')
-        pickle.dump(sampler, open(mcmcfile,'wb'))
-
-
-
-    #sampler = pickle.load(open(mcmcfile,'rb'))
-    #sampler.pool = pool # deal with change in pool!
+        pickle.dump(sampler, open(mcmcfile, 'wb'))
 
     print('Mean acceptance fraction: {0:.2f}'
-          ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
+          ' (should ideally be between 0.2 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
 
     try:
         tau = sampler.get_autocorr_time()
@@ -434,37 +448,37 @@ if run_inversion:
     except emcee.autocorr.AutocorrError as e:
         print(e)
 
+        plot_chains = False
+        if plot_chains:
+            samples = sampler.get_chain()
+            n_params = samples.shape[2]
+            n_params_per_plot = 10
+            for j in range(int(np.ceil(n_params/n_params_per_plot))):
+                if j == int(np.ceil(n_params/n_params_per_plot) - 1):
+                    n_plots = n_params - n_params_per_plot*j
+                else:
+                    n_plots = n_params_per_plot
+                fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
+                for i in range(n_plots):
+                    ax = axes[i]
+                    ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
+                    ax.set_xlim(0, len(samples))
+                    ax.set_ylabel(labels[j*n_params_per_plot + i])
+                    ax.yaxis.set_label_coords(-0.1, 0.5)
 
-        samples = sampler.get_chain()
-        n_params = samples.shape[2]
-        n_params_per_plot = 10
-        for j in range(int(np.ceil(n_params/n_params_per_plot))):
-            if j == int(np.ceil(n_params/n_params_per_plot) - 1):
-                n_plots = n_params - n_params_per_plot*j
-            else:
-                n_plots = n_params_per_plot
-            fig, axes = plt.subplots(n_plots, figsize=(10, n_plots), sharex=True)
-            for i in range(n_plots):
-                ax = axes[i]
-                ax.plot(samples[:, :, j*n_params_per_plot + i], "k", alpha=0.3)
-                ax.set_xlim(0, len(samples))
-                ax.set_ylabel(labels[j*n_params_per_plot + i])
-                ax.yaxis.set_label_coords(-0.1, 0.5)
-
-            axes[-1].set_xlabel("step number")
-            plt.show()
+                axes[-1].set_xlabel("step number")
+                plt.show()
 
         #print('Plotting autocorrelation functions')
         #from autocorr import plot_autocorr
         #plot_autocorr(sampler.get_chain()[:, :, 0].T)  # arbitrarily pick the 1st chain
         #print('Average autocorrelation time: {0}'.format(np.mean(tau)))
 
-    flat_samples = sampler.get_chain(discard=500, thin=thin, flat=True)
+    flat_samples = sampler.get_chain(discard=1000, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
     mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84]) for i in range(ndim)])
-
 
     for i in range(ndim):
         mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])
@@ -503,6 +517,9 @@ if run_inversion:
 
 # Print the current parameters
 print(get_params(storage))
+
+lnprob = log_probability(get_params(storage), dataset, storage)
+print(lnprob)
 
 ####################
 ### A few images ###
