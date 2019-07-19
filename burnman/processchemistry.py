@@ -1,10 +1,12 @@
-# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for
+# the Earth and Planetary Sciences
 # Copyright (C) 2012 - 2017 by the BurnMan team, released under the GNU
 # GPL v2 or later.
 
-
-# This module provides the functions required to process the standard burnman formula compositions
-# ProcessChemistry returns the number of atoms and molar mass of a compound given its unit formula as an argument.
+# This module provides the functions required to process the standard burnman
+# formula compositions
+# ProcessChemistry returns the number of atoms and molar mass of a compound
+# given its unit formula as an argument.
 # process_solution_chemistry returns information required to calculate
 # solid solution properties from a set of endmember formulae
 
@@ -15,8 +17,8 @@ from fractions import Fraction
 from collections import Counter
 import pkgutil
 from string import ascii_uppercase as ucase
-from scipy.optimize import nnls
-from sympy import Matrix, nsimplify
+from sympy import nsimplify
+
 
 def read_masses():
     """
@@ -26,7 +28,8 @@ def read_masses():
     datastream = pkgutil.get_data(
         'burnman', 'data/input_masses/atomic_masses.dat')
     datalines = [line.strip()
-                 for line in datastream.decode('ascii').split('\n') if line.strip()]
+                 for line in datastream.decode('ascii').split('\n')
+                 if line.strip()]
     lookup = dict()
     for line in datalines:
         data = "%".join(line.split("%")[:1]).split()
@@ -34,7 +37,9 @@ def read_masses():
             lookup[data[0]] = float(data[1])
     return lookup
 
+
 atomic_masses = read_masses()
+
 
 def dictionarize_formula(formula):
     """
@@ -54,6 +59,7 @@ def dictionarize_formula(formula):
 
     return f
 
+
 def sum_formulae(formulae, amounts=None):
     if amounts is None:
         amounts = [1. for formula in formulae]
@@ -62,8 +68,11 @@ def sum_formulae(formulae, amounts=None):
 
     summed_formula = Counter()
     for i, formula in enumerate(formulae):
-        summed_formula.update(Counter({element: amounts[i] * n_atoms for (element, n_atoms) in formula.items()}))
+        summed_formula.update(Counter({element: amounts[i] * n_atoms
+                                       for (element, n_atoms)
+                                       in formula.items()}))
     return summed_formula
+
 
 def formula_mass(formula):
     """
@@ -74,6 +83,7 @@ def formula_mass(formula):
         formula[element] * atomic_masses[element] for element in formula)
     return mass
 
+
 def convert_formula(formula, to_type='mass', normalize=False):
     """
     Converts a chemical formula from one type (mass or molar)
@@ -81,18 +91,22 @@ def convert_formula(formula, to_type='mass', normalize=False):
     """
 
     if to_type == 'mass':
-        f = {element: n_atoms * atomic_masses[element] for (element, n_atoms) in formula.items()}
+        f = {element: n_atoms * atomic_masses[element]
+             for (element, n_atoms) in formula.items()}
     elif to_type == 'molar':
-        f = {element: n_atoms / atomic_masses[element] for (element, n_atoms) in formula.items()}
+        f = {element: n_atoms / atomic_masses[element]
+             for (element, n_atoms) in formula.items()}
     else:
-        raise Exception('Value of parameter to_type not recognised. Should be either "mass" or "molar".')
+        raise Exception('Value of parameter to_type not recognised. '
+                        'Should be either "mass" or "molar".')
 
     if normalize:
         s = np.sum([n for (element, n) in f.items()])
         f = {element: n/s for (element, n) in f.items()}
 
     return f
-    
+
+
 def dictionarize_site_formula(formula):
     """
     A function to take a chemical formula with sites specified
@@ -133,6 +147,7 @@ def dictionarize_site_formula(formula):
             f[element[0]] = f.get(element[0], 0.0) + float(element[1])
 
     return f
+
 
 def process_solution_chemistry(solution_model):
     """
@@ -192,7 +207,6 @@ def process_solution_chemistry(solution_model):
         A 1D array for each endmember in the solid solution,
         containing the number of atoms of each element on each site
         per mole of endmember.
-
     """
     formulae = solution_model.formulas
     n_sites = formulae[0].count('[')
@@ -212,7 +226,7 @@ def process_solution_chemistry(solution_model):
     for i_mbr in range(n_endmembers):
         solution_formula = dict()
         list_occupancies.append([[0] * len(sites[site])
-                                for site in range(n_sites)])
+                                 for site in range(n_sites)])
         s = re.split(r'\[', formulae[i_mbr])[1:]
 
         for i_site, site_string in enumerate(s):
@@ -238,7 +252,8 @@ def process_solution_chemistry(solution_model):
                     proportion_element_on_site = Fraction(element_split[1])
 
                 solution_formula[element_on_site] = solution_formula.get(
-                    element_on_site, 0.0) + list_multiplicity[i_site] * proportion_element_on_site
+                    element_on_site, 0.0) + (list_multiplicity[i_site]
+                                             * proportion_element_on_site)
 
                 if element_on_site not in sites[i_site]:
                     n_occupancies += 1
@@ -283,7 +298,8 @@ def process_solution_chemistry(solution_model):
     solution_model.site_names = []
     for i, elements in enumerate(sites):
         for element in elements:
-            solution_model.site_names.append('{0}_{1}'.format(element, ucase[i]))
+            solution_model.site_names.append('{0}_{1}'.format(element,
+                                                              ucase[i]))
 
     # Finally, make attributes for solution model instance:
     solution_model.solution_formulae = solution_formulae
@@ -292,25 +308,36 @@ def process_solution_chemistry(solution_model):
     solution_model.n_occupancies = n_occupancies
     solution_model.site_multiplicities = site_multiplicities
     solution_model.endmember_occupancies = endmember_occupancies
-    solution_model.endmember_noccupancies = np.einsum('ij, j->ij', endmember_occupancies, site_multiplicities)
+    solution_model.endmember_noccupancies = np.einsum('ij, j->ij',
+                                                      endmember_occupancies,
+                                                      site_multiplicities)
 
-def site_occupancies_to_strings(site_names, site_multiplicities, site_occupancies):
+    sfs = [dict(((solution_model.site_names[i], nocc[i])
+                 for i in range(n_occupancies) if nocc[i] > 1.e-12))
+           for nocc in solution_model.endmember_noccupancies]
+    solution_model.site_formulae = sfs
+
+
+def site_occupancies_to_strings(site_names, site_multiplicities,
+                                site_occupancies):
     site_formulae = []
     for mbr_occupancies in site_occupancies:
-        i=0
+        i = 0
         site_formulae.append('')
         for site in site_names:
             amounts = mbr_occupancies[i:i+len(site)]
             mult = site_multiplicities[i]
             if np.abs(mult - 1.) < 1.e-12:
-                mult=''
+                mult = ''
             else:
-                mult=str(nsimplify(mult))
+                mult = str(nsimplify(mult))
             amounts /= sum(amounts)
-            site_formulae[-1] += '['+formula_to_string(dict(zip(site, amounts)))+']'+mult
-            i+=len(site)
+            fstr = formula_to_string(dict(zip(site, amounts)))
+            site_formulae[-1] += '[{0}]{1}'.format(fstr, mult)
+            i += len(site)
 
     return site_formulae
+
 
 def compositional_array(formulae):
     """
@@ -378,33 +405,37 @@ def formula_to_string(formula):
         If one or more keys in the dictionary are not one of the elements
         in the periodic table, then they are added at the end of the string.
     """
-    IUPAC_element_order=['v', 'Og', 'Rn', 'Xe', 'Kr', 'Ar', 'Ne', 'He', # Group 18
-                         'Fr', 'Cs', 'Rb', 'K', 'Na', 'Li', # Group 1 (omitting H)
-                         'Ra', 'Ba', 'Sr', 'Ca', 'Mg', 'Be', # Group 2
-                         'Lr', 'No', 'Md', 'Fm', 'Es', 'Cf', 'Bk', 'Cm',
-                         'Am', 'Pu', 'Np', 'U', 'Pa', 'Th', 'Ac', # Actinides
-                         'Lu', 'Yb', 'Tm', 'Er', 'Ho', 'Dy', 'Tb', 'Gd',
-                         'Eu', 'Sm', 'Pm', 'Nd', 'Pr', 'Ce', 'La', # Lanthanides
-                         'Y', 'Sc', # Group 3
-                         'Rf', 'Hf', 'Zr', 'Ti', # Group 4
-                         'Db', 'Ta', 'Nb', 'V', # Group 5
-                         'Sg', 'W', 'Mo', 'Cr', # Group 6
-                         'Bh', 'Re', 'Tc', 'Mn', # Group 7
-                         'Hs', 'Os', 'Ru', 'Fe', # Group 8
-                         'Mt', 'Ir', 'Rh', 'Co', # Group 9
-                         'Ds', 'Pt', 'Pd', 'Ni', # Group 10
-                         'Rg', 'Au', 'Ag', 'Cu', # Group 11
-                         'Cn', 'Hg', 'Cd', 'Zn', # Group 12
-                         'Nh', 'Tl', 'In', 'Ga', 'Al', 'B', # Group 13
-                         'Fl', 'Pb', 'Sn', 'Ge', 'Si', 'C', # Group 14
-                         'Mc', 'Bi', 'Sb', 'As', 'P', 'N', # Group 15
-                         'Lv', 'Po', 'Te', 'Se', 'S', 'O', # Group 16
-                         'H', # hydrogen
-                         'Ts', 'At', 'I', 'Br', 'Cl', 'F']# Group 17
+    IUPAC_element_order = ['v', 'Og', 'Rn', 'Xe', 'Kr',
+                           'Ar', 'Ne', 'He',  # Group 18
+                           'Fr', 'Cs', 'Rb', 'K', 'Na',
+                           'Li',  # Group 1 (omitting H)
+                           'Ra', 'Ba', 'Sr', 'Ca', 'Mg', 'Be',  # Group 2
+                           'Lr', 'No', 'Md', 'Fm', 'Es', 'Cf',
+                           'Bk', 'Cm', 'Am', 'Pu', 'Np', 'U',
+                           'Pa', 'Th', 'Ac',  # Actinides
+                           'Lu', 'Yb', 'Tm', 'Er', 'Ho', 'Dy',
+                           'Tb', 'Gd', 'Eu', 'Sm', 'Pm', 'Nd',
+                           'Pr', 'Ce', 'La',  # Lanthanides
+                           'Y', 'Sc',  # Group 3
+                           'Rf', 'Hf', 'Zr', 'Ti',  # Group 4
+                           'Db', 'Ta', 'Nb', 'V',  # Group 5
+                           'Sg', 'W', 'Mo', 'Cr',  # Group 6
+                           'Bh', 'Re', 'Tc', 'Mn',  # Group 7
+                           'Hs', 'Os', 'Ru', 'Fe',  # Group 8
+                           'Mt', 'Ir', 'Rh', 'Co',  # Group 9
+                           'Ds', 'Pt', 'Pd', 'Ni',  # Group 10
+                           'Rg', 'Au', 'Ag', 'Cu',  # Group 11
+                           'Cn', 'Hg', 'Cd', 'Zn',  # Group 12
+                           'Nh', 'Tl', 'In', 'Ga', 'Al', 'B',  # Group 13
+                           'Fl', 'Pb', 'Sn', 'Ge', 'Si', 'C',  # Group 14
+                           'Mc', 'Bi', 'Sb', 'As', 'P', 'N',  # Group 15
+                           'Lv', 'Po', 'Te', 'Se', 'S', 'O',  # Group 16
+                           'H',  # hydrogen
+                           'Ts', 'At', 'I', 'Br', 'Cl', 'F']  # Group 17
 
     formula_string = ''
     for e in IUPAC_element_order:
-        if e in formula and np.abs(formula[e])>1.e-12:
+        if e in formula and np.abs(formula[e]) > 1.e-12:
             if np.abs(formula[e] - 1.) < 1.e-12:
                 formula_string += e
             else:
@@ -412,7 +443,7 @@ def formula_to_string(formula):
 
     for e in formula:
         if e not in IUPAC_element_order:
-            if e in formula and np.abs(formula[e])>1.e-12:
+            if e in formula and np.abs(formula[e]) > 1.e-12:
                 if np.abs(formula[e] - 1.) < 1.e-12:
                     formula_string += e
                 else:

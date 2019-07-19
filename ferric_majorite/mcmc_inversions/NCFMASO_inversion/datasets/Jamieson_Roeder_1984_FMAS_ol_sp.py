@@ -20,8 +20,11 @@ def get_assemblages(mineral_dataset):
 
         p_fo = float(Mg1) / 100.
         p_sp = float(Mg2) / 100.
-        ol_cov = float(Mgerr1)*float(Mgerr1)/10000.  # sqrt2
-        sp_cov = float(Mgerr2)*float(Mgerr2)/10000.  # sqrt2
+
+        # Here we make the error sqrt(16) times bigger
+        # to more reasonably match the extent of disequilibrium
+        ol_cov = float(Mgerr1)*float(Mgerr1) / 10000. * 16. # sqrt2
+        sp_cov = float(Mgerr2)*float(Mgerr2) / 10000. * 16. # sqrt2
 
         assemblage = burnman.Composite([solutions['ol'],
                                         child_solutions['sp_herc']])

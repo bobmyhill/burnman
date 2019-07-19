@@ -4,10 +4,10 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from matplotlib import cm
-from scipy.optimize import minimize, fsolve
+# import matplotlib.image as mpimg
+# from matplotlib import cm
+# from scipy.optimize import minimize, fsolve
+
 # hack to allow scripts to be placed in subdirectories next to burnman:
 if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
     sys.path.insert(1, os.path.abspath('../../..'))
@@ -17,7 +17,8 @@ from burnman.solutionbases import transform_solution_to_new_basis
 
 
 def create_minerals():
-    from input_buffers import rhenium, rhenium_dioxide, molybdenum, molybdenum_dioxide
+    from input_buffers import rhenium, rhenium_dioxide
+    from input_buffers import molybdenum, molybdenum_dioxide
 
     #########################
     # ENDMEMBER DEFINITIONS #
@@ -64,7 +65,7 @@ def create_minerals():
     cen = burnman.minerals.HP_2011_ds62.cen()
     cats = burnman.minerals.HP_2011_ds62.cats()
     jd = burnman.minerals.HP_2011_ds62.jd()
-    aeg = burnman.minerals.HP_2011_ds62.acm() # aegirine is also known as acmite
+    aeg = burnman.minerals.HP_2011_ds62.acm()  # aegirine also known as acmite
 
     cfs = burnman.minerals.HP_2011_ds62.fs()
     cfs.params['name'] = 'cfs'
@@ -82,14 +83,15 @@ def create_minerals():
     odi.params['S_0'] += -0.211
     odi.params['V_0'] += 0.005e-5
 
-    ofm = burnman.CombinedMineral([oen, ofs], [0.5, 0.5], [-6.6e3, 0., 0.], name='ofm')
-
+    ofm = burnman.CombinedMineral([oen, ofs], [0.5, 0.5], [-6.6e3, 0., 0.],
+                                  name='ofm')
 
     # High pressure clinopyroxene endmembers
     hen = burnman.minerals.HHPH_2013.hen()
     hfs = burnman.minerals.HHPH_2013.hfs()
 
-    hfm = burnman.CombinedMineral([hen, hfs], [0.5, 0.5], [-6.6e3, 0., 0.], name='hfm')
+    hfm = burnman.CombinedMineral([hen, hfs], [0.5, 0.5], [-6.6e3, 0., 0.],
+                                  name='hfm')
 
     # Garnet endmembers
     py = burnman.minerals.HHPH_2013.py()
@@ -104,12 +106,15 @@ def create_minerals():
     Heinemann_data = np.array([[0.2592, 0.4985, 0.7510, 0.9998],
                                [1511.167, 1509.386, 1506.802, 1503.654],
                                [0.024, 0.044, 0.047, 0.052]])
-    quad = lambda x, a, b, c: a*x + b*(1. - x) + c*x*(1. - x)
+
+    def quad(x, a, b, c):
+        return a*x + b*(1. - x) + c*x*(1. - x)
 
     from scipy.optimize import curve_fit
     popt, pcov = curve_fit(quad,
                            xdata=Heinemann_data[0],
-                           ydata=Heinemann_data[1]*1.e-30/8.*burnman.constants.Avogadro,
+                           ydata=(Heinemann_data[1]*1.e-30/8.
+                                  * burnman.constants.Avogadro),
                            sigma=Heinemann_data[2])
 
     py.params['V_0'] = popt[0]
@@ -127,7 +132,6 @@ def create_minerals():
     nagt.params['Kprime_0'] = 4.  # fixed, otherwise 3.8-ish
     nagt.params['Kdprime_0'] = -4./177.83e9
     nagt.params['a_0'] = 2.38345e-5
-
 
     """
     xs = np.linspace(0., 1., 101)
@@ -410,7 +414,7 @@ def create_minerals():
     # SOLID SOLUTIONS #
     ###################
 
-    bdg = Solution(name='bridgmanite',
+    bdg = Solution(name='bridgmanite with order-disorder',
                    solution_type='symmetric',
                    endmembers=[[mbdg, '[Mg][Si]O3'],
                                [fbdg, '[Fe][Si]O3'],
@@ -426,7 +430,7 @@ def create_minerals():
                                        [0., 0.],
                                        [0.]])
 
-    cor = Solution(name='corundum',
+    cor = Solution(name='corundum with order-disorder',
                    solution_type='symmetric',
                    endmembers=[[cor, '[Al][Al]O3'],
                                [hem, '[Fef][Fef]O3'],
@@ -447,11 +451,13 @@ def create_minerals():
                     endmembers=[[per, '[Mg]O'], [wus, '[Fe]O']],
                     energy_interaction=[[11.1e3]],
                     volume_interaction=[[1.1e-7]])
+
     ol = Solution(name='olivine',
                   solution_type='symmetric',
                   endmembers=[[fo, '[Mg]2SiO4'], [fa, '[Fe]2SiO4']],
                   energy_interaction=[[6.37e3]],
                   volume_interaction=[[0.e-7]])  # O'Neill et al., 2003
+
     wad = Solution(name='wadsleyite',
                    solution_type='symmetric',
                    endmembers=[[mwd, '[Mg]2SiO4'], [fwd, '[Fe]2SiO4']],
@@ -476,15 +482,15 @@ def create_minerals():
 
     """
     spinel_od = Solution(name = 'spinel with order-disorder',
-                         solution_type ='symmetric', # fake multiplicity of 1 (should be 2)
-                         endmembers=[[nsp,   '[Mg][Al]AlO4'],
+                         solution_type ='symmetric',  # fake multiplicity of 1 (should be 2)
+                         endmembers=[[nsp, '[Mg][Al]AlO4'],
                                      [nherc, '[Fe][Al]AlO4'],
-                                     [nmt,   '[Fe][Fef]FefO4'],
-                                     [mrw,   '[Si][Mg]MgO4'],
-                                     [frw,   '[Si][Fe]FeO4'],
-                                     [isp,   '[Al][Mg1/2Al1/2]Mg1/2Al1/2O4'],
+                                     [nmt, '[Fe][Fef]FefO4'],
+                                     [mrw, '[Si][Mg]MgO4'],
+                                     [frw, '[Si][Fe]FeO4'],
+                                     [isp, '[Al][Mg1/2Al1/2]Mg1/2Al1/2O4'],
                                      [iherc, '[Al][Fe1/2Al1/2]Fe1/2Al1/2O4'],
-                                     [imt,   '[Fef][Fe1/2Fef1/2]Fe1/2Fef1/2O4']], # 3 ordered endmembers
+                                     [imt, '[Fef][Fe1/2Fef1/2]Fe1/2Fef1/2O4']],  # 3 ordered endmembers
                          energy_interaction=[[0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3],
                                              [0.e3, 0.e3, 0.e3, 0.e3, 0.e3, 0.e3,],
                                              [0.e3, 0.e3, 0.e3, 0.e3, 0.e3,],
@@ -502,37 +508,36 @@ def create_minerals():
     """
 
     cpx_od = Solution(name='clinopyroxene with order-disorder',
-                      solution_type='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                      solution_type='asymmetric',  # fake multiplicity of 1/2 (should be 2)
                       alphas=[1.2, 1.2, 1.0, 1.0, 1.9, 1.2, 1.2],
-                      endmembers=[[di,   '[Ca][Mg][Si]1/2O6'],
-                                    [hed,  '[Ca][Fe][Si]1/2O6'],
-                                    [cen,  '[Mg][Mg][Si]1/2O6'],
-                                    [cfs,  '[Fe][Fe][Si]1/2O6'], # order-disorder
-                                    [cats, '[Ca][Al][Si1/2Al1/2]1/2O6'],
-                                    [jd,   '[Na][Al][Si]1/2O6'],
-                                    [aeg,  '[Na][Fef][Si]1/2O6']],
-                      energy_interaction=[[ 2.9e3, 29.8e3, 25.8e3, 13.0e3, 26.0e3, 26.7e3],
-                                          [26.6e3, 20.9e3,  8.9e3,  9.6e3, 10.4e3],
-                                          [ 2.3e3, 45.2e3, 40.0e3, 60.8e3],
+                      endmembers=[[di, '[Ca][Mg][Si]1/2O6'],
+                                  [hed, '[Ca][Fe][Si]1/2O6'],
+                                  [cen, '[Mg][Mg][Si]1/2O6'],
+                                  [cfs, '[Fe][Fe][Si]1/2O6'],  # ord-disord
+                                  [cats, '[Ca][Al][Si1/2Al1/2]1/2O6'],
+                                  [jd, '[Na][Al][Si]1/2O6'],
+                                  [aeg, '[Na][Fef][Si]1/2O6']],
+                      energy_interaction=[[2.9e3, 29.8e3, 25.8e3, 13.0e3, 26.0e3, 26.7e3],
+                                          [26.6e3, 20.9e3, 8.9e3, 9.6e3, 10.4e3],
+                                          [2.3e3, 45.2e3, 40.0e3, 60.8e3],
                                           [25.0e3, 24.0e3, 52.3e3],
-                                          [ 6.0e3, 17.4e3],
-                                          [ 3.2e3]],
-                      volume_interaction=[[ 0.0,  -3e-7,   -3e-7,  -6e-7,    0.0,    7.35e-7],
-                                          [-3e-7, -3e-7,   -6e-7,    0.0,    7.35e-7],
-                                          [ 0.0, -3.5e-06, 0.0,    4.2e-06],
-                                          [-1e-6,  0.0,    1.2e-6],
-                                          [ 0.0,   0.0],
-                                          [ 0.0]])
-
+                                          [6.0e3, 17.4e3],
+                                          [3.2e3]],
+                      volume_interaction=[[0.0, -3e-7, -3e-7, -6e-7, 0.0, 7.35e-7],
+                                          [-3e-7, -3e-7, -6e-7, 0.0, 7.35e-7],
+                                          [0.0, -3.5e-06, 0.0, 4.2e-06],
+                                          [-1e-6, 0.0, 1.2e-6],
+                                          [0.0, 0.0],
+                                          [0.0]])
 
     opx_od = Solution(name='orthopyroxene with order-disorder',
-                      solution_type='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                      solution_type='asymmetric',  # fake multiplicity of 1/2 (should be 2)
                       alphas=[1., 1., 1., 1.2, 1.],
-                      endmembers=[[oen,  '[Mg][Mg][Si]1/2Si3/2O6'],
-                                  [ofs,  '[Fe][Fe][Si]1/2Si3/2O6'],
+                      endmembers=[[oen, '[Mg][Mg][Si]1/2Si3/2O6'],
+                                  [ofs, '[Fe][Fe][Si]1/2Si3/2O6'],
                                   [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'],
-                                  [odi,  '[Ca][Mg][Si]1/2Si3/2O6'],
-                                  [ofm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d with Mg on the Al site
+                                  [odi, '[Ca][Mg][Si]1/2Si3/2O6'],
+                                  [ofm, '[Fe][Mg][Si]1/2Si3/2O6']],  # Fe-Mg o-d with Mg on the Al site
                       energy_interaction=[[7.e3, 12.5e3, 32.2e3, 4.e3],
                                           [11.e3, 25.54e3, 4.e3],
                                           [75.5e3, 15.e3],
@@ -543,13 +548,13 @@ def create_minerals():
                                           [0.084e-5]])
 
     hpx_od = Solution(name='high pressure clinopyroxene with order-disorder',
-                      solution_type='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                      solution_type='asymmetric',  # fake multiplicity of 1/2 (should be 2)
                       alphas=[1., 1., 1., 1.2, 1.],
-                      endmembers=[[hen,  '[Mg][Mg][Si]1/2Si3/2O6'],
-                                  [hfs,  '[Fe][Fe][Si]1/2Si3/2O6'],
+                      endmembers=[[hen, '[Mg][Mg][Si]1/2Si3/2O6'],
+                                  [hfs, '[Fe][Fe][Si]1/2Si3/2O6'],
                                   [mgts, '[Mg][Al][Al1/2Si1/2]1/2Al3/4Si3/4O6'],
-                                  [odi,  '[Ca][Mg][Si]1/2Si3/2O6'],
-                                  [hfm,  '[Fe][Mg][Si]1/2Si3/2O6']], # Fe-Mg o-d with Mg on the Al site
+                                  [odi, '[Ca][Mg][Si]1/2Si3/2O6'],
+                                  [hfm, '[Fe][Mg][Si]1/2Si3/2O6']],  # Fe-Mg o-d with Mg on the Al site
                       energy_interaction=[[7.e3, 12.5e3, 32.2e3, 4.e3],
                                           [11.e3, 25.54e3, 4.e3],
                                           [75.5e3, 15.e3],
@@ -561,12 +566,12 @@ def create_minerals():
 
     gt = Solution(name='garnet',
                   # solution_type = 'symmetric',
-                  solution_type='asymmetric', # fake multiplicity of 1/2 (should be 2)
+                  solution_type='asymmetric',
                   alphas=[1., 1., 2.7, 2.7, 1., 1.],
                   endmembers=[[py, '[Mg]3[Al]2Si3O12'],
                               [alm, '[Fe]3[Al]2Si3O12'],
                               [gr, '[Ca]3[Al]2Si3O12'],
-                              [andr, '[Ca]3[Fe]2Si3O12'],
+                              [andr, '[Ca]3[Fef]2Si3O12'],
                               [dmaj, '[Mg]3[Mg1/2Si1/2]2Si3O12'],
                               [nagt, '[Na1/3Mg2/3]3[Al1/2Si1/2]2Si3O12']],
                   energy_interaction=[[0.e3, 30.e3, 56.e3, 0., 0.],  # py-....
@@ -579,8 +584,6 @@ def create_minerals():
                                       [0., 0., 0.],
                                       [0., 0.],
                                       [0.]])
-
-    print('Warning! oen_ofs still doesn\'t have o-d')
 
     # Child solutions *must* be in dictionary to be reset properly
     child_solutions = {'mg_fe_bdg': transform_solution_to_new_basis(bdg,
@@ -633,7 +636,7 @@ def create_minerals():
                                                                        solution_name='py-alm-gr garnet'),
 
                        'alm_sk_gt': transform_solution_to_new_basis(gt,
-                                                                    np.array([[0., 1.,  0., 0., 0., 0.],
+                                                                    np.array([[0., 1., 0., 0., 0., 0.],
                                                                               [0., 1., -1., 1., 0., 0.]]),
                                                                     solution_name='alm-sk garnet'),
                        'lp_gt': transform_solution_to_new_basis(gt,
@@ -709,10 +712,11 @@ def create_minerals():
                                                                            [0., 0., 0., 0., 1.]]),
                                                                  solution_name='mt-frw spinel'),
 
-                       'oen_ofs': transform_solution_to_new_basis(opx_od,
-                                                                  np.array([[1., 0., 0., 0., 0.],
-                                                                            [0., 1., 0., 0., 0.]]),
-                                                                  solution_name='Mg-Fe orthopyroxene'),
+                       'mg_fe_opx': transform_solution_to_new_basis(opx_od,
+                                                                    np.array([[1., 0., 0., 0., 0.],
+                                                                              [0., 1., 0., 0., 0.],
+                                                                              [0., 0., 0., 0., 1.]]),
+                                                                    solution_name='Mg-Fe orthopyroxene with order-disorder'),
 
                        'oen_mgts': transform_solution_to_new_basis(opx_od,
                                                                    np.array([[1., 0., 0., 0., 0.],
@@ -731,9 +735,22 @@ def create_minerals():
                                                                   solution_name='CMS orthopyroxene'),
 
                        'ofs_fets': transform_solution_to_new_basis(opx_od,
-                                                                   np.array([[0., 1., 0., 0., 0.],    # ofs
-                                                                             [-1., 0., 1., 0., 1.]]), # fets = - oen + mgts + ofm
+                                                                   np.array([[0., 1., 0., 0., 0.],  # ofs
+                                                                             [-1., 0., 1., 0., 1.]]),  # fets = - oen + mgts + ofm
                                                                    solution_name='FAS orthopyroxene'),
+
+                       'mg_fe_hpx': transform_solution_to_new_basis(hpx_od,
+                                                                    np.array([[1., 0., 0., 0., 0.],
+                                                                              [0., 1., 0., 0., 0.],
+                                                                              [0., 0., 0., 0., 1.]]),
+                                                                    solution_name='Mg-Fe HP clinopyroxene with order-disorder'),
+
+                       'cfm_hpx': transform_solution_to_new_basis(hpx_od,
+                                                                  np.array([[1., 0., 0., 0., 0.],
+                                                                            [0., 1., 0., 0., 0.],
+                                                                            [0., 0., 0., 1., 0.],
+                                                                            [0., 0., 0., 0., 1.]]),
+                                                                  solution_name='CFM HP clinopyroxene with order-disorder'),
 
                        'di_cen': transform_solution_to_new_basis(cpx_od,
                                                                  np.array([[1., 0., 0., 0., 0., 0., 0.],
@@ -755,24 +772,11 @@ def create_minerals():
                                                                 np.array([[1., 0., 0., 0., 0., 0., 0.],
                                                                           [0., 0., 0., 0., 0., 1., 0.]]),
                                                                 solution_name='di-jd clinopyroxene'),
-                       #'NCMAS_cpx': transform_solution_to_new_basis(cpx_od,
-                       #                                             np.array([[1., 0., 0., 0., 0., 0., 0.],
-                       #                                                       [0., 0., 1., 0., 0., 0., 0.],
-                       #                                                       [0., 0., 0., 0., 1., 0., 0.],
-                       #                                                       [0., 0., 0., 0., 0., 1., 0.]]),
-                       #                                              solution_name='NCMAS clinopyroxene'),
+
                        'cen_jd': transform_solution_to_new_basis(cpx_od,
                                                                  np.array([[0., 0., 1., 0., 0., 0., 0.],
                                                                            [0., 0., 0., 0., 0., 1., 0.]]),
-                                                                 solution_name='cen-jd clinopyroxene'),
-                       'nocfs_cpx': transform_solution_to_new_basis(cpx_od,
-                                                                    np.array([[1., 0., 0., 0., 0., 0., 0.],
-                                                                              [0., 1., 0., 0., 0., 0., 0.],
-                                                                              [0., 0., 1., 0., 0., 0., 0.],
-                                                                              [0., 0., 0., 0., 1., 0., 0.],
-                                                                              [0., 0., 0., 0., 0., 1., 0.],
-                                                                              [0., 0., 0., 0., 0., 0., 1.]]),
-                                                                    solution_name='nocfs clinopyroxene')}
+                                                                 solution_name='cen-jd clinopyroxene')}
 
     solutions = {'mw': fper,
                  'ol': ol,
@@ -784,7 +788,16 @@ def create_minerals():
                  'hpx': hpx_od,
                  'bdg': bdg}
 
-    endmembers = {'Re':       Re,        # buffer materials
+    print('order-disorder solutions:')
+    for sol_dict in [solutions, child_solutions]:
+        for name in sol_dict:
+            if 'order-disorder' in sol_dict[name].name:
+                sol_dict[name].ordered = True
+                print(sol_dict[name].name)
+            else:
+                sol_dict[name].ordered = False
+
+    endmembers = {'Re':       Re,  # buffer materials
                   'ReO2':     ReO2,
                   'Mo':       Mo,
                   'MoO2':     MoO2,
@@ -792,40 +805,42 @@ def create_minerals():
                   'bcc_iron': bcc_iron,  # iron polymorphs
                   'fcc_iron': fcc_iron,
                   'hcp_iron': hcp_iron,
-                  'per':      per,      # MgO / FeO
+                  'per':      per,  # MgO / FeO
                   'wus':      wus,
-                  'fo':       fo,       # olivine
+                  'fo':       fo,  # olivine
                   'fa':       fa,
-                  'mwd':      mwd,      # wadsleyite
+                  'mwd':      mwd,  # wadsleyite
                   'fwd':      fwd,
-                  'mrw':      mrw,      # spinel / ringwoodite
+                  'mrw':      mrw,  # spinel / ringwoodite
                   'frw':      frw,
                   'sp':       sp,
                   'herc':     herc,
                   'mt':       mt,
-                  'py':       py,       # garnet
+                  'py':       py,  # garnet
                   'alm':      alm,
                   'gr':       gr,
                   'andr':     andr,
                   'dmaj':     dmaj,
                   'nagt':     nagt,
-                  'di':       di,       # clinopyroxene
+                  'di':       di,  # clinopyroxene
                   'hed':      hed,
                   'cen':      cen,
                   'cfs':      cfs,
                   'cats':     cats,
                   'jd':       jd,
                   'aeg':      aeg,
-                  'oen':      oen,      # orthopyroxene
+                  'oen':      oen,  # orthopyroxene
                   'ofs':      ofs,
+                  'ofm':      ofm,
                   'mgts':     mgts,
                   'odi':      odi,
-                  'hen':      hen,      # high pressure (C2/c) clinopyroxene
+                  'hen':      hen,  # high pressure (C2/c) clinopyroxene
                   'hfs':      hfs,
+                  'hfm':      hfm,
                   'mbdg':     mbdg,
                   'fbdg':     fbdg,
                   'cpv':      cpv,
-                  'qtz':      qtz,      # SiO2 polymorphs
+                  'qtz':      qtz,  # SiO2 polymorphs
                   'coe':      coe,
                   'stv':      stv,
                   'hem':      hem}  # hem only in Woodland

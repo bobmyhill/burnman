@@ -82,18 +82,18 @@ class Composite(Material):
         self.name=name
 
         self.print_precision = 4 # number of significant figures used by self.__str__
-        
+
     def __str__(self):
         string='Composite: {0}'.format(self.name)
         try:
             string += '\n  P, T: {0:.{sf}g} Pa, {1:.{sf}g} K'.format(self.pressure, self.temperature, sf=self.print_precision)
         except:
-            pass
+            string += '\n  (state not yet set)'
         string+='\nPhase and endmember fractions:'
         for phase, fraction in zip(*self.unroll()):
             string+='\n  {0}: {1:0.{sf}f}'.format(phase.name, fraction, sf=self.print_precision)
             if isinstance(phase, SolidSolution):
-               for i in range(phase.n_endmembers): 
+               for i in range(phase.n_endmembers):
                    string+='\n    {0}: {1:0.{sf}f}'.format(phase.endmember_names[i], phase.molar_fractions[i], sf=self.print_precision)
         return string
 
@@ -209,7 +209,7 @@ class Composite(Material):
         This composite must be composed only of instances of the Mineral
         or SolidSolution class.
         """
-        
+
         elements = []
         for i, ph in enumerate(self.phases):
             if isinstance(ph, SolidSolution):
@@ -240,7 +240,7 @@ class Composite(Material):
             else:
                 raise Exception('Composite includes a phase which is neither an instance of a burnman.Mineral nor a burnman.SolidSolution.')
         return n_mbrs
-        
+
     @material_property
     def compositional_constraints(self):
         """
@@ -253,7 +253,7 @@ class Composite(Material):
         for ph in self.phases:
             n_pad = site_occupancies.shape[1]
 
-            if isinstance(ph, SolidSolution): 
+            if isinstance(ph, SolidSolution):
                 if site_occupancies.shape[1] == 0:
                     site_occupancies = np.empty([0, ph.solution_model.endmember_occupancies.shape[1]])
                 else:
@@ -261,12 +261,12 @@ class Composite(Material):
                                               ((0, 0),
                                                (0, ph.solution_model.endmember_occupancies.shape[1])),
                                               'constant', constant_values=((0, 0), (0, 0)))
-                
+
                 site_occupancies = np.vstack((site_occupancies,
                                               np.pad(ph.solution_model.endmember_occupancies,
                                                      ((0, 0), (n_pad,0)),
                                                      'constant', constant_values=(0., 0.))))
-        
+
             elif isinstance(ph, Mineral):
                 site_occupancies = np.pad(site_occupancies,
                                           ((0, 1), (0, 1)),
@@ -275,9 +275,9 @@ class Composite(Material):
                 site_occupancies[-1,-1] = 1.
             else:
                 raise Exception('Composite includes a phase which is neither an instance of a burnman.Mineral nor a burnman.SolidSolution.')
-        
+
         return site_occupancies.T
-            
+
     def stoichiometric_matrix(self, elements = None, excluded_endmembers = None,
                               calculate_subspaces = False):
         """
@@ -323,7 +323,7 @@ class Composite(Material):
             The column space of the stoichiometric matrix
             (returned only if calculate_subspaces = True)
         """
-        
+
         def matrix_func(i,j):
             e = elements[j]
             if e in formulae[i]:
@@ -333,7 +333,7 @@ class Composite(Material):
 
         if elements is None:
             elements = self.element_set
-                    
+
         if excluded_endmembers is None:
             excluded_endmembers = [[]]*len(self.phases)
 
@@ -347,7 +347,7 @@ class Composite(Material):
                     formulae.append(ph.formula)
             else:
                 raise Exception('Composite includes a phase which is neither an instance of a burnman.Mineral nor a burnman.SolidSolution.')
-        
+
         stoichiometric_matrix = Matrix( len(formulae), len(elements), matrix_func )
 
         if calculate_subspaces:
@@ -363,8 +363,8 @@ class Composite(Material):
         """
         Sets the phase proportions and total number of moles
         of the composite to minimize (using non-negative least squares)
-        the difference between the composite composition and 
-        elemental composition. 
+        the difference between the composite composition and
+        elemental composition.
         Caution: The solution will not necessarily be unique.
 
         Parameters
@@ -385,16 +385,16 @@ class Composite(Material):
 
         formulae = [phase.formula for phase in self.phases]
         elements = list(set().union(*formulae+[elemental_composition]))
-        
+
         b = np.array([elemental_composition[e]
                       if e in elemental_composition else 0.
                       for e in elements])
-        
+
         A = np.array([[f[e]
                        if e in f else 0.
                        for f in formulae]
                       for e in elements])
-        
+
         x, rnorm = opt.nnls(A, b)
         res_array = b - A.dot(x)
         residuals = {e: res_array[i] for i, e in enumerate(elements)}
@@ -402,8 +402,8 @@ class Composite(Material):
         self.n_moles = sum(x)
         self.set_fractions(x/self.n_moles)
         return (x, residuals, rnorm)
-        
-        
+
+
     def set_potential_composition_from_bulk(self, elemental_composition,
                                             unfitted_elements=None,
                                             excluded_endmembers=None,
@@ -413,7 +413,7 @@ class Composite(Material):
         Sets phase fractions and compositions of solutions within the
         composite to values which minimize (in a least-squares sense) the
         difference between a provided bulk composition and the composition
-        of the assemblage. Also adds/modifies the composite attribute 
+        of the assemblage. Also adds/modifies the composite attribute
         n_moles, which corresponds to the number of moles of the composite
         required to convert the phase fractions into phase amounts.
 
@@ -457,17 +457,17 @@ class Composite(Material):
         Returns
         -------
         endmember_amounts : numpy array
-            A numpy array of the amounts of each endmember 
+            A numpy array of the amounts of each endmember
         residuals : dictionary
             A dictionary containing the residuals in each of the elements.
         rnorm : float
             The overall residual || residuals ||_2.
         """
-        
+
         if use_solution_guesses and not exact_solution_required:
             raise Exception('If use_solution_guesses is True, '
                             'exact_solution_required must also be set to True.')
-            
+
         if excluded_endmembers is None:
             excluded_endmembers = [[]]*len(self.phases)
 
@@ -485,13 +485,13 @@ class Composite(Material):
         for i, n in enumerate(self.endmembers_per_phase):
             excluded_indices.extend([m + v for v in excluded_endmembers[i]])
             m += n
-        
+
         S = self.stoichiometric_matrix(elements, excluded_endmembers)
         E = np.delete(self.compositional_constraints.T, excluded_indices, axis=0)
         Enull = np.array(Matrix(E).nullspace()).astype(float)
-        
+
         A = S.T.dot(pinv(E.T))
-    
+
         # First, let's make a guess at a composition using nnls
         # This will not satisfy the site occupancy constraints,
         # but should provide a reasonable starting guess for the constrained minimization
@@ -525,7 +525,7 @@ class Composite(Material):
         # solution starting guesses
         if use_solution_guesses:
             guesses = []
-            
+
             n_total = sum(self.endmembers_per_phase)
             mul = np.zeros((n_total, n_total))
 
@@ -537,7 +537,7 @@ class Composite(Material):
                     guesses.extend(list(self.phases[i].guess))
                 else:
                     guesses.extend([0.]*n)
-                    
+
                 mul[m:m+n, m:m+n] = 1.
                 m += n
 
@@ -545,7 +545,7 @@ class Composite(Material):
                 guesses = np.delete(np.array(guesses), excluded_indices, axis=0)
                 mul = np.delete(mul, excluded_indices, axis=0)
                 mul = np.delete(mul, excluded_indices, axis=1)
-                
+
                 def fn(x, E, mul):
                     mbr_amounts = pinv(E.T).dot(sol.x)
                     phase_amounts = np.array([max(1.e-10, v) for v in mul.dot(mbr_amounts)])
@@ -567,7 +567,7 @@ class Composite(Material):
                 else:
                     warnings.warn('Solver failed to minimize the residuals in composition. '
                                   'Falling back to solution ignoring compositional guesses.')
-                        
+
             else:
                 warnings.warn('No compositional guesses exist for this Composite. Set the function variable use_solution_guesses = False to remove this warning.', stacklevel=2)
 
@@ -575,11 +575,11 @@ class Composite(Material):
 
         # Now calcuate residuals and insert solution into the composite
         if sol.success or sol.fun < 1.e-12:
-            
+
             residual_values = S.T.dot(endmember_amounts) - bulk_composition_vector
             residuals = {e: residual_values[i] for i, e in enumerate(elements)}
             rnorm = np.sqrt(sum(residual_values*residual_values))
-            
+
             for idx in excluded_indices:
                 endmember_amounts = np.insert(endmember_amounts, idx, 0.)
 
@@ -606,14 +606,14 @@ class Composite(Material):
                             endmember_constraints = lambda constraints: [{'type': 'ineq',
                                                                           'fun': lambda x, c=c: 1.e20*c.dot(x)}
                                                                          for c in constraints]
-                            
+
                             cons = endmember_constraints(self.compositional_constraints[:,m:m+n])
-        
+
                             fn = lambda x, x0: np.linalg.norm(x - x0)
                             solv = opt.minimize(fn, endmember_proportions, args=(endmember_proportions),
                                                   method='SLSQP', constraints=cons)
                             endmember_proportions = solv.x
-                            
+
                         endmember_proportions[np.abs(endmember_proportions) < 1.e-12] = 0.
                     n_moles.append(phase_amount)
                     self.phases[i].set_composition(endmember_proportions)
@@ -622,11 +622,19 @@ class Composite(Material):
                 m += n
             self.n_moles = sum(n_moles)
             self.set_fractions(np.array(n_moles)/self.n_moles)
-                    
+
             return (endmember_amounts, residuals, rnorm)
         else:
             raise Exception("A solution was not found.")
 
+
+    @material_property
+    def formula(self):
+        """
+        Returns molar chemical formula of the solid solution
+        """
+        return sum_formulae([ph.formula for ph in self.phases],
+                            self.molar_fractions)
 
     @material_property
     def molar_internal_energy(self):

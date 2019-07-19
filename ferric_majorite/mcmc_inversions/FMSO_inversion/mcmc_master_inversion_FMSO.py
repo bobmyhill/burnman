@@ -430,14 +430,14 @@ if run_inversion:
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
         """
 
-        sampler = pickle.load(open(mcmcfile+'int', 'rb'))
+        sampler = pickle.load(open(mcmcfile, 'rb'))
         sampler.pool = pool  # deal with change in pool!
-        state = sampler.run_mcmc(sampler._previous_state,
-                                 n_steps_mcmc,
-                                 progress=True)
+        #state = sampler.run_mcmc(sampler._previous_state,
+        #                         n_steps_mcmc,
+        #                         progress=True)
 
-        print('100% complete. Pickling')
-        pickle.dump(sampler, open(mcmcfile, 'wb'))
+        #print('100% complete. Pickling')
+        #pickle.dump(sampler, open(mcmcfile, 'wb'))
 
     print('Mean acceptance fraction: {0:.2f}'
           ' (should ideally be between 0.2 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
@@ -474,7 +474,7 @@ if run_inversion:
         #plot_autocorr(sampler.get_chain()[:, :, 0].T)  # arbitrarily pick the 1st chain
         #print('Average autocorrelation time: {0}'.format(np.mean(tau)))
 
-    flat_samples = sampler.get_chain(discard=1000, thin=thin, flat=True)
+    flat_samples = sampler.get_chain(discard=6000, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
@@ -517,7 +517,7 @@ if run_inversion:
 
 # Print the current parameters
 print(get_params(storage))
-
+print(storage)
 lnprob = log_probability(get_params(storage), dataset, storage)
 print(lnprob)
 
