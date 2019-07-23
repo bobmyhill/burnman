@@ -423,7 +423,6 @@ def initialise_params():
 
 print('Fitting {0} assemblages'.format(len(dataset['assemblages'])))
 initialise_params()
-exit()
 
 ########################
 # RUN THE MINIMIZATION #
