@@ -317,6 +317,8 @@ labels.extend(['{0}_{1}'.format(a[0], a[1]) for a in experiment_uncertainties])
 #######################
 
 from datasets import Frost_2003_fper_ol_wad_rw
+from datasets import Tsujino_et_al_2019_FMS_wad_rw
+from datasets import Katsura_et_al_2004_FMS_ol_wad
 from datasets import Jamieson_Roeder_1984_FMAS_ol_sp
 from datasets import Seckendorff_ONeill_1992_ol_opx
 from datasets import ONeill_Wood_1979_ol_gt
@@ -369,6 +371,8 @@ assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
                 for module in [endmember_reactions,  # 73, 2713
                                Frost_2003_fper_ol_wad_rw,  # 143, 512
+                               Katsura_et_al_2004_FMS_ol_wad,
+                               Tsujino_et_al_2019_FMS_wad_rw,
                                Seckendorff_ONeill_1992_ol_opx,  # 46, 852
                                Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 956
                                ONeill_Wood_1979_ol_gt,  # 54, 548
@@ -389,7 +393,7 @@ assemblages = [assemblage for assemblage_list in
                                Gasparik_1989_CMAS_px_gt,  # 18, 1703
                                Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,  # 14 15588
                                Gasparik_1989_NMAS_px_gt,  # 12 1675
-                               Gasparik_1989_NCMAS_px_gt,  # 5, 1982
+                               # Gasparik_1989_NCMAS_px_gt,  # 5, 1982 threw an error during early fitting
                                Perkins_Vielzeuf_1992_CFMS_ol_cpx,  # 15, 179
                                # ?Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
                                Rohrbach_et_al_2007_NCFMASO_gt_cpx,  # 5, 1201
@@ -419,7 +423,7 @@ def initialise_params():
 
 print('Fitting {0} assemblages'.format(len(dataset['assemblages'])))
 initialise_params()
-
+exit()
 
 ########################
 # RUN THE MINIMIZATION #
@@ -432,7 +436,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 1200  # number of steps in the full mcmc run
+    n_steps_mcmc = 300  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -479,9 +483,9 @@ if run_inversion:
         else:
             state = p0
 
-        # sampler = pickle.load(open(mcmcfile+'int','rb'))
-        # sampler.pool = pool  # deal with change in pool!
-        # state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+        sampler = pickle.load(open(mcmcfile+'int','rb'))
+        sampler.pool = pool  # deal with change in pool!
+        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
 
         print('Burn-in complete. Starting MCMC run.')
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
@@ -507,8 +511,8 @@ if run_inversion:
     if plot_chains:
         chain_plotter(sampler, labels)
 
-    # flat_samples = sampler.get_chain(discard=300, thin=thin, flat=True)
-    flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
+    flat_samples = sampler.get_chain(discard=1000, thin=thin, flat=True)
+    #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     for i in range(ndim):
         mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])

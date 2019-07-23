@@ -56,13 +56,15 @@ def equilibrium_order(solution):
     assemblage.set_state(solution.pressure, solution.temperature)
     equality_constraints = [('P', solution.pressure),
                             ('T', solution.temperature)]
+    f = solution.molar_fractions
     sol, prm = burnman.equilibrate(solution.formula, assemblage,
                                    equality_constraints,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False, verbose=False)
     if not sol.success:
-        raise Exception('equilibrium state not found')
-
+        print('Oh oh, could not find equilibrium order for one solution')
+        solution.set_composition(f)
+        #raise Exception('equilibrium state not found')
 
 def get_params(storage):
     """
