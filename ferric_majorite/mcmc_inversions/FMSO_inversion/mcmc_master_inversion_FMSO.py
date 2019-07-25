@@ -433,14 +433,14 @@ if run_inversion:
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
         """
 
-        sampler = pickle.load(open(mcmcfile, 'rb'))
+        sampler = pickle.load(open(mcmcfile+'int', 'rb'))
         sampler.pool = pool  # deal with change in pool!
-        #state = sampler.run_mcmc(sampler._previous_state,
-        #                         n_steps_mcmc,
-        #                         progress=True)
+        state = sampler.run_mcmc(sampler._previous_state,
+                                 n_steps_mcmc,
+                                 progress=True)
 
-        #print('100% complete. Pickling')
-        #pickle.dump(sampler, open(mcmcfile, 'wb'))
+        print('100% complete. Pickling')
+        pickle.dump(sampler, open(mcmcfile, 'wb'))
 
     print('Chain shape: {0}'.format(sampler.get_chain().shape))
     print('Mean acceptance fraction: {0:.2f}'
