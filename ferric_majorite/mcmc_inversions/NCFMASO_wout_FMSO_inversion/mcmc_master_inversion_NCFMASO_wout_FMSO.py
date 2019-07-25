@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from input_dataset import create_minerals
 from fitting_functions import Storage, log_probability
 from fitting_functions import get_params, set_params
+from fitting_functions import set_dataset_params_from_storage
 from output_plots import chain_plotter, plots
 import pickle
 import emcee
@@ -48,111 +49,31 @@ solutions = mineral_dataset['solutions']
 child_solutions = mineral_dataset['child_solutions']
 
 endmember_args = [[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
-                  for mbr in ['wus',
-                              'fo', 'fa',
-                              'mwd',  # fwd H0 from special prior
-                              'mrw', 'frw',
-                              'herc', 'sp', 'mt',
+                  for mbr in ['herc', 'sp', 'mt',
                               'alm', 'gr', 'andr', 'dmaj', 'nagt',
-                              'coe', 'stv',
                               'hed', 'cen', 'cfs', 'cats', 'aeg',
                               'oen', 'ofs', 'mgts',
                               'hen', 'hfs',
-                              'mbdg', 'fbdg',
                               'cpv']]
 
 endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
-                       for mbr in ['per', 'wus',
-                                   'fo', 'fa',
-                                   'mwd',  # fwd S0 from special prior
-                                   'mrw', 'frw',
-                                   'herc', 'sp', 'mt',
+                       for mbr in ['herc', 'sp', 'mt',
                                    'alm', 'gr', 'andr', 'dmaj', 'nagt',
-                                   'coe', 'stv',
                                    'di', 'hed',  # 'cen', 'cfs', 'cats', 'aeg',
                                    'oen', 'ofs', 'mgts',
                                    'hen', 'hfs',
-                                   'mbdg', 'fbdg',
                                    'cpv']])
-
-endmember_args.extend([[mbr, 'V_0', endmembers[mbr].params['V_0'], 1.e-5]
-                       for mbr in ['fwd']])
-endmember_args.extend([[mbr, 'K_0', endmembers[mbr].params['K_0'], 1.e11]
-                       for mbr in ['wus', 'fwd', 'frw']])
-endmember_args.extend([[mbr, 'a_0', endmembers[mbr].params['a_0'], 1.e-5]
-                       for mbr in ['per', 'wus',
-                                   'fo', 'fa',
-                                   'mwd', 'fwd',
-                                   'mrw', 'frw',
-                                   'mbdg', 'fbdg']])
 
 endmember_priors = [[mbr, 'S_0', endmembers[mbr].params['S_0_orig'][0],
                      endmembers[mbr].params['S_0_orig'][1]]
-                    for mbr in ['per', 'wus',
-                                'fo', 'fa',
-                                'mwd',
-                                'mrw', 'frw',
-                                'alm', 'gr', 'andr',
+                    for mbr in ['alm', 'gr', 'andr',
                                 'di', 'hed',
                                 'oen', 'ofs',
-                                'mbdg', 'fbdg',
                                 'sp']]
 
-endmembers['fwd'].params['V_0_orig'] = [endmembers['fwd'].params['V_0'],
-                                        endmembers['fwd'].params['V_0']
-                                        / 100. * 0.05]  # 0.05% uncertainty
-endmember_priors.extend([[mbr, 'V_0', endmembers[mbr].params['V_0_orig'][0],
-                          endmembers[mbr].params['V_0_orig'][1]]
-                         for mbr in ['fwd']])
 
-endmembers['fwd'].params['K_0_orig'] = [endmembers['fwd'].params['K_0'],
-                                        endmembers['fwd'].params['K_0']
-                                        / 100. * 2.]  # 2% uncertainty
-endmembers['frw'].params['K_0_orig'] = [endmembers['frw'].params['K_0'],
-                                        endmembers['frw'].params['K_0']
-                                        / 100. * 0.5]  # 0.5% uncertainty
-endmembers['wus'].params['K_0_orig'] = [endmembers['wus'].params['K_0'],
-                                        endmembers['wus'].params['K_0']
-                                        / 100. * 1.]  # 1% uncertainty
-endmember_priors.extend([[mbr, 'K_0', endmembers[mbr].params['K_0_orig'][0],
-                          endmembers[mbr].params['K_0_orig'][1]]
-                         for mbr in ['fwd', 'frw', 'wus']])
-
-endmember_priors.extend([['per', 'a_0',
-                          endmembers['per'].params['a_0_orig'], 2.e-7],
-                         ['wus', 'a_0',
-                          endmembers['wus'].params['a_0_orig'], 5.e-7],
-                         ['fo',  'a_0',
-                          endmembers['fo'].params['a_0_orig'], 2.e-7],
-                         ['fa',  'a_0',
-                          endmembers['fa'].params['a_0_orig'], 2.e-7],
-                         ['mwd', 'a_0',
-                          endmembers['mwd'].params['a_0_orig'], 5.e-7],
-                         ['fwd', 'a_0',
-                          endmembers['fwd'].params['a_0_orig'], 5.e-7],
-                         ['mrw', 'a_0',
-                          endmembers['mrw'].params['a_0_orig'], 2.e-7],
-                         ['frw', 'a_0',
-                          endmembers['frw'].params['a_0_orig'], 5.e-7],
-                         ['mbdg', 'a_0',
-                          endmembers['mbdg'].params['a_0_orig'], 2.e-7],
-                         ['fbdg', 'a_0',
-                          endmembers['fbdg'].params['a_0_orig'], 5.e-7]])
-
-solution_args = [['mw', 'E', 0, 0,
-                  solutions['mw'].energy_interaction[0][0], 1.e3],
-                 ['ol', 'E', 0, 0,
-                  solutions['ol'].energy_interaction[0][0], 1.e3],
-                 ['wad', 'E', 0, 0,
-                  solutions['wad'].energy_interaction[0][0], 1.e3],
-
-                 ['sp', 'E', 0, 0,
+solution_args = [['sp', 'E', 0, 0,
                   solutions['sp'].energy_interaction[0][0], 1.e3],  # sp-herc
-                 ['sp', 'E', 3, 0,
-                  solutions['sp'].energy_interaction[3][0], 1.e3],  # mrw-frw
-
-                 ['bdg', 'E', 0, 0,
-                  solutions['bdg'].energy_interaction[0][0], 1.e3],  # mgfe bdg
 
                  ['opx', 'E', 0, 0,
                   solutions['opx'].energy_interaction[0][0], 1.e3],  # oen-ofs
@@ -198,8 +119,7 @@ solution_priors = [['opx', 'E', 0, 0, 7.e3, 2.e3],  # oen-ofs
                    ['opx', 'E', 3, 0, 25.54, 5.e3],  # odi-ofm
 
                    ['gt', 'E', 0, 0, 3.e3, 2.e3],  # py-alm
-                   ['gt', 'E', 0, 1, 30.e3, 3.e3],  # py-gr
-                   ['bdg', 'E', 0, 0, 5.e3, 5.e3]]  # mbdg-fbdg
+                   ['gt', 'E', 0, 1, 30.e3, 3.e3]]  # py-gr
 
 # Some fairly lax priors on cpx solution parameters
 for i in range(6):  # di=0, hed=1, cen=2, cfs=3, cats=4, jd=5, aeg=6, ignore od
@@ -209,29 +129,7 @@ for i in range(6):  # di=0, hed=1, cen=2, cfs=3, cats=4, jd=5, aeg=6, ignore od
                                 2.e3 + 0.3*solutions['cpx'].energy_interaction[i][j]])
 
 # Uncertainties from Frost data
-experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
-                            ['50Fe', 'P', 0., 0.5e9],
-                            ['61Fe', 'P', 0., 0.5e9],
-                            ['62Fe', 'P', 0., 0.5e9],
-                            ['63Fe', 'P', 0., 0.5e9],
-                            ['64Fe', 'P', 0., 0.5e9],
-                            ['66Fe', 'P', 0., 0.5e9],
-                            ['67Fe', 'P', 0., 0.5e9],
-                            ['68Fe', 'P', 0., 0.5e9],
-                            ['V189', 'P', 0., 0.5e9],
-                            ['V191', 'P', 0., 0.5e9],
-                            ['V192', 'P', 0., 0.5e9],
-                            ['V200', 'P', 0., 0.5e9],
-                            ['V208', 'P', 0., 0.5e9],
-                            ['V209', 'P', 0., 0.5e9],
-                            ['V212', 'P', 0., 0.5e9],
-                            ['V217', 'P', 0., 0.5e9],
-                            ['V220', 'P', 0., 0.5e9],
-                            ['V223', 'P', 0., 0.5e9],
-                            ['V227', 'P', 0., 0.5e9],
-                            ['V229', 'P', 0., 0.5e9],
-                            ['V252', 'P', 0., 0.5e9],
-                            ['V254', 'P', 0., 0.5e9]]
+experiment_uncertainties = []
 
 experiment_uncertainties.extend([['Frost_2003_H1554', 'P', 0., 0.5e9],
                                  ['Frost_2003_H1555', 'P', 0., 0.5e9],
@@ -385,18 +283,11 @@ from datasets import Beyer_et_al_2019_NCFMASO
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
                 for module in [endmember_reactions,  # 73, 2713
-                               Frost_2003_fper_ol_wad_rw,  # 143, 512
-                               Katsura_et_al_2004_FMS_ol_wad,
-                               Tsujino_et_al_2019_FMS_wad_rw,
                                Seckendorff_ONeill_1992_ol_opx,  # 46, 852
                                Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 956
                                ONeill_Wood_1979_ol_gt,  # 54, 548
                                ONeill_Wood_1979_CFMAS_ol_gt,  # 20, 176
                                Matsuzaka_et_al_2000_rw_wus_stv,  # 19, 166 assume all Fe as Fe2+
-                               ONeill_1987_QFI,  # 103, 168
-                               ONeill_1987_QFM,  # 38, 168
-                               Nakajima_FR_2012_bdg_fper,  # 10, 364
-                               Tange_TNFS_2009_bdg_fper_stv,  # 8, 481
                                Frost_2003_FMASO_garnet,  # 36, 391
                                Gasparik_1989_MAS_px_gt,  # 9, 234
                                Gasparik_1992_MAS_px_gt,  # 12, 232
@@ -427,9 +318,10 @@ dataset = {'endmembers': mineral_dataset['endmembers'],
 def initialise_params():
     from import_params import FMSO_storage, transfer_storage
 
-    print('Initializing parameters from FMSO output...')
-    transfer_storage(from_storage=FMSO_storage,
-                     to_storage=storage)
+    print('Setting parameters from FMSO output... but not adding them to inversion')
+    set_dataset_params_from_storage(dataset, FMSO_storage,
+                                    special_constraints)
+
     lnprob = log_probability(get_params(storage), dataset, storage,
                              special_constraints)
     print('Initial ln(p) = {0}'.format(lnprob))
@@ -449,8 +341,8 @@ if run_inversion:
 
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
-    n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 300  # number of steps in the full mcmc run
+    n_steps_burn_in = 5  # number of steps in the burn in period (not used)
+    n_steps_mcmc = 2000  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -497,15 +389,15 @@ if run_inversion:
         else:
             state = p0
 
-        sampler = pickle.load(open(mcmcfile,'rb'))
-        sampler.pool = pool  # deal with change in pool!
+        #sampler = pickle.load(open(mcmcfile,'rb'))
+        #sampler.pool = pool  # deal with change in pool!
         #state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
 
-        #print('Burn-in complete. Starting MCMC run.')
-        #state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+        print('Burn-in complete. Starting MCMC run.')
+        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
-        #print('100% complete. Pickling')
-        #pickle.dump(sampler, open(mcmcfile,'wb'))
+        print('100% complete. Pickling')
+        pickle.dump(sampler, open(mcmcfile,'wb'))
 
     print('Chain shape: {0}'.format(sampler.get_chain().shape))
     print('Mean acceptance fraction: {0:.2f}'

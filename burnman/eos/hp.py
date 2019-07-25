@@ -257,6 +257,8 @@ class HP_TMT(eos.EquationOfState):
         """
         Check for existence and validity of the parameters
         """
+        if 'name' not in params:
+            params['name'] = 'unnamed mineral'
         if 'T_0' not in params:
             params['T_0'] = 298.15
 
@@ -288,27 +290,27 @@ class HP_TMT(eos.EquationOfState):
 
         # Finally, check that the values are reasonable.
         if params['T_0'] < 0.:
-            warnings.warn('Unusual value for T_0', stacklevel=2)
+            warnings.warn('Unusual value for T_0 for {0}'.format(params['name']), stacklevel=2)
         if params['G_0'] is not float('nan') and (params['G_0'] < 0. or params['G_0'] > 1.e13):
-            warnings.warn('Unusual value for G_0', stacklevel=2)
+            warnings.warn('Unusual value for G_0 for {0}'.format(params['name']), stacklevel=2)
         if params['Gprime_0'] is not float('nan') and (params['Gprime_0'] < -5. or params['Gprime_0'] > 10.):
-            warnings.warn('Unusual value for Gprime_0', stacklevel=2)
+            warnings.warn('Unusual value for Gprime_0 for {0}'.format(params['name']), stacklevel=2)
 
         # no test for H_0
         if params['S_0'] is not float('nan') and params['S_0'] < 0.:
-            warnings.warn('Unusual value for S_0', stacklevel=2)
+            warnings.warn('Unusual value for S_0 for {0}'.format(params['name']), stacklevel=2)
         if params['V_0'] < 1.e-7 or params['V_0'] > 1.e-2:
-            warnings.warn('Unusual value for V_0', stacklevel=2)
+            warnings.warn('Unusual value for V_0 for {0}'.format(params['name']), stacklevel=2)
 
         if self.molar_heat_capacity_p0(params['T_0'], params) < 0.:
-            warnings.warn('Negative heat capacity at T_0', stacklevel=2)
+            warnings.warn('Negative heat capacity at T_0 for {0}'.format(params['name']), stacklevel=2)
         if self.molar_heat_capacity_p0(2000., params) < 0.:
-            warnings.warn('Negative heat capacity at 2000K', stacklevel=2)
+            warnings.warn('Negative heat capacity at 2000K for {0}'.format(params['name']), stacklevel=2)
 
         if params['a_0'] < 0. or params['a_0'] > 1.e-3:
-            warnings.warn('Unusual value for a_0', stacklevel=2)
+            warnings.warn('Unusual value for a_0 for {0}'.format(params['name']), stacklevel=2)
 
         if params['n'] < 1. or params['n'] > 1000.:
-            warnings.warn('Unusual value for n', stacklevel=2)
+            warnings.warn('Unusual value for n for {0}'.format(params['name']), stacklevel=2)
         if params['molar_mass'] < 0.001 or params['molar_mass'] > 10.:
-            warnings.warn('Unusual value for molar_mass', stacklevel=2)
+            warnings.warn('Unusual value for molar_mass for {0}'.format(params['name']), stacklevel=2)

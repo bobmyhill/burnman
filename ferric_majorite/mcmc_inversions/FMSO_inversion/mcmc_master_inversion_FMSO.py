@@ -331,6 +331,8 @@ labels.extend([a[0]+'_'+a[1] for a in experiment_uncertainties])
 from datasets import endmember_reactions
 from datasets import ONeill_1987_QFI
 from datasets import ONeill_1987_QFM
+from datasets import Katsura_et_al_2004_FMS_ol_wad
+from datasets import Tsujino_et_al_2019_FMS_wad_rw
 from datasets import Frost_2003_fper_ol_wad_rw
 from datasets import Matsuzaka_et_al_2000_rw_wus_stv
 from datasets import Nakajima_FR_2012_bdg_fper
@@ -342,6 +344,8 @@ assemblages = [assemblage for assemblage_list in
                                ONeill_1987_QFI,
                                ONeill_1987_QFM,
                                Frost_2003_fper_ol_wad_rw,
+                               Katsura_et_al_2004_FMS_ol_wad,
+                               Tsujino_et_al_2019_FMS_wad_rw,
                                Matsuzaka_et_al_2000_rw_wus_stv,
                                Nakajima_FR_2012_bdg_fper,
                                Tange_TNFS_2009_bdg_fper_stv]]
@@ -385,8 +389,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4 # this number must be greater than 2! 4 ok
     n_steps_burn_in = 0 # number of steps in the burn in period (not used)
-    n_steps_mcmc = 6800 # number of steps in the full mcmc run
-    n_discard = 0 # discard this number of steps from the full mcmc run
+    n_steps_mcmc = 10000 # number of steps in the full mcmc run
     thin = 1 # thin the number of steps by this factor when calling get_chain (so 10 reduces by a factor of 10)
 
     x0 = get_params(storage)
@@ -439,6 +442,7 @@ if run_inversion:
         #print('100% complete. Pickling')
         #pickle.dump(sampler, open(mcmcfile, 'wb'))
 
+    print('Chain shape: {0}'.format(sampler.get_chain().shape))
     print('Mean acceptance fraction: {0:.2f}'
           ' (should ideally be between 0.2 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
 
@@ -474,7 +478,9 @@ if run_inversion:
         #plot_autocorr(sampler.get_chain()[:, :, 0].T)  # arbitrarily pick the 1st chain
         #print('Average autocorrelation time: {0}'.format(np.mean(tau)))
 
-    flat_samples = sampler.get_chain(discard=6000, thin=thin, flat=True)
+    n_use_samples = 1000
+    n_discard = sampler.get_chain().shape[0] - n_use_samples
+    flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
     #flat_samples = sampler.get_chain(discard=n_discard, thin=thin, flat=True)
 
     mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0] for i in range(ndim)])
