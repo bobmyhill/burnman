@@ -192,10 +192,10 @@ solution_priors = [['opx', 'E', 0, 0, 7.e3, 2.e3],  # oen-ofs
                    ['opx', 'E', 0, 1, 12.5e3, 2.e3],  # oen-mgts
                    ['opx', 'E', 0, 2, 32.2e3, 5.e3],  # oen-odi
                    ['opx', 'E', 1, 0, 11.e3, 2.e3],  # ofs-mgts
-                   ['opx', 'E', 1, 1, 25.54, 5.e3],  # ofs-odi
-                   ['opx', 'E', 2, 0, 75.5, 30.e3],  # mgts-odi
-                   ['opx', 'E', 2, 1, 15.0, 5.e3],  # mgts-ofm
-                   ['opx', 'E', 3, 0, 25.54, 5.e3],  # odi-ofm
+                   ['opx', 'E', 1, 1, 25.54e3, 5.e3],  # ofs-odi
+                   ['opx', 'E', 2, 0, 75.5e3, 30.e3],  # mgts-odi
+                   ['opx', 'E', 2, 1, 15.0e3, 5.e3],  # mgts-ofm
+                   ['opx', 'E', 3, 0, 25.54e3, 5.e3],  # odi-ofm
 
                    ['gt', 'E', 0, 0, 3.e3, 2.e3],  # py-alm
                    ['gt', 'E', 0, 1, 30.e3, 3.e3],  # py-gr

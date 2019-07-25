@@ -49,109 +49,51 @@ solutions = mineral_dataset['solutions']
 child_solutions = mineral_dataset['child_solutions']
 
 endmember_args = [[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
-                  for mbr in ['herc', 'sp', 'mt',
-                              'alm', 'gr', 'andr', 'dmaj', 'nagt',
-                              'hed', 'cen', 'cfs', 'cats', 'aeg',
-                              'oen', 'ofs', 'mgts',
-                              'hen', 'hfs',
-                              'cpv']]
+                  for mbr in ['sp', 'gr', 'cen', 'cats',
+                              'oen', 'mgts']]
 
 endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
-                       for mbr in ['herc', 'sp', 'mt',
-                                   'alm', 'gr', 'andr', 'dmaj', 'nagt',
-                                   'di', 'hed',  # 'cen', 'cfs', 'cats', 'aeg',
-                                   'oen', 'ofs', 'mgts',
-                                   'hen', 'hfs',
-                                   'cpv']])
+                       for mbr in ['sp', 'gr', 'di', # 'cen', 'cats',
+                                   'oen', 'mgts']])
 
 endmember_priors = [[mbr, 'S_0', endmembers[mbr].params['S_0_orig'][0],
                      endmembers[mbr].params['S_0_orig'][1]]
-                    for mbr in ['alm', 'gr', 'andr',
-                                'di', 'hed',
-                                'oen', 'ofs',
+                    for mbr in ['gr',
+                                'di',
+                                'oen',
                                 'sp']]
 
 
-solution_args = [['sp', 'E', 0, 0,
-                  solutions['sp'].energy_interaction[0][0], 1.e3],  # sp-herc
-
-                 ['opx', 'E', 0, 0,
-                  solutions['opx'].energy_interaction[0][0], 1.e3],  # oen-ofs
-                 ['opx', 'E', 0, 1,
+solution_args = [['opx', 'E', 0, 1,
                   solutions['opx'].energy_interaction[0][1], 1.e3],  # oen-mgts
                  ['opx', 'E', 0, 2,
                   solutions['opx'].energy_interaction[0][2], 1.e3],  # oen-odi
-                 ['opx', 'E', 1, 0,
-                  solutions['opx'].energy_interaction[1][0], 1.e3],  # ofs-mgts
-                 ['opx', 'E', 1, 1,
-                  solutions['opx'].energy_interaction[1][1], 1.e3],  # ofs-odi
                  ['opx', 'E', 2, 0,
-                  solutions['opx'].energy_interaction[2][0], 1.e3],  # mgts-odi
-                 ['opx', 'E', 2, 1,
-                  solutions['opx'].energy_interaction[2][1], 1.e3],  # mgts-ofm
-                 ['opx', 'E', 3, 0,
-                  solutions['opx'].energy_interaction[3][0], 1.e3]]  # odi-ofm
+                  solutions['opx'].energy_interaction[1][0], 1.e3],  # mgts-odi
+                 ['cpx', 'E', 0, 1,
+                  solutions['cpx'].energy_interaction[0][1], 1.e3],  # di-cen
+                 ['cpx', 'E', 0, 3,
+                  solutions['cpx'].energy_interaction[0][3], 1.e3],  # di-cats
+                 ['cpx', 'E', 2, 1,
+                  solutions['cpx'].energy_interaction[2][1], 1.e3],  # cen-cats
+                 ['gt', 'E', 0, 1,
+                  solutions['gt'].energy_interaction[0][1], 1.e3]]  # py-gr
 
-for i in range(6):  # di=0, hed=1, cen=2, cfs=3, cats=4, jd=5, aeg=6, ignore od
-    for j in range(6-i):
-        solution_args.append(['cpx', 'E', i, j,
-                              solutions['cpx'].energy_interaction[i][j],
-                              1.e3])
-
-for i in range(5):  # py=0, alm=1, gr=2, andr=3, dmaj=4, nagt=5, no od
-    for j in range(5-i):
-        solution_args.append(['gt', 'E', i, j,
-                              solutions['gt'].energy_interaction[i][j],
-                              1.e3])
-
-for (i, j) in [(0, 2), (0, 4), (1, 1)]: # py-andr, py-nagt, alm-andr
-    solution_args.append(['gt', 'V', i, j,
-                          solutions['gt'].volume_interaction[i][j],
-                          1.e-7])
-
-solution_priors = [['opx', 'E', 0, 0, 7.e3, 2.e3],  # oen-ofs
-                   ['opx', 'E', 0, 1, 12.5e3, 2.e3],  # oen-mgts
+solution_priors = [['opx', 'E', 0, 1, 12.5e3, 2.e3],  # oen-mgts
                    ['opx', 'E', 0, 2, 32.2e3, 5.e3],  # oen-odi
-                   ['opx', 'E', 1, 0, 11.e3, 2.e3],  # ofs-mgts
-                   ['opx', 'E', 1, 1, 25.54e3, 5.e3],  # ofs-odi
                    ['opx', 'E', 2, 0, 75.5e3, 30.e3],  # mgts-odi
-                   ['opx', 'E', 2, 1, 15.0e3, 5.e3],  # mgts-ofm
-                   ['opx', 'E', 3, 0, 25.54e3, 5.e3],  # odi-ofm
-
-                   ['gt', 'E', 0, 0, 3.e3, 2.e3],  # py-alm
                    ['gt', 'E', 0, 1, 30.e3, 3.e3]]  # py-gr
 
 # Some fairly lax priors on cpx solution parameters
-for i in range(6):  # di=0, hed=1, cen=2, cfs=3, cats=4, jd=5, aeg=6, ignore od
-    for j in range(6-i):
-        solution_priors.append(['cpx', 'E', i, j,
-                                solutions['cpx'].energy_interaction[i][j],
-                                2.e3 + 0.3*solutions['cpx'].energy_interaction[i][j]])
+for (i, j) in [(0, 1),
+               (0, 3),
+               (2, 1)]:
+    solution_priors.append(['cpx', 'E', i, j,
+                            solutions['cpx'].energy_interaction[i][j],
+                            2.e3 + 0.3*solutions['cpx'].energy_interaction[i][j]])
 
 # Uncertainties from Frost data
 experiment_uncertainties = []
-
-experiment_uncertainties.extend([['Frost_2003_H1554', 'P', 0., 0.5e9],
-                                 ['Frost_2003_H1555', 'P', 0., 0.5e9],
-                                 ['Frost_2003_H1556', 'P', 0., 0.5e9],
-                                 ['Frost_2003_H1582', 'P', 0., 0.5e9],
-                                 ['Frost_2003_S2773', 'P', 0., 0.5e9],
-                                 ['Frost_2003_V170', 'P', 0., 0.5e9],
-                                 ['Frost_2003_V171', 'P', 0., 0.5e9],
-                                 ['Frost_2003_V175', 'P', 0., 0.5e9],
-                                 ['Frost_2003_V179', 'P', 0., 0.5e9]])
-
-experiment_uncertainties.extend([['Beyer2019_H4321', 'P', 0., 0.2e9],
-                                 ['Beyer2019_H4556', 'P', 0., 0.2e9],
-                                 ['Beyer2019_H4557', 'P', 0., 0.2e9],
-                                 ['Beyer2019_H4560', 'P', 0., 0.2e9],
-                                 ['Beyer2019_H4692', 'P', 0., 0.2e9],
-                                 ['Beyer2019_Z1699', 'P', 0., 0.2e9],
-                                 ['Beyer2019_Z1700', 'P', 0., 0.2e9],
-                                 ['Beyer2019_Z1782', 'P', 0., 0.2e9],
-                                 ['Beyer2019_Z1785', 'P', 0., 0.2e9],
-                                 ['Beyer2019_Z1786', 'P', 0., 0.2e9]])
-
 
 def special_constraints(dataset, storage):
 
@@ -218,24 +160,12 @@ labels.extend(['{0}_{1}'.format(a[0], a[1]) for a in experiment_uncertainties])
 # EXPERIMENTAL DATA ###
 #######################
 
-
 from datasets import endmember_reactions
 
 # CMS
 from datasets import Carlson_Lindsley_1988_CMS_opx_cpx
 
-# FMS
-from datasets import Frost_2003_fper_ol_wad_rw
-from datasets import Tsujino_et_al_2019_FMS_wad_rw
-from datasets import Katsura_et_al_2004_FMS_ol_wad
-from datasets import Seckendorff_ONeill_1992_ol_opx
-from datasets import Matsuzaka_et_al_2000_rw_wus_stv
-from datasets import Nakajima_FR_2012_bdg_fper
-from datasets import Tange_TNFS_2009_bdg_fper_stv
-
 # MAS
-from datasets import Gasparik_1989_MAS_px_gt
-from datasets import Gasparik_1992_MAS_px_gt
 from datasets import Gasparik_Newton_1984_MAS_opx_sp_fo
 from datasets import Gasparik_Newton_1984_MAS_py_opx_sp_fo
 from datasets import Perkins_et_al_1981_MAS_py_opx
@@ -243,67 +173,20 @@ from datasets import Perkins_et_al_1981_MAS_py_opx
 #from datasets import Liu_et_al_2017_bdg_cor
 #from datasets import Hirose_et_al_2001_ilm_bdg_gt
 
-
-# NMAS
-from datasets import Gasparik_1989_NMAS_px_gt
-
 # CMAS
 from datasets import Perkins_Newton_1980_CMAS_opx_cpx_gt
-from datasets import Gasparik_1989_CMAS_px_gt
 from datasets import Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp
-
-# CFMS
-from datasets import Perkins_Vielzeuf_1992_CFMS_ol_cpx
-
-# FMSO
-from datasets import ONeill_1987_QFI
-from datasets import ONeill_1987_QFM
-
-# FMAS
-from datasets import ONeill_Wood_1979_ol_gt
-from datasets import Jamieson_Roeder_1984_FMAS_ol_sp
-
-# FASO
-from datasets import Woodland_ONeill_1993_FASO_alm_sk
-
-# NCMAS
-from datasets import Gasparik_1989_NCMAS_px_gt
-
-# CFMAS
-from datasets import ONeill_Wood_1979_CFMAS_ol_gt
-
-# FMASO
-from datasets import Frost_2003_FMASO_garnet
-
-# NCFMASO
-from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
-from datasets import Beyer_et_al_2019_NCFMASO
 
 
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
                 for module in [endmember_reactions,  # 73, 2713
-                               Seckendorff_ONeill_1992_ol_opx,  # 46, 852
-                               Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 956
-                               ONeill_Wood_1979_ol_gt,  # 54, 548
-                               ONeill_Wood_1979_CFMAS_ol_gt,  # 20, 176
-                               Matsuzaka_et_al_2000_rw_wus_stv,  # 19, 166 assume all Fe as Fe2+
-                               Frost_2003_FMASO_garnet,  # 36, 391
-                               Gasparik_1989_MAS_px_gt,  # 9, 234
-                               Gasparik_1992_MAS_px_gt,  # 12, 232
                                Gasparik_Newton_1984_MAS_opx_sp_fo,  # 14 634
                                Gasparik_Newton_1984_MAS_py_opx_sp_fo,  # 2, 230
                                Perkins_et_al_1981_MAS_py_opx,  # 91, 553
                                Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 4644
                                Perkins_Newton_1980_CMAS_opx_cpx_gt,  # 12, 894
-                               Gasparik_1989_CMAS_px_gt,  # 18, 1703
-                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,  # 14 15588
-                               Gasparik_1989_NMAS_px_gt,  # 12 1675
-                               # Gasparik_1989_NCMAS_px_gt,  # 5, 1982 threw an error during early fitting
-                               Perkins_Vielzeuf_1992_CFMS_ol_cpx,  # 15, 179
-                               # ?Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
-                               Rohrbach_et_al_2007_NCFMASO_gt_cpx,  # 5, 1201
-                               Beyer_et_al_2019_NCFMASO  # 12, 12450
+                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp  # 14 15588
                                ]]
                for assemblage in assemblage_list]
 
