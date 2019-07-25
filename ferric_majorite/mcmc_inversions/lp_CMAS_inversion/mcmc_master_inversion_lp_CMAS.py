@@ -224,7 +224,7 @@ if run_inversion:
 
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
-    n_steps_burn_in = 5  # number of steps in the burn in period (not used)
+    n_steps_burn_in = 0  # number of steps in the burn in period (not used)
     n_steps_mcmc = 2000  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
