@@ -82,7 +82,7 @@ solution_args = [['opx', 'E', 0, 1,
 solution_priors = [['opx', 'E', 0, 1, 12.5e3, 2.e3],  # oen-mgts
                    ['opx', 'E', 0, 2, 32.2e3, 5.e3],  # oen-odi
                    ['opx', 'E', 2, 0, 75.5e3, 30.e3],  # mgts-odi
-                   ['gt', 'E', 0, 1, 30.e3, 3.e3]]  # py-gr
+                   ['gt', 'E', 0, 1, 30.e3, 0.1e3]]  # py-gr
 
 # Some fairly lax priors on cpx solution parameters
 for (i, j) in [(0, 1),
@@ -225,7 +225,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 2000  # number of steps in the full mcmc run
+    n_steps_mcmc = 6000  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -272,12 +272,12 @@ if run_inversion:
         else:
             state = p0
 
-        #sampler = pickle.load(open(mcmcfile,'rb'))
-        #sampler.pool = pool  # deal with change in pool!
-        #state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+        sampler = pickle.load(open(mcmcfile+'int','rb'))
+        sampler.pool = pool  # deal with change in pool!
+        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
 
-        print('Burn-in complete. Starting MCMC run.')
-        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+        #print('Burn-in complete. Starting MCMC run.')
+        #state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
         print('100% complete. Pickling')
         pickle.dump(sampler, open(mcmcfile,'wb'))
@@ -297,7 +297,7 @@ if run_inversion:
     except emcee.autocorr.AutocorrError as e:
         print(e)
 
-    plot_chains = False
+    plot_chains = True
     if plot_chains:
         chain_plotter(sampler, labels)
 
@@ -347,7 +347,7 @@ if run_inversion:
     # args=(assemblages), method='BFGS')) # , options={'eps': 1.e-02}))
 
 # Print the current parameters
-print(get_params(storage))
+print(storage)
 
 # Make plots
 plots(dataset, storage)
