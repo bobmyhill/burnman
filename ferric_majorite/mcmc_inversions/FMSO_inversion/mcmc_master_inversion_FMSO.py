@@ -433,14 +433,14 @@ if run_inversion:
         state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
         """
 
-        sampler = pickle.load(open(mcmcfile+'int', 'rb'))
+        sampler = pickle.load(open(mcmcfile, 'rb'))
         sampler.pool = pool  # deal with change in pool!
-        state = sampler.run_mcmc(sampler._previous_state,
-                                 n_steps_mcmc,
-                                 progress=True)
+        #state = sampler.run_mcmc(sampler._previous_state,
+        #                         n_steps_mcmc,
+        #                         progress=True)
 
-        print('100% complete. Pickling')
-        pickle.dump(sampler, open(mcmcfile, 'wb'))
+        #print('100% complete. Pickling')
+        #pickle.dump(sampler, open(mcmcfile, 'wb'))
 
     print('Chain shape: {0}'.format(sampler.get_chain().shape))
     print('Mean acceptance fraction: {0:.2f}'
@@ -505,15 +505,18 @@ if run_inversion:
     #fig.savefig('corner_plot.pdf')
     #plt.show()
 
-    fig, ax = plt.subplots(figsize=(20,20))
+    fig, ax = plt.subplots(1, 2, figsize=(20,20),
+                           gridspec_kw={'width_ratios': [30,1]})
     cmap = sns.diverging_palette(250, 10, as_cmap=True)
-    ax = sns.heatmap(pd.DataFrame(Mcorr),
-                     xticklabels=labels,
-                     yticklabels=labels,
-                     cmap=cmap,
-                     vmin=-1.,
-                     center=0.,
-                     vmax=1.)
+    sns.heatmap(pd.DataFrame(Mcorr),
+                xticklabels=labels,
+                yticklabels=labels,
+                cmap=cmap,
+                vmin=-1.,
+                center=0.,
+                vmax=1.,
+                ax=ax[0], cbar_ax=ax[1])
+    ax[0].set(adjustable='box', aspect='equal')
     fig.savefig('parameter_correlations.pdf')
     plt.show()
 
@@ -823,12 +826,17 @@ c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',
 ax[2].set_xlim(0., 1.)
 ax[2].set_ylim(0., 1.)
 ax[2].legend(loc='best')
+
+fig.savefig('fper_partitioning.pdf')
 plt.show()
 
 # BINARY PHASE DIAGRAM
 
 #plt.imshow(ol_polymorph_img, extent=[0., 1., 6., 20.], aspect='auto')
 #plt.imshow(ol_polymorph_img_1000C, extent=[-0.01, 1.005, 4., 21.], aspect='auto')
+
+fig = plt.figure(figsize=(15,12))
+ax = fig.add_subplot(1, 1, 1)
 
 for (T0, color) in [(1273.15, 'blue'),
                     (1673.15, 'orange'),
@@ -889,9 +897,9 @@ for (T0, color) in [(1273.15, 'blue'),
             x_m2s[i] = m2.molar_fractions[1]
             pressures[i] = assemblage.pressure
 
-        plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
-        plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color, label='{0} K'.format(T0))
-    plt.plot([x_ol_inv, x_rw_inv], [P_inv/1.e9, P_inv/1.e9], linewidth=3., color=color)
+        ax.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
+        ax.plot(x_m2s, pressures/1.e9, linewidth=3., color=color, label='{0} K'.format(T0))
+    ax.plot([x_ol_inv, x_rw_inv], [P_inv/1.e9, P_inv/1.e9], linewidth=3., color=color)
 
     """
     # bdg + fper
@@ -915,8 +923,8 @@ for (T0, color) in [(1273.15, 'blue'),
             x_m2s.append(fper.molar_fractions[1])
             pressures.append(assemblage.pressure)
 
-    plt.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
-    plt.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
+    ax.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
+    ax.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
     """
 
     # bdg + fper
@@ -956,8 +964,8 @@ for (T0, color) in [(1273.15, 'blue'),
 
             pressures.append(assemblage.pressure)
 
-    plt.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
-    plt.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
+    ax.plot(x_m1s, np.array(pressures)/1.e9, linewidth=3., color=color)
+    ax.plot(x_m2s, np.array(pressures)/1.e9, linewidth=3., color=color)
 
 
     # rw -> fper + stv
@@ -987,8 +995,8 @@ for (T0, color) in [(1273.15, 'blue'),
         pressures[i] = assemblage.pressure
         Pi = assemblage.pressure
 
-    plt.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
-    plt.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
+    ax.plot(x_m1s, pressures/1.e9, linewidth=3., color=color)
+    ax.plot(x_m2s, pressures/1.e9, linewidth=3., color=color)
 
 
 Matsuzaka_2000_assemblages = Matsuzaka_et_al_2000_rw_wus_stv.get_assemblages(dataset)
@@ -1001,11 +1009,11 @@ for assemblage in Matsuzaka_2000_assemblages:
 
 P, Ts, x_rw, x_fper = np.array(P_rw_fper).T
 mask = [i for i, T in enumerate(Ts) if np.abs(T - 1673.15) < 0.1]
-plt.scatter(x_rw[mask], P[mask]/1.e9, color='orange', label='1673.15 K')
-plt.scatter(x_fper[mask], P[mask]/1.e9, color='orange')
+ax.scatter(x_rw[mask], P[mask]/1.e9, color='orange', label='1673.15 K')
+ax.scatter(x_fper[mask], P[mask]/1.e9, color='orange')
 mask = [i for i, T in enumerate(Ts) if np.abs(T - 1873.15) < 0.1]
-plt.scatter(x_rw[mask], P[mask]/1.e9, color='red', label='1873.15 K')
-plt.scatter(x_fper[mask], P[mask]/1.e9, color='red')
+ax.scatter(x_rw[mask], P[mask]/1.e9, color='red', label='1873.15 K')
+ax.scatter(x_fper[mask], P[mask]/1.e9, color='red')
 
 
 P_Xmg_phase = {'ol': [], 'wad': [], 'ring': []}
@@ -1034,8 +1042,11 @@ arrow_params = {'shape': 'full',
 for m in ['ol', 'wad', 'ring']:
     pressures, pressure_shift, xs = np.array(P_Xmg_phase[m]).T
     for i in range(len(xs)):
-        plt.arrow(xs[i], pressures[i]/1.e9, 0., pressure_shift[i]/1.e9, **arrow_params)
-    plt.scatter(xs, pressures/1.e9, s=80., label='data')
+        ax.arrow(xs[i], pressures[i]/1.e9, 0., pressure_shift[i]/1.e9, **arrow_params)
+    ax.scatter(xs, pressures/1.e9, s=80., label='data')
 
-plt.legend()
+ax.set_ylabel('P (GPa)')
+ax.set_xlabel('x(fa)')
+ax.legend()
+fig.savefig('ol_phase_diagram.pdf')
 plt.show()
