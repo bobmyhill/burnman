@@ -47,7 +47,11 @@ def get_assemblages(mineral_dataset):
                 sig_c = np.array([cs[1], cs[3], cs[5], cs[7]])
                 phases[-1].fitted_elements = ['Si', 'Al', 'Mg', 'Ca']
                 phases[-1].composition = c
-                phases[-1].compositional_uncertainties = sig_c
+                phases[-1].compositional_uncertainties = np.array([max([0.01, sig_c[i], 0.02*c[i]])
+                                                                   for i in
+                                                                   range(4)])
+                # compositional uncertainties max of the reported uncertainty,
+                # 2 % of the reported value and 0.01
 
         assemblage = burnman.Composite(phases)
         assemblage.experiment_id = 'Klemme_ONeill_2000_CMAS_{0}'.format(run_id)

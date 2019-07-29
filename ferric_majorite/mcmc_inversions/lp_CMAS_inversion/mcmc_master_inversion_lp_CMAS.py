@@ -53,15 +53,13 @@ endmember_args = [[mbr, 'H_0', endmembers[mbr].params['H_0'], 1.e3]
                               'oen', 'mgts']]
 
 endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
-                       for mbr in ['sp', 'gr', 'di', # 'cen', 'cats',
+                       for mbr in ['sp', 'py', 'gr', 'di', # 'cen', 'cats',
                                    'oen', 'mgts']])
 
 endmember_priors = [[mbr, 'S_0', endmembers[mbr].params['S_0_orig'][0],
                      endmembers[mbr].params['S_0_orig'][1]]
-                    for mbr in ['gr',
-                                'di',
-                                'oen',
-                                'sp']]
+                    for mbr in ['sp', 'py', 'gr', 'di',
+                                'oen']]
 
 
 solution_args = [['opx', 'E', 0, 1,
@@ -69,7 +67,7 @@ solution_args = [['opx', 'E', 0, 1,
                  ['opx', 'E', 0, 2,
                   solutions['opx'].energy_interaction[0][2], 1.e3],  # oen-odi
                  ['opx', 'E', 2, 0,
-                  solutions['opx'].energy_interaction[1][0], 1.e3],  # mgts-odi
+                  solutions['opx'].energy_interaction[2][0], 1.e3],  # mgts-odi
                  ['cpx', 'E', 0, 1,
                   solutions['cpx'].energy_interaction[0][1], 1.e3],  # di-cen
                  ['cpx', 'E', 0, 3,
@@ -95,8 +93,8 @@ for (i, j) in [(0, 1),
 # Uncertainties from Frost data
 experiment_uncertainties = []
 
-def special_constraints(dataset, storage):
 
+def special_constraints(dataset, storage):
     endmembers = dataset['endmembers']
     solutions = dataset['solutions']
 
@@ -140,6 +138,8 @@ def special_constraints(dataset, storage):
     solutions['hpx'].entropy_interaction = solutions['opx'].entropy_interaction
     solutions['hpx'].volume_interaction = solutions['opx'].volume_interaction
 
+    return None
+
 
 # Create storage object
 storage = Storage({'endmember_args': endmember_args,
@@ -180,13 +180,13 @@ from datasets import Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp
 
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
-                for module in [endmember_reactions,  # 73, 2713
-                               Gasparik_Newton_1984_MAS_opx_sp_fo,  # 14 634
-                               Gasparik_Newton_1984_MAS_py_opx_sp_fo,  # 2, 230
-                               Perkins_et_al_1981_MAS_py_opx,  # 91, 553
-                               Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 4644
-                               Perkins_Newton_1980_CMAS_opx_cpx_gt,  # 12, 894
-                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp  # 14 15588
+                for module in [endmember_reactions,  # 73, 2610
+                               Gasparik_Newton_1984_MAS_opx_sp_fo,  # 14 36
+                               Gasparik_Newton_1984_MAS_py_opx_sp_fo,  # 2, 35
+                               Perkins_et_al_1981_MAS_py_opx,  # 91, 354
+                               Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 48
+                               Perkins_Newton_1980_CMAS_opx_cpx_gt,  # 12, 747
+                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp  # 14 356
                                ]]
                for assemblage in assemblage_list]
 
@@ -198,6 +198,7 @@ dataset = {'endmembers': mineral_dataset['endmembers'],
 
 # Initialize parameters and pepare internal arrays
 # This should speed things up after depickling
+
 def initialise_params():
     from import_params import FMSO_storage, transfer_storage
 
@@ -272,12 +273,12 @@ if run_inversion:
         else:
             state = p0
 
-        sampler = pickle.load(open(mcmcfile+'int','rb'))
-        sampler.pool = pool  # deal with change in pool!
-        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+        #sampler = pickle.load(open(mcmcfile+'int','rb'))
+        #sampler.pool = pool  # deal with change in pool!
+        #state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
 
-        #print('Burn-in complete. Starting MCMC run.')
-        #state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
+        print('Burn-in complete. Starting MCMC run.')
+        state = sampler.run_mcmc(state, n_steps_mcmc, progress=True)
 
         print('100% complete. Pickling')
         pickle.dump(sampler, open(mcmcfile,'wb'))

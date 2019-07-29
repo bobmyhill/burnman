@@ -71,14 +71,14 @@ class plagioclase(SolidSolution):
 class clinopyroxene(SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name = 'clinopyroxene (NCFMASCrO)'
-        self.endmembers = [[HP_2011_ds62.di(),   '[Mg][Ca][Si]2O6'],
-                           [cfs(),  '[Fe][Fe][Si]2O6'],
-                           [HP_2011_ds62.cats(), '[Al][Ca][Si1/2Al1/2]2O6'],
-                           [crdi(), '[Cr][Ca][Si1/2Al1/2]2O6'],
-                           [cess(), '[Fef][Ca][Si1/2Al1/2]2O6'],
-                           [HP_2011_ds62.jd(),   '[Al][Na][Si]2O6'],
-                           [cen(),  '[Mg][Mg][Si]2O6'],
-                           [cfm(),  '[Mg][Fe][Si]2O6']] # note cfm ordered endmember
+        self.endmembers = [[HP_2011_ds62.di(),   '[Mg][Ca][Si]1/2O6'],
+                           [cfs(),  '[Fe][Fe][Si]1/2O6'],
+                           [HP_2011_ds62.cats(), '[Al][Ca][Si1/2Al1/2]1/2O6'],
+                           [crdi(), '[Cr][Ca][Si1/2Al1/2]1/2O6'],
+                           [cess(), '[Fef][Ca][Si1/2Al1/2]1/2O6'],
+                           [HP_2011_ds62.jd(),   '[Al][Na][Si]1/2O6'],
+                           [cen(),  '[Mg][Mg][Si]1/2O6'],
+                           [cfm(),  '[Mg][Fe][Si]1/2O6']] # note cfm ordered endmember
         self.solution_type = 'asymmetric'
         self.alphas = [1.2, 1.0, 1.9, 1.9, 1.9, 1.2, 1.0, 1.0]
         self.energy_interaction = [[20.e3, 12.3e3, 8.e3, 8.e3, 26.e3, 29.8e3, 18.e3],

@@ -62,7 +62,13 @@ def create_minerals():
     # Clinopyroxene endmembers
     di = burnman.minerals.HP_2011_ds62.di()
     hed = burnman.minerals.HP_2011_ds62.hed()
-    cen = burnman.minerals.HP_2011_ds62.cen()
+    # cen = burnman.minerals.HP_2011_ds62.cen() not this one
+
+    cen = burnman.minerals.HP_2011_ds62.en()  # close match to JH2015
+    cen.params['H_0'] += 3.5e3
+    cen.params['S_0'] += 2.
+    cen.params['V_0'] += 0.048e-5
+
     cats = burnman.minerals.HP_2011_ds62.cats()
     jd = burnman.minerals.HP_2011_ds62.jd()
     aeg = burnman.minerals.HP_2011_ds62.acm()  # aegirine also known as acmite
