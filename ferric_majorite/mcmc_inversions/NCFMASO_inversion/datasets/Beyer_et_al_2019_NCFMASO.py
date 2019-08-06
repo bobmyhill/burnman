@@ -1,7 +1,7 @@
 import numpy as np
 import burnman
 from fitting_functions import equilibrium_order
-
+from burnman.processanalyses import assemblage_affinity_misfit
 
 def get_assemblages(mineral_dataset):
     endmembers = mineral_dataset['endmembers']
@@ -13,7 +13,7 @@ def get_assemblages(mineral_dataset):
         ds = [line.split() for line in f
               if line.split() != [] and line[0] != '#']
 
-    set_runs = list(set([d[0] for d in ds]))
+    set_runs = sorted(list(set([d[0] for d in ds])))
     all_chambers = [list(set([d[2] for d in ds if d[0] == run]))
                     for run in set_runs]
 
@@ -195,6 +195,9 @@ def get_assemblages(mineral_dataset):
                     except AttributeError:
                         pass
 
+                #assemblage.set_state(*assemblage.nominal_state)
+                #print(assemblage.experiment_id, [ph.name for ph in assemblage.phases],
+                #      assemblage_affinity_misfit(assemblage))
                 Beyer_et_al_2019_NCFMASO_assemblages.append(assemblage)
-
+    #exit()
     return Beyer_et_al_2019_NCFMASO_assemblages

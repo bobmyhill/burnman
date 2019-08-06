@@ -67,7 +67,7 @@ endmember_args.extend([[mbr, 'S_0', endmembers[mbr].params['S_0'], 1.]
                                    'mwd',  # fwd S0 from special prior
                                    'mrw', 'frw',
                                    'herc', 'sp', 'mt',
-                                   'alm', 'gr', 'andr', 'dmaj', 'nagt',
+                                   'py', 'alm', 'gr', 'andr', 'dmaj', 'nagt',
                                    'coe', 'stv',
                                    'di', 'hed',  # 'cen', 'cfs', 'cats', 'aeg',
                                    'oen', 'ofs', 'mgts',
@@ -92,7 +92,7 @@ endmember_priors = [[mbr, 'S_0', endmembers[mbr].params['S_0_orig'][0],
                                 'fo', 'fa',
                                 'mwd',
                                 'mrw', 'frw',
-                                'alm', 'gr', 'andr',
+                                'py', 'alm', 'gr', 'andr',
                                 'di', 'hed',
                                 'oen', 'ofs',
                                 'mbdg', 'fbdg',
@@ -183,7 +183,7 @@ for i in range(5):  # py=0, alm=1, gr=2, andr=3, dmaj=4, nagt=5, no od
                               solutions['gt'].energy_interaction[i][j],
                               1.e3])
 
-for (i, j) in [(0, 2), (0, 4), (1, 1)]: # py-andr, py-nagt, alm-andr
+for (i, j) in [(0, 2), (0, 4), (1, 1)]:  # py-andr, py-nagt, alm-andr
     solution_args.append(['gt', 'V', i, j,
                           solutions['gt'].volume_interaction[i][j],
                           1.e-7])
@@ -381,15 +381,15 @@ from datasets import Frost_2003_FMASO_garnet
 from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
 from datasets import Beyer_et_al_2019_NCFMASO
 
-
+# raw is -215
 assemblages = [assemblage for assemblage_list in
                [module.get_assemblages(mineral_dataset)
-                for module in [endmember_reactions,  # 73, 2713
+                for module in [endmember_reactions,  # 73, 2825
                                Frost_2003_fper_ol_wad_rw,  # 143, 512
-                               Katsura_et_al_2004_FMS_ol_wad,
-                               Tsujino_et_al_2019_FMS_wad_rw,
-                               Seckendorff_ONeill_1992_ol_opx,  # 46, 852
-                               Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 956
+                               Katsura_et_al_2004_FMS_ol_wad, # 6, 228
+                               Tsujino_et_al_2019_FMS_wad_rw, # 13, 429
+                               Seckendorff_ONeill_1992_ol_opx,  # 46, 886
+                               Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 1005
                                ONeill_Wood_1979_ol_gt,  # 54, 548
                                ONeill_Wood_1979_CFMAS_ol_gt,  # 20, 176
                                Matsuzaka_et_al_2000_rw_wus_stv,  # 19, 166 assume all Fe as Fe2+
@@ -403,16 +403,16 @@ assemblages = [assemblage for assemblage_list in
                                Gasparik_Newton_1984_MAS_opx_sp_fo,  # 14 634
                                Gasparik_Newton_1984_MAS_py_opx_sp_fo,  # 2, 230
                                Perkins_et_al_1981_MAS_py_opx,  # 91, 553
-                               Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 4644
+                               Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 264
                                Perkins_Newton_1980_CMAS_opx_cpx_gt,  # 12, 894
                                Gasparik_1989_CMAS_px_gt,  # 18, 1703
-                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,  # 14 15588
-                               Gasparik_1989_NMAS_px_gt,  # 12 1675
+                               Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,  # 14 572
+                               Gasparik_1989_NMAS_px_gt,  # 12 1540
                                # Gasparik_1989_NCMAS_px_gt,  # 5, 1982 threw an error during early fitting
                                Perkins_Vielzeuf_1992_CFMS_ol_cpx,  # 15, 179
-                               # ?Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
+                               # Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
                                Rohrbach_et_al_2007_NCFMASO_gt_cpx,  # 5, 1201
-                               Beyer_et_al_2019_NCFMASO  # 12, 12450
+                               Beyer_et_al_2019_NCFMASO  # 12, 9230
                                ]]
                for assemblage in assemblage_list]
 
