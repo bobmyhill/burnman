@@ -27,6 +27,16 @@ def thermal_energy(T, einstein_T, n):
         (0.5 + 1. / (np.exp(x) - 1.0))  # include the zero point energy
     return E_th
 
+def molar_entropy(T, einstein_T, n):
+    """
+    Heat capacity at constant volume.  In J/K/mol
+    """
+    if T <= eps:
+        return 0.
+    x = einstein_T / T
+    S = (3.0 * n * constants.gas_constant
+         * (x*(1. + 1./(np.exp(x) - 1.0)) - np.log(np.exp(x) - 1.0)))
+    return S
 
 def molar_heat_capacity_v(T, einstein_T, n):
     """

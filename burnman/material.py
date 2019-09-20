@@ -138,7 +138,7 @@ class Material(object):
         It is typically not required for the user to call this function.
         """
         self._cached = {}
-    
+
     def copy(self):
         return deepcopy(self)
 
@@ -179,8 +179,8 @@ class Material(object):
 
         Returns
         -------
-        output : array of array of float
-            Array returning all variables at given pressure/temperature values. output[i][j] is property vars_list[j]
+        output : list of array of float
+            List returning all variables at given pressure/temperature values. output[i][j] is property vars_list[j]
             and temperatures[i] and pressures[i].
 
         """
@@ -190,12 +190,19 @@ class Material(object):
         temperatures = np.array(temperatures)
 
         assert(pressures.shape == temperatures.shape)
-        
-        output = np.empty((len(vars_list),) + pressures.shape)
+
+        n_vars = len(vars_list)
+        self.set_state(pressures[0], temperatures[0])
+        shapes = [pressures.shape
+                  if type(getattr(self, vars_list[i])) == float
+                  else pressures.shape+getattr(self, vars_list[i]).shape
+                  for i in range(n_vars)]
+
+        output = [np.empty(shape) for shape in shapes]
         for i, p in np.ndenumerate(pressures):
             self.set_state(p, temperatures[i])
-            for j in range(len(vars_list)):
-                output[(j,) + i] = getattr(self, vars_list[j])
+            for j in range(n_vars):
+                output[j][i] = getattr(self, vars_list[j])
         if old_pressure is None or old_temperature is None:
             # do not set_state if old values were None. Just reset to None
             # manually
@@ -204,6 +211,8 @@ class Material(object):
         else:
             self.set_state(old_pressure, old_temperature)
 
+        if all(shapes) == shapes[0]:
+            output = np.array(output)
         return output
 
     @property

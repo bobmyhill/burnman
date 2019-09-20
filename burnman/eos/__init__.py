@@ -11,6 +11,7 @@ Equation of State
 """
 from __future__ import absolute_import
 
+from .anisotropic_equation_of_state import AnisotropicEquationOfState
 from .equation_of_state import EquationOfState
 from .birch_murnaghan import BM2, BM3
 from .birch_murnaghan_4th import BM4
@@ -25,6 +26,7 @@ from .reciprocal_kprime import RKprime
 from .dks_liquid import DKS_L
 from .dks_solid import DKS_S
 from .aa import AA
+from .aeos import AEOS
 
 from .property_modifiers import calculate_property_modifications
 
