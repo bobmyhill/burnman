@@ -10,6 +10,50 @@ from input_dataset import create_minerals
 from fitting_functions import Storage, log_probability
 from fitting_functions import get_params, set_params
 
+def special_constraints(dataset, storage):
+
+    endmembers = dataset['endmembers']
+    solutions = dataset['solutions']
+
+    # 1) Destabilise fwd
+    endmembers['fa'].set_state(6.25e9, 1673.15)
+    endmembers['frw'].set_state(6.25e9, 1673.15)
+    endmembers['fwd'].set_state(6.25e9, 1673.15)
+
+    # First, determine the entropy which will give the fa-fwd reaction
+    # the same slope as the fa-frw reaction
+    dPdT = (endmembers['frw'].S
+            - endmembers['fa'].S)/(endmembers['frw'].V
+                                   - endmembers['fa'].V)  # = dS/dV
+
+    dV = endmembers['fwd'].V - endmembers['fa'].V
+    dS = dPdT*dV
+    endmembers['fwd'].params['S_0'] += (endmembers['fa'].S
+                                        - endmembers['fwd'].S + dS)
+    endmembers['fwd'].params['H_0'] += (endmembers['frw'].gibbs
+                                        - endmembers['fwd'].gibbs
+                                        + 100.)  # fwd less stable than frw
+
+    # 2) Fix odi (just in case we decide to fit di H, S or V at some point)
+    endmembers['odi'].params['H_0'] = endmembers['di'].params['H_0'] - 0.1e3
+    endmembers['odi'].params['S_0'] = endmembers['di'].params['S_0'] - 0.211
+    endmembers['odi'].params['V_0'] = endmembers['di'].params['V_0'] + 0.005e-5
+
+    # 3) Make sure the temperature dependence of ordering
+    # is preserved in Mg-Fe opx and hpx
+    wMgFe = solutions['opx'].energy_interaction[0][0] / 4. + 2.25e3
+    Etweak = solutions['opx'].energy_interaction[0][0] / 4. - 8.35e3
+
+    solutions['opx'].energy_interaction[0][-1] = wMgFe  # oen-ofm
+    solutions['opx'].energy_interaction[1][-1] = wMgFe  # ofs-ofm
+    endmembers['ofm'].property_modifiers[0][1]['delta_E'] = Etweak
+    endmembers['hfm'].property_modifiers[0][1]['delta_E'] = Etweak
+
+    # 4) Copy interaction parameters from opx to hpx:
+    solutions['hpx'].alphas = solutions['opx'].alphas
+    solutions['hpx'].energy_interaction = solutions['opx'].energy_interaction
+    solutions['hpx'].entropy_interaction = solutions['opx'].entropy_interaction
+    solutions['hpx'].volume_interaction = solutions['opx'].volume_interaction
 
 def create_dataset():
     # Component defining endmembers (for H_0 and S_0) are:
@@ -235,52 +279,6 @@ def create_dataset():
                                      ['Beyer2019_Z1786', 'P', 0., 0.2e9]])
 
 
-    def special_constraints(dataset, storage):
-
-        endmembers = dataset['endmembers']
-        solutions = dataset['solutions']
-
-        # 1) Destabilise fwd
-        endmembers['fa'].set_state(6.25e9, 1673.15)
-        endmembers['frw'].set_state(6.25e9, 1673.15)
-        endmembers['fwd'].set_state(6.25e9, 1673.15)
-
-        # First, determine the entropy which will give the fa-fwd reaction
-        # the same slope as the fa-frw reaction
-        dPdT = (endmembers['frw'].S
-                - endmembers['fa'].S)/(endmembers['frw'].V
-                                       - endmembers['fa'].V)  # = dS/dV
-
-        dV = endmembers['fwd'].V - endmembers['fa'].V
-        dS = dPdT*dV
-        endmembers['fwd'].params['S_0'] += (endmembers['fa'].S
-                                            - endmembers['fwd'].S + dS)
-        endmembers['fwd'].params['H_0'] += (endmembers['frw'].gibbs
-                                            - endmembers['fwd'].gibbs
-                                            + 100.)  # fwd less stable than frw
-
-        # 2) Fix odi (just in case we decide to fit di H, S or V at some point)
-        endmembers['odi'].params['H_0'] = endmembers['di'].params['H_0'] - 0.1e3
-        endmembers['odi'].params['S_0'] = endmembers['di'].params['S_0'] - 0.211
-        endmembers['odi'].params['V_0'] = endmembers['di'].params['V_0'] + 0.005e-5
-
-        # 3) Make sure the temperature dependence of ordering
-        # is preserved in Mg-Fe opx and hpx
-        wMgFe = solutions['opx'].energy_interaction[0][0] / 4. + 2.25e3
-        Etweak = solutions['opx'].energy_interaction[0][0] / 4. - 8.35e3
-
-        solutions['opx'].energy_interaction[0][-1] = wMgFe  # oen-ofm
-        solutions['opx'].energy_interaction[1][-1] = wMgFe  # ofs-ofm
-        endmembers['ofm'].property_modifiers[0][1]['delta_E'] = Etweak
-        endmembers['hfm'].property_modifiers[0][1]['delta_E'] = Etweak
-
-        # 4) Copy interaction parameters from opx to hpx:
-        solutions['hpx'].alphas = solutions['opx'].alphas
-        solutions['hpx'].energy_interaction = solutions['opx'].energy_interaction
-        solutions['hpx'].entropy_interaction = solutions['opx'].entropy_interaction
-        solutions['hpx'].volume_interaction = solutions['opx'].volume_interaction
-
-
     # Create storage object
     storage = Storage({'endmember_args': endmember_args,
                        'solution_args': solution_args,
@@ -419,4 +417,4 @@ def create_dataset():
     print('Creating dataset with {0} assemblages'.format(len(dataset['assemblages'])))
     initialise_params()
 
-    return dataset, storage, labels, special_constraints
+    return dataset, storage, labels

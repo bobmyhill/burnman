@@ -9,10 +9,9 @@ import matplotlib.pyplot as plt
 from input_dataset import create_minerals
 from fitting_functions import Storage, log_probability
 from fitting_functions import get_params, set_params
-from create_dataset import create_dataset
+from create_dataset import create_dataset, special_constraints
 
 from output_plots import chain_plotter, plots
-import pickle
 import emcee
 from multiprocessing import Pool
 
@@ -34,7 +33,7 @@ else:
           ' to invert parameters')
 
 
-dataset, storage, labels, special_constraints = create_dataset()
+dataset, storage, labels = create_dataset()
 
 ########################
 # RUN THE MINIMIZATION #
