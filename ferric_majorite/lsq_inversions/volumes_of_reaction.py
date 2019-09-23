@@ -19,20 +19,20 @@ from fitting_functions import equilibrium_order
 
 from input_dataset import *
 from preload_params import *
-    
+
 print('Olivine-polymorph-skiagite (Fe buffered)')
 print('3Fe2SiO4 <-> Fe3Fe2Si3O12 + Fe')
 for (P, T, fe_ol_polymorph) in [(12.e9, 1673.15, fa),
                                 (16.e9, 1673.15, fwd),
                                 (20.e9, 1673.15, frw)]:
-                             
+
     minerals = [fe_ol_polymorph, fcc_iron, child_solutions['sk_gt']]
     for m in minerals:
         m.set_state(P, 1673.15)
 
     delta_V = minerals[2].V + minerals[1].V - 3.*minerals[0].V
     print('{0:.1f} GPa, {1:.1f} K: {2:.1f} cm^3/mol-skiagite ({3})'.format(P/1.e9, T, delta_V*1.e6, fe_ol_polymorph.name))
-     
+
 print('')
 
 
@@ -55,7 +55,7 @@ print('Clinoferrosilite-skiagite (stv + Fe buffered)')
 print('3Fe2Si2O6 -> Fe3Fe2Si3O12 + 3 SiO2 + Fe')
 print(child_solutions['sk_gt'].formula)
 minerals = [cfs, child_solutions['sk_gt'], stv, fcc_iron]
-P = 14.e9
+P = 12.e9
 for m in minerals:
     m.set_state(P, 1673.15)
 
@@ -67,7 +67,7 @@ print('')
 print('Ferric-in-majorite (stv + Fe buffered)')
 print('2Fe3(MgSi)Si3O12 <-> Fe3Fe2Si3O12 + 3 SiO2 + Fe + 1/2 Mg3(MgSi)Si3O12')
 minerals = [fmaj, child_solutions['sk_gt'], stv, fcc_iron, dmaj]
-P = 14.e9
+P = 17.e9
 for m in minerals:
     m.set_state(P, 1673.15)
 
@@ -75,6 +75,17 @@ delta_V = minerals[1].V + 3.*minerals[2].V + minerals[3].V + 0.5*minerals[4].V -
 print('{0:.1f} GPa, {1:.1f} K: {2:.1f} cm^3/mol-skiagite'.format(P/1.e9, T, delta_V*1.e6))
 
 
+print('fO2 (Re-ReO2, high pressure)')
+print('Fe3(MgSi)Si3O12 + 6Fe2SiO4 + 3/2ReO2 <-> 3Fe3Fe2Si3O12 + 1/4Mg3(MgSi)Si3O12 + 3/2Re')
+minerals = [fmaj, fwd, ReO2, child_solutions['sk_gt'], dmaj, Re]
+P = 20.e9
+for m in minerals:
+    m.set_state(P, 1673.15)
+
+delta_V = 3.*minerals[3].V + 0.25*minerals[4].V + 1.5*minerals[5].V - (1.*minerals[0].V + 6.*minerals[1].V + 1.5*minerals[2].V)
+print('{0:.1f} GPa, {1:.1f} K: {2:.1f} cm^3/mol-Fe3(MgSi)Si3O12'.format(P/1.e9, T, delta_V*1.e6))
+
+exit()
 
 
 # There are similar reactions for O2 rather than Fe:

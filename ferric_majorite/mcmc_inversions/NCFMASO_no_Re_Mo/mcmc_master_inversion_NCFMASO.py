@@ -79,13 +79,13 @@ if run_inversion:
 
     with Pool(processes=processes) as pool:
         backend=emcee.backends.HDFBackend(hdffile)
-        # backend.reset(nwalkers, ndim) # only reset if you want to start a new inversion!
+        backend.reset(nwalkers, ndim) # only reset if you want to start a new inversion!
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
                                         args=[dataset, storage,
                                               special_constraints],
                                         pool=pool, backend=backend)
-
-        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+        state = sampler.run_mcmc(p0, n_steps_mcmc, progress=True)
+        #state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True) # if you're using an old inversion!
         print('100% complete.')
 
     print('Chain shape: {0}'.format(sampler.get_chain().shape))

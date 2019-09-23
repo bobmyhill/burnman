@@ -38,11 +38,11 @@ def set_params_from_special_constraints():
     hpx_od.energy_interaction = opx_od.energy_interaction
     hpx_od.entropy_interaction = opx_od.entropy_interaction
     hpx_od.volume_interaction = opx_od.volume_interaction
-
+    
 def minimize_func(params, assemblages):
-    # Set parameters
+    # Set parameters 
     set_params(params)
-
+    
     chisqr = []
     # Run through all assemblages for affinity misfit
     for i, assemblage in enumerate(assemblages):
@@ -52,7 +52,7 @@ def minimize_func(params, assemblages):
             if isinstance(phase, burnman.SolidSolution):
                 molar_fractions, phase.molar_fraction_covariances = assemblage.stored_compositions[j]
                 phase.set_composition(molar_fractions)
-
+                
         # Assign a state to the assemblage
         P, T = np.array(assemblage.nominal_state)
         try:
@@ -60,10 +60,10 @@ def minimize_func(params, assemblages):
              T += dict_experiment_uncertainties[assemblage.experiment_id]['T']
         except:
             pass
-
+        
         assemblage.set_state(P, T)
-
-
+        
+        
         # Calculate the misfit and store it
         assemblage.chisqr = assemblage_affinity_misfit(assemblage)
         #print('assemblage chisqr', assemblage.experiment_id, [phase.name for phase in assemblage.phases], assemblage.chisqr)
@@ -74,7 +74,7 @@ def minimize_func(params, assemblages):
         c = np.power(((dict_endmember_args[p[0]][p[1]] - p[2])/p[3]), 2.)
         #print('endmember_prior', p[0], p[1], dict_endmember_args[p[0]][p[1]], p[2], p[3], c)
         chisqr.append(c)
-
+        
     # Solution priors
     for p in solution_priors:
         c = np.power(((dict_solution_args[p[0]]['{0}{1}{2}'.format(p[1], p[2], p[3])] -
@@ -109,45 +109,45 @@ def minimize_func(params, assemblages):
 # Ca: CaMgSi2O6 diopside
 # Na: NaAlSi2O6 jadeite
 
-endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3], # per is a standard
+endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3], # per is a standard 
                   ['fo',  'H_0', fo.params['H_0'],  1.e3],
                   ['fa',  'H_0', fa.params['H_0'],  1.e3],
                   ['mwd', 'H_0', mwd.params['H_0'], 1.e3], # fwd H_0 and S_0 obtained in set_params_from_special_constraints()
                   ['mrw', 'H_0', mrw.params['H_0'], 1.e3],
                   ['frw', 'H_0', frw.params['H_0'], 1.e3],
-
+                  
                   ['alm', 'H_0', alm.params['H_0'], 1.e3], # pyrope is a standard
                   ['gr',   'H_0', gr.params['H_0'], 1.e3],
                   ['andr', 'H_0', andr.params['H_0'], 1.e3],
                   ['dmaj', 'H_0', dmaj.params['H_0'], 1.e3],
                   ['nagt', 'H_0', nagt.params['H_0'], 1.e3],
-
+                  
                   ['coe', 'H_0', coe.params['H_0'], 1.e3], # qtz is a standard
                   ['stv', 'H_0', stv.params['H_0'], 1.e3],
-
+                  
                   ['hed', 'H_0', hed.params['H_0'], 1.e3], # diopside is a standard
-                  ['cen', 'H_0', cen.params['H_0'], 1.e3],
-                  ['cfs', 'H_0', cfs.params['H_0'], 1.e3],
+                  ['cen', 'H_0', cen.params['H_0'], 1.e3], 
+                  ['cfs', 'H_0', cfs.params['H_0'], 1.e3], 
                   ['cats', 'H_0', cats.params['H_0'], 1.e3], # jadeite is a standard
                   ['aeg', 'H_0', aeg.params['H_0'], 1.e3],
-
+                  
                   ['oen', 'H_0', oen.params['H_0'], 1.e3],
                   ['ofs', 'H_0', ofs.params['H_0'], 1.e3], #  no odi, as based on di (a std)
                   ['mgts', 'H_0', mgts.params['H_0'], 1.e3],
-
+                  
                   ['hen', 'H_0', hen.params['H_0'], 1.e3],
                   ['hfs', 'H_0', hfs.params['H_0'], 1.e3],
-
+                  
                   ['mbdg', 'H_0', mbdg.params['H_0'], 1.e3],
                   ['fbdg', 'H_0', fbdg.params['H_0'], 1.e3],
-
+                  
                   ['sp', 'H_0', sp.params['H_0'], 1.e3],
-
+                  
                   ['per', 'S_0', per.params['S_0'], 1.], # has a prior associated with it, so can be inverted
                   ['wus', 'S_0', wus.params['S_0'], 1.],
                   ['fo',  'S_0', fo.params['S_0'],  1.],
                   ['fa',  'S_0', fa.params['S_0'],  1.],
-                  ['mwd', 'S_0', mwd.params['S_0'], 1.],
+                  ['mwd', 'S_0', mwd.params['S_0'], 1.], 
                   ['mrw', 'S_0', mrw.params['S_0'], 1.],
                   ['frw', 'S_0', frw.params['S_0'], 1.],
                   ['alm', 'S_0', alm.params['S_0'], 1.],
@@ -158,21 +158,21 @@ endmember_args = [['wus', 'H_0', wus.params['H_0'], 1.e3], # per is a standard
 
                   ['di', 'S_0', di.params['S_0'], 1.], # has a prior associated with it, so can be inverted
                   ['hed', 'S_0', hed.params['S_0'], 1.],
-
+                  
                   ['oen', 'S_0', oen.params['S_0'], 1.],
                   ['ofs', 'S_0', ofs.params['S_0'], 1.],
                   ['mgts', 'S_0', mgts.params['S_0'], 1.],
-
+                  
                   ['hen', 'S_0', hen.params['S_0'], 1.],
                   ['hfs', 'S_0', hfs.params['S_0'], 1.],
-
+                  
                   ['coe', 'S_0', coe.params['S_0'], 1.],
                   ['stv', 'S_0', stv.params['S_0'], 1.],
                   ['mbdg', 'S_0', mbdg.params['S_0'], 1.],
                   ['fbdg', 'S_0', fbdg.params['S_0'], 1.],
-
+                  
                   ['sp', 'S_0', sp.params['S_0'], 1.],
-
+                  
                   ['fwd', 'V_0', fwd.params['V_0'], 1.e-5],
                   ['wus', 'K_0', wus.params['K_0'], 1.e11],
                   ['fwd', 'K_0', fwd.params['K_0'], 1.e11],
@@ -192,17 +192,17 @@ solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
                  ['ol', 'E', 0, 0, ol.energy_interaction[0][0], 1.e3],
                  ['wad', 'E', 0, 0, wad.energy_interaction[0][0], 1.e3],
                  ['sp', 'E', 3, 0, spinel.energy_interaction[3][0], 1.e3], # mrw-frw
-
+                 
                  ['opx', 'E', 0, 0, opx_od.energy_interaction[0][0], 1.e3], # oen-ofs
                  ['opx', 'E', 0, 1, opx_od.energy_interaction[0][1], 1.e3], # oen-mgts
                  ['opx', 'E', 0, 2, opx_od.energy_interaction[0][2], 1.e3], # oen-odi
                  ['opx', 'E', 2, 0, opx_od.energy_interaction[2][0], 1.e3], # mgts-odi
-
+                 
                  ['cpx', 'E', 0, 0, cpx_od.energy_interaction[0][0], 1.e3], # di-hed
                  ['cpx', 'E', 0, 1, cpx_od.energy_interaction[0][1], 1.e3], # di-cen
                  ['cpx', 'E', 0, 3, cpx_od.energy_interaction[0][3], 1.e3], # di-cats
                  ['cpx', 'E', 2, 1, cpx_od.energy_interaction[2][1], 1.e3], # cen-cats
-
+                 
                  ['gt', 'E', 0, 2,  gt.energy_interaction[0][2], 1.e3], # py-andr (py-alm ideal)
                  ['gt', 'E', 0, 3,  gt.energy_interaction[0][3], 1.e3], # py-dmaj
                  ['gt', 'E', 0, 4,  gt.energy_interaction[0][4], 1.e3], # py-nagt
@@ -216,7 +216,7 @@ solution_args = [['mw', 'E', 0, 0, fper.energy_interaction[0][0], 1.e3],
                  ['gt', 'E', 3, 0,  gt.energy_interaction[3][0], 1.e3], # andr-dmaj
                  ['gt', 'E', 3, 1,  gt.energy_interaction[3][1], 1.e3], # andr-nagt
                  ['gt', 'E', 4, 0,  gt.energy_interaction[4][0], 1.e3], # dmaj-nagt
-
+                 
                  ['gt', 'V', 0, 2,  gt.volume_interaction[0][2], 1.e-7], # py-andr
                  ['gt', 'V', 0, 4,  gt.volume_interaction[0][4], 1.e-7], # py-nagt
                  ['gt', 'V', 1, 1,  gt.volume_interaction[1][1], 1.e-7]] # alm-andr, ['bdg', 'E', 0, 0, bdg.energy_interaction[0][0], 1.e3]]
@@ -235,18 +235,18 @@ endmember_priors = [['per', 'S_0', per.params['S_0_orig'][0], per.params['S_0_or
                     ['alm', 'S_0', alm.params['S_0_orig'][0], alm.params['S_0_orig'][1]],
                     ['gr', 'S_0', gr.params['S_0_orig'][0], gr.params['S_0_orig'][1]],
                     ['andr', 'S_0', andr.params['S_0_orig'][0], gr.params['S_0_orig'][1]],
-
+                    
                     ['di', 'S_0', di.params['S_0_orig'][0], di.params['S_0_orig'][1]],
                     ['hed', 'S_0', hed.params['S_0_orig'][0], hed.params['S_0_orig'][1]],
-
+                    
                     ['oen', 'S_0', oen.params['S_0_orig'][0], oen.params['S_0_orig'][1]],
                     ['ofs', 'S_0', ofs.params['S_0_orig'][0], ofs.params['S_0_orig'][1]],
-
+                    
                     ['mbdg', 'S_0', mbdg.params['S_0_orig'][0], mbdg.params['S_0_orig'][1]],
                     ['fbdg', 'S_0', fbdg.params['S_0_orig'][0], fbdg.params['S_0_orig'][1]],
-
+                    
                     ['sp', 'S_0', sp.params['S_0_orig'][0], sp.params['S_0_orig'][1]],
-
+                    
                     ['fwd', 'V_0', fwd.params['V_0'], 2.15e-7], # 0.5% uncertainty, somewhat arbitrary
                     ['fwd', 'K_0', fwd.params['K_0'], fwd.params['K_0']/100.*2.], # 2% uncertainty, somewhat arbitrary
                     ['frw', 'K_0', frw.params['K_0'], frw.params['K_0']/100.*0.5], # 0.5% uncertainty, somewhat arbitrary
@@ -290,7 +290,7 @@ experiment_uncertainties = [['49Fe', 'P', 0., 0.5e9],
                             ['V227', 'P', 0., 0.5e9],
                             ['V229', 'P', 0., 0.5e9],
                             ['V252', 'P', 0., 0.5e9],
-                            ['V254', 'P', 0., 0.5e9],
+                            ['V254', 'P', 0., 0.5e9], 
                             ['Frost_2003_H1554', 'P', 0., 0.5e9],
                             ['Frost_2003_H1555', 'P', 0., 0.5e9],
                             ['Frost_2003_H1556', 'P', 0., 0.5e9],
@@ -331,7 +331,7 @@ def get_params():
     """
     This function gets the parameters from the parameter lists
     """
-
+    
     # Endmember parameters
     args = [a[2]/a[3] for a in endmember_args]
 
@@ -344,10 +344,10 @@ def get_params():
 
 def set_params(args):
     """
-    This function sets the parameters *both* in the parameter lists,
+    This function sets the parameters *both* in the parameter lists, 
     the parameter dictionaries and also in the minerals / solutions.
     """
-
+    
     i=0
 
     # Endmember parameters
@@ -429,9 +429,9 @@ from Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp import Klemme_ONeill_2000_CMAS_ass
 # NMAS
 from Gasparik_1989_NMAS_px_gt import Gasparik_1989_NMAS_assemblages
 
-# NCMAS
+# NCMAS                    
 from Gasparik_1989_NCMAS_px_gt import Gasparik_1989_NCMAS_assemblages
-
+                                
 # CFMS
 from Perkins_Vielzeuf_1992_CFMS_ol_cpx import Perkins_Vielzeuf_1992_CFMS_assemblages
 
@@ -464,7 +464,7 @@ assemblages = [assemblage for assemblage_list in # NOT Woodland and ONeill.
                 Gasparik_1989_CMAS_assemblages,
                 Gasparik_1989_NMAS_assemblages,
                 Gasparik_1989_NCMAS_assemblages,
-                Rohrbach_et_al_2007_NCFMASO_assemblages,
+                Rohrbach_et_al_2007_NCFMASO_assemblages, 
                 Beyer_et_al_2019_NCFMASO_assemblages
                ]
                for assemblage in assemblage_list]
@@ -487,32 +487,32 @@ set_params([-278.8774, -2175.3133, -1476.9771, -2142.8000, -2131.4548, -1493.926
 print(gt.energy_interaction)
 
 # KLB-1 (Takahashi, 1986; Walter, 1998; Holland et al., 2013)
-KLB_1_composition_Fe_saturated = {'Si': 39.4,
-                                  'Al': 2.*2.,
-                                  'Ca': 3.3,
-                                  'Mg': 49.5,
-                                  'Fe': 5.2 + 5.,
-                                  'Na': 0.26*2.,
-                                  'O': 39.4*2. + 2.*3. + 3.3 + 49.5 + 5.2 + 0.26} # reduced starting mix + Fe
+KLB_1_composition = {'Si': 39.4,
+                     'Al': 2.*2.,
+                     'Ca': 3.3,
+                     'Mg': 49.5,
+                     'Fe': 5.2 + 5.,
+                     'Na': 0.26*2.,
+                     'O': 39.4*2. + 2.*3. + 3.3 + 49.5 + 5.2 + 0.26} # reduced starting mix + Fe
 
 # MORB (Litasov et al., 2005)
-MORB_composition_Fe_saturated = {'Si': 53.9,
-                                 'Al': 9.76*2.,
-                                 'Ca': 13.0,
-                                 'Mg': 12.16,
-                                 'Fe': 8.64 + 5.,
-                                 'Na': 2.54*2.,
-                                 'O': 53.9*2. + 9.76*3. + 13.0 + 12.16 + 8.64 + 2.54} # reduced starting mix + Fe
+MORB_composition = {'Si': 53.9,
+                    'Al': 9.76*2.,
+                    'Ca': 13.0,
+                    'Mg': 12.16,
+                    'Fe': 8.64 + 5.,
+                    'Na': 2.54*2.,
+                    'O': 53.9*2. + 9.76*3. + 13.0 + 12.16 + 8.64 + 2.54} # reduced starting mix + Fe
 
 
 
-Rohrbach_composition_Fe_saturated = {'Si': 45.4,
-                                     'Al': 7.3,
-                                     'Ca': 3.9,
-                                     'Mg': 20.9,
-                                     'Fe': 20.9 + 5.,
-                                     'Na': 0.9,
-                                     'O': 149.3} # reduced starting mix + Fe
+Rohrbach_composition = {'Si': 45.4,
+                        'Al': 7.3,
+                        'Ca': 3.9,
+                        'Mg': 20.9,
+                        'Fe': 20.9 + 5.,
+                        'Na': 0.9,
+                        'O': 149.3} # reduced starting mix + Fe
 
 
 
@@ -544,17 +544,17 @@ if plot_KLB:
     rw.guess = np.array([0.84, 0.16])
     gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
     cpx_od.guess = np.array([0.7, 0.1, 0.05, 0.02, 0.05, 0.03, 0.05])
-
-
+    
+    
     P0 = 13.e9
-    composition = KLB_1_composition_Fe_saturated
+    composition = KLB_1_composition
     assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron])
     equality_constraints = [('P', P0), ('T', T0)]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    store_iterates=False)
-
+    
     fs = assemblage.molar_fractions
     fs.append(0.)
     n = assemblage.n_moles
@@ -567,32 +567,32 @@ if plot_KLB:
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
-
+    
     P_wad_in = assemblage.pressure
-
-
+    
+    
     equality_constraints = [('T', T0), ('phase_proportion', (ol, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
     P_ol_out = assemblage.pressure
-
+    
     assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
     equality_constraints = [('T', T0), ('phase_proportion', (cpx_od, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_assemblage=True,
                                    store_iterates=False)
     P_cpx_out = assemblage.pressure
-
+    
     P0 = 16.e9
-    composition = KLB_1_composition_Fe_saturated
+    composition = KLB_1_composition
     assemblage = burnman.Composite([wad, gt, fcc_iron])
     equality_constraints = [('P', P0), ('T', T0)]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_iterates=False)
-
+    
     rw.set_composition(rw.guess)
     fs = assemblage.molar_fractions
     fs.append(0.)
@@ -600,58 +600,58 @@ if plot_KLB:
     assemblage = burnman.Composite([wad, gt, fcc_iron, rw], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
-
+    
     equality_constraints = [('T', T0), ('phase_proportion', (rw, 0.0))]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
     P_rw_in = assemblage.pressure
-
+    
     equality_constraints = [('T', T0), ('phase_proportion', (wad, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
-
+    
     P_wad_out = assemblage.pressure
-
-
+    
+    
     # ol-cpx-gt-iron
-
+    
     assemblage = burnman.Composite([ol, cpx_od, fcc_iron, gt])
     pressures = np.linspace(10.e9, P_wad_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_ol_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                            store_assemblage=True,
                                            store_iterates=False)
-
-
+    
+    
     assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
     pressures = np.linspace(P_ol_out, P_ol_out+0.1e9, 2)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                             store_assemblage=True,
                                             store_iterates=False)
-
-
+    
+    
     assemblage = burnman.Composite([wad, fcc_iron, gt])
     pressures = np.linspace(P_cpx_out, P_rw_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                         store_assemblage=True,
                                         store_iterates=False)
-
-
-
+    
+    
+    
     assemblage = burnman.Composite([rw, fcc_iron, gt])
     pressures = np.linspace(P_wad_out, 20.e9, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_rw, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                        store_assemblage=True,
                                        store_iterates=False)
-
+    
     # Plotting
     pressures = []
     Fe3 = []
@@ -670,7 +670,7 @@ if plot_KLB:
 
 
     pressures = np.array(pressures)
-
+    
     plt.style.use('ggplot')
     plt.plot(pressures/1.e9, x_dmaj, label='p(Mg$_3$(MgSi)Si$_3$O$_{{12}}$)')
     plt.plot(pressures/1.e9, x_nmaj, label='p(NaMg$_2$(AlSi)Si$_3$O$_{{12}}$)')
@@ -690,7 +690,7 @@ if plot_KLB:
         plt.text((P0+P1)/2./1.e9, 0.3, lbl,
                  horizontalalignment='center',
                  verticalalignment='center')
-
+        
     plt.title('Garnet in iron-saturated KLB-1 peridotite at {0} K'.format(T0))
     plt.xlabel('P (GPa)')
     plt.ylabel('composition')
@@ -705,18 +705,18 @@ if plot_MORB:
     gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
 
     cpx = cpx_od # child_solutions['nocfs_cpx']
-
+    
     cpx.guess = np.array([0.5, 0.1, 0.05, 0.05, 0.05, 0.2, 0.05])
     #cpx.guess = np.array([0.5, 0.1, 0.05, 0.05, 0.2, 0.05])
-
+    
     P0 = 10.e9
-    composition = MORB_composition_Fe_saturated
+    composition = MORB_composition
     assemblage = burnman.Composite([gt, cpx, stv, fcc_iron])
     equality_constraints = [('P', P0), ('T', T0)]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_iterates=False)
-
+    
     equality_constraints = [('T', T0), ('phase_proportion', (cpx, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
@@ -731,15 +731,15 @@ if plot_MORB:
     sols_gt_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                            store_assemblage=True,
                                            store_iterates=False)
-
-    pressures = np.linspace(P_cpx_out, 20.e9, 21)
+    
+    pressures = np.linspace(P_cpx_out, 20.e9, 21)    
     assemblage = burnman.Composite([stv, fcc_iron, gt])
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_gt, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                        store_assemblage=True,
                                        store_iterates=False)
 
-
+    
     # Plotting
     pressures = []
     Fe3 = []
@@ -758,7 +758,7 @@ if plot_MORB:
 
 
     pressures = np.array(pressures)
-
+    
     plt.style.use('ggplot')
     plt.plot(pressures/1.e9, x_dmaj, label='p(Mg$_3$(MgSi)Si$_3$O$_{{12}}$)')
     plt.plot(pressures/1.e9, x_nmaj, label='p(NaMg$_2$(AlSi)Si$_3$O$_{{12}}$)')
@@ -776,7 +776,7 @@ if plot_MORB:
         plt.text((P0+P1)/2./1.e9, 0.5, lbl,
                  horizontalalignment='center',
                  verticalalignment='center')
-
+        
     plt.title('Garnet in iron-saturated MORB at {0} K'.format(T0))
     plt.xlabel('P (GPa)')
     plt.ylabel('composition')
@@ -785,7 +785,7 @@ if plot_MORB:
     plt.savefig('MORB_gt_Fe_saturated.pdf')
     plt.show()
 
-
+    
 
 if plot_mars:
 
@@ -795,17 +795,17 @@ if plot_mars:
     rw.guess = np.array([0.84, 0.16])
     gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
     cpx_od.guess = np.array([0.7, 0.1, 0.05, 0.02, 0.05, 0.03, 0.05])
-
-
+    
+    
     P0 = 13.e9
     composition = mars_composition
     assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron])
     equality_constraints = [('P', P0), ('T', T0)]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    store_iterates=False)
-
+    
     fs = assemblage.molar_fractions
     fs.append(0.)
     n = assemblage.n_moles
@@ -818,32 +818,32 @@ if plot_mars:
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
-
+    
     P_wad_in = assemblage.pressure
-
-
+    
+    
     equality_constraints = [('T', T0), ('phase_proportion', (ol, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
     P_ol_out = assemblage.pressure
-
+    
     assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
     equality_constraints = [('T', T0), ('phase_proportion', (cpx_od, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_assemblage=True,
                                    store_iterates=False)
     P_cpx_out = assemblage.pressure
-
+    
     P0 = 16.e9
-    composition = KLB_1_composition_Fe_saturated
+    composition = KLB_1_composition
     assemblage = burnman.Composite([wad, gt, fcc_iron])
     equality_constraints = [('P', P0), ('T', T0)]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_iterates=False)
-
+    
     rw.set_composition(rw.guess)
     fs = assemblage.molar_fractions
     fs.append(0.)
@@ -851,58 +851,58 @@ if plot_mars:
     assemblage = burnman.Composite([wad, gt, fcc_iron, rw], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
-
+    
     equality_constraints = [('T', T0), ('phase_proportion', (rw, 0.0))]
-
+    
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
     P_rw_in = assemblage.pressure
-
+    
     equality_constraints = [('T', T0), ('phase_proportion', (wad, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    initial_state_from_assemblage=True,
                                    initial_composition_from_assemblage=True,
                                    store_iterates=False)
-
+    
     P_wad_out = assemblage.pressure
-
-
+    
+    
     # ol-cpx-gt-iron
-
+    
     assemblage = burnman.Composite([ol, cpx_od, fcc_iron, gt])
     pressures = np.linspace(10.e9, P_wad_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_ol_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                            store_assemblage=True,
                                            store_iterates=False)
-
-
+    
+    
     assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
     pressures = np.linspace(P_ol_out, P_ol_out+0.1e9, 2)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                             store_assemblage=True,
                                             store_iterates=False)
-
-
+    
+    
     assemblage = burnman.Composite([wad, fcc_iron, gt])
     pressures = np.linspace(P_cpx_out, P_rw_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                         store_assemblage=True,
                                         store_iterates=False)
-
-
-
+    
+    
+    
     assemblage = burnman.Composite([rw, fcc_iron, gt])
     pressures = np.linspace(P_wad_out, 20.e9, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_rw, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                        store_assemblage=True,
                                        store_iterates=False)
-
+    
     # Plotting
     pressures = []
     Fe3 = []
@@ -921,7 +921,7 @@ if plot_mars:
 
 
     pressures = np.array(pressures)
-
+    
     plt.style.use('ggplot')
     plt.plot(pressures/1.e9, x_dmaj, label='p(Mg$_3$(MgSi)Si$_3$O$_{{12}}$)')
     plt.plot(pressures/1.e9, x_nmaj, label='p(NaMg$_2$(AlSi)Si$_3$O$_{{12}}$)')
@@ -941,7 +941,7 @@ if plot_mars:
         plt.text((P0+P1)/2./1.e9, 0.3, lbl,
                  horizontalalignment='center',
                  verticalalignment='center')
-
+        
     plt.title('Garnet in iron-saturated Martian peridotite at {0} K'.format(T0))
     plt.xlabel('P (GPa)')
     plt.ylabel('composition')
