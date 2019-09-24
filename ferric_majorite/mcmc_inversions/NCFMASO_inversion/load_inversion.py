@@ -16,9 +16,9 @@ from multiprocessing import Pool
 import pandas as pd
 import seaborn as sns
 
-from create_dataset import create_dataset
+from create_dataset import create_dataset, special_constraints
 
-dataset, storage, labels, special_constraints = create_dataset()
+dataset, storage, labels = create_dataset()
 
 def load_inversion(show_correlations=True):
     ########################

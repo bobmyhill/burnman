@@ -261,10 +261,17 @@ def buffered_KLB_plot(dataset, storage, buffer, n_log_units):
     plt.show()
 
 
-def buffered_MORB_plot(dataset, storage, n_log_units):
+def buffered_MORB_plot(dataset, storage, buffer, n_log_units):
+    n_ln_units = np.log(np.power(10., n_log_units))
+
     endmembers = dataset['endmembers']
     solutions = dataset['solutions']
     child_solutions = dataset['child_solutions']
+    
+    # Alias solutions:
+    gt = solutions['gt']
+    cpx_od = solutions['cpx']
+    stv = endmembers['stv']
 
     # MORB (Litasov et al., 2005)
     MORB_composition_plus_oxygen = {'Si': 53.9,
@@ -274,3 +281,117 @@ def buffered_MORB_plot(dataset, storage, n_log_units):
                         'Fe': 8.64,
                         'Na': 2.54*2.,
                         'O': 53.9*2. + 9.76*3. + 13.0 + 12.16 + 8.64 + 2.54 + 2.} # reduced starting mix + 02
+
+    if buffer == 'EMOD':
+        #0.5*(Mg2Si2O6) + MgCO3 - Mg2SiO4 - C  = O2
+        HP_hen = burnman.minerals.HGP_2018_ds633.hen()
+        HP_mag = burnman.minerals.HGP_2018_ds633.mag()
+        HP_fo = burnman.minerals.HGP_2018_ds633.fo()
+        HP_mwd = burnman.minerals.HGP_2018_ds633.mwd()
+        HP_mrw = burnman.minerals.HGP_2018_ds633.mrw()
+        HP_diam = burnman.minerals.HGP_2018_ds633.diam()
+
+        EMOD_O2 = burnman.CombinedMineral([HP_hen, HP_mag, HP_fo, HP_diam],
+                                          [0.5, 1., -1., -1.])
+        EMWD_O2 = burnman.CombinedMineral([HP_hen, HP_mag, HP_mwd, HP_diam],
+                                          [0.5, 1., -1., -1.])
+        EMRD_O2 = burnman.CombinedMineral([HP_hen, HP_mag, HP_mrw, HP_diam],
+                                          [0.5, 1., -1., -1.])
+        combined_buffer = burnman.CombinedMineral([HP_hen, HP_mag, HP_fo, HP_diam],
+                                                  [0.5, 1., -1., -1.],
+                                                  [0., -n_ln_units*burnman.constants.gas_constant,
+                                                   0.])
+    elif buffer == 'Re-ReO2':
+        combined_buffer = burnman.CombinedMineral([endmembers['ReO2'],
+                                                   endmembers['Re']],
+                                                  [1., -1.],
+                                                  [0., -n_ln_units*burnman.constants.gas_constant,
+                                                   0.])
+    else:
+        raise Exception('buffer not recognised')
+
+
+
+
+    P_min = 6.e9
+    P0 = 13.e9
+    T0 = 1750.
+
+    gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
+    cpx = cpx_od
+    cpx.guess = np.array([0.5, 0.1, 0.05, 0.05, 0.05, 0.2, 0.05])
+
+    composition = MORB_composition_plus_oxygen
+    assemblage = burnman.Composite([gt, cpx, stv, combined_buffer])
+    equality_constraints = [('P', P0), ('T', T0)]
+
+    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                   store_iterates=False)
+
+    equality_constraints = [('T', T0), ('phase_proportion', (cpx, 0.0))]
+    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                   initial_state_from_assemblage=True,
+                                   initial_composition_from_assemblage=True,
+                                   store_iterates=False)
+    P_cpx_out = sol.x[0]
+
+
+    pressures = np.linspace(P_min, (P_cpx_out+P_min)/3., 21) # hard to find solution for whole range
+    assemblage = burnman.Composite([cpx, stv, combined_buffer, gt])
+    equality_constraints = [('P', pressures), ('T', T0)]
+    sols_gt_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                           store_assemblage=True,
+                                           store_iterates=False)
+
+    pressures = np.linspace(P_cpx_out, 20.e9, 21)
+    assemblage = burnman.Composite([stv, combined_buffer, gt])
+    equality_constraints = [('P', pressures), ('T', T0)]
+    sols_gt, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                       store_assemblage=True,
+                                       store_iterates=False)
+
+
+    # Plotting
+    pressures = []
+    Fe3 = []
+    FeT = []
+    x_dmaj = []
+    x_nmaj = []
+    for sols in [sols_gt_cpx, sols_gt]:
+        pressures.extend([sol.assemblage.pressure
+                          for sol in sols if sol.success])
+        c_gt = np.array([sol.assemblage.phases[-1].molar_fractions
+                         for sol in sols if sol.success])
+        Fe3.extend([c[3]*2./(c[1]*3. + c[3]*2.) for c in c_gt])
+        FeT.extend([(c[1]*3. + c[3]*2.) for c in c_gt])
+        x_dmaj.extend([c[4] for c in c_gt])
+        x_nmaj.extend([c[5] for c in c_gt])
+
+
+    pressures = np.array(pressures)
+
+    plt.style.use('ggplot')
+    plt.plot(pressures/1.e9, x_dmaj, label='p(Mg$_3$(MgSi)Si$_3$O$_{{12}}$)')
+    plt.plot(pressures/1.e9, x_nmaj, label='p(NaMg$_2$(AlSi)Si$_3$O$_{{12}}$)')
+    plt.plot(pressures/1.e9, FeT, label='Fe atoms per 12 O')
+    plt.plot(pressures/1.e9, Fe3, label='Fe$^{{3+}}$/(Fe$^{{2+}}$ + Fe$^{{3+}}$)')
+    plt.legend()
+
+    for P in [P_cpx_out]:
+        plt.plot(np.array([P, P])/1.e9, [0., 1.], color='k', linestyle=':')
+
+    field_labels = [[P_min, P_cpx_out, 'cpx+gt+stv'],
+                    [P_cpx_out, 20.e9, 'gt+stv']]
+
+    for P0, P1, lbl in field_labels:
+        plt.text((P0+P1)/2./1.e9, 0.5, lbl,
+                 horizontalalignment='center',
+                 verticalalignment='center')
+
+    plt.title('Garnet in MORB at {0} K'.format(T0))
+    plt.xlabel('P (GPa)')
+    plt.ylabel('composition')
+    plt.xlim(P_min/1.e9,20.)
+    plt.ylim(0.,1.)
+    plt.savefig('MORB_gt_{0}_plus_{1}_log_units.pdf'.format(buffer, n_log_units))
+    plt.show()
