@@ -357,7 +357,7 @@ def create_dataset():
 
     # NCFMASO
     from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
-    from datasets import Beyer_et_al_2019_NCFMASO_no_Mo
+    from datasets import Beyer_et_al_2019_NCFMASO
 
     # raw is -215
     assemblages = [assemblage for assemblage_list in
@@ -390,7 +390,7 @@ def create_dataset():
                                    Perkins_Vielzeuf_1992_CFMS_ol_cpx,  # 15, 179
                                    # Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
                                    Rohrbach_et_al_2007_NCFMASO_gt_cpx,  # 5, 1201
-                                   Beyer_et_al_2019_NCFMASO_no_Mo  # 12, 9230
+                                   Beyer_et_al_2019_NCFMASO  # 12, 9230
                                    ]]
                    for assemblage in assemblage_list]
 

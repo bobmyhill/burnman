@@ -42,6 +42,7 @@ def get_assemblages(mineral_dataset):
                     if phase_name == 'ring?':  # be confident!
                         phase_name = 'ring'
 
+                    # Begin loop over phases
                     if phase_name == 'gt':
                         c = np.array([float(ds[idx][cidx])
                                       for cidx in [7, 9, 11, 15, 17, 19]])
@@ -62,11 +63,15 @@ def get_assemblages(mineral_dataset):
                     elif phase_name == 'hpx':
                         phases.append(child_solutions['cfm_hpx'])
                     else:
+                        phase_found = False
                         for phase_dict in [endmembers,
                                            solutions,
                                            child_solutions]:
                             if phase_name in phase_dict:
                                 phases.append(phase_dict[phase_name])
+                                phase_found = True
+                        if not phase_found:
+                            raise Exception('phase {0} not recognised'.format(phase_name))
 
                 assemblage = burnman.Composite(phases)
 
@@ -170,6 +175,7 @@ def get_assemblages(mineral_dataset):
                                                                 'Ca', 'Na',
                                                                 'Fef_B']
 
+                        #print(f, sig_f)
                         # Composition
                         assemblage.phases[k].composition = np.zeros(7)
                         assemblage.phases[k].composition[:6] = np.copy(c)
@@ -189,6 +195,14 @@ def get_assemblages(mineral_dataset):
 
                 assemblage.stored_compositions = ['composition not assigned']*len(chamber_indices)
                 for k in range(len(chamber_indices)):
+                    """
+                    if (assemblage.phases[k] is solutions['gt']
+                          or assemblage.phases[k] is child_solutions['xna_gt']
+                          or assemblage.phases[k] is child_solutions['xmj_gt']):
+                        Fe3 = 2.*assemblage.phases[k].molar_fractions[assemblage.phases[k].endmember_names.index('andr')]
+                        print(assemblage.experiment_id, [ph.name for ph in assemblage.phases])
+                        print(Fe3/assemblage.phases[k].formula['Fe'])
+                    """
                     try:
                         assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
                                                              assemblage.phases[k].molar_fraction_covariances)
