@@ -34,7 +34,7 @@ def iron_saturated_KLB_plot(dataset, storage):
     rw = child_solutions['ring']
     gt = solutions['gt']
     cpx_od = solutions['cpx']
-    fcc_iron = endmembers['fcc_iron']
+    iron = endmembers['fcc_iron']
 
     ol.guess = np.array([0.9, 0.1])
     wad.guess = np.array([0.87, 0.13])
@@ -46,7 +46,7 @@ def iron_saturated_KLB_plot(dataset, storage):
     T0 = 1750.
 
     composition = KLB_1_composition_Fe_saturated
-    assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron])
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron])
     equality_constraints = [('P', P0), ('T', T0)]
 
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -57,7 +57,7 @@ def iron_saturated_KLB_plot(dataset, storage):
     fs.append(0.)
     n = assemblage.n_moles
     wad.set_composition(wad.guess)
-    assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron, wad], fs)
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron, wad], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
     equality_constraints = [('T', T0), ('phase_proportion', (wad, 0.0))]
@@ -76,7 +76,7 @@ def iron_saturated_KLB_plot(dataset, storage):
                                    store_iterates=False)
     P_ol_out = assemblage.pressure
 
-    assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, cpx_od, iron, gt])
     equality_constraints = [('T', T0), ('phase_proportion', (cpx_od, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_assemblage=True,
@@ -85,7 +85,7 @@ def iron_saturated_KLB_plot(dataset, storage):
 
     P0 = 16.e9
     composition = KLB_1_composition_Fe_saturated
-    assemblage = burnman.Composite([wad, gt, fcc_iron])
+    assemblage = burnman.Composite([wad, gt, iron])
     equality_constraints = [('P', P0), ('T', T0)]
 
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -95,7 +95,7 @@ def iron_saturated_KLB_plot(dataset, storage):
     fs = assemblage.molar_fractions
     fs.append(0.)
     n = assemblage.n_moles
-    assemblage = burnman.Composite([wad, gt, fcc_iron, rw], fs)
+    assemblage = burnman.Composite([wad, gt, iron, rw], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
 
@@ -118,7 +118,7 @@ def iron_saturated_KLB_plot(dataset, storage):
 
     # ol-cpx-gt-iron
 
-    assemblage = burnman.Composite([ol, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([ol, cpx_od, iron, gt])
     pressures = np.linspace(10.e9, P_wad_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_ol_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -126,7 +126,7 @@ def iron_saturated_KLB_plot(dataset, storage):
                                            store_iterates=False)
 
 
-    assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, cpx_od, iron, gt])
     pressures = np.linspace(P_ol_out, P_ol_out+0.1e9, 2)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -134,7 +134,7 @@ def iron_saturated_KLB_plot(dataset, storage):
                                             store_iterates=False)
 
 
-    assemblage = burnman.Composite([wad, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, iron, gt])
     pressures = np.linspace(P_cpx_out, P_rw_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -143,7 +143,7 @@ def iron_saturated_KLB_plot(dataset, storage):
 
 
 
-    assemblage = burnman.Composite([rw, fcc_iron, gt])
+    assemblage = burnman.Composite([rw, iron, gt])
     pressures = np.linspace(P_wad_out, 20.e9, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_rw, prm = burnman.equilibrate(composition, assemblage, equality_constraints,

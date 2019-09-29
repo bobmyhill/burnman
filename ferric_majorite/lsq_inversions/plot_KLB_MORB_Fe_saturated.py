@@ -545,10 +545,10 @@ if plot_KLB:
     gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
     cpx_od.guess = np.array([0.7, 0.1, 0.05, 0.02, 0.05, 0.03, 0.05])
 
-
+    iron = burnman.CombinedMineral([fcc_iron], [1.], [-15.e3, 0., 0.])
     P0 = 13.e9
     composition = KLB_1_composition_Fe_saturated
-    assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron])
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron])
     equality_constraints = [('P', P0), ('T', T0)]
 
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -559,7 +559,7 @@ if plot_KLB:
     fs.append(0.)
     n = assemblage.n_moles
     wad.set_composition(wad.guess)
-    assemblage = burnman.Composite([ol, gt, cpx_od, fcc_iron, wad], fs)
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron, wad], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
     equality_constraints = [('T', T0), ('phase_proportion', (wad, 0.0))]
@@ -578,7 +578,7 @@ if plot_KLB:
                                    store_iterates=False)
     P_ol_out = assemblage.pressure
 
-    assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, cpx_od, iron, gt])
     equality_constraints = [('T', T0), ('phase_proportion', (cpx_od, 0.0))]
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                    store_assemblage=True,
@@ -587,7 +587,7 @@ if plot_KLB:
 
     P0 = 16.e9
     composition = KLB_1_composition_Fe_saturated
-    assemblage = burnman.Composite([wad, gt, fcc_iron])
+    assemblage = burnman.Composite([wad, gt, iron])
     equality_constraints = [('P', P0), ('T', T0)]
 
     sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -597,7 +597,7 @@ if plot_KLB:
     fs = assemblage.molar_fractions
     fs.append(0.)
     n = assemblage.n_moles
-    assemblage = burnman.Composite([wad, gt, fcc_iron, rw], fs)
+    assemblage = burnman.Composite([wad, gt, iron, rw], fs)
     assemblage.n_moles = n
     assemblage.set_state(sol.x[0], sol.x[1])
 
@@ -620,7 +620,7 @@ if plot_KLB:
 
     # ol-cpx-gt-iron
 
-    assemblage = burnman.Composite([ol, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([ol, cpx_od, iron, gt])
     pressures = np.linspace(10.e9, P_wad_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_ol_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -628,7 +628,7 @@ if plot_KLB:
                                            store_iterates=False)
 
 
-    assemblage = burnman.Composite([wad, cpx_od, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, cpx_od, iron, gt])
     pressures = np.linspace(P_ol_out, P_ol_out+0.1e9, 2)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -636,7 +636,7 @@ if plot_KLB:
                                             store_iterates=False)
 
 
-    assemblage = burnman.Composite([wad, fcc_iron, gt])
+    assemblage = burnman.Composite([wad, iron, gt])
     pressures = np.linspace(P_cpx_out, P_rw_in, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_wad, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -645,7 +645,7 @@ if plot_KLB:
 
 
 
-    assemblage = burnman.Composite([rw, fcc_iron, gt])
+    assemblage = burnman.Composite([rw, iron, gt])
     pressures = np.linspace(P_wad_out, 20.e9, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_rw, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
@@ -691,12 +691,12 @@ if plot_KLB:
                  horizontalalignment='center',
                  verticalalignment='center')
 
-    plt.title('Garnet in iron-saturated KLB-1 peridotite at {0} K'.format(T0))
+    plt.title('Garnet in pseudo iron-saturated KLB-1 peridotite at {0} K'.format(T0))
     plt.xlabel('P (GPa)')
     plt.ylabel('composition')
     plt.xlim(10.,20.)
     plt.ylim(0.,0.6)
-    plt.savefig('KLB-1_gt_Fe_saturated.pdf')
+    plt.savefig('KLB-1_gt_pseudo_Fe_saturated.pdf')
     plt.show()
 
 
