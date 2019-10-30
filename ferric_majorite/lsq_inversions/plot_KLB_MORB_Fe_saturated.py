@@ -542,10 +542,43 @@ if plot_KLB:
     ol.guess = np.array([0.9, 0.1])
     wad.guess = np.array([0.87, 0.13])
     rw.guess = np.array([0.84, 0.16])
-    gt.guess = np.array([0.6, 0.2, 0.15, 0.03, 0.01, 0.01])
-    cpx_od.guess = np.array([0.7, 0.1, 0.05, 0.02, 0.05, 0.03, 0.05])
+    gt.guess = np.array([0.45, 0.12, 0.10, 0.03, 0.25, 0.05])
+    opx_od.guess = np.array([0.6, 0.1, 0.01, 0.08, 0.21])
+    cpx_od.guess = np.array([0.36, 0.07, 0.48, 0.01, 0.01, 0.04, 0.01])
 
+    iron = fcc_iron
     iron = burnman.CombinedMineral([fcc_iron], [1.], [-15.e3, 0., 0.])
+    """
+    P0 = 10.e9
+    composition = KLB_1_composition_Fe_saturated
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron])
+    equality_constraints = [('P', P0), ('T', T0)]
+
+    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                   initial_state_from_assemblage=True,
+                                   store_iterates=False)
+    print(assemblage)
+
+    P0 = 10.e9
+
+    fs = assemblage.molar_fractions
+    fs.append(0.)
+    n = assemblage.n_moles
+    opx_od.set_composition(opx_od.guess)
+
+    assemblage = burnman.Composite([ol, gt, cpx_od, iron, opx_od], fs)
+    assemblage.set_state(10.e9, 1750.)
+    equality_constraints = [('T', T0), ('phase_proportion', (opx_od, 0.0))]
+    #equality_constraints = [('P', P0), ('T', T0)]
+
+    sol, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
+                                   initial_state_from_assemblage=True,
+                                   initial_composition_from_assemblage=True,
+                                   store_iterates=False)
+    print(assemblage)
+    exit()
+    """
+
     P0 = 13.e9
     composition = KLB_1_composition_Fe_saturated
     assemblage = burnman.Composite([ol, gt, cpx_od, iron])
@@ -619,9 +652,10 @@ if plot_KLB:
 
 
     # ol-cpx-gt-iron
-
+    ol.guess = np.array([0.9, 0.1])
+    gt.guess = np.array([0.75, 0.2, 0.05, 0.01, 0.01, 0.00001])
     assemblage = burnman.Composite([ol, cpx_od, iron, gt])
-    pressures = np.linspace(10.e9, P_wad_in, 21)
+    pressures = np.linspace(6.e9, P_wad_in, 101)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_ol_cpx, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                            store_assemblage=True,
@@ -646,7 +680,7 @@ if plot_KLB:
 
 
     assemblage = burnman.Composite([rw, iron, gt])
-    pressures = np.linspace(P_wad_out, 20.e9, 21)
+    pressures = np.linspace(P_wad_out, 25.e9, 21)
     equality_constraints = [('P', pressures), ('T', T0)]
     sols_rw, prm = burnman.equilibrate(composition, assemblage, equality_constraints,
                                        store_assemblage=True,
@@ -669,7 +703,14 @@ if plot_KLB:
         x_nmaj.extend([c[5] for c in c_gt])
 
 
+    from scipy.interpolate import interp1d
     pressures = np.array(pressures)
+    Fe3 = np.array(Fe3)
+
+    f = interp1d(pressures, Fe3, kind='linear')
+    p_list = np.linspace(6.0349e9, 25.e9, 730)
+    PFe3 = np.array([p_list, f(p_list)]).T
+    np.savetxt(fname='Fe3_carbide_diamond.dat', X=PFe3)
 
     plt.style.use('ggplot')
     plt.plot(pressures/1.e9, x_dmaj, label='p(Mg$_3$(MgSi)Si$_3$O$_{{12}}$)')

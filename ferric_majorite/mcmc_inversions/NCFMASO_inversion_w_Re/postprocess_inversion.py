@@ -16,8 +16,8 @@ print(get_params(storage))
 
 # Make plots
 # plots(dataset, storage)
-iron_saturated_KLB_plot(dataset, storage)
-#iron_saturated_MORB_plot(dataset, storage)
+#iron_saturated_KLB_plot(dataset, storage)
+iron_saturated_MORB_plot(dataset, storage)
 #buffered_KLB_plot(dataset, storage, buffer='EMOD', n_log_units=0.)
-buffered_KLB_plot(dataset, storage, buffer='Re-ReO2', n_log_units=0.)
+#buffered_KLB_plot(dataset, storage, buffer='Re-ReO2', n_log_units=0.)
 #buffered_MORB_plot(dataset, storage, buffer='Re-ReO2', n_log_units=0.)
