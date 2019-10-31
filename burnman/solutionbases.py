@@ -19,7 +19,7 @@ from scipy.special import comb
 from copy import copy
 
 
-class gridded_simplex(object):
+class SimplexGrid(object):
     def __init__(self, vertices, points_per_edge):
 
         assert vertices >= 2, 'need at least two vertices'
@@ -218,7 +218,7 @@ class SolutionPolytope(object):
         n_ind = f_occ.shape[1]
         n_simplices = len(simplices)
         dim = len(simplices[0])
-        simplex_grid = gridded_simplex(dim, points_per_edge)
+        simplex_grid = SimplexGrid(dim, points_per_edge)
         grid = simplex_grid.grid('array')
         points_per_simplex = simplex_grid.n_points()
         n_points = n_simplices*points_per_simplex
