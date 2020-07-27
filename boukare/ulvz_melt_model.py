@@ -10,14 +10,14 @@ def liq_sol_molar_compositions(P, T,
                                melting_entropies,
                                melting_volumes,
                                n_mole_mix):
-    
+
     dG = ((melting_temperatures - T) * melting_entropies +
           (P - melting_reference_pressure) * melting_volumes) # this is a linearised version (we don't use the melt and solid endmember equations of state directly).
-    
+
     Xls = 1.0 - ((1.0 - np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))) /
                  (np.exp(dG[0]/(n_mole_mix[0]*gas_constant*T)) -
                   np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))))
-           
+
     Xss = Xls * np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))
 
     return Xls, Xss
@@ -25,7 +25,7 @@ def liq_sol_molar_compositions(P, T,
 from scipy.optimize import fsolve
 def solidus_liquidus(P, X_Fe):
 
-    
+
     diff_Xl = lambda T: liq_sol_molar_compositions(P, T,
                                                    melting_reference_pressure,
                                                    melting_temperatures,
@@ -47,18 +47,18 @@ def melting_enthalpy(P, T, X_bulk,
                      melting_entropies,
                      melting_volumes,
                      n_mole_mix):
-    
+
     # arrays are Mg-rich endmember first
     dG = ((melting_temperatures - T) * melting_entropies +
           (P - melting_reference_pressure) * melting_volumes) # this is a linearised version (we don't use the melt and solid endmember equations of state directly).
-    
+
     Xls = 1.0 - ((1.0 - np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))) /
                  (np.exp(dG[0]/(n_mole_mix[0]*gas_constant*T)) -
                   np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))))
-           
+
     Xss = Xls * np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))
 
-    
+
     dH = (melting_temperatures * melting_entropies +
           (P - melting_reference_pressure) * melting_volumes)
     if X_bulk < Xss:
@@ -76,21 +76,21 @@ def calculate_endmember_proportions_volumes_masses(pressure, temperature,
     Calculates the endmember molar fractions in the composite,
     along with the solid and melt molar masses and molar volumes
 
-    Note: the equilibrium compositions of the solid phases 
+    Note: the equilibrium compositions of the solid phases
     (bridgmanite and periclase) are calculated in this function,
     but the coexisting melt is not necessarily in equilibrium with those solid phases.
     A separate function is required to equilibrate the solid and melt.
     """
-    
+
     # 1) Molar composition of the solid
     x_MgO_solid = (1. - x_Fe_bearing_endmember)*c_mantle[0]['MgO']
     x_FeO_solid = x_Fe_bearing_endmember*c_mantle[1]['FeO']
     x_SiO2_solid = (1. - x_Fe_bearing_endmember)*c_mantle[0]['SiO2'] + x_Fe_bearing_endmember*c_mantle[1]['SiO2']
-    
+
     norm = x_MgO_solid + x_FeO_solid
     f_FeO = x_FeO_solid/norm # note that f_FeO ("Fe number, or Fe/(Mg+Fe)") is NOT x_Fe
     f_SiO2 = x_SiO2_solid/norm
-    
+
     # 2) Fe-Mg partitioning between bridgmanite and periclase in the solid
     mpv_gibbs = thermodynamic_properties(pressure, temperature, mpv_params)['gibbs']
     fpv_gibbs = thermodynamic_properties(pressure, temperature, fpv_params)['gibbs']
@@ -115,20 +115,20 @@ def calculate_endmember_proportions_volumes_masses(pressure, temperature,
     molar_mass_pv = p_fpv*fpv_params['molar_mass'] + (1. - p_fpv)*mpv_params['molar_mass']
     molar_mass_melt = (x_Fe_bearing_endmember_in_melt * fe_mantle_melt_params['molar_mass'] +
                        (1. - x_Fe_bearing_endmember_in_melt) * mg_mantle_melt_params['molar_mass'])
-    
+
     # 5) Molar volume of the solid phases
     mpv_volume = thermodynamic_properties(pressure, temperature, mpv_params)['V']
     fpv_volume = thermodynamic_properties(pressure, temperature, fpv_params)['V']
     per_volume = thermodynamic_properties(pressure, temperature, per_params)['V']
     wus_volume = thermodynamic_properties(pressure, temperature, wus_params)['V']
-    
+
     molar_volume_fper = p_wus*wus_volume + (1. - p_wus)*per_volume # 1 cation
     molar_volume_pv = p_fpv*fpv_volume + (1. - p_fpv)*mpv_volume # 2 cations
 
     # 6) Molar volume of the solid on a formula unit basis
-    molar_volume_solid = (molar_volume_fper*(1. - f_pv) + molar_volume_pv*f_pv) 
-    molar_mass_solid = (molar_mass_fper*(1. - f_pv) + molar_mass_pv*f_pv) 
-    
+    molar_volume_solid = (molar_volume_fper*(1. - f_pv) + molar_volume_pv*f_pv)
+    molar_mass_solid = (molar_mass_fper*(1. - f_pv) + molar_mass_pv*f_pv)
+
     # 7) Molar volume of the liquid on a formula-unit (one-cation) basis
     # We can calculate this in two ways, using the full EOS for the liquid,
     # or the two-parameter volume of melting (from which the full EOS is built).
@@ -136,7 +136,7 @@ def calculate_endmember_proportions_volumes_masses(pressure, temperature,
     mg_melt_volume = thermodynamic_properties(pressure, temperature, mg_mantle_melt_params)['V']
     fe_melt_volume = thermodynamic_properties(pressure, temperature, fe_mantle_melt_params)['V']
     molar_volume_melt = (1. - x_Fe_bearing_endmember_in_melt)*mg_melt_volume + x_Fe_bearing_endmember_in_melt*fe_melt_volume
-    
+
     # Here I use the two parameter version
     # This is slightly more efficient than querying the melt equations of state
 
@@ -156,7 +156,7 @@ def calculate_endmember_proportions_volumes_masses(pressure, temperature,
     n_moles_solid = (1. - porosity)/molar_volume_solid
     molar_fraction_solid = n_moles_solid/(n_moles_melt + n_moles_solid)
     molar_fraction_melt = 1. - molar_fraction_solid
-    
+
     # 9) Endmember molar fractions in the solid-melt composite (on a formula-unit basis)
     molar_fractions_in_composite = {'per': molar_fraction_solid * (1. - f_pv) * (1. - p_wus),
                                     'wus': molar_fraction_solid * (1. - f_pv) * p_wus,
@@ -169,19 +169,19 @@ def calculate_endmember_proportions_volumes_masses(pressure, temperature,
                      'solid': molar_volume_solid}
     molar_masses = {'melt': molar_mass_melt,
                     'solid': molar_mass_solid}
-    
+
     return [molar_fractions_in_composite, molar_volumes, molar_masses]
 
 
 def calculate_xfe_in_solid_from_molar_proportions(endmember_proportions, c_mantle):
     """
-    Calculates x_Fe in the solid given 
+    Calculates x_Fe in the solid given
     the endmember proportions in the solid.
     """
 
     molar_FeO = ((1.*endmember_proportions['fpv'] + endmember_proportions['wus'])/
                  (2.*endmember_proportions['fpv'] + endmember_proportions['wus'] +
-                  2.*endmember_proportions['mpv'] + endmember_proportions['per'])) 
+                  2.*endmember_proportions['mpv'] + endmember_proportions['per']))
 
     x_Fe = molar_FeO / c_mantle[1]['FeO']
     return x_Fe
@@ -202,7 +202,7 @@ for i, x_Fe_bearing_endmember in enumerate(x_Fes):
                                                                x_Fe_bearing_endmember,
                                                                x_Fe_bearing_endmember_in_melt=0.0, porosity=0.0,
                                                                c_mantle=c_mantle)[0])
-    
+
 
 
 fig = plt.figure(figsize=(20, 8))
@@ -243,15 +243,17 @@ plt.show()
 fig = plt.figure()
 fig.set_size_inches(18.0, 12.0)
 
-ax = [fig.add_subplot(2, 2, i) for i in range(1, 4)]
+ax = [fig.add_subplot(2, 2, i) for i in range(1, 5)]
 for P in [120.e9, 130.e9, 140.e9]:
     dT = melting_volumes/melting_entropies*(P - melting_reference_pressure) # dT/dP = DV/DS
     T_melt = melting_temperatures + dT
     temperatures = np.linspace(T_melt[0], T_melt[1], 101)
 
-    
+
     Xls = np.empty_like(temperatures)
     Xss = np.empty_like(temperatures)
+
+    KDs = []
     for i, T in enumerate(temperatures):
         Xls[i], Xss[i] = liq_sol_molar_compositions(P, T,
                                                     melting_reference_pressure,
@@ -260,9 +262,25 @@ for P in [120.e9, 130.e9, 140.e9]:
                                                     melting_volumes,
                                                     n_mole_mix)
 
+        sol = calculate_endmember_proportions_volumes_masses(P, T,
+                                                             x_Fe_bearing_endmember=Xss[i],
+                                                             x_Fe_bearing_endmember_in_melt=Xss[i],
+                                                             porosity=0., c_mantle=c_mantle)[0]
+        melt = calculate_endmember_proportions_volumes_masses(P, T,
+                                                              x_Fe_bearing_endmember=Xls[i],
+                                                              x_Fe_bearing_endmember_in_melt=Xls[i],
+                                                              porosity=1., c_mantle=c_mantle)[0]
+        D_sol = (sol['fpv'] + sol['wus'])/(sol['per'] + sol['mpv'])
+        D_liq = (melt['fe_melt']/melt['mg_melt'])
+
+        KDs.append(D_sol/D_liq)
+
+
 
     ax[0].plot(Xls, temperatures, label='liquid composition, {0} GPa'.format(P/1.e9))
     ax[0].plot(Xss, temperatures, label='solid composition, {0} GPa'.format(P/1.e9))
+
+    ax[3].plot(Xss, KDs)
 
 xs = np.linspace(0., 1., 101)
 
@@ -279,7 +297,7 @@ for j, x_Fe_bearing_endmember in enumerate(xs):
                                                                    c_mantle=c_mantle)[1]
 
     melt_volumes[j] = molar_volumes['melt'] - molar_volumes['solid']/n_cations_solid
-    
+
 ax[2].plot(xs, melt_volumes*1.e6, linestyle=':', label='computed melting volumes (not used, but should be close to the line fit)')
 ax[2].set_ylim(0.,)
 
@@ -291,8 +309,9 @@ for i in range(3):
 ax[0].set_ylabel('Temperature (K)')
 ax[1].set_ylabel('$\Delta S_{melting}$ (J/K/mol_cations)')
 ax[2].set_ylabel('$\Delta V_{melting}$ (cm$^3$/mol_cations)')
-    
+
 plt.show()
+exit()
 
 
 ##########################################
@@ -324,10 +343,10 @@ for i, T in enumerate(temperatures):
     p, v, m = calculate_endmember_proportions_volumes_masses(P, T,
                                                              X_Fe, X_Fe,  0., # (completely solid)
                                                              c_mantle)
-    
-    heat_capacities[i] = (p['mpv']*thermodynamic_properties(P, T, mpv_params)['molar_C_p'] + 
-                          p['fpv']*thermodynamic_properties(P, T, fpv_params)['molar_C_p'] + 
-                          p['per']*thermodynamic_properties(P, T, per_params)['molar_C_p'] + 
+
+    heat_capacities[i] = (p['mpv']*thermodynamic_properties(P, T, mpv_params)['molar_C_p'] +
+                          p['fpv']*thermodynamic_properties(P, T, fpv_params)['molar_C_p'] +
+                          p['per']*thermodynamic_properties(P, T, per_params)['molar_C_p'] +
                           p['wus']*thermodynamic_properties(P, T, wus_params)['molar_C_p'])/m['solid']
 
 heat_capacities2 = np.empty_like(temperatures)
@@ -336,7 +355,7 @@ for i, T in enumerate(temperatures):
                                                              X_Fe, X_Fe,  1., # (completely liq)
                                                              c_mantle)
 
-    heat_capacities2[i] = (p['mg_melt']*thermodynamic_properties(P, T, mg_mantle_melt_params)['molar_C_p'] + 
+    heat_capacities2[i] = (p['mg_melt']*thermodynamic_properties(P, T, mg_mantle_melt_params)['molar_C_p'] +
                           p['fe_melt']*thermodynamic_properties(P, T, fe_mantle_melt_params)['molar_C_p'])/m['melt']
 
 
@@ -360,6 +379,6 @@ for i, T in enumerate(temperatures):
                                      melting_entropies,
                                      melting_volumes,
                                      n_mole_mix)
-        
+
 plt.plot(temperatures, np.gradient(enthalpies, temperatures))
 plt.show()

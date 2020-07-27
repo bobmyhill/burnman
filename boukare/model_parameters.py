@@ -110,46 +110,46 @@ mg_mantle_melt_params={'a_0': 2.0572748142847914e-05,
                        'formula': {'O': 1.419, 'Mg': 0.581, 'Si': 0.419}}
 
 
-H2O_mantle_melt_params={'name': 'H2O melt mantle component (data from Mookherjee et al., 2008; 10.1038/nature06918)', 
+H2O_mantle_melt_params={'name': 'H2O melt mantle component (data from Mookherjee et al., 2008; 10.1038/nature06918)',
                         'equation_of_state': 'mod_hp_tmt',
-                        
+
                         'Pref': 100.e9,
                         'T_0': 298.15,
-                        
+
                         'V_0': 1.086e-05,
                         'a_0': 6.475e-05,
                         'K_0': 73.3e9,
                         'Kprime_0': 2.265,
                         'Kdprime_0': -1.04e-11,
-                        
+
                         'T_einstein': 242., # 0.806*300
-                        
+
                         'H_Pref': 0., # not used
                         'S_Pref': 0., # not used
                         'Cp_Pref': np.array([74.83, 0., 0., 0.]), # not used in melt model, arbitrarily picked at 3nR (note this is technically for CV, not CP)
-                        
+
                         'molar_mass': 0.01801528,
                         'n': 3.,
                         'formula': {'H': 2., 'O': 1.}}
 
 CO2_mantle_melt_params={'name': 'CO2 melt mantle component (data from Ghosh et al., 2017; 10.1038/s41598-017-00918-x)',
                         'equation_of_state': 'mod_hp_tmt',
-                        
+
                         'Pref': 100.e9,
                         'T_0': 298.15,
-                        
+
                         'V_0': 2.195e-05,
                         'a_0': 4.97e-05,
                         'K_0': 22.8e9,
                         'Kprime_0': 3.87,
                         'Kdprime_0': -1.98e-11,
-                        
+
                         'T_einstein': 160., # ~0.806*200 # TDebye is 140 K at 15 K, increase a bit for HT, https://arxiv.org/pdf/1403.4403.pdf
-                        
+
                         'H_Pref': 0., # not used
                         'S_Pref': 0., # not used
                         'Cp_Pref': np.array([74.83, 0., 0., 0.]), # not used in melt model, arbitrarily picked at 3nR (note this is technically for CV, not CP)
-                        
+
                         'molar_mass': 0.04401,
                         'n': 3.,
                         'formula': {'C': 1., 'O': 2.}}
@@ -166,7 +166,7 @@ c_mantle = [{'MgO': 0.581, 'SiO2': 0.419},
             {'FeO': 0.907, 'SiO2': 0.093}] # molar_proportions
 
 melting_reference_pressure = 120.e9 # Pa
-melting_temperatures=np.array([4821.2, 3424.5]) # K 
+melting_temperatures=np.array([4821.2, 3424.5]) # K
 melting_entropies=np.array([34.33, 33.77]) # J/K/mol-cations
 melting_volumes=np.array([9.29e-08, 1.51e-07]) # m^3/mol-cations
 n_mole_mix = np.array([0.62, 0.48]) # having different "n"s would be incorrect for a solid solution, but this does a slightly better job than assuming the same number of moles mixing for each "endmember"... this model is not strictly thermodynamically correct anyway.
