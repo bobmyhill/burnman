@@ -30,7 +30,6 @@ def _ideal_activities_fct(molar_fractions, endmember_occupancies, n_endmembers, 
                                      constants.gas_constant)
     return normalisation_constants * a
 
-@jit
 def _non_ideal_hessian_fct(phi, molar_fractions, n_endmembers, alpha, W):
     q = np.eye(n_endmembers) - phi*np.ones((n_endmembers, n_endmembers))
     sum_pa = np.sum(np.dot(molar_fractions, alpha))
@@ -38,7 +37,6 @@ def _non_ideal_hessian_fct(phi, molar_fractions, n_endmembers, alpha, W):
     hess += hess.T
     return hess
 
-@jit
 def _non_ideal_interactions_fct(phi, molar_fractions, n_endmembers, alpha, W):
     # -sum(sum(qi.qj.Wij*)
     # equation (2) of Holland and Powell 2003
@@ -59,14 +57,14 @@ def _non_ideal_hessian_subreg(p, n_endmembers, W):
                     djl = 1. if j==l else 0.
                     dim = 1. if i==m else 0.
                     djm = 1. if j==m else 0.
-                    
+
 
                     hess[l,m] += W[i,j]*((djl*djm*p[i] - dil*dim*p[j]) +
                                          (dil*djm + djl*dim) * (p[j] - p[i]) +
                                          (djl + djm)*(p[i]*(p[i] - 2.*p[j])) -
                                          (dil + dim)*(p[j]*(p[j] - 2.*p[i])) +
-                                         3.*p[i]*p[j]*(p[j] - p[i]) + 
-                                         (((dil + dim) - p[i]) * 
+                                         3.*p[i]*p[j]*(p[j] - p[i]) +
+                                         (((dil + dim) - p[i]) *
                                           ((djl + djm) - p[j]) + p[i]*p[j])/2.)
     return hess
 
@@ -113,11 +111,11 @@ class SolutionModel(object):
     a solution model for defining how the endmembers in the solid solution
     interact.
 
-    A user wanting a new solution model should define the functions included 
-    in the base class. All of the functions in the base class return zero, 
-    so if the user-defined solution model does not implement them, 
-    they essentially have no effect, and the Gibbs free energy and molar 
-    volume of a solid solution will be equal to the weighted arithmetic 
+    A user wanting a new solution model should define the functions included
+    in the base class. All of the functions in the base class return zero,
+    so if the user-defined solution model does not implement them,
+    they essentially have no effect, and the Gibbs free energy and molar
+    volume of a solid solution will be equal to the weighted arithmetic
     averages of the different endmember values.
     """
 
@@ -333,7 +331,7 @@ class MechanicalSolution (SolutionModel):
     An extremely simple class representing a mechanical solution model.
     A mechanical solution experiences no interaction between endmembers.
     Therefore, unlike ideal solutions there is no entropy of mixing;
-    the total gibbs free energy of the solution is equal to the 
+    the total gibbs free energy of the solution is equal to the
     dot product of the molar gibbs free energies and molar fractions
     of the constituent materials.
     """
@@ -353,7 +351,7 @@ class MechanicalSolution (SolutionModel):
 
     def excess_enthalpy(self, pressure, temperature, molar_fractions):
         return 0.
-    
+
     def excess_partial_gibbs_free_energies(self, pressure, temperature, molar_fractions):
         return np.zeros_like(molar_fractions)
 
@@ -370,7 +368,7 @@ class MechanicalSolution (SolutionModel):
         return np.ones_like(molar_fractions)
 
 
-    
+
 class IdealSolution (SolutionModel):
 
     """
@@ -416,7 +414,7 @@ class IdealSolution (SolutionModel):
 
     def configurational_entropy(self, molar_fractions):
         site_occupancies = np.dot(molar_fractions, self.endmember_occupancies)
-        conf_entropy = - constants.gas_constant * (site_occupancies * 
+        conf_entropy = - constants.gas_constant * (site_occupancies *
                                                    self.site_multiplicities *
                                                    logish(site_occupancies)).sum(-1)
         return conf_entropy
@@ -455,11 +453,11 @@ class IdealSolution (SolutionModel):
 
 
     def _ideal_activities(self, molar_fractions):
-        return _ideal_activities_fct(molar_fractions, 
-                                     self.endmember_occupancies, 
-                                     self.n_endmembers, 
-                                     self.n_occupancies, 
-                                     self.site_multiplicities, 
+        return _ideal_activities_fct(molar_fractions,
+                                     self.endmember_occupancies,
+                                     self.n_endmembers,
+                                     self.n_occupancies,
+                                     self.site_multiplicities,
                                      self.endmember_configurational_entropies)
 
     def activity_coefficients(self, pressure, temperature, molar_fractions):
@@ -652,7 +650,7 @@ class SubregularSolution (IdealSolution):
         non_ideal_volumes = self._non_ideal_function(self.Wv, molar_fractions)
         return non_ideal_volumes
 
-    
+
     def gibbs_hessian(self, pressure, temperature, molar_fractions):
         n = len(molar_fractions)
         ideal_entropy_hessian = IdealSolution._ideal_entropy_hessian(self, temperature, molar_fractions)
