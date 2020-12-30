@@ -269,14 +269,15 @@ ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
 tfig, tax = ternary.figure()
 fontsize = 10
 tax.ax.axis("off")
-tax.gridlines(color="blue", multiple=0.1)
+tax.gridlines(color="grey", linestyle='-', multiple=0.1)
 tax.ticks(multiple=0.2,offset=0.02, tick_formats="%.1f")
 tax.right_axis_label("Fe-endmember", fontsize=fontsize, offset=0.14)
 tax.left_axis_label("Mg-endmember", fontsize=fontsize, offset=0.14)
 tax.bottom_axis_label("volatile", fontsize=fontsize, offset=0.14)
 
+FFM_plot = 0.07
 for Fe_over_Fe_plus_Mg in np.linspace(0.01, 0.1, 10):
-    for X_vol_bulk in np.linspace(0.1, 0., 11):
+    for X_vol_bulk in np.linspace(0.1, 0., 6):
 
         X_Fe_bulk = Fe_over_Fe_plus_Mg*(1. - X_vol_bulk)
 
@@ -292,7 +293,8 @@ for Fe_over_Fe_plus_Mg in np.linspace(0.01, 0.1, 10):
                                                                                           melting_entropies,
                                                                                           melting_volumes,
                                                                                           n_mole_mix)
-        if Fe_over_Fe_plus_Mg == 0.08:
+
+        if Fe_over_Fe_plus_Mg == FFM_plot:
             ax[0].plot(temperatures, molar_f_liq, label='$x^{{bulk}}_{{volatile}}$: {0:.2f}'.format(X_vol_bulk))
             ax[1].plot(temperatures, Xls/(1.-Xlv), label='$x^{{bulk}}_{{volatile}}$: {0:.2f}'.format(X_vol_bulk))
             ax[2].plot(temperatures, Xss, label='$x^{{bulk}}_{{volatile}}$: {0:.2f}'.format(X_vol_bulk))
@@ -302,8 +304,31 @@ for Fe_over_Fe_plus_Mg in np.linspace(0.01, 0.1, 10):
 
             tax.plot(np.array([Xlv, Xls, 1. - Xls - Xlv]).T, linewidth=2.0,
                               label='$x^{{bulk}}_{{volatile}}$: {0:.2f}'.format(X_vol_bulk))
-        #else:
-        #    plt.plot(temperatures, molar_f_liq)
+
+Fe_over_Fe_plus_Mg = FFM_plot
+
+temperatures = np.linspace(3250., 5000., 8)
+X_vol_bulks = np.linspace(0.1, 0.005, 101)
+
+for j, T in enumerate(temperatures):
+
+    Xls = np.empty_like(X_vol_bulks)
+    Xss = np.empty_like(X_vol_bulks)
+    Xlv = np.empty_like(X_vol_bulks)
+    molar_f_liq = np.empty_like(X_vol_bulks)
+
+    for i, X_vol_bulk in enumerate(X_vol_bulks):
+        X_Fe_bulk = Fe_over_Fe_plus_Mg*(1. - X_vol_bulk)
+        Xls[i], Xss[i], Xlv[i], molar_f_liq[i] = liq_sol_molar_compositions_from_bulk(P, T, X_Fe_bulk, X_vol_bulk,
+                                                                                      melting_reference_pressure,
+                                                                                      melting_temperatures,
+                                                                                      melting_entropies,
+                                                                                      melting_volumes,
+                                                                                      n_mole_mix)
+
+    print(np.array([Xlv, Xls, 1. - Xls - Xlv]).T)
+    tax.plot(np.array([Xlv, Xls, 1. - Xls - Xlv]).T, linewidth=2.0, color='black')
+
 tax.legend()
 ax[5].legend()
 for i in range(3):

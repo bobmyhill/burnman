@@ -4,7 +4,7 @@ import numpy as np
 gas_constant = 8.31446
 
 #################### BEGIN EOS PARAMETERS #######################
-mpv_params={'name': 'mpv',
+mpv_params={'name': 'mbdg',
             'a_0': 1.87e-05,
             'K_0': 251.0e9,
             'Pref': 100.0e9,
@@ -32,12 +32,46 @@ fpv_params={'a_0': 1.87e-05,
             'T_einstein': 418.1,
             'Kdprime_0': -1.6e-11,
             'V_0': 2.534e-05,
-            'name': 'fpv',
+            'name': 'fbdg',
             'molar_mass': 0.1319287,
             'S_Pref': 95.0,
             'equation_of_state': 'mod_hp_tmt',
             'n': 5.0,
             'formula': {'Si': 1.0, 'Fe': 1.0, 'O': 3.0}}
+
+apv_params={'Pref': 100.0e9,
+            'T_0': 298.15,
+            'T_einstein': 418.1, # copied from fpv
+            'V_0': 2.591e-05, # Myhill, 2018
+            'K_0': 223.0e9,  # Myhill, 2018
+            'Kprime_0': 4.03, # Myhill, 2018
+            'Kdprime_0': -4.03/223e9, # Holland + Powell heuristic
+            'a_0': 1.87e-05,  # copied from fpv
+            'name': 'abdg',
+            'molar_mass': 0.10196,
+            'H_Pref': -1082910.0, # copied from fpv
+            'S_Pref': 95.0, # copied from fpv
+            'Cp_Pref': np.array([ 1.39546209e+02,  6.36191292e-03, -4.13886524e+06, -4.64775577e+02]),  # copied from fpv
+            'equation_of_state': 'mod_hp_tmt',
+            'n': 5.0,
+            'formula': {'Al': 2.0, 'O': 3.0}}
+
+fapv_params={'Pref': 100.0e9,
+            'T_0': 298.15,
+            'T_einstein': 418.1, # copied from fpv
+            'V_0': 2.768e-05, # Myhill, 2018
+            'K_0': 207.0e9,  # Myhill, 2018
+            'Kprime_0': 3.73, # Myhill, 2018
+            'Kdprime_0': -3.73/207e9, # Holland + Powell heuristic
+            'a_0': 1.87e-05,  # copied from fpv
+            'name': 'fabdg',
+            'molar_mass': 0.1308247,
+            'H_Pref': -1082910.0, # copied from fpv
+            'S_Pref': 95.0, # copied from fpv
+            'Cp_Pref': np.array([ 1.39546209e+02,  6.36191292e-03, -4.13886524e+06, -4.64775577e+02]), # copied from fpv
+            'equation_of_state': 'mod_hp_tmt',
+            'n': 5.0,
+            'formula': {'Al': 1.0, 'Fe': 1.0, 'O': 3.0}}
 
 
 per_params={'a_0': 3.11e-05,
@@ -68,7 +102,7 @@ wus_params={'a_0': 3.22e-05,
             'T_einstein': 297.6,
             'Kdprime_0': -3.2e-11,
             'V_0': 1.206e-05,
-            'name': 'fper',
+            'name': 'wus',
             'molar_mass': 0.0718444,
             'S_Pref': 58.6,
             'equation_of_state': 'mod_hp_tmt',
@@ -85,7 +119,7 @@ fe_mantle_melt_params={'a_0': 2.9614332469401705e-05,
                        'T_einstein': 505.75,
                        'Kdprime_0': -3.9742163085937504e-11,
                        'V_0': 1.2325484447664221e-05,
-                       'name': 'fe mantle',
+                       'name': 'Fe-bearing melt',
                        'molar_mass': 0.0707624708,
                        'S_Pref': 95.0299295525918,
                        'equation_of_state': 'mod_hp_tmt',
@@ -102,7 +136,7 @@ mg_mantle_melt_params={'a_0': 2.0572748142847914e-05,
                        'T_einstein': 558.0924045503805,
                        'Kdprime_0': -2.1381292724609374e-11,
                        'V_0': 1.2180438865657191e-05,
-                       'name': 'mg mantle',
+                       'name': 'Mg-bearing melt',
                        'molar_mass': 0.048592178,
                        'S_Pref': 64.88469713598576,
                        'equation_of_state': 'mod_hp_tmt',
