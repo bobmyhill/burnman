@@ -85,6 +85,25 @@ class SolidSolution(Mineral):
             raise Exception("Not all endmembers of this solid solution have a formula in their params dictionary.")
 
         # Set default solution model type
+        self.set_model()
+
+        # Number of endmembers in the solid solution
+        self.n_endmembers = len(self.endmembers)
+        try:
+            self.endmember_names = [mbr[0].name for mbr in self.endmembers]
+        except:
+            pass
+
+        # Equation of state
+        for i in range(self.n_endmembers):
+            self.endmembers[i][0].set_method(
+                self.endmembers[i][0].params['equation_of_state'])
+
+        # Molar fractions
+        if molar_fractions is not None:
+            self.set_composition(molar_fractions)
+
+    def set_model(self):
         if hasattr(self, 'solution_type'):
             if self.solution_type == 'mechanical':
                 self.solution_model = MechanicalSolution(self.endmembers)
@@ -115,22 +134,6 @@ class SolidSolution(Mineral):
                         "Solution model type " + self.solution_type + "not recognised.")
         else:
             self.solution_model = SolutionModel()
-
-        # Number of endmembers in the solid solution
-        self.n_endmembers = len(self.endmembers)
-        try:
-            self.endmember_names = [mbr[0].name for mbr in self.endmembers]
-        except:
-            pass
-
-        # Equation of state
-        for i in range(self.n_endmembers):
-            self.endmembers[i][0].set_method(
-                self.endmembers[i][0].params['equation_of_state'])
-
-        # Molar fractions
-        if molar_fractions is not None:
-            self.set_composition(molar_fractions)
 
     def get_endmembers(self):
         return self.endmembers

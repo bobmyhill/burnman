@@ -74,8 +74,12 @@ class gridded_simplex(object):
 
 
 class SolutionPolytope(object):
-    def __init__(self, equalities, return_fractions=False):
+    def __init__(self, equalities,
+                 independent_endmember_occupancies=None,
+                 return_fractions=False):
+        self._independent_endmember_occupancies = independent_endmember_occupancies
         self.return_fractions = return_fractions
+
         self.polytope_matrix = cdd.Matrix(equalities,
                                           linear=True,
                                           number_type='fraction')
@@ -110,7 +114,6 @@ class SolutionPolytope(object):
             v = np.asarray(self.raw_vertices, dtype=float)
         return v[:, 1:] / v[:, 0, np.newaxis]
 
-
     def _independent_row_indices(self, array):
         m = Matrix(array.shape[0], array.shape[1], lambda i, j: Rational(array[i,j]).limit_denominator(1000))
         _, pivots, swaps = m._row_reduce(iszerofunc=lambda x: x.is_zero,
@@ -120,10 +123,24 @@ class SolutionPolytope(object):
             indices[swap] = indices[swap[::-1]]
         return indices[:len(pivots)]
 
+
+    @property
+    def independent_row_indices(self):
+        if self._independent_endmember_occupancies is None:
+            arr = self.endmember_occupancies
+            return self._independent_row_indices(arr)
+        else:
+            return [np.argmin(m)
+                    for m in [np.max(self.endmember_occupancies - o, axis=1)
+                              for o in self._independent_endmember_occupancies]]
+
     @property
     def independent_endmember_occupancies(self):
-        arr = self.endmember_occupancies
-        return arr[self._independent_row_indices(arr)]
+        if self._independent_endmember_occupancies is None:
+            arr = self.endmember_occupancies
+            return arr[self._independent_row_indices(arr)]
+        else:
+            return self._independent_endmember_occupancies
 
     def independent_endmember_proportions(self, endmember_occupancies):
         ind = self.independent_endmember_occupancies
@@ -242,14 +259,16 @@ def polytope_from_solution_model(solution_model, return_fractions=False):
     n_sites = len(solution_model.sites)
     nullspace = np.array(Matrix(solution_model.endmember_occupancies).nullspace(),
                          dtype=np.float)
-
     equalities = np.zeros((len(nullspace)+1, solution_model.n_occupancies+1))
     equalities[0, 0] = -n_sites
     equalities[0, 1:] = 1
 
     if len(nullspace) > 0:
         equalities[1:, 1:] = nullspace
-    return SolutionPolytope(equalities, return_fractions)
+
+    return SolutionPolytope(equalities,
+                            solution_model.endmember_occupancies,
+                            return_fractions)
 
 
 def independent_row_indices(array):

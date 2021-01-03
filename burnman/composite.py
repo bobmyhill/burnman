@@ -69,6 +69,7 @@ class Composite(Material):
 
         assert(len(phases) > 0)
         self.phases = phases
+        self.solution_transformations = [None for ph in self.phases]
 
         if not hasattr(self, 'n_moles'):
             self.n_moles = 1.
@@ -331,26 +332,36 @@ class Composite(Material):
             else:
                 return 0
 
+        def formula_to_array(formula, elements):
+            return [formula[e] if e in formula else 0 for e in elements]
+
+
         if elements is None:
             elements = self.element_set
 
         if excluded_endmembers is None:
             excluded_endmembers = [[]]*len(self.phases)
 
-        formulae = []
+        f_matrix = []
         for i, ph in enumerate(self.phases):
             if isinstance(ph, SolidSolution):
-                formulae.extend([f for j, f in enumerate(ph.endmember_formulae)
-                                 if j not in excluded_endmembers[i]])
+                s_matrix = [formula_to_array(f, elements)
+                            for j, f in enumerate(ph.endmember_formulae)
+                            if j not in excluded_endmembers[i]]
+                if self.solution_transformations[i] is not None:
+                    s_matrix = np.array(self.solution_transformations[i]).dot(np.array(s_matrix))
+                    s_matrix = [list(r) for r in s_matrix]
+                f_matrix.extend(s_matrix)
             elif isinstance(ph, Mineral):
                 if excluded_endmembers is not [0]:
-                    formulae.append(ph.formula)
+                    f_matrix.append(formula_to_array(ph.formula, elements))
             else:
                 raise Exception('Composite includes a phase which is neither an instance of a burnman.Mineral nor a burnman.SolidSolution.')
 
-        stoichiometric_matrix = Matrix( len(formulae), len(elements), matrix_func )
+        stoichiometric_matrix = Matrix(f_matrix)
 
         if calculate_subspaces:
+            stoichiometric_matrix = nsimplify(stoichiometric_matrix)
             S_leftnullspace = np.array(stoichiometric_matrix.T.nullspace()).astype(float)
             S_columnspace = np.array(stoichiometric_matrix.columnspace()).astype(float)
             stoichiometric_matrix = np.array(stoichiometric_matrix).astype(float)
