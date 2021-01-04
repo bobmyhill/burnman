@@ -1,11 +1,16 @@
 import numpy as np
-import burnman
-from burnman.processanalyses import compute_and_set_phase_compositions
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
 
 
 def get_assemblages(mineral_dataset):
     endmembers = mineral_dataset['endmembers']
-    child_solutions = mineral_dataset['child_solutions']
+    solutions = mineral_dataset['solutions']
 
     # Garnet-pyroxene partitioning data
     with open('data/Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp.dat', 'r') as f:
@@ -24,50 +29,48 @@ def get_assemblages(mineral_dataset):
         for datum in [expt_data[idx] for idx in run_indices]:
             master_id, run_id = datum[0:2]
             TC, Pkbar, t = list(map(float, datum[2:5]))
-            phase = datum[5]
+            phase_name = datum[5]
 
-            # composition = Si	Sierr	Al	Alerr	Mg	Mgerr	Ca	Caerr
-            cs = list(map(float, datum[6:]))
+            if phase_name in ['fo', 'sp']:
+                phases.append(endmembers[phase_name])
+            elif phase_name in ['opx', 'cpx', 'gt']:
+                phases.append(solutions[phase_name])
 
-            if phase == 'fo':
-                phases.append(endmembers['fo'])
-            elif phase == 'sp':
-                phases.append(endmembers['sp'])
-            elif phase == 'opx':
-                phases.append(child_solutions['oen_mgts_odi'])
-            elif phase == 'cpx':
-                phases.append(child_solutions['di_cen_cats'])
-            elif phase == 'gt':
-                phases.append(child_solutions['py_gr_gt'])
+                # composition = Si	Sierr	Al	Alerr	Mg	Mgerr	Ca	Caerr
+                Si, Sierr, Al, Alerr = list(map(float, datum[6:10]))
+                Mg, Mgerr, Ca, Caerr = list(map(float, datum[10:]))
+                Caerr = max([0.01, Caerr, 0.02*Ca])
+                Mgerr = max([0.01, Mgerr, 0.02*Mg])
+                Alerr = max([0.01, Alerr, 0.02*Al])
+                Sierr = max([0.01, Sierr, 0.02*Si])
+                store_composition(phases[-1],
+                                  ['Ca', 'Mg', 'Al', 'Si',
+                                   'Na', 'Fe', 'Fe_B', 'Fef_B'],
+                                  np.array([Ca, Mg, Al, Si,
+                                            0., 0., 0., 0.]),
+                                  np.array([Caerr, Mgerr, Alerr, Sierr,
+                                            1.e-5, 1.e-5, 1.e-5, 1.e-5]))
+
             else:
                 raise Exception('phase not recognised')
 
-            if type(phases[-1]) is burnman.SolidSolution:
-                c = np.array([cs[0], cs[2], cs[4], cs[6]])
-                sig_c = np.array([cs[1], cs[3], cs[5], cs[7]])
-                phases[-1].fitted_elements = ['Si', 'Al', 'Mg', 'Ca']
-                phases[-1].composition = c
-                phases[-1].compositional_uncertainties = np.array([max([0.01, sig_c[i], 0.02*c[i]])
-                                                                   for i in
-                                                                   range(4)])
-                # compositional uncertainties max of the reported uncertainty,
-                # 2 % of the reported value and 0.01
+        assemblage = AnalysedComposite(phases)
 
-        assemblage = burnman.Composite(phases)
+        # Convert P from kbar to Pa, T from C to K
         assemblage.experiment_id = 'Klemme_ONeill_2000_CMAS_{0}'.format(run_id)
         assemblage.nominal_state = np.array([Pkbar*1.e8,
-                                             TC+273.15])  # P TO Pa, T to K
+                                             TC+273.15])
         assemblage.state_covariances = np.array([[1.e8*1.e8, 0.], [0., 100.]])
 
-        compute_and_set_phase_compositions(assemblage)
-
-        assemblage.stored_compositions = ['composition not assigned']*n_phases
-        for k in range(n_phases):
-            try:
-                assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
-                                                     assemblage.phases[k].molar_fraction_covariances)
-            except AttributeError:  # fo and sp are endmembers
-                pass
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Klemme_ONeill_2000_CMAS_assemblages.append(assemblage)
 

@@ -41,7 +41,8 @@ def get_assemblages(mineral_dataset):
         store_composition(solutions['sp'],
                           ['Mg', 'Fe', 'Al', 'Fe_B', 'Mg_B', 'Si'],
                           np.array([p_mrw, 1. - p_mrw, 0., 0., 0., 0.5]),
-                          np.array([unc_mrw, unc_mrw, 1.e-6, 1.e-6, 1.e-6, 1.e-6]))
+                          np.array([unc_mrw, unc_mrw, 1.e-6, 1.e-6,
+                                    1.e-6, 1.e-6]))
 
         # Tweak compositions with 0.1% of a midpoint proportion
         # Do not consider (transformed) endmembers with < 5% abundance

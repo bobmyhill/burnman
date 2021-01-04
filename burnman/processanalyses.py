@@ -238,7 +238,13 @@ def compute_and_store_phase_compositions(assemblage, midpoint_proportion,
     for k in range(n_phases):
         if isinstance(assemblage.phases[k], SolidSolution):
             if False in (assemblage.phases[k].molar_fraction_covariances < 1.):
-                raise Exception(f'Oh No!\n{assemblage.phases[k].name}\n'
+                raise Exception(f'Error: The covariance matrix for the '
+                                f'endmember proportions of '
+                                f'{assemblage.phases[k].name} contains '
+                                f'elements which are unexpectedly large (>1).\n'
+                                f'You probably need to provide more '
+                                f'constraints in order to uniquely constrain '
+                                f'the composition of this phase.\n'
                                 f'{assemblage.phase_storage[k].fitted_elements}\n'
                                 f'{assemblage.phase_storage[k].composition}\n'
                                 f'{assemblage.phases[k].molar_fractions}\n'
@@ -246,8 +252,6 @@ def compute_and_store_phase_compositions(assemblage, midpoint_proportion,
 
             assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
                                                  assemblage.phases[k].molar_fraction_covariances)
-            # print(run_id, assemblage.phases[k].name,
-            #       assemblage.phases[k].molar_fractions)
 
 
 def declare_constrained_endmembers(assemblage, proportion_cutoff):

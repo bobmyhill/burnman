@@ -26,9 +26,11 @@ def get_assemblages(mineral_dataset):
         assemblage.experiment_id = 'Perkins_et_al_1981_MAS_{0}'.format(run_id)
 
         # Convert P to Pa from GPa
+        Perr = float(Perr)
+        Terr = float(Terr)
         assemblage.nominal_state = np.array([float(PGPa)*1.e9, float(TK)])
-        assemblage.state_covariances = np.array([[float(Perr)*float(Perr)*1.e18, 0.],
-                                                 [0., float(Terr)*float(Terr)]])
+        assemblage.state_covariances = np.array([[Perr*Perr*1.e18, 0.],
+                                                 [0., Terr*Terr]])
 
         xAl = float(Al_fraction)
 
@@ -36,7 +38,8 @@ def get_assemblages(mineral_dataset):
                           ['Mg', 'Al', 'Si', 'Fe', 'Ca', 'Na', 'Fe_B'],
                           np.array([(1. - xAl)/2., xAl, (1. - xAl)/2.,
                                     0., 0., 0., 0.]),
-                          np.array([0.025, 0.005, 0.005, 1.e-6, 1.e-6, 1.e-6, 1.e-6]))
+                          np.array([0.025, 0.005, 0.005,
+                                    1.e-6, 1.e-6, 1.e-6, 1.e-6]))
 
         # Tweak compositions with 0.1% of a midpoint proportion
         # Do not consider (transformed) endmembers with < 5% abundance

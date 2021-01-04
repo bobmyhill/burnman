@@ -1,16 +1,24 @@
 import numpy as np
-import burnman
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
+
 
 def get_assemblages(mineral_dataset):
     endmembers = mineral_dataset['endmembers']
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
 
     # garnet-bridgmanite-corundum data
     with open('data/Hirose_et_al_2001_MAS_ilm_gt_bdg.dat', 'r') as f:
-        ilm_bdg_gt_data = [line.split() for line in f if line.split() != [] and line[0] != '#']
+        ilm_bdg_gt_data = [line.split() for line in f
+                           if line.split() != [] and line[0] != '#']
 
-    delta_pressure = 2.e9 # Adjustment for Anderson -> Jamieson Au pressure scale
+     # Adjustment for Anderson -> Jamieson Au pressure scale
+    delta_pressure = 2.e9
 
     Hirose_et_al_2001_MAS_assemblages = []
 
@@ -22,35 +30,34 @@ def get_assemblages(mineral_dataset):
         pressure = float(PGPa)*1.e9 + delta_pressure
         temperature = float(TC) + 273.15
 
-        for (phase, Al) in [(phase1, ph1_Al2O3),
-                            (phase2, ph1_Al2O3)]:
+        for (phase_name, Al) in [(phase1, ph1_Al2O3),
+                                 (phase2, ph2_Al2O3)]:
             Al = float(Al)
-            c = np.array([(1. - Al)/2., Al, (1. - Al)/2.])
-            sig_c = np.array([float(0.01), float(0.01), float(0.01)])
+            Mg = (1. - Al)/2.
+            Si = (1. - Al)/2.
 
-            if phase == 'gt':
-                phases.append(child_solutions['py_dmaj_gt'])
-            elif phase == 'bdg':
-                phases.append(child_solutions['mg_al_bdg'])
+            phases.append(solutions[phase_name])
 
-            phases[-1].fitted_elements = ['Mg', 'Al', 'Si']
-            phases[-1].composition = c
-            phases[-1].compositional_uncertainties = sig_c
+            store_composition(solutions[phase_name],
+                              ['Mg', 'Al', 'Si', 'Na', 'Ca', 'Fe', 'Fef_B', 'O'],
+                              np.array([Mg, Al, Si, 0., 0., 0., 0., 1.5]),
+                              np.array([0.01, 0.01, 0.01, 1.e-5, 1.e-5,
+                                        1.e-5, 1.e-5, 1.e-5]))
 
-        assemblage = burnman.Composite(phases)
+        assemblage = AnalysedComposite(phases)
         assemblage.experiment_id = 'Hirose_2001_{0}'.format(i)
-        assemblage.nominal_state = np.array([pressure, temperature]) # CONVERT P TO PA, T to K
+        assemblage.nominal_state = np.array([pressure, temperature])
         assemblage.state_covariances = np.array([[5.e8*5.e8, 0.], [0., 100.]])
 
-        burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
-
-        assemblage.stored_compositions = ['composition not assigned']*len(assemblage.phases)
-        for k in range(len(phases)):
-            try:
-                assemblage.stored_compositions[k] = (assemblage.phases[k].molar_fractions,
-                                                     assemblage.phases[k].molar_fraction_covariances)
-            except:
-                pass
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Hirose_et_al_2001_MAS_assemblages.append(assemblage)
 

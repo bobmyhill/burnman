@@ -1,39 +1,54 @@
 import numpy as np
-import burnman
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
+
 
 def get_assemblages(mineral_dataset):
     endmembers = mineral_dataset['endmembers']
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
-
 
     # Garnet-pyroxene partitioning data
     with open('data/Gasparik_Newton_1984_MAS_opx_sp_fo.dat', 'r') as f:
-        opx_sp_fo_data = [line.split() for line in f if line.split() != [] and line[0] != '#']
-
+        opx_sp_fo_data = [line.split() for line in f
+                          if line.split() != [] and line[0] != '#']
 
     Gasparik_Newton_1984_MAS_assemblages = []
 
     for run_id, mix, TC, Pkbar, t, N, Mg, Al, Si in opx_sp_fo_data:
 
-        assemblage = burnman.Composite([child_solutions['oen_mgts'],
+        Mg = float(Mg)
+        Al = float(Al)
+        Si = float(Si)
+
+        assemblage = AnalysedComposite([solutions['opx'],
                                         endmembers['sp'], endmembers['fo']])
         assemblage.experiment_id = 'Gasparik_Newton_1984_MAS_{0}'.format(run_id)
+        # Convert P from kbar to Pa, T from C to K
         assemblage.nominal_state = np.array([float(Pkbar)*1.e8,
-                                             float(TC)+273.15]) # CONVERT P TO PA, T to K
-        assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.], [0., 100.]])
+                                             float(TC)+273.15])
+        assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.],
+                                                 [0., 100.]])
 
+        store_composition(solutions['opx'],
+                          ['Mg', 'Al', 'Si', 'Na', 'Ca', 'Fe', 'Fe_B'],
+                          np.array([Mg, Al, Si, 0., 0., 0., 0.]),
+                          np.array([0.02, 0.02, 0.02, 1.e-5, 1.e-5,
+                                    1.e-5, 1.e-5]))
 
-        child_solutions['oen_mgts'].fitted_elements = ['Mg', 'Al', 'Si']
-        child_solutions['oen_mgts'].composition = np.array([float(Mg), float(Al), float(Si)])
-        child_solutions['oen_mgts'].compositional_uncertainties = np.array([0.02, 0.02, 0.02])
-
-        burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
-
-
-        assemblage.stored_compositions = ['composition not assigned']*len(assemblage.phases)
-        assemblage.stored_compositions[0] = (assemblage.phases[0].molar_fractions,
-                                             assemblage.phases[0].molar_fraction_covariances)
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Gasparik_Newton_1984_MAS_assemblages.append(assemblage)
 

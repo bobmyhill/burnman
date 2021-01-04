@@ -606,7 +606,8 @@ def create_minerals():
                  'cpx': cpx_od,
                  'opx': opx_od,
                  'hpx': hpx_od,
-                 'bdg': bdg}
+                 'bdg': bdg,
+                 'cor': cor}
 
     # Add polytope stuff to each solution
     for name in solutions:

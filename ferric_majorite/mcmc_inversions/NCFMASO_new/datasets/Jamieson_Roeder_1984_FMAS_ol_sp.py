@@ -1,10 +1,15 @@
 import numpy as np
-import burnman
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
 
 
 def get_assemblages(mineral_dataset):
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
 
     # olivine-spinel partitioning data
     with open('data/Jamieson_Roeder_1984_FMAS_ol_sp.dat', 'r') as f:
@@ -18,32 +23,45 @@ def get_assemblages(mineral_dataset):
     for P, T, Mg1, Mgerr1, Mg2, Mgerr2 in ol_sp_data:
         run_id += 1
 
-        p_fo = float(Mg1) / 100.
-        p_sp = float(Mg2) / 100.
+        Mg_ol = float(Mg1) / 100.
+        Fe_ol = 1. - Mg_ol
 
-        # Here we make the error sqrt(16) times bigger
+        Mg_sp = float(Mg2) / 100.
+        Fe_sp = 1. - Mg_sp
+
+        # Here we make the uncertainties 4 times bigger
         # to more reasonably match the extent of disequilibrium
-        ol_cov = float(Mgerr1)*float(Mgerr1) / 10000. * 16. # sqrt2
-        sp_cov = float(Mgerr2)*float(Mgerr2) / 10000. * 16. # sqrt2
+        Mg_ol_unc = float(Mgerr1) / 100. * 4.
+        Mg_sp_unc = float(Mgerr2) / 100. * 4.
 
-        assemblage = burnman.Composite([solutions['ol'],
-                                        child_solutions['sp_herc']])
+        store_composition(solutions['ol'],
+                          ['Mg', 'Fe'],
+                          np.array([Mg_ol, Fe_ol]),
+                          np.array([Mg_ol_unc, Mg_ol_unc]))
 
+        store_composition(solutions['sp'],
+                          ['Mg', 'Fe', 'Al', 'Fef_A', 'Fef_B', 'Si'],
+                          np.array([Mg_sp, Fe_sp, 2., 0., 0., 0.]),
+                          np.array([Mg_sp_unc, Mg_sp_unc, 1.e-5,
+                                    1.e-5, 1.e-5, 1.e-5]))
+
+        assemblage = AnalysedComposite([solutions['ol'],
+                                        solutions['sp']])
+
+        # Convert pressure from GPa to Pa
         assemblage.experiment_id = 'Jamieson_Roeder_1984_FMAS_{0}'.format(run_id)
-        assemblage.nominal_state = np.array([float(P)*1.e9, float(T)])  # CONVERT PRESSURE TO GPA
+        assemblage.nominal_state = np.array([float(P)*1.e9, float(T)])
         assemblage.state_covariances = np.array([[1.e4*1.e4, 0.], [0., 100.]])
 
-        solutions['ol'].set_composition(np.array([p_fo, 1. - p_fo]))
-        child_solutions['sp_herc'].set_composition(np.array([p_sp, 1. - p_sp]))
-
-        solutions['ol'].molar_fraction_covariances = np.array([[ol_cov, -ol_cov],
-                                                               [-ol_cov, ol_cov]])
-        child_solutions['sp_herc'].molar_fraction_covariances = np.array([[sp_cov, -sp_cov],
-                                                                          [-sp_cov, sp_cov]])
-
-        assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
-                                           assemblage.phases[k].molar_fraction_covariances)
-                                          for k in range(2)]
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Jamieson_Roeder_1984_FMAS_ol_sp_assemblages.append(assemblage)
 
