@@ -14,6 +14,26 @@ if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
 import burnman
 from burnman.solidsolution import SolidSolution as Solution
 from burnman.processanalyses import create_polytope_attributes
+from burnman.processanalyses import create_reaction_matrix
+
+
+def print_solution_info(solution):
+    print(solution.name)
+    print('Reactions:')
+    for rxn in solution.rxn_matrix:
+        s = ''
+        for i, v in enumerate(rxn):
+            if v < -1.e-12:
+                s += f'{-v} {solution.endmember_names[i]} + '
+
+        s = s[:-3]
+        s += ' = '
+        for i, v in enumerate(rxn):
+            if v > 1.e-12:
+                s += f'{v} {solution.endmember_names[i]} + '
+        s = s[:-3]
+    print(s)
+    print('')
 
 
 def create_minerals():
@@ -477,7 +497,13 @@ def create_minerals():
                    energy_interaction=[[16.7e3]],
                    volume_interaction=[[0.e-7]])
 
-    spinel = Solution(name='spinel',
+    # Note: The following model has Fe-Mg order-disorder
+    # but we ignore it in the inversion because all of
+    # the observed spinels were either mrw-frw-(mt) or
+    # sp-herc-(mt)
+    # The Woodland study is frustrating, as the only study with
+    # significant mt-frw solid solution, requiring Fe2+-Fe3+ order-disorder
+    spinel = Solution(name='spinel with order-disorder',
                       solution_type='symmetric',
                       endmembers=[[sp, '[Al7/8Mg1/8]2[Mg3/4Al1/4]O4'],
                                   [herc, '[Al7/8Fe1/8]2[Fe3/4Al1/4]O4'],
@@ -617,7 +643,8 @@ def create_minerals():
     for name in solutions:
         if 'order-disorder' in solutions[name].name:
             solutions[name].ordered = True
-            print(solutions[name].name)
+            create_reaction_matrix(solutions[name])
+            print_solution_info(solutions[name])
         else:
             solutions[name].ordered = False
 

@@ -38,21 +38,12 @@ def get_assemblages(mineral_dataset):
                           np.array([p_mwd, 1. - p_mwd]),
                           np.array([unc_mwd, unc_mwd]))
 
+        # assume pure ringwoodite, so Mg and Fe only on A, no Fe3+
         store_composition(solutions['sp'],
                           ['Mg', 'Fe', 'Al', 'Fe_B', 'Mg_B', 'Si'],
                           np.array([p_mrw, 1. - p_mrw, 0., 0., 0., 0.5]),
                           np.array([unc_mrw, unc_mrw, 1.e-6, 1.e-6,
                                     1.e-6, 1.e-6]))
-
-        # Tweak compositions with 0.1% of a midpoint proportion
-        # Do not consider (transformed) endmembers with < 5% abundance
-        # in the solid solution. Copy the stored compositions from
-        # each phase to the assemblage storage.
-        compute_and_store_phase_compositions(assemblage,
-                                             midpoint_proportion,
-                                             constrain_endmembers,
-                                             proportion_cutoff,
-                                             copy_storage=True)
 
         Pvar = np.power(float(PSpezerr)*1.e9, 2.)
         Tvar = 25.*25.
@@ -64,6 +55,17 @@ def get_assemblages(mineral_dataset):
                                              float(TK)])
         assemblage.state_covariances = np.array([[Pvar, 0.],
                                                  [0., Tvar]])
+
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Tsujino_et_al_2019_FMS_wad_ring_assemblages.append(assemblage)
     return Tsujino_et_al_2019_FMS_wad_ring_assemblages

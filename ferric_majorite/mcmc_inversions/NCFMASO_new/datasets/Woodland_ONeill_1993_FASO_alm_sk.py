@@ -35,10 +35,16 @@ def get_assemblages(mineral_dataset):
                 phases.append(endmembers[phase])
             elif phase in ['opx', 'sp', 'gt']:
                 phases.append(solutions[phase])
+                if phase == 'opx':  # we add oxygen as our constraint on Fe3+
+                    nO = 6.
+                elif phase == 'sp':
+                    nO = 4.
+                elif phase == 'gt':
+                    nO = 12.
                 store_composition(phases[-1],
-                                  ['Al', 'Fe', 'Si', 'Mg', 'Ca', 'Na', 'Fe_B'],
+                                  ['Al', 'Fe', 'Si', 'Mg', 'Ca', 'Na', 'O'],
                                   np.array([c[0], c[1]+c[2], c[3],
-                                            0., 0., 0., 0.]),
+                                            0., 0., 0., nO]),
                                   np.array([0.01]*7))
             else:
                 raise Exception('{0} not recognised'.format(phase))
@@ -65,6 +71,7 @@ def get_assemblages(mineral_dataset):
             # Do not consider (transformed) endmembers with < 5% abundance
             # in the solid solution. Copy the stored compositions from
             # each phase to the assemblage storage.
+            assemblage.set_state(*assemblage.nominal_state)
             compute_and_store_phase_compositions(assemblage,
                                                  midpoint_proportion,
                                                  constrain_endmembers,

@@ -27,7 +27,7 @@ def remove_redundant_inequalities(inequalities_matrix, inequalities_vector):
     # We want to test if there is any solution to the additional constraint
     # Sx >= -t
     # If not, that constraint is redundant
-    
+
     # Set up bounds and null vector for the linear programming problem
     n_dim = len(inequalities_matrix[0])
     bounds = [[None, None] for j in range(n_dim)]
@@ -39,7 +39,7 @@ def remove_redundant_inequalities(inequalities_matrix, inequalities_vector):
 
     A = np.copy(inequalities_matrix)
     b = np.copy(inequalities_vector)
-    
+
     # Sweep forward and backward to remove all redundant constraints
     for dirn in ['forward', 'backward']:
         A_build = np.copy(A[0,np.newaxis])
@@ -47,13 +47,13 @@ def remove_redundant_inequalities(inequalities_matrix, inequalities_vector):
         for i in range(1, len(A)):
             A_ub = np.concatenate((A_build, -A[i,np.newaxis]))
             b_ub = np.concatenate((b_build, -b[i,np.newaxis]+1.e-10))
-        
+
             lp = linprog(c, A_ub=A_ub, b_ub=-b_ub, bounds=bounds)
-            
+
             if lp.success:
                 A_build = np.concatenate((A_build, A[i,np.newaxis]))
                 b_build = np.concatenate((b_build, b[i,np.newaxis]))
-                
+
         A = np.copy(A_build[::-1])
         b = np.copy(b_build[::-1])
 
@@ -68,22 +68,22 @@ def get_formulae_indices_endmembers(assemblage, elements):
     #Listify the elements and sort them so they have a consistent order.
     #This will be the ordering of the rows.  The ordering of the columns
     #will be the ordering of the endmembers as they are passed in.
-    
+
     formulae = []
     indices = []
     endmembers_per_phase = []
     for ph_idx, ph in enumerate(assemblage.phases):
         indices.append([])
-        
+
         # Add the endmembers if it is a solid solution
-        if isinstance(ph, SolidSolution):          
+        if isinstance(ph, SolidSolution):
             for e_idx, e in enumerate(ph.endmembers):
                 f = e[0].params['formula']
-                if all(keys in elements for keys in f.keys()): # make sure endmember is within 
+                if all(keys in elements for keys in f.keys()): # make sure endmember is within
                     formulae.append(f)
                     indices[-1].append(e_idx)
             endmembers_per_phase.append(len(ph.endmembers))
-                    
+
         # Add formula if it is a simple mineral
         elif isinstance(ph, Mineral):
             f = ph.params['formula']
@@ -93,14 +93,14 @@ def get_formulae_indices_endmembers(assemblage, elements):
                 endmembers_per_phase.append(1)
         else:
             raise Exception('Unsupported mineral type, can only read burnman.Mineral or burnman.SolidSolution')
-    
-        
+
+
     return formulae, indices, endmembers_per_phase
 
 def calculate_constraints(assemblage, indices):
     n_phase_mbrs = [len(i) for i in indices]
     n_mbrs = sum(n_phase_mbrs)
-    
+
     bounds = []
     n_constraints = 0
     n_raw_constraints = 0
@@ -115,7 +115,7 @@ def calculate_constraints(assemblage, indices):
             n_constraints += len(bounds[-1][0])
             n_raw_constraints += len(bounds[-1][0])
 
-            
+
     constraint_vector = np.zeros((n_constraints+2))
     constraint_matrix = np.zeros((n_constraints+2, n_mbrs+2)) # includes P and T
     raw_constraint_matrix = np.zeros((n_raw_constraints, n_mbrs))
@@ -138,12 +138,12 @@ def calculate_constraints(assemblage, indices):
             constraint_vector[cidx:cidx+m] = -bounds[i][0] # f(mbr[0]) = (1 - f(mbr[1:]))
             constraint_matrix[cidx:cidx+m,pidx+1+2:pidx+n+2] = np.einsum('i, j', bounds[i][0], np.ones_like(bounds[i][1:,0])) - bounds[i].T[:,1:]
             raw_constraint_matrix[rcidx:rcidx+m,pidx:pidx+n] = bounds[i].T
-            cidx += m 
+            cidx += m
         rcidx += m
         pidx += n
 
     constraint_matrix, constraint_vector = remove_redundant_inequalities(constraint_matrix, constraint_vector)
-        
+
     return constraint_vector, constraint_matrix, raw_constraint_matrix
 
 
@@ -155,21 +155,21 @@ def func_min_cdist(x, guess_proportions, baseline_endmember_amounts, reaction_ve
         n_mbrs = len(mbr_indices)
         if n_mbrs > 1:
             phase_amounts = endmember_amounts[i:i+n_mbrs]
-            
+
             if sum(phase_amounts) > np.finfo(float).eps:
                 diffs[i:i+n_mbrs] = phase_amounts/np.sum(phase_amounts) - guess_proportions[i:i+n_mbrs]
         i+=n_mbrs
-    
+
     return np.sum(diffs*diffs)
 
-def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm): 
-    # We use the nullspace to find the vector 
+def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
+    # We use the nullspace to find the vector
     # that minimizes the change in composition of the phases.
     # The molar proportions of the phases do not matter.
 
-    A = prm.stoichiometric_matrix[:,:] 
+    A = prm.stoichiometric_matrix[:,:]
     b = prm.bulk_composition_vector
-    
+
     # Check if the problem involves equality constraints
     # If it does, add the constraints to A, and a zero to b.
     reduced_nullspace = prm.stoic_nullspace[:,:] # matrix_copy
@@ -220,7 +220,7 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
                 guess_proportions[i:i+n_mbrs] = guess/np.sum(guess)
             i+=n_mbrs
         equality_matrix = num - np.einsum('ij, i->ij', denom, guess_proportions)
-        
+
         # convert back to simple endmembers
         baseline_endmember_amounts = Rinv.dot(baseline_proportions)
 
@@ -234,7 +234,7 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
 
         #assert(sol.status==1)
         assert(all([v > -eps for v in cons_fun(sol.x)]))
-        
+
         # add the reaction vector
         baseline_endmember_amounts += reaction_vectors.dot(sol.x)
     else:
@@ -314,7 +314,7 @@ def parameter_constraints_to_endmember_constraint_vector(constraint, indices):
         values.extend([nsimplify(constraint[0][start_idx] + constraint[1])]*n_mbrs)
 
     return (Matrix(values))
-    
+
 def get_endmember_amounts(assemblage, indices):
     x_ph = assemblage.n_moles*np.array(assemblage.molar_fractions)
     n_indices = sum([len(i) for i in indices])
@@ -328,8 +328,8 @@ def get_endmember_amounts(assemblage, indices):
                                              for idx in mbr_indices]
         j+=len(mbr_indices)
     return amounts
-    
-    
+
+
 def set_compositions_and_state_from_parameters(x, assemblage, indices, endmembers_per_phase):
     assemblage.set_state(x[0], x[1])
     i=2
@@ -350,7 +350,7 @@ def set_compositions_and_state_from_parameters(x, assemblage, indices, endmember
     assemblage.n_moles = sum(phase_amounts)
     assemblage.set_fractions(phase_amounts/assemblage.n_moles)
 
-    
+
 def F(x, assemblage, equality_constraints, prm):
     """
     x is a list of the pressure, temperature and compositional parameters
@@ -358,11 +358,11 @@ def F(x, assemblage, equality_constraints, prm):
 
     If equality_constraints[i][0] = 'P', F[i] = P - equality_constraints[i][1]
     If equality_constraints[i][0] = 'T', F[i] = T - equality_constraints[i][1]
-    
+
     If one of equality_constraints[i][0] = 'PT', then the constraint is equivalent to
-    the P-T point lying on an ellipse centered on a given point. 
-    
-    For each equality_constraints = X, then an extra 
+    the P-T point lying on an ellipse centered on a given point.
+
+    For each equality_constraints = X, then an extra
     """
 
     set_compositions_and_state_from_parameters(x, assemblage, prm.indices, prm.endmembers_per_phase)
@@ -398,7 +398,7 @@ def F(x, assemblage, equality_constraints, prm):
             eqns[i] = np.dot(eq_c[0], x) - eq_c[1] # i.e. Ax = b
         else:
             raise Exception('constraint type not recognised')
-        
+
     eqns[2:2+n_reactions] = np.dot(prm.stoic_nullspace, partial_gibbs_vector)
     eqns[2+n_reactions:] = np.dot(prm.stoic_colspace, (new_endmember_amounts - prm.baseline_endmember_amounts))
     return eqns # , assemblage.molar_gibbs*assemblage.n_moles #*scaling(equality_constraints, n_indices, n_reactions)
@@ -418,7 +418,7 @@ def jacobian(x, assemblage, equality_constraints, prm):
 
     # First, we find out the effect of the two constraint parameters on the
     # pressure and temperature functions:
-    # i.e. dF(i, constraints)/dx[0, 1]  
+    # i.e. dF(i, constraints)/dx[0, 1]
     full_hessian = np.zeros((n_indices+2, n_indices+2))
     for i, (type_c, eq_c) in enumerate(equality_constraints):
         if type_c == 'P': # dP/dx
@@ -427,7 +427,7 @@ def jacobian(x, assemblage, equality_constraints, prm):
             full_hessian[i,1] = 1. # full_hessian[i, j!=1] = 0
         elif type_c == 'S': # dS/dx
             # dS/dP = -aV, dS/dT = Cp/T
-            full_hessian[i,0:2] = [-assemblage.n_moles*assemblage.alpha*assemblage.molar_volume, 
+            full_hessian[i,0:2] = [-assemblage.n_moles*assemblage.alpha*assemblage.molar_volume,
                                    assemblage.n_moles*assemblage.molar_heat_capacity_p/x[1]]
             j=2
             for k, mbr_indices in enumerate(prm.indices):
@@ -451,14 +451,14 @@ def jacobian(x, assemblage, equality_constraints, prm):
                                                (assemblage.phases[k].partial_volumes[mbr_indices[1:]] -
                                                 assemblage.phases[k].partial_volumes[mbr_indices[0]]))
                 j+=n
-        elif type_c == 'PT_ellipse': 
+        elif type_c == 'PT_ellipse':
             v_scaled = (x[0:2] - eq_c[0])/eq_c[1]
             full_hessian[i,0:2] = v_scaled/(np.linalg.norm(v_scaled)*eq_c[1])
         elif type_c == 'X':
             full_hessian[i,:] = eq_c[0]
         else:
             raise Exception('constraint type not recognised')
-        
+
     # Next, let's get the effect of pressure and temperature on each of the independent reactions
     # i.e. dF(i, reactions)/dx[0] and dF(i, reactions)/dx[1]
     partial_volumes_vector = np.zeros((n_indices))
@@ -475,10 +475,10 @@ def jacobian(x, assemblage, equality_constraints, prm):
         j+=n
     reaction_volumes = np.dot(prm.stoic_nullspace, partial_volumes_vector)
     reaction_entropies = np.dot(prm.stoic_nullspace, partial_entropies_vector)
-    
+
     full_hessian[2:2+len(reaction_volumes),0] = reaction_volumes  # dGi/dP = deltaVi
-    full_hessian[2:2+len(reaction_volumes),1] = -reaction_entropies # dGi/dT = -deltaSi 
-    
+    full_hessian[2:2+len(reaction_volumes),1] = -reaction_entropies # dGi/dT = -deltaSi
+
     # Pressure and temperature have no effect on the bulk compositional constraints
     # i.e. dF(i, bulk)/dx[0] and dF(i, bulk)/dx[1] = 0
 
@@ -502,9 +502,9 @@ def jacobian(x, assemblage, equality_constraints, prm):
         else:
             dpi_dxj[j,j] = 1.
         j+=n
-        
+
     reaction_hessian = prm.stoic_nullspace.dot(comp_hessian).dot(dfi_dxj) # dfi_dxj converts the endmember hessian to the parameter hessian.
-    bulk_hessian = prm.stoic_colspace.dot(dpi_dxj) 
+    bulk_hessian = prm.stoic_colspace.dot(dpi_dxj)
     full_hessian[2:,2:] = np.concatenate((reaction_hessian, bulk_hessian))
     return full_hessian # np.einsum('ij, i->ij', full_hessian, scaling(equality_constraints, n_indices, n_reactions))
 
@@ -513,14 +513,14 @@ def lambda_bounds(dx, x, indices):
     x is a list of the pressure, temperature and compositional parameters
     (in that order).
 
-    dx is the proposed newton step 
+    dx is the proposed newton step
     """
     n_indices = sum([len(i) for i in indices])
     max_steps = np.ones((n_indices+2))*100000.
 
     # first two constraints are P and T
     max_steps[0:2] = [20.e9, 500.] # biggest reasonable P and T steps
-    
+
     j=2
     for i, mbr_indices in enumerate(indices):
         n = len(mbr_indices)
@@ -532,7 +532,7 @@ def lambda_bounds(dx, x, indices):
 
     max_lmda = min([1. if step <= max_steps[i] else max_steps[i]/step
                     for i, step in enumerate(np.abs(dx))])
-    
+
     #return (1.e-8, 1.)
     return (1.e-8, max_lmda)
 
@@ -554,7 +554,7 @@ def dxidxj(x, assemblage, equality_constraints):
 # compositional constraints. Note that constraints in the form
 # sum(ax + b)/sum(cx + d) - f = 0
 # can be recast as:
-# (a-fc)*x = fd - b 
+# (a-fc)*x = fd - b
 # which is less easy for a human to understand
 # (in terms of chemical constraints), but much easier to solve.
 def phase_proportion_constraint(phase, assemblage, indices, proportion):
@@ -567,7 +567,7 @@ def phase_proportion_constraint(phase, assemblage, indices, proportion):
         constraints.append(['X', [np.zeros((n_indices+2)), 0.]])
         constraints[-1][-1][0][proportion_indices] = -p
         constraints[-1][-1][0][proportion_indices[phase_idx]] += 1.
-            
+
     return constraints
 
 def phase_composition_constraint(phase, assemblage, indices, constraint):
@@ -601,7 +601,7 @@ def phase_composition_constraint(phase, assemblage, indices, constraint):
 def equilibrate(composition, assemblage, equality_constraints,
                 initial_state = None,
                 initial_state_from_assemblage = False,
-                initial_composition_from_assemblage = False, 
+                initial_composition_from_assemblage = False,
                 tol=1.e-3,
                 store_iterates=False, store_assemblage=False,
                 max_iterations=100.,verbose=True,
@@ -612,8 +612,8 @@ def equilibrate(composition, assemblage, equality_constraints,
     # rather than setting a default in the function call above.
     if initial_state is None:
         initial_state = [5.e9, 1000.]
-        
-    # First, overwrite initial state if the user wants it set from the assemblage    
+
+    # First, overwrite initial state if the user wants it set from the assemblage
     if initial_state_from_assemblage is True:
         try:
             initial_state = [assemblage.pressure, assemblage.temperature]
@@ -622,7 +622,7 @@ def equilibrate(composition, assemblage, equality_constraints,
 
     # Initialize a named tuple for the equilibration parameters
     prm = namedtuple('assemblage_parameters', [])
-    
+
     # Process elements
     prm.elements = list(set(composition.keys()))
     prm.formulae, prm.indices, prm.endmembers_per_phase = get_formulae_indices_endmembers(assemblage, prm.elements)
@@ -647,12 +647,12 @@ def equilibrate(composition, assemblage, equality_constraints,
             return 0
     prm.stoichiometric_matrix = Matrix( len(prm.elements), len(prm.formulae), f )
     prm.stoic_colspace = np.array([v.T[:] for v in prm.stoichiometric_matrix.T.columnspace()])
-    prm.stoic_nullspace = np.array([v.T[:] for v in prm.stoichiometric_matrix.nullspace()])    
+    prm.stoic_nullspace = np.array([v.T[:] for v in prm.stoichiometric_matrix.nullspace()])
     prm.constraint_vector, prm.constraint_matrix, prm.raw_constraint_matrix = calculate_constraints(assemblage, prm.indices)
 
 
 
-    
+
     # Check equality constraints have the correct structure
     # Convert them into versions readable by the function and jacobian functions
     equality_constraint_lists = []
@@ -675,7 +675,7 @@ def equilibrate(composition, assemblage, equality_constraints,
             if not isinstance(constraint[3], np.ndarray):
                 raise Exception('The last constraint parameter in equality {0} should be '
                                 'a float or numpy array'.format(i+1))
-            
+
             equality_constraint_lists.append(phase_composition_constraint(phase, assemblage,
                                                                           prm.indices, constraint))
         elif equality_constraints[i][0] == 'X':
@@ -687,7 +687,7 @@ def equilibrate(composition, assemblage, equality_constraints,
                                 'a float or numpy array'.format(i+1))
             equality_constraint_lists.append([['X', [constraint[0], p]]
                                               for p in constraint[1]])
-            
+
         elif (equality_constraints[i][0] == 'P' or
               equality_constraints[i][0] == 'T' or
               equality_constraints[i][0] == 'PT_ellipse' or
@@ -729,9 +729,9 @@ def equilibrate(composition, assemblage, equality_constraints,
                                                                               [equality_constraint_lists[0][0],
                                                                                equality_constraint_lists[1][0]],
                                                                               prm)
-        
+
         prm.initial_parameters = get_parameters_from_state_and_endmember_amounts(initial_state, assemblage, prm)
-        
+
     # Solve the system of equations, loop over input parameters
     sol_list = np.empty(shape=(n_c0, n_c1)+(0,)).tolist()
     for i_c0 in range(n_c0):
@@ -744,9 +744,9 @@ def equilibrate(composition, assemblage, equality_constraints,
                 if n_c1 > 1:
                     string += ' {0}/{1}'.format(i_c1+1, n_c1)
                 print(string+':')
-                
+
             equality_constraints = [equality_constraint_lists[0][i_c0], equality_constraint_lists[1][i_c1]]
-    
+
             # Set the initial proportions and compositions of the phases in the assemblage:
             set_compositions_and_state_from_parameters(prm.initial_parameters, assemblage,
                                                        prm.indices, prm.endmembers_per_phase)
@@ -760,19 +760,19 @@ def equilibrate(composition, assemblage, equality_constraints,
                                       linear_constraints = (prm.constraint_matrix, prm.constraint_vector),
                                       tol=tol,
                                       store_iterates=store_iterates, max_iterations=max_iterations)
-            
+
             if store_assemblage:
                 sol.assemblage = assemblage.copy()
 
             if verbose:
                 print(sol.text)
-                
+
             sol_list[i_c0][i_c1] = sol
 
             if (sol.success == False and exit_on_first_failure):
                 print('Exiting on first failure')
                 break
-                
+
             new_c0 = False
 
             prev = []
@@ -807,7 +807,7 @@ def equilibrate(composition, assemblage, equality_constraints,
                                                 enumerate(new_parameters[proportion_indices]) if v<0.]
                             if len(exhausted_phases) > 0 and verbose:
                                 print('A phase might be exhausted before the next step: {0}'.format(exhausted_phases))
-                        
+
                         updated_params = True
                 if not updated_params:
                     prm.baseline_endmember_amounts = calculate_baseline_endmember_amounts(assemblage,
@@ -818,9 +818,30 @@ def equilibrate(composition, assemblage, equality_constraints,
             continue # continue if the inner loop was not broken
         break
 
-    # Finally, make dimensions of sol_list equal the input dimensions 
+    # Finally, make dimensions of sol_list equal the input dimensions
     if len(sol_list[0]) == 1:
         sol_list = list(zip(*sol_list))[0]
     if len(sol_list) == 1:
         sol_list = sol_list[0]
     return sol_list, prm
+
+
+def equilibrium_order(solution):
+    """
+    Finds the equilibrium molar fractions of the solution
+    with the composition given by the input molar fractions and
+    at the input pressure and temperature.
+    """
+    assemblage = Composite([solution], [1.])
+    assemblage.set_state(solution.pressure, solution.temperature)
+    equality_constraints = [('P', solution.pressure),
+                            ('T', solution.temperature)]
+    f = solution.molar_fractions
+    sol, prm = equilibrate(solution.formula, assemblage,
+                           equality_constraints,
+                           initial_composition_from_assemblage=True,
+                           store_iterates=False, verbose=False)
+    if not sol.success:
+        print('Oh oh, could not find equilibrium order for one solution')
+        solution.set_composition(f)
+        # raise Exception('equilibrium state not found')

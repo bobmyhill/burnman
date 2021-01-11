@@ -32,9 +32,9 @@ def get_assemblages(mineral_dataset):
                               ['Mg', 'Ca', 'Al', 'Si',
                                'Fe', 'Na', 'Fef_B'],
                               np.array([Mggt, 1. - Mggt, 2./3., 1.,
-                                        0., 0., 0., 0.]),
+                                        0., 0., 0.]),
                               np.array([Mggterr, Mggterr, 1.e-5, 1.e-5,
-                                        1.e-5, 1.e-5, 1.e-5, 1.e-5]))
+                                        1.e-5, 1.e-5, 1.e-5]))
         else:
             raise Exception('Wrong number of columns')
 
@@ -77,6 +77,7 @@ def get_assemblages(mineral_dataset):
         # Do not consider (transformed) endmembers with < 5% abundance
         # in the solid solution. Copy the stored compositions from
         # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
                                              constrain_endmembers,

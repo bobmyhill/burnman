@@ -9,7 +9,6 @@ from global_constants import proportion_cutoff
 
 
 def get_assemblages(mineral_dataset):
-    endmembers = mineral_dataset['endmembers']
     solutions = mineral_dataset['solutions']
 
     # garnet-bridgmanite-corundum data
@@ -17,7 +16,7 @@ def get_assemblages(mineral_dataset):
         ilm_bdg_gt_data = [line.split() for line in f
                            if line.split() != [] and line[0] != '#']
 
-     # Adjustment for Anderson -> Jamieson Au pressure scale
+    # Adjustment for Anderson -> Jamieson Au pressure scale
     delta_pressure = 2.e9
 
     Hirose_et_al_2001_MAS_assemblages = []
@@ -53,6 +52,7 @@ def get_assemblages(mineral_dataset):
         # Do not consider (transformed) endmembers with < 5% abundance
         # in the solid solution. Copy the stored compositions from
         # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
                                              constrain_endmembers,

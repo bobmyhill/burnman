@@ -8,6 +8,7 @@ import numpy as np
 if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
     sys.path.insert(1, os.path.abspath('../../..'))
 import burnman
+from burnman.processanalyses import equilibrate_phase
 from burnman.processanalyses import assemblage_affinity_misfit
 
 
@@ -42,27 +43,6 @@ def param_list_to_string(params):
             string += ', '
     string += ']'
     return string
-
-
-def equilibrium_order(solution):
-    """
-    Finds the equilibrium molar fractions of the solution
-    with the composition given by the input molar fractions and
-    at the input pressure and temperature.
-    """
-    assemblage = burnman.Composite([solution], [1.])
-    assemblage.set_state(solution.pressure, solution.temperature)
-    equality_constraints = [('P', solution.pressure),
-                            ('T', solution.temperature)]
-    f = solution.molar_fractions
-    sol, prm = burnman.equilibrate(solution.formula, assemblage,
-                                   equality_constraints,
-                                   initial_composition_from_assemblage=True,
-                                   store_iterates=False, verbose=False)
-    if not sol.success:
-        print('Oh oh, could not find equilibrium order for one solution')
-        solution.set_composition(f)
-        # raise Exception('equilibrium state not found')
 
 
 def get_params(storage):
@@ -151,12 +131,6 @@ def minimize_func(params, dataset, storage, special_constraint_function):
     for i, assemblage in enumerate(dataset['assemblages']):
         # print(i, assemblage.experiment_id,
         # [phase.name for phase in assemblage.phases])
-        # Assign compositions and uncertainties to solid solutions
-        for j, phase in enumerate(assemblage.phases):
-            if isinstance(phase, burnman.SolidSolution):
-                phase.set_composition(assemblage.stored_compositions[j][0])
-                cov = assemblage.stored_compositions[j][1]
-                phase.molar_fraction_covariances = cov
 
         # Assign a state to the assemblage
         P, T = np.array(assemblage.nominal_state)
@@ -169,16 +143,16 @@ def minimize_func(params, dataset, storage, special_constraint_function):
 
         assemblage.set_state(P, T)
 
-        # Calculate equilibrium compositions
-        # and update stored stored_compositions
-        # TODO: adjust covariance matrix
+        # Assign compositions and uncertainties to solid solutions
         for j, phase in enumerate(assemblage.phases):
             if isinstance(phase, burnman.SolidSolution):
+                phase.set_composition(assemblage.stored_compositions[j][0])
+                cov = assemblage.stored_compositions[j][1]
+                phase.molar_fraction_covariances = cov
+
                 if phase.ordered:
-                    equilibrium_order(phase)
-                    new_c = (phase.molar_fractions,
-                             assemblage.stored_compositions[j][1])
-                    assemblage.stored_compositions[j] = new_c
+                    equilibrate_phase(assemblage, j)
+                    assemblage.stored_compositions[j][0] = phase.molar_fractions
 
         # Calculate the misfit and store it
         assemblage.chisqr = assemblage_affinity_misfit(assemblage)

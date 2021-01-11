@@ -1,16 +1,19 @@
 import numpy as np
-import burnman
-from burnman.processanalyses import compute_and_set_phase_compositions
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
 
 
 def get_assemblages(mineral_dataset):
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
 
     print('Warning: Perkins and Vielzeuf cpx could have Fe3+. '
           'Uncertainties guessed')
-    print('N.B. Only using ol-cpx equilibria with Ca in ol < 0.02 '
-          'and Ca in cpx > 0.475 (near di-hed join)')
+    print('N.B. Only using ol-cpx equilibria with Ca in ol < 0.02 ')
 
     # Garnet-pyroxene partitioning data
     cpx_ol_data = np.loadtxt('data/Perkins_Vielzeuf_1992_CFMS_ol_cpx.dat')
@@ -19,26 +22,37 @@ def get_assemblages(mineral_dataset):
 
     for run_id, (PGPa, TK, Cacpx, Mgcpx, Fecpx, Caol, Mgol, Feol) in enumerate(cpx_ol_data):
 
-        if Cacpx > 0.475 and Caol < 0.02:
-            assemblage = burnman.Composite([child_solutions['di_hed'],
-                                            solutions['ol']])
+        if Caol < 0.02:
+            assemblage = AnalysedComposite([solutions['ol'],
+                                            solutions['cpx']])
+
+            store_composition(solutions['ol'],
+                              ['Mg', 'Fe'],
+                              np.array([Mgol, Feol]),
+                              np.array([0.01, 0.01]))
+
+            # Ca+Mg+Fe sum to one
+            store_composition(solutions['cpx'],
+                              ['Ca', 'Mg', 'Fe', 'Si', 'Al', 'Na', 'Fef_B'],
+                              np.array([Cacpx, Mgcpx, Fecpx, 1., 0., 0., 0.]),
+                              np.array([0.01, 0.01, 0.01, 1.e-5,
+                                        1.e-5, 1.e-5, 1.e-5]))
+
             assemblage.experiment_id = 'Perkins_Vielzeuf_1992_CFMS_{0}'.format(run_id)
             assemblage.nominal_state = np.array([PGPa*1.e9, TK])  # GPa to Pa
             assemblage.state_covariances = np.array([[5.e8*5.e8, 0.],
                                                      [0., 100.]])
 
-            for (phase, comp) in [[solutions['ol'], np.array([Mgol, Feol])],
-                                  [child_solutions['di_hed'],
-                                   np.array([Mgcpx, Fecpx])]]:
-                phase.fitted_elements = ['Mg', 'Fe']
-                phase.composition = comp
-                phase.compositional_uncertainties = np.array([0.01, 0.01])
-
-            compute_and_set_phase_compositions(assemblage)
-
-            assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
-                                               assemblage.phases[k].molar_fraction_covariances)
-                                              for k in range(2)]
+            # Tweak compositions with 0.1% of a midpoint proportion
+            # Do not consider (transformed) endmembers with < 5% abundance
+            # in the solid solution. Copy the stored compositions from
+            # each phase to the assemblage storage.
+            assemblage.set_state(*assemblage.nominal_state)
+            compute_and_store_phase_compositions(assemblage,
+                                                 midpoint_proportion,
+                                                 constrain_endmembers,
+                                                 proportion_cutoff,
+                                                 copy_storage=True)
 
             Perkins_Vielzeuf_1992_CFMS_assemblages.append(assemblage)
 

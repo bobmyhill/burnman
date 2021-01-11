@@ -24,7 +24,6 @@ def get_assemblages(mineral_dataset):
     for i, run in enumerate(set_runs):
 
         run_indices = [idx for idx, d in enumerate(expt_data) if d[1] == run]
-        n_phases = len(run_indices)
         phases = []
         for datum in [expt_data[idx] for idx in run_indices]:
             master_id, run_id = datum[0:2]
@@ -66,6 +65,7 @@ def get_assemblages(mineral_dataset):
         # Do not consider (transformed) endmembers with < 5% abundance
         # in the solid solution. Copy the stored compositions from
         # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
                                              constrain_endmembers,

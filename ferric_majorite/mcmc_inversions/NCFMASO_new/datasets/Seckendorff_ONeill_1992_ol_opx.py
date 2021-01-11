@@ -1,17 +1,20 @@
 import numpy as np
-from fitting_functions import equilibrium_order
-import burnman
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
+
 
 def get_assemblages(mineral_dataset):
-    endmembers = mineral_dataset['endmembers']
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
-
 
     # Garnet-olivine partitioning data
     with open('data/Seckendorff_ONeill_1992_ol_opx.dat', 'r') as f:
-        ol_opx_data = [line.split() for line in f if line.split() != [] and line[0] != '#']
-
+        ol_opx_data = [line.split() for line in f
+                       if line.split() != [] and line[0] != '#']
 
     Seckendorff_ONeill_1992_assemblages = []
 
@@ -21,37 +24,44 @@ def get_assemblages(mineral_dataset):
         pressure = float(P)*1.e9
         temperature = float(T)
 
-        p_fo = 1. - float(Fe1)
-        p_en = 1. - float(Fe2)
-        ol_cov = float(Feerr1)*float(Feerr1) # sqrt2
-        opx_cov = float(Feerr2)*float(Feerr2) # sqrt2
+        Feol = float(Fe1)
+        Feopx = float(Fe2)
+        Mgol = 1. - Feol
+        Mgopx = 1. - Feopx
 
+        Feol_unc = float(Feerr1)
+        Feopx_unc = float(Feerr2)
 
-        assemblage = burnman.Composite([solutions['ol'],
-                                        child_solutions['mg_fe_opx']])
+        assemblage = AnalysedComposite([solutions['ol'],
+                                        solutions['opx']])
+
+        store_composition(solutions['ol'],
+                          ['Mg', 'Fe', 'Si'],
+                          np.array([Mgol, Feol, 0.5]),
+                          np.array([Feol_unc, Feol_unc, 1.e-5]))
+
+        store_composition(solutions['opx'],
+                          ['Mg', 'Fe', 'Si', 'Al', 'Ca', 'Na', 'Fef_B'],
+                          np.array([Mgopx, Feopx, 1.,
+                                    0., 0., 0., 0.]),
+                          np.array([Feopx_unc, Feopx_unc, 1.e-5,
+                                    1.e-5, 1.e-5, 1.e-5, 1.e-5]))
 
         assemblage.experiment_id = 'Seckendorff_ONeill_1992_{0}'.format(run_id)
-        assemblage.nominal_state = np.array([pressure, temperature]) # CONVERT PRESSURE TO GPA
-        assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.], [0., 100.]])
+        assemblage.nominal_state = np.array([pressure, temperature])
+        assemblage.state_covariances = np.array([[0.1e9*0.1e9, 0.],
+                                                 [0., 100.]])
 
-        solutions['ol'].set_composition(np.array([p_fo, 1. - p_fo]))
-        child_solutions['mg_fe_opx'].set_composition(np.array([p_en, 1. - p_en, 0.]))
-
-        solutions['ol'].molar_fraction_covariances = np.array([[ol_cov, -ol_cov],
-                                                               [-ol_cov, ol_cov]])
-
-
-        # The following adjusts compositions to reach equilibrium
-        child_solutions['mg_fe_opx'].set_state(pressure, temperature)
-        equilibrium_order(child_solutions['mg_fe_opx'])
-
-        child_solutions['mg_fe_opx'].molar_fraction_covariances = np.array([[opx_cov, -opx_cov, -opx_cov],
-                                                                            [-opx_cov, opx_cov, -opx_cov],
-                                                                            [-opx_cov, -opx_cov, opx_cov]])
-
-        assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
-                                           assemblage.phases[k].molar_fraction_covariances)
-                                          for k in range(2)]
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
 
         Seckendorff_ONeill_1992_assemblages.append(assemblage)
 
