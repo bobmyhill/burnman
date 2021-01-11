@@ -39,11 +39,10 @@ def get_assemblages(mineral_dataset):
             elif phase_name in ['bdg', 'cor']:
                 phases.append(solutions[phase_name])
                 store_composition(solutions[phase_name],
-                                  ['Mg', 'Al', 'Si', 'Fe', 'Ca', 'Na', 'Fe_B', 'Fef_B'],
-                                  np.array([Mg, Al, Si,
-                                            0., 0., 0., 0., 0.]),
+                                  ['Mg', 'Al', 'Si', 'Fe', 'Fef_B'],
+                                  np.array([Mg, Al, Si, 0., 0.]),
                                   np.array([Mgerr, Alerr, Sierr,
-                                            1.e-5, 1.e-5, 1.e-5, 1.e-5, 1.e-5]))
+                                            1.e-5, 1.e-5]))
 
         assemblage = AnalysedComposite(phases)
         assemblage.experiment_id = 'Liu_2016_{0}'.format(run_id)

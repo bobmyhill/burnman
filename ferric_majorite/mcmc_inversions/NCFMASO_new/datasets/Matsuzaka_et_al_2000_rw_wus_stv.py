@@ -24,13 +24,15 @@ def get_assemblages(mineral_dataset):
         ph1, Mg_ring, Mgerr_ring = datum[4:7]
         ph2, Mg_mw, Mgerr_mw = datum[7:]
 
-        Mg_ring = float(Mg_ring)
-        Mgerr_ring = float(Mgerr_ring)
-        Mg_mw = float(Mg_mw)
-        Mgerr_mw = float(Mgerr_mw)
+        # Ringwoodite (spinel) composition
+        Mg_ring = float(Mg_ring)/100.*2.
+        Mgerr_ring = float(Mgerr_ring)/100.*2.
+        Fe_ring = 2. - Mg_ring
 
+        # Magnesiowustite composition
+        Mg_mw = float(Mg_mw)/100.
+        Mgerr_mw = float(Mgerr_mw)/100.
         Fe_mw = 1. - Mg_mw
-        Fe_ring = 1. - Mg_ring
 
         # Time to equilibration was about 180 minutes
         # (don't include shorter runs)
@@ -52,11 +54,11 @@ def get_assemblages(mineral_dataset):
 
             store_composition(solutions['sp'],
                               ['Fe', 'Mg', 'Si',
-                               'Al', 'Ca', 'Na', 'Fe_B', 'Fef_B'],
-                              np.array([Fe_ring, Mg_ring, 0.5,
-                                        0., 0., 0., 0., 0.]),
+                               'Al', 'Fef_B'],
+                              np.array([Fe_ring, Mg_ring, 1.,
+                                        0., 0.]),
                               np.array([Mgerr_ring, Mgerr_ring, 1.e-5,
-                                        1.e-5, 1.e-5, 1.e-5, 1.e-5, 1.e-5]))
+                                        1.e-5, 1.e-5]))
 
             # Tweak compositions with 0.1% of a midpoint proportion
             # Do not consider (transformed) endmembers with < 5% abundance
@@ -68,7 +70,6 @@ def get_assemblages(mineral_dataset):
                                                  constrain_endmembers,
                                                  proportion_cutoff,
                                                  copy_storage=True)
-
             Matsuzaka_2000_assemblages.append(assemblage)
 
     return Matsuzaka_2000_assemblages

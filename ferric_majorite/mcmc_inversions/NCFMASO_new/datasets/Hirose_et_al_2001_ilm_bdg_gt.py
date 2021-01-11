@@ -29,17 +29,22 @@ def get_assemblages(mineral_dataset):
         pressure = float(PGPa)*1.e9 + delta_pressure
         temperature = float(TC) + 273.15
 
-        for (phase_name, Al) in [(phase1, ph1_Al2O3),
-                                 (phase2, ph2_Al2O3)]:
-            Al = float(Al)
-            Mg = (1. - Al)/2.
-            Si = (1. - Al)/2.
+        for (phase_name, Al2O3) in [(phase1, ph1_Al2O3),
+                                    (phase2, ph2_Al2O3)]:
+            Al2O3 = float(Al2O3)
+            MgSiO3 = 1 - Al2O3
+
+            Al = 2.*Al2O3
+            Mg = MgSiO3
+            Si = MgSiO3
+            nO = 3.
 
             phases.append(solutions[phase_name])
 
             store_composition(solutions[phase_name],
-                              ['Mg', 'Al', 'Si', 'Na', 'Ca', 'Fe', 'Fef_B', 'O'],
-                              np.array([Mg, Al, Si, 0., 0., 0., 0., 1.5]),
+                              ['Mg', 'Al', 'Si',
+                               'Na', 'Ca', 'Fe', 'Fef_B', 'O'],
+                              np.array([Mg, Al, Si, 0., 0., 0., 0., nO]),
                               np.array([0.01, 0.01, 0.01, 1.e-5, 1.e-5,
                                         1.e-5, 1.e-5, 1.e-5]))
 

@@ -35,7 +35,7 @@ def get_assemblages(mineral_dataset):
             Al = float(Al)
             Si = float(Si)
 
-            if phase_name in ['gt', 'cpx']:
+            if phase_name in ['gt', 'cpx', 'opx']:
                 phases.append(solutions[phase_name])
 
                 store_composition(phases[-1],
@@ -45,8 +45,6 @@ def get_assemblages(mineral_dataset):
                                             1.e-6, 1.e-6, 1.e-6]))
             elif phase_name == 'hpx':
                 phases.append(endmembers['hen'])  # within 0.5% of pure hen
-            elif phase_name == 'opx':
-                print('opx not yet included in Gasparik 1989 inversion')
             else:
                 raise Exception(f'{phase_name} not recognised')
 
