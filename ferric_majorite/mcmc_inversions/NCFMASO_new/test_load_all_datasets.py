@@ -47,7 +47,7 @@ def compile_assemblages():
                     Frost_2003_fper_ol_wad_rw,
                     Gasparik_1989_CMAS_px_gt,
                     Gasparik_1989_MAS_px_gt,
-                    #Gasparik_1989_NCMAS_px_gt, # equilibrium state not found
+                    Gasparik_1989_NCMAS_px_gt,  # equilibrium state problem
                     Gasparik_1989_NMAS_px_gt,
                     Gasparik_1992_MAS_px_gt,
                     Gasparik_Newton_1984_MAS_opx_sp_fo,

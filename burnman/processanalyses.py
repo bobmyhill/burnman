@@ -337,7 +337,10 @@ def compute_and_set_phase_composition(assemblage, phase_index,
             raise Exception('Setting the initial composition of an '
                             'order-disorder compound requires '
                             'first setting state')
-        equilibrium_order(phase)
+        try:
+            equilibrium_order(phase)
+        except:
+            print('passing for now')
 
         popt, pcov, res, A, b, b_uncertainties = sol
 
