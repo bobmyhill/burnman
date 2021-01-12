@@ -844,4 +844,4 @@ def equilibrium_order(solution):
     if not sol.success:
         print('Oh oh, could not find equilibrium order for one solution')
         solution.set_composition(f)
-        # raise Exception('equilibrium state not found')
+        raise Exception('equilibrium state not found')

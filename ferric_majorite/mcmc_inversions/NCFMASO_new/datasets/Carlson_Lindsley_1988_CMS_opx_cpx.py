@@ -50,15 +50,19 @@ def get_assemblages(mineral_dataset):
                 # additional uncertainty
                 dierr = (float(datum[5]) - float(datum[4]))/2. + 0.005
 
-                if phase == 'opx' or phase == 'cpx':
+                # diopside is CaMgSi2O6, so proportion of diopside is
+                # also amount of Ca (on a 4 cation basis)
+                xCa = diav
+                xMg = 2. - diav
+                xO = 5.999 # slightly less than 6 to prevent other endmembers
+                if phase in ['opx', 'cpx']:
                     store_composition(solutions[phase],
                                       ['Mg', 'Ca', 'Si',
-                                       'Na', 'Fe', 'Al', 'Fe_B', 'Fe_A'],
-                                      np.array([1. - diav, diav, 1.,
-                                                0., 0., 0., 0., 0.]),
-                                      np.array([dierr, dierr, 1.e-6,
-                                                1.e-6, 1.e-6, 1.e-6,
-                                                1.e-6, 1.e-6]))
+                                       'Na', 'Fe', 'Al', 'Fe_A', 'Fe_B', 'O'],
+                                      np.array([xMg, xCa, 2.,
+                                                0., 0., 0., 0., 0., xO]),
+                                      np.array([dierr, dierr, 1.e-5,
+                                                1.e-5, 1.e-5, 1.e-5, 1.e-5, 1.e-5, 1.e-5]))
 
             # Tweak compositions with 0.1% of a midpoint proportion
             # Do not consider (transformed) endmembers with < 5% abundance

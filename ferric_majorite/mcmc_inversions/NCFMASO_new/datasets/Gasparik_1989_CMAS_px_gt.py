@@ -39,10 +39,10 @@ def get_assemblages(mineral_dataset):
                 phases.append(solutions[phase_name])
 
                 store_composition(phases[-1],
-                                  ['Ca', 'Mg', 'Al', 'Si', 'Fe', 'Na', 'Fe_B'],
-                                  np.array([Ca, Mg, Al, Si, 0., 0., 0.]),
+                                  ['Ca', 'Mg', 'Al', 'Si', 'Fe', 'Na', 'Fe_B', 'Fef_B'],
+                                  np.array([Ca, Mg, Al, Si, 0., 0., 0., 0.]),
                                   np.array([0.02, 0.02, 0.02, 0.02,
-                                            1.e-6, 1.e-6, 1.e-6]))
+                                            1.e-6, 1.e-6, 1.e-6, 1.e-6]))
             elif phase_name == 'hpx':
                 phases.append(endmembers['hen'])  # within 0.5% of pure hen
             else:
@@ -60,6 +60,7 @@ def get_assemblages(mineral_dataset):
         # Do not consider (transformed) endmembers with < 5% abundance
         # in the solid solution. Copy the stored compositions from
         # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
                                              constrain_endmembers,

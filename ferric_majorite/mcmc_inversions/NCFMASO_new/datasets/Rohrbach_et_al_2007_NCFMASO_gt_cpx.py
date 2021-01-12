@@ -1,12 +1,16 @@
 import numpy as np
-from fitting_functions import equilibrium_order
-import burnman
+
+from burnman.processanalyses import store_composition
+from burnman.processanalyses import AnalysedComposite
+from burnman.processanalyses import compute_and_store_phase_compositions
+from global_constants import midpoint_proportion
+from global_constants import constrain_endmembers
+from global_constants import proportion_cutoff
 
 
 def get_assemblages(mineral_dataset):
     endmembers = mineral_dataset['endmembers']
     solutions = mineral_dataset['solutions']
-    child_solutions = mineral_dataset['child_solutions']
 
     # Garnet-clinopyroxene partitioning data
     with open('data/Rohrbach_et_al_2007_NCFMASO_gt_cpx.dat', 'r') as f:
@@ -23,16 +27,11 @@ def get_assemblages(mineral_dataset):
 
         pressure = float(expt_data[gt_idx][1]) * 1.e9  # GPa to Pa
         temperature = float(expt_data[gt_idx][2]) + 273.15  # C to K
-        if pressure > 5.e9:
-            assemblage = burnman.Composite([solutions['gt'],
-                                            solutions['cpx'],
-                                            endmembers['fcc_iron']],
-                                           [0.2, 0.3, 0.5])
-        else:
-            assemblage = burnman.Composite([child_solutions['xmj_gt'],
-                                            solutions['cpx'],
-                                            endmembers['fcc_iron']],
-                                           [0.2, 0.3, 0.5])
+
+        # All compositions in equilibrium with metallic iron
+        assemblage = AnalysedComposite([solutions['gt'],
+                                        solutions['cpx'],
+                                        endmembers['fcc_iron']])
 
         assemblage.experiment_id = 'Rohrbach_et_al_2007_NCFMASO_{0}'.format(run_id)
         assemblage.nominal_state = np.array([pressure, temperature])
@@ -41,60 +40,68 @@ def get_assemblages(mineral_dataset):
         c_gt = np.array(list(map(float, expt_data[gt_idx][5:])))
         c_px = np.array(list(map(float, expt_data[cpx_idx][5:])))
 
-        gt_Si, gt_Ti, gt_Al, gt_Cr, gt_Fetot, gt_Mg, gt_Ca, gt_Na, gt_FoF, gt_FoF_unc = c_gt
-        px_Si, px_Ti, px_Al, px_Cr, px_Fetot, px_Mg, px_Ca, px_Na, px_FoF, px_FoF_unc = c_px
+        gt_Si, gt_Ti, gt_Al, gt_Cr, gt_Fetot = c_gt[:5]
+        gt_Mg, gt_Ca, gt_Na, gt_FoF, gt_FoF_unc = c_gt[5:]
+        px_Si, px_Ti, px_Al, px_Cr, px_Fetot = c_px[:5]
+        px_Mg, px_Ca, px_Na, px_FoF, px_FoF_unc = c_px[5:]
 
         # Fudge compositions by adding Cr to the Al totals
         gt_Al += gt_Cr
         px_Al += px_Cr
 
-        gt_Fe3 = gt_FoF * gt_Fetot
-        gt_Fe3_unc = gt_FoF_unc * gt_Fetot
+        # Calculate variance-covariance matrices
+        # sadly,no uncertainties are reported for the Rohrbach compositions
 
-        px_Fe3 = px_FoF * px_Fetot
-        px_Fe3_unc = px_FoF_unc * px_Fetot
+        # Garnet
+        gt_Fe_unc = 0.01 + gt_Fetot * 0.02
+        gt_Fef = gt_FoF * gt_Fetot
 
-        # Process garnet
-        assemblage.phases[0].fitted_elements = ['Na', 'Ca', 'Fe', 'Fef_B', 'Mg', 'Al', 'Si']
-        assemblage.phases[0].composition = np.array([gt_Na, gt_Ca,
-                                                     gt_Fetot, gt_Fe3,
-                                                     gt_Mg, gt_Al, gt_Si])
-        assemblage.phases[0].compositional_uncertainties = 0.01 + assemblage.phases[0].composition*0.02 # unknown errors
-        assemblage.phases[0].compositional_uncertainties[3] = gt_Fe3_unc
+        gt_J = np.array([[1., 0.],
+                         [gt_FoF, gt_Fetot]])
+        gt_covFe = np.array([[gt_Fe_unc*gt_Fe_unc, 0.],
+                             [0., gt_FoF_unc * gt_FoF_unc]])
+        gt_covFe = np.einsum('ij, jk, lk', gt_J, gt_covFe, gt_J)
 
-        # Process pyroxene
-        solutions['cpx'].fitted_elements = ['Na', 'Ca', 'Fe', 'Fef_B', 'Mg',
-                                            'Al', 'Si', 'Fe_A']
-        solutions['cpx'].composition = np.array([px_Na, px_Ca,
-                                                 px_Fetot, px_Fe3,
-                                                 px_Mg, px_Al, px_Si, 0.01])
-        solutions['cpx'].compositional_uncertainties = 0.01 + solutions['cpx'].composition*0.02 # unknown errors
-        solutions['cpx'].compositional_uncertainties[3] = px_Fe3_unc
+        fitted_elements = ['Na', 'Ca', 'Mg', 'Al', 'Si', 'Fe', 'Fef_B']
+        gt_composition = [gt_Na, gt_Ca, gt_Mg, gt_Al, gt_Si, gt_Fetot, gt_Fef]
+        gt_cov = np.zeros((7, 7))
+        gt_cov[:5, :5] = np.diag([np.max([1.e-10, 0.01 + 0.02 * u]) for u in
+                                  [gt_Na, gt_Ca, gt_Mg, gt_Al, gt_Si]])
+        gt_cov[5:, 5:] = gt_covFe
 
-        # The following adjusts compositions to reach equilibrium
-        a = burnman.Composite([solutions['cpx']])
-        burnman.processanalyses.compute_and_set_phase_compositions(a)
-        a.set_state(pressure, temperature)
-        equilibrium_order(solutions['cpx'])
-        solutions['cpx'].composition[7] = solutions['cpx'].molar_fractions[solutions['cpx'].endmember_names.index('cfs')]
+        # Clinopyroxene
+        px_Fe_unc = 0.01 + px_Fetot * 0.02
+        px_Fef = px_FoF * px_Fetot
 
-        burnman.processanalyses.compute_and_set_phase_compositions(assemblage)
+        px_J = np.array([[1., 0.],
+                         [px_FoF, px_Fetot]])
+        px_covFe = np.array([[px_Fe_unc*px_Fe_unc, 0.],
+                             [0., px_FoF_unc * px_FoF_unc]])
+        px_covFe = np.einsum('ij, jk, lk', px_J, px_covFe, px_J)
 
-        assemblage.stored_compositions = [(assemblage.phases[k].molar_fractions,
-                                           assemblage.phases[k].molar_fraction_covariances)
-                                          for k in range(2)]
+        fitted_elements = ['Na', 'Ca', 'Mg', 'Al', 'Si', 'Fe', 'Fef_B']
+        px_composition = [px_Na, px_Ca, px_Mg, px_Al, px_Si, px_Fetot, px_Fef]
+        px_cov = np.zeros((7, 7))
+        px_cov[:5, :5] = np.diag([np.max([1.e-10, 0.01 + 0.02 * u]) for u in
+                                  [px_Na, px_Ca, px_Mg, px_Al, px_Si]])
+        px_cov[5:, 5:] = px_covFe
 
-        """
-        # py, alm, gt, andr, dmaj, nagt
-        # di, hed, cen, cats, jd, aeg, cfs
-        print(run_id, pressure)
-        print(assemblage.phases[0].fitted_elements)
-        act = [float('{0:.3f}'.format(assemblage.phases[0].formula[e]))
-               for e in assemblage.phases[0].fitted_elements]
-        diff = act - assemblage.phases[0].composition
-        print(diff)
-        print(assemblage.phases[0].compositional_uncertainties)
-        """
+        store_composition(solutions['gt'], fitted_elements,
+                          gt_composition, gt_cov)
+        store_composition(solutions['cpx'], fitted_elements,
+                          px_composition, px_cov)
+
+        # Tweak compositions with 0.1% of a midpoint proportion
+        # Do not consider (transformed) endmembers with < 5% abundance
+        # in the solid solution. Copy the stored compositions from
+        # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
+        compute_and_store_phase_compositions(assemblage,
+                                             midpoint_proportion,
+                                             constrain_endmembers,
+                                             proportion_cutoff,
+                                             copy_storage=True)
+
         Rohrbach_et_al_2007_NCFMASO_assemblages.append(assemblage)
 
     return Rohrbach_et_al_2007_NCFMASO_assemblages

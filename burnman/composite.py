@@ -280,7 +280,8 @@ class Composite(Material):
         return site_occupancies.T
 
     def stoichiometric_matrix(self, elements = None, excluded_endmembers = None,
-                              calculate_subspaces = False):
+                              calculate_subspaces = False,
+                              use_transformed_solutions = False):
         """
         Create a 2D matrix containing the number of atoms of element j in
         endmember i of all phases in the composite. Elements to be included and
@@ -348,7 +349,8 @@ class Composite(Material):
                 s_matrix = [formula_to_array(f, elements)
                             for j, f in enumerate(ph.endmember_formulae)
                             if j not in excluded_endmembers[i]]
-                if self.solution_transformations[i] is not None:
+                if (use_transformed_solutions and
+                    (self.solution_transformations[i] is not None)):
                     s_matrix = np.array(self.solution_transformations[i]).dot(np.array(s_matrix))
                     s_matrix = [list(r) for r in s_matrix]
                 f_matrix.extend(s_matrix)

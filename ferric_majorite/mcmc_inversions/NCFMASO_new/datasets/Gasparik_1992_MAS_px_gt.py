@@ -58,6 +58,7 @@ def get_assemblages(mineral_dataset):
         # Do not consider (transformed) endmembers with < 5% abundance
         # in the solid solution. Copy the stored compositions from
         # each phase to the assemblage storage.
+        assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
                                              constrain_endmembers,

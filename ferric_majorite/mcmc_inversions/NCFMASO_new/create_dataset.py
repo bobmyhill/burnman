@@ -311,9 +311,9 @@ def create_dataset(import_assemblages=True):
         from datasets import Gasparik_Newton_1984_MAS_opx_sp_fo
         from datasets import Gasparik_Newton_1984_MAS_py_opx_sp_fo
         from datasets import Perkins_et_al_1981_MAS_py_opx
-        # from datasets import Liu_et_al_2016_gt_bdg_cor
-        # from datasets import Liu_et_al_2017_bdg_cor
-        # from datasets import Hirose_et_al_2001_ilm_bdg_gt
+        from datasets import Liu_et_al_2016_gt_bdg_cor
+        from datasets import Liu_et_al_2017_bdg_cor
+        from datasets import Hirose_et_al_2001_ilm_bdg_gt
 
         # NMAS
         from datasets import Gasparik_1989_NMAS_px_gt
@@ -346,42 +346,48 @@ def create_dataset(import_assemblages=True):
         # FMASO
         from datasets import Frost_2003_FMASO_garnet
 
+        # CFMASO
+        from datasets import Frost_2003_CFMASO_garnet
+
         # NCFMASO
         from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
-        from datasets import Beyer_et_al_2019_NCFMASO
+        from datasets import Beyer_et_al_2021_NCFMASO
 
         # raw is -215
         assemblages = [assemblage for assemblage_list in
                        [module.get_assemblages(mineral_dataset)
-                        for module in [endmember_reactions,  # 73, 2825
-                                       Frost_2003_fper_ol_wad_rw,  # 143, 512
-                                       Katsura_et_al_2004_FMS_ol_wad, # 6, 228
-                                       Tsujino_et_al_2019_FMS_wad_rw, # 13, 429
-                                       Seckendorff_ONeill_1992_ol_opx,  # 46, 886
-                                       Jamieson_Roeder_1984_FMAS_ol_sp,  # 18, 1005
-                                       ONeill_Wood_1979_ol_gt,  # 54, 548
-                                       ONeill_Wood_1979_CFMAS_ol_gt,  # 20, 176
-                                       Matsuzaka_et_al_2000_rw_wus_stv,  # 19, 166 assume all Fe as Fe2+
-                                       ONeill_1987_QFI,  # 103, 168
-                                       ONeill_1987_QFM,  # 38, 168
-                                       Nakajima_FR_2012_bdg_fper,  # 10, 364
-                                       Tange_TNFS_2009_bdg_fper_stv,  # 8, 481
-                                       Frost_2003_FMASO_garnet,  # 36, 391
-                                       Gasparik_1989_MAS_px_gt,  # 9, 234
-                                       Gasparik_1992_MAS_px_gt,  # 12, 232
-                                       Gasparik_Newton_1984_MAS_opx_sp_fo,  # 14 634
-                                       Gasparik_Newton_1984_MAS_py_opx_sp_fo,  # 2, 230
-                                       Perkins_et_al_1981_MAS_py_opx,  # 91, 553
-                                       Carlson_Lindsley_1988_CMS_opx_cpx,  # 40, 264
-                                       Perkins_Newton_1980_CMAS_opx_cpx_gt,  # 12, 894
-                                       Gasparik_1989_CMAS_px_gt,  # 18, 1703
-                                       Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,  # 14 572
-                                       Gasparik_1989_NMAS_px_gt,  # 12 1540
-                                       # Gasparik_1989_NCMAS_px_gt,  # 5, 1982 threw an error during early fitting
-                                       Perkins_Vielzeuf_1992_CFMS_ol_cpx,  # 15, 179
-                                       # Woodland_ONeill_1993_FASO_alm_sk, # 21, 11134 I don't think we have a good enough spinel model yet
-                                       Rohrbach_et_al_2007_NCFMASO_gt_cpx,  # 5, 1201
-                                       Beyer_et_al_2019_NCFMASO  # 12, 9230
+                        for module in [Beyer_et_al_2021_NCFMASO,
+                                       Carlson_Lindsley_1988_CMS_opx_cpx,
+                                       endmember_reactions,
+                                       Frost_2003_FMASO_garnet,
+                                       Frost_2003_CFMASO_garnet,
+                                       Frost_2003_fper_ol_wad_rw,
+                                       Gasparik_1989_CMAS_px_gt,
+                                       Gasparik_1989_MAS_px_gt,
+                                       Gasparik_1989_NCMAS_px_gt,
+                                       Gasparik_1989_NMAS_px_gt,
+                                       Gasparik_1992_MAS_px_gt,
+                                       Gasparik_Newton_1984_MAS_opx_sp_fo,
+                                       Gasparik_Newton_1984_MAS_py_opx_sp_fo,
+                                       Hirose_et_al_2001_ilm_bdg_gt,
+                                       Jamieson_Roeder_1984_FMAS_ol_sp,
+                                       Katsura_et_al_2004_FMS_ol_wad,
+                                       Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,
+                                       Liu_et_al_2016_gt_bdg_cor,
+                                       Liu_et_al_2017_bdg_cor,
+                                       Nakajima_FR_2012_bdg_fper,
+                                       Matsuzaka_et_al_2000_rw_wus_stv,
+                                       ONeill_1987_QFI,
+                                       ONeill_1987_QFM,
+                                       ONeill_Wood_1979_CFMAS_ol_gt,
+                                       ONeill_Wood_1979_ol_gt,
+                                       Perkins_et_al_1981_MAS_py_opx,
+                                       Perkins_Newton_1980_CMAS_opx_cpx_gt,
+                                       Perkins_Vielzeuf_1992_CFMS_ol_cpx,
+                                       Seckendorff_ONeill_1992_ol_opx,
+                                       Tange_TNFS_2009_bdg_fper_stv,
+                                       Tsujino_et_al_2019_FMS_wad_rw,
+                                       Woodland_ONeill_1993_FASO_alm_sk
                                        ]]
                        for assemblage in assemblage_list]
     else:

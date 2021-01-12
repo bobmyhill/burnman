@@ -41,11 +41,11 @@ def get_assemblages(mineral_dataset):
                           np.array([Feol_unc, Feol_unc, 1.e-5]))
 
         store_composition(solutions['opx'],
-                          ['Mg', 'Fe', 'Si', 'Al', 'Ca', 'Na', 'Fef_B'],
+                          ['Mg', 'Fe', 'Si', 'Al', 'Ca', 'Fef_B'],
                           np.array([Mgopx, Feopx, 1.,
-                                    0., 0., 0., 0.]),
+                                    0., 0., 0.]),
                           np.array([Feopx_unc, Feopx_unc, 1.e-5,
-                                    1.e-5, 1.e-5, 1.e-5, 1.e-5]))
+                                    1.e-5, 1.e-5, 1.e-5]))
 
         assemblage.experiment_id = 'Seckendorff_ONeill_1992_{0}'.format(run_id)
         assemblage.nominal_state = np.array([pressure, temperature])

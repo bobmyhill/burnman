@@ -224,32 +224,48 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
                      for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
         cons.extend([{'type': 'ineq', 'fun': lambda x, eq=eq: -eq.dot(x)}
                      for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
+
+        #cons.extend([{'type': 'eq', 'fun': lambda x, eq=eq: eq.dot(x)}
+        #             for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
         return cons
 
     cons = endmember_constraints(endmember_site_occupancies.T, A)
 
-    popt, pcov = unconstrained_least_squares(A, b, b_uncertainties,
-                                             p0=np.array([0. for i in range(len(A.T))]))
+    p0 = np.array([0. for i in range(len(A.T))])
+    popt, pcov = unconstrained_least_squares(A, b, b_uncertainties, p0=p0)
 
     res = np.sqrt((A.dot(popt) - b).dot(np.linalg.solve(b_uncertainties,
                                                         A.dot(popt) - b)))
 
     # Check constraints
-    if any([c['fun'](popt)<0. for c in cons]):
+    if any([c['fun'](popt) < -1.e-10 for c in cons]):
         warnings.warn('Warning: Simple least squares predicts an unfeasible '
                       'solution composition for {0} solution. '
                       'Recalculating with site constraints. '
                       'The covariance matrix must be '
                       'treated with caution.'.format(name))
-        fn = lambda x, A, b, b_uncertainties: np.sqrt((A.dot(popt) - b).dot(np.linalg.solve(b_uncertainties, A.dot(popt) - b)))
+        fn = lambda x, A, b, b_uncertainties: np.sqrt((A.dot(x) - b).dot(np.linalg.solve(b_uncertainties, A.dot(x) - b)))
+
+        # Try with default options first, then COBYLA
         sol = minimize(fn, popt,
                        args=(A, b, b_uncertainties),
-                       method='COBYLA',
                        constraints=cons)
         popt = sol.x
         res = sol.fun
+
         if not sol.success:
-            raise Exception("BAD composition")
+            sol = minimize(fn, popt,
+                           args=(A, b, b_uncertainties),
+                           method='COBYLA',
+                           constraints=cons)
+            popt = sol.x
+            res = sol.fun
+
+        if not sol.success:
+            print(sol)
+            print(f'popt: {popt}')
+            print([c['fun'](popt) for c in cons])
+            raise Exception(f'BAD composition for phase {name}')
 
     if normalize:
         sump = sum(popt)
@@ -427,11 +443,13 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
     if reuse_reaction_matrix:
         try:
             reaction_matrix = assemblage.stored_reaction_matrix
-        except:
-            reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
+        except AttributeError:
+            reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True,
+                                                               use_transformed_solutions=True)[1]
             assemblage.stored_reaction_matrix = reaction_matrix
     else:
-        reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True)[1]
+        reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True,
+                                                           use_transformed_solutions=True)[1]
 
 
     if len(reaction_matrix) == 0:

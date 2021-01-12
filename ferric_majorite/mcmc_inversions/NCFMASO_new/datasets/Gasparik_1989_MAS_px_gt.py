@@ -29,7 +29,7 @@ def get_assemblages(mineral_dataset):
             run_id, mix, t = px_gt_data[run_idx][:3]
             ramP, Pkbar, TC, phase_name, N = px_gt_data[run_idx][3:8]
             Mg, Al, Si, cation_sum = px_gt_data[run_idx][8:]
-            
+
             Mg = float(Mg)
             Al = float(Al)
             Si = float(Si)
@@ -38,7 +38,7 @@ def get_assemblages(mineral_dataset):
                 phases.append(solutions[phase_name])
 
                 store_composition(phases[-1],
-                                  ['Mg', 'Al', 'Si', 'Ca', 'Fe', 'Na', 'Fe_B'],
+                                  ['Mg', 'Al', 'Si', 'Ca', 'Fe', 'Na', 'Fef_B'],
                                   np.array([Mg, Al, Si, 0., 0., 0., 0.]),
                                   np.array([0.02, 0.02, 0.02, 1.e-6,
                                             1.e-6, 1.e-6, 1.e-6]))

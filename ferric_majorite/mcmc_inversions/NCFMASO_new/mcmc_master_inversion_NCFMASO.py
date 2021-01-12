@@ -6,18 +6,16 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from input_dataset import create_minerals
-from fitting_functions import Storage, log_probability
-from fitting_functions import get_params, set_params
-from create_dataset import create_dataset, special_constraints
-
-from output_plots import chain_plotter, plots
-import pickle
 import emcee
 from multiprocessing import Pool
-
 import pandas as pd
 import seaborn as sns
+
+from fitting_functions import get_params, set_params
+from fitting_functions import log_probability
+from create_dataset import create_dataset, special_constraints
+from output_plots import chain_plotter, plots
+
 
 print('TODO!! Check endmembers and priors, add solution parameters and priors')
 if len(sys.argv) == 2:
@@ -57,11 +55,14 @@ if run_inversion:
 
     thisfilename = os.path.basename(__file__)
     base = os.path.splitext(thisfilename)[0]
-    hdffile=base+'_sampler_after_mcmc_run.hdf5'
+    hdffile = base+'_sampler_after_mcmc_run.hdf5'
 
-    print('Running MCMC inversion with {0} parameters and {1} walkers'.format(ndim, nwalkers))
-    print('This inversion will involve {0} burn-in steps and {1} stored steps'.format(n_steps_burn_in, n_steps_mcmc))
-    print('The walkers will be clustered around a start point with a random jiggle of {0}'.format(jiggle_x0))
+    print(f'Running MCMC inversion with {ndim} parameters '
+          f'and {nwalkers} walkers')
+    print(f'This inversion will involve {n_steps_burn_in} burn-in steps '
+          'and {n_steps_mcmc} stored steps')
+    print('The walkers will be clustered around a start point '
+          f'with a random jiggle of {jiggle_x0}')
     print('The samplers will be saved to the following hdf file:')
     print(hdffile)
 
@@ -69,30 +70,32 @@ if run_inversion:
 
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
 
-    if platform.node() == "axolotl.gly.bris.ac.uk": #"ix.gly.bris.ac.uk":
+    if platform.node() == "axolotl.gly.bris.ac.uk":  # "ix.gly.bris.ac.uk":
         print('This computer is ix.gly.bris.ac.uk. Leaving two cpus free.')
         processes = os.cpu_count()-2  # NT suggests keeping two cpus free
     else:
         print('This computer is not ix.gly.bris.ac.uk. Using all cpus.')
         processes = None  # default is to use all of the cpus
 
-
     with Pool(processes=processes) as pool:
-        backend=emcee.backends.HDFBackend(hdffile)
-        # backend.reset(nwalkers, ndim) # only reset if you want to start a new inversion!
+        backend = emcee.backends.HDFBackend(hdffile)
+        # only reset backend if you want to start a new inversion!
+        # backend.reset(nwalkers, ndim)
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
                                         args=[dataset, storage,
                                               special_constraints],
                                         pool=pool, backend=backend)
 
-        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc, progress=True)
+        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc,
+                                 progress=True)
         print('100% complete.')
 
     print('Chain shape: {0}'.format(sampler.get_chain().shape))
-    print('Mean acceptance fraction: {0:.2f}'
-          ' (should ideally be between 0.25 and 0.5)'.format(np.mean(sampler.acceptance_fraction)))
+    mean_acceptance_fraction = np.mean(sampler.acceptance_fraction)
+    print(f'Mean acceptance fraction: {mean_acceptance_fraction:.2f}'
+          ' (should ideally be between 0.25 and 0.5)')
 
-    if np.mean(sampler.acceptance_fraction) < 0.15:
+    if mean_acceptance_fraction < 0.15:
         print(sampler.get_chain().shape)
         print(sampler.acceptance_fraction)
         exit()
@@ -129,13 +132,13 @@ if run_inversion:
     abs_Mcorr_sorted_indices = np.unravel_index(np.argsort(np.abs(triu_Mcorr),
                                                            axis=None)[::-1],
                                                 triu_Mcorr.shape)
-    Mcov = np.cov(flat_samples.T) # each row corresponds to a different variable
-    #import corner
-    #fig = corner.corner(flat_samples, labels=labels);
-    #fig.savefig('corner_plot.pdf')
-    #plt.show()
+    Mcov = np.cov(flat_samples.T)  # rows corresponds to variables
+    # import corner
+    # fig = corner.corner(flat_samples, labels=labels);
+    # fig.savefig('corner_plot.pdf')
+    # plt.show()
 
-    fig, ax = plt.subplots(figsize=(50,50))
+    fig, ax = plt.subplots(figsize=(50, 50))
     cmap = sns.diverging_palette(250, 10, as_cmap=True)
     ax = sns.heatmap(pd.DataFrame(Mcorr),
                      xticklabels=labels,

@@ -1,4 +1,4 @@
-# Run_no P_(GPa) T_(K)	phase	Fe	Feerr	
+# Run_no P_(GPa) T_(K)	phase	Fe	Feerr
 SO41	 1.6	 1173	ol	0.053	0.002 opx	0.051	0.003
 SO42	 1.6	 1173	ol	0.071	0.005 opx	0.062	0.004
 SO46	 1.6	 1173	ol	0.169	0.003 opx	0.146	0.004
@@ -32,7 +32,7 @@ SO22	 1.6	 1273	ol	0.821	0.002 opx	0.700	0.003
 SO11	 1.6	 1273	ol	0.888	0.001 opx	0.797	0.003
 SO6	 1.6	 1273	ol	0.917	0.001 opx	0.839	0.003
 SO12	 1.6	 1273	ol	0.960	0.001 opx	0.917	0.002
-SO27	 1.6	 1273	ol	0.977	0.001 opx	0.952	0.002
+#SO27	 1.6	 1273	ol	0.977	0.001 opx	0.952	0.002 # burnman struggles to equilibrate opx at this composition
 
 SO33	 1.6	 1423	ol	0.040	0.002 opx	0.032	0.002
 SO38	 1.6	 1423	ol	0.050	0.002 opx	0.046	0.001

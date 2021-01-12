@@ -28,6 +28,7 @@ from datasets import ONeill_Wood_1979_ol_gt
 from datasets import Perkins_et_al_1981_MAS_py_opx
 from datasets import Perkins_Newton_1980_CMAS_opx_cpx_gt
 from datasets import Perkins_Vielzeuf_1992_CFMS_ol_cpx
+from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
 from datasets import Seckendorff_ONeill_1992_ol_opx
 from datasets import Tange_TNFS_2009_bdg_fper_stv
 from datasets import Tsujino_et_al_2019_FMS_wad_rw
@@ -46,7 +47,7 @@ def compile_assemblages():
                     Frost_2003_fper_ol_wad_rw,
                     Gasparik_1989_CMAS_px_gt,
                     Gasparik_1989_MAS_px_gt,
-                    Gasparik_1989_NCMAS_px_gt,
+                    #Gasparik_1989_NCMAS_px_gt, # equilibrium state not found
                     Gasparik_1989_NMAS_px_gt,
                     Gasparik_1992_MAS_px_gt,
                     Gasparik_Newton_1984_MAS_opx_sp_fo,
@@ -66,6 +67,7 @@ def compile_assemblages():
                     Perkins_et_al_1981_MAS_py_opx,
                     Perkins_Newton_1980_CMAS_opx_cpx_gt,
                     Perkins_Vielzeuf_1992_CFMS_ol_cpx,
+                    Rohrbach_et_al_2007_NCFMASO_gt_cpx,
                     Seckendorff_ONeill_1992_ol_opx,
                     Tange_TNFS_2009_bdg_fper_stv,
                     Tsujino_et_al_2019_FMS_wad_rw,
@@ -79,7 +81,7 @@ def compile_assemblages():
 
 
 assemblages = compile_assemblages()
-
+print(f'{len(assemblages)} assemblages loaded successfully.')
 if False:
     for a in assemblages:
         print([b.name for b in a.phases])
