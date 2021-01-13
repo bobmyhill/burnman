@@ -88,20 +88,18 @@ def equilibrate_phase(assemblage, phase_index):
     equilibrium_order(phase)
 
     # add R.dot(H) to transformation matrix
-    A_new = np.vstack((A,
-                       phase.rxn_matrix.dot(phase.gibbs_hessian)))
+    A_new = np.vstack((A, phase.rxn_matrix.dot(phase.gibbs_hessian)))
 
-    n_rxns, n_mbrs = phase.rxn_matrix.shape
-    b_new = np.vstack((b, np.zeros(n_rxns)))
+    n_var, n_mbrs = A_new.shape
+    n_b, n_mbrs = A.shape
+    n_rxns = n_var - n_b
 
     # Add block to covariance matrix
-    n_c = len(b)
-    n_var = n_c + n_rxns
     sig_G = 1. # nominal 1 J uncertainty
 
     Cov_b_new = np.zeros((n_var, n_var))
-    Cov_b_new[:n_c, :n_c] = Cov_b
-    Cov_b_new[n_c:, n_c:] = np.eye(n_rxns) * sig_G * sig_G
+    Cov_b_new[:n_b, :n_b] = Cov_b
+    Cov_b_new[n_b:, n_b:] = np.eye(n_rxns) * sig_G * sig_G
 
 
     popt = phase.molar_fractions
@@ -226,7 +224,7 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
         print(f'{b} (sum = {sum(b)})')
         print(A.dot(popt))
         print(f'Endmember proportions: {popt}')
-        #exit()
+        exit()
 
     if return_Ab:
         pcov = 0.
@@ -431,7 +429,12 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
         return 0.
     else:
         # d(partial_gibbs)i/d(variables)j can be split into blocks
-        n_mbrs = reaction_matrix.shape[0]
+        n_mbrs = reaction_matrix.shape[1]
+        #print([ph.name for ph in assemblage.phases])
+        print(assemblage.pressure/1.e9,
+              [ph.molar_fractions for ph in assemblage.phases
+               if ph.name == 'garnet'][0])
+        #print(reaction_matrix)
         Cov_mu = np.zeros((n_mbrs, n_mbrs))
         dmudPT = np.zeros((n_mbrs, 2))
         mu = np.zeros(n_mbrs)
@@ -439,11 +442,26 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
         i = 0
         for iph, phase in enumerate(assemblage.phases):
             if isinstance(phase, SolidSolution):
-                p_mbrs = phase.n_endmembers
-                Cov_mu[i:i+p_mbrs, i:i+p_mbrs] = (phase.gibbs_hessian).dot(phase.molar_fraction_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
-                dmudPT[i:i+p_mbrs] = np.array([phase.partial_volumes, -phase.partial_entropies]).T
-                mu[i:i+n_mbrs] = phase.partial_gibbs
-                i += n_mbrs
+                T = assemblage.solution_transformations[iph]
+                if (T is not None):
+                    p_mbrs = len(T)
+                    hess = np.einsum('ij, kj->ki', phase.gibbs_hessian, T)
+
+                    pGPT = np.array([phase.partial_gibbs,
+                                     phase.partial_volumes,
+                                     -phase.partial_entropies])
+                    pGPT = np.einsum('ij, kj', pGPT, T)
+
+                    Cov_mu[i:i+p_mbrs, i:i+p_mbrs] = (hess).dot(phase.molar_fraction_covariances).dot(hess.T)
+                    mu[i:i+p_mbrs] = pGPT[0]
+                    dmudPT[i:i+p_mbrs] = pGPT[1:].T
+                    i += p_mbrs
+                else:
+                    p_mbrs = phase.n_endmembers
+                    Cov_mu[i:i+p_mbrs, i:i+p_mbrs] = (phase.gibbs_hessian).dot(phase.molar_fraction_covariances).dot(phase.gibbs_hessian.T) # the hessian is symmetric, so transpose only taken for legibility...
+                    dmudPT[i:i+p_mbrs] = np.array([phase.partial_volumes, -phase.partial_entropies]).T
+                    mu[i:i+p_mbrs] = phase.partial_gibbs
+                    i += p_mbrs
             else:
                 dmudPT[i] = np.array([phase.V, -phase.S])
                 mu[i] = phase.gibbs

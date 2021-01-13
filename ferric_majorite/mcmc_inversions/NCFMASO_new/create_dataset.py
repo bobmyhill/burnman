@@ -5,6 +5,52 @@ from input_dataset import create_minerals
 from fitting_functions import Storage, log_probability
 from fitting_functions import get_params
 
+from importlib import import_module
+from collections import OrderedDict
+
+dataset_names = ['Beyer_et_al_2021_NCFMASO',
+                 'Carlson_Lindsley_1988_CMS_opx_cpx',
+                 'endmember_reactions',
+                 'Frost_2003_FMASO_garnet',
+                 'Frost_2003_CFMASO_garnet',
+                 'Frost_2003_fper_ol_wad_rw',
+                 'Gasparik_1989_CMAS_px_gt',
+                 'Gasparik_1989_MAS_px_gt',
+                 # 'Gasparik_1989_NCMAS_px_gt', # v high Na2O in gt
+                 'Gasparik_1989_NMAS_px_gt',
+                 'Gasparik_1992_MAS_px_gt',
+                 'Gasparik_Newton_1984_MAS_opx_sp_fo',
+                 'Gasparik_Newton_1984_MAS_py_opx_sp_fo',
+                 'Hirose_et_al_2001_ilm_bdg_gt',
+                 'Jamieson_Roeder_1984_FMAS_ol_sp',
+                 'Katsura_et_al_2004_FMS_ol_wad',
+                 'Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp',
+                 'Liu_et_al_2016_gt_bdg_cor',
+                 'Liu_et_al_2017_bdg_cor',
+                 'Nakajima_FR_2012_bdg_fper',
+                 'Matsuzaka_et_al_2000_rw_wus_stv',
+                 'ONeill_1987_QFI',
+                 'ONeill_1987_QFM',
+                 'ONeill_Wood_1979_CFMAS_ol_gt',
+                 'ONeill_Wood_1979_ol_gt',
+                 'Perkins_et_al_1981_MAS_py_opx',
+                 'Perkins_Newton_1980_CMAS_opx_cpx_gt',
+                 'Perkins_Vielzeuf_1992_CFMS_ol_cpx',
+                 'Rohrbach_et_al_2007_NCFMASO_gt_cpx',
+                 'Seckendorff_ONeill_1992_ol_opx',
+                 'Tange_TNFS_2009_bdg_fper_stv',
+                 'Tsujino_et_al_2019_FMS_wad_rw',
+                 'Woodland_ONeill_1993_FASO_alm_sk']
+
+dataset_names = ['Beyer_et_al_2021_NCFMASO']
+
+dataset_modules = OrderedDict()
+for x in dataset_names:
+    try:
+        dataset_modules[x] = import_module(f'datasets.{x}')
+    except ImportError:
+        raise Exception(f'Error importing {x}')
+
 
 def special_constraints(dataset, storage):
 
@@ -290,108 +336,11 @@ def create_dataset(import_assemblages=True):
     #######################
     # EXPERIMENTAL DATA ###
     #######################
+    assemblages = []
     if import_assemblages:
-        from datasets import endmember_reactions
-
-        # CMS
-        from datasets import Carlson_Lindsley_1988_CMS_opx_cpx
-
-        # FMS
-        from datasets import Frost_2003_fper_ol_wad_rw
-        from datasets import Tsujino_et_al_2019_FMS_wad_rw
-        from datasets import Katsura_et_al_2004_FMS_ol_wad
-        from datasets import Seckendorff_ONeill_1992_ol_opx
-        from datasets import Matsuzaka_et_al_2000_rw_wus_stv
-        from datasets import Nakajima_FR_2012_bdg_fper
-        from datasets import Tange_TNFS_2009_bdg_fper_stv
-
-        # MAS
-        from datasets import Gasparik_1989_MAS_px_gt
-        from datasets import Gasparik_1992_MAS_px_gt
-        from datasets import Gasparik_Newton_1984_MAS_opx_sp_fo
-        from datasets import Gasparik_Newton_1984_MAS_py_opx_sp_fo
-        from datasets import Perkins_et_al_1981_MAS_py_opx
-        from datasets import Liu_et_al_2016_gt_bdg_cor
-        from datasets import Liu_et_al_2017_bdg_cor
-        from datasets import Hirose_et_al_2001_ilm_bdg_gt
-
-        # NMAS
-        from datasets import Gasparik_1989_NMAS_px_gt
-
-        # CMAS
-        from datasets import Perkins_Newton_1980_CMAS_opx_cpx_gt
-        from datasets import Gasparik_1989_CMAS_px_gt
-        from datasets import Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp
-
-        # CFMS
-        from datasets import Perkins_Vielzeuf_1992_CFMS_ol_cpx
-
-        # FMSO
-        from datasets import ONeill_1987_QFI
-        from datasets import ONeill_1987_QFM
-
-        # FMAS
-        from datasets import ONeill_Wood_1979_ol_gt
-        from datasets import Jamieson_Roeder_1984_FMAS_ol_sp
-
-        # FASO
-        from datasets import Woodland_ONeill_1993_FASO_alm_sk
-
-        # NCMAS
-        from datasets import Gasparik_1989_NCMAS_px_gt
-
-        # CFMAS
-        from datasets import ONeill_Wood_1979_CFMAS_ol_gt
-
-        # FMASO
-        from datasets import Frost_2003_FMASO_garnet
-
-        # CFMASO
-        from datasets import Frost_2003_CFMASO_garnet
-
-        # NCFMASO
-        from datasets import Rohrbach_et_al_2007_NCFMASO_gt_cpx
-        from datasets import Beyer_et_al_2021_NCFMASO
-
-        # raw is -215
-        assemblages = [assemblage for assemblage_list in
-                       [module.get_assemblages(mineral_dataset)
-                        for module in [Beyer_et_al_2021_NCFMASO,
-                                       Carlson_Lindsley_1988_CMS_opx_cpx,
-                                       endmember_reactions,
-                                       Frost_2003_FMASO_garnet,
-                                       Frost_2003_CFMASO_garnet,
-                                       Frost_2003_fper_ol_wad_rw,
-                                       Gasparik_1989_CMAS_px_gt,
-                                       Gasparik_1989_MAS_px_gt,
-                                       Gasparik_1989_NCMAS_px_gt,
-                                       Gasparik_1989_NMAS_px_gt,
-                                       Gasparik_1992_MAS_px_gt,
-                                       Gasparik_Newton_1984_MAS_opx_sp_fo,
-                                       Gasparik_Newton_1984_MAS_py_opx_sp_fo,
-                                       Hirose_et_al_2001_ilm_bdg_gt,
-                                       Jamieson_Roeder_1984_FMAS_ol_sp,
-                                       Katsura_et_al_2004_FMS_ol_wad,
-                                       Klemme_ONeill_2000_CMAS_opx_cpx_gt_ol_sp,
-                                       Liu_et_al_2016_gt_bdg_cor,
-                                       Liu_et_al_2017_bdg_cor,
-                                       Nakajima_FR_2012_bdg_fper,
-                                       Matsuzaka_et_al_2000_rw_wus_stv,
-                                       ONeill_1987_QFI,
-                                       ONeill_1987_QFM,
-                                       ONeill_Wood_1979_CFMAS_ol_gt,
-                                       ONeill_Wood_1979_ol_gt,
-                                       Perkins_et_al_1981_MAS_py_opx,
-                                       Perkins_Newton_1980_CMAS_opx_cpx_gt,
-                                       Perkins_Vielzeuf_1992_CFMS_ol_cpx,
-                                       Seckendorff_ONeill_1992_ol_opx,
-                                       Tange_TNFS_2009_bdg_fper_stv,
-                                       Tsujino_et_al_2019_FMS_wad_rw,
-                                       Woodland_ONeill_1993_FASO_alm_sk
-                                       ]]
-                       for assemblage in assemblage_list]
-    else:
-        assemblages = []
+        for dataset_name, dataset_module in dataset_modules.items():
+            print(f'Importing experiments from {dataset_name}')
+            assemblages.extend(dataset_module.get_assemblages(mineral_dataset))
 
     dataset = {'endmembers': mineral_dataset['endmembers'],
                'solutions': mineral_dataset['solutions'],
@@ -405,6 +354,8 @@ def create_dataset(import_assemblages=True):
         print('Initializing parameters from FMSO output...')
         transfer_storage(from_storage=FMSO_storage,
                          to_storage=storage)
+
+        # raw is -215
         lnprob = log_probability(get_params(storage), dataset, storage,
                                  special_constraints)
         print('Initial ln(p) = {0}'.format(lnprob))

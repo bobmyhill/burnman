@@ -1,5 +1,5 @@
 import numpy as np
-import burnman
+from burnman.processanalyses import AnalysedComposite
 
 
 def get_assemblages(mineral_dataset):
@@ -14,7 +14,7 @@ def get_assemblages(mineral_dataset):
     endmember_reaction_assemblages = []
     for d in ds:
         i += 1
-        assemblage = burnman.Composite([endmembers[d[j]]
+        assemblage = AnalysedComposite([endmembers[d[j]]
                                         for j in range(4, len(d))])
         assemblage.experiment_id = 'endmember_rxn_{0}'.format(i)
 
