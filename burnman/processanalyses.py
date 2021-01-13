@@ -6,7 +6,9 @@ from __future__ import absolute_import
 
 import warnings
 import numpy as np
-from scipy.optimize import curve_fit, minimize, LinearConstraint
+import cvxpy as cp
+from scipy.optimize import minimize, LinearConstraint
+from scipy.linalg import inv, sqrtm
 from collections import Counter
 from copy import deepcopy
 
@@ -42,53 +44,6 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-def linear_function(A, *b):
-    """
-    A function returning the dot product of a matrix A and
-    vector b.
-    """
-    return A.dot(b)
-
-
-def linear_jacobian(A, *b):
-    """
-    A function returning the matrix A,
-    for use as the Jacobian in linear least squares.
-    """
-    return A
-
-
-def unconstrained_least_squares(A, b, b_uncertainties, p0):
-    """
-    Solves Ap = b using linear least squares,
-    given uncertainties on b.
-
-    Parameters
-    ----------
-    A : 2D numpy array
-        The matrix A
-    b : 1D numpy array
-        The vector b
-    b_uncertainties : 1D or 2D numpy array
-        If 1D array, then this parameter is an array of 1 sigma uncertainties
-        on the parameters b. If 2D, this parameter is the variance-covariance
-        matrix of b
-    p0 : A starting guess for p
-
-    Returns
-    -------
-    popt : 1D numpy array
-        The optimized parameters
-    pcov : 2D numpy array
-        The covariance matrix of the parameters
-    """
-    popt, pcov = curve_fit(linear_function, A, b,
-                           p0=p0,
-                           jac=linear_jacobian,
-                           sigma=b_uncertainties, absolute_sigma=True)
-    return (popt, pcov)
 
 
 def equilibrate_phase(assemblage, phase_index):
@@ -127,7 +82,7 @@ def equilibrate_phase(assemblage, phase_index):
         The variance-covariance matrix of endmember proportions.
     """
     phase = assemblage.phases[phase_index]
-    A, b, b_uncertainty = assemblage.stored_compositions[phase_index][1]
+    A, Cov_b, sump = assemblage.stored_compositions[phase_index][1]
 
     # Re-equilibrate at a constant bulk composition
     equilibrium_order(phase)
@@ -143,23 +98,24 @@ def equilibrate_phase(assemblage, phase_index):
     n_c = len(b)
     n_var = n_c + n_rxns
     sig_G = 1. # nominal 1 J uncertainty
-    if b_uncertainties.ndim == 1:
-        b_new_uncertainties = np.hstack((b_uncertainties,
-                                         np.ones(n_rxns) * sig_G))
-    else:
-        b_new_uncertainties = np.zeros((n_var, n_var))
-        b_new_uncertainties[:n_c, :n_c] = b_uncertainties
-        b_new_uncertainties[n_c:, n_c:] = np.eye(n_rxns) * sig_G
+
+    Cov_b_new = np.zeros((n_var, n_var))
+    Cov_b_new[:n_c, :n_c] = Cov_b
+    Cov_b_new[n_c:, n_c:] = np.eye(n_rxns) * sig_G * sig_G
 
 
-    # Calculate new covariance matrix
-    popt, pcov = unconstrained_least_squares(A_new, b_new, b_new_uncertainties,
-                                             p0=phase.molar_fractions)
+    popt = phase.molar_fractions
+
+    # Calculate the covariance matrix
+    # (also from https://stats.stackexchange.com/a/333551)
+    inv_Cov_b_new = np.linalg.inv(Cov_b_new)
+    pcov = np.linalg.inv(A_new.T.dot(inv_Cov_b_new.dot(A_new)))
+
+    pcov /= sump * sump
 
     # Convert the variance-covariance matrix from endmember amounts to
     # endmember proportions
-    p = phase.molar_fractions
-    dpdx = (np.eye(n_mbrs) - p).T # same as (1. - p[i] if i == j else -p[i])
+    dpdx = (np.eye(n_mbrs) - popt).T # same as (1. - p[i] if i == j else -p[i])
     Cov_p = dpdx.dot(pcov).dot(dpdx.T)
 
     phase.molar_fraction_covariances = Cov_p
@@ -186,90 +142,73 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
     normalized to a total of one.
     """
 
+    # Construct A, b and Cov_b
     if type(formulae[0]) is dict or type(formulae[0]) is Counter:
-        stoichiometric_matrix = np.array([[f[e] if e in f else 0.
-                                           for e in fitted_elements]
-                                          for f in formulae])
+        A = np.array([[f[e] if e in f else 0.
+                       for e in fitted_elements]
+                      for f in formulae]).T
     else:
-        stoichiometric_matrix = formulae
+        A = formulae.T
 
     b = composition
 
     if len(compositional_uncertainties.shape) == 1:
-        b_uncertainties = np.diag(compositional_uncertainties
-                                  * compositional_uncertainties)
+        Cov_b = np.diag(compositional_uncertainties
+                        * compositional_uncertainties)
     else:
-        b_uncertainties = compositional_uncertainties
+        Cov_b = compositional_uncertainties
 
-    # ensure uncertainty matrix is not singular
-    det = np.linalg.det(b_uncertainties)
-    if det < 1.e-30:
-        #print(b_uncertainties)
-        #warnings.warn(f'The compositional covariance matrix for the {name} '
-        #              'solution is nearly singular or not positive-definite '
-        #              f'(determinant = {det}). '
-        #              'This is likely to be because your fitting parameters '
-        #              'are not independent. '
-        #              'For now, we increase all diagonal components by 1%. '
-        #              'However, you may wish to redefine your problem.')
+    # Create the standard weighted least squares objective function
+    # (https://stats.stackexchange.com/a/333551)
+    n_mbrs = A.shape[1]
+    m = inv(sqrtm(Cov_b))
+    mA = m@A
+    mb = m@b
+    x = cp.Variable(n_mbrs)
+    objective = cp.Minimize(cp.sum_squares(mA@x - mb))
 
-        b_uncertainties += np.diag(np.diag(b_uncertainties))*0.01
+    # Define the constraints
+    # Ensure that element abundances / site occupancies
+    # are exactly equal to zero if the user specifies that
+    # they are equal to zero.
+    # Also ensure all site occupancies are non-negative
+    S, S_index = np.unique(A, axis=0, return_index=True)
+    S = np.array([s for i, s in enumerate(S)
+                  if np.abs(b[S_index[i]]) < 1.e-10
+                  and any(np.abs(s) > 1.e-10)])
+    constraints = [eq@x == 0 for eq in S]
 
-    A = stoichiometric_matrix.T
+    T = np.array([t for t in np.unique(endmember_site_occupancies.T, axis=0)
+                  if t not in S and any(np.abs(t) > 1.e-10)])
+    T = np.array([t for t in np.unique(endmember_site_occupancies.T, axis=0)
+                  if any(np.abs(t) > 1.e-10)])
+    #T = np.array(np.unique(endmember_site_occupancies.T, axis=0))
+    if len(T) > 0:
+        constraints.extend([-eq@x <= 0 for eq in T])
 
-    def endmember_constraints(site_occ, stoic):
-        cons = [{'type': 'ineq', 'fun': lambda x, eq=eq: eq.dot(x)}
-                for eq in site_occ]
-        cons.extend([{'type': 'ineq', 'fun': lambda x, eq=eq: eq.dot(x)}
-                     for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
-        cons.extend([{'type': 'ineq', 'fun': lambda x, eq=eq: -eq.dot(x)}
-                     for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
-
-        #cons.extend([{'type': 'eq', 'fun': lambda x, eq=eq: eq.dot(x)}
-        #             for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
-        return cons
-
-    print('so', endmember_site_occupancies.T)
-    print('bu', b_uncertainties)
-    cons = endmember_constraints(endmember_site_occupancies.T, A)
-
-    p0 = np.array([0. for i in range(len(A.T))])
-    popt, pcov = unconstrained_least_squares(A, b, b_uncertainties, p0=p0)
-
-    res = np.sqrt((A.dot(popt) - b).dot(np.linalg.solve(b_uncertainties,
-                                                        A.dot(popt) - b)))
-    print(popt, res)
-    # Check constraints
-    if any([c['fun'](popt) < -1.e-10 for c in cons]):
-        warnings.warn('Warning: Simple least squares predicts an unfeasible '
-                      'solution composition for {0} solution. '
-                      'Recalculating with site constraints. '
-                      'The covariance matrix must be '
-                      'treated with caution.'.format(name))
-        fn = lambda x, A, b, b_uncertainties: np.sqrt((A.dot(x) - b).dot(np.linalg.solve(b_uncertainties, A.dot(x) - b)))
-
-        # Try with default options first, then COBYLA
-        sol = minimize(fn, popt,
-                       args=(A, b, b_uncertainties),
-                       constraints=cons)
-        popt = sol.x
-        res = sol.fun
-
-        if not sol.success:
-            sol = minimize(fn, popt,
-                           args=(A, b, b_uncertainties),
-                           method='COBYLA',
-                           constraints=cons)
-            popt = sol.x
-            res = sol.fun
-
-        if not sol.success:
-            print(sol)
-            print(f'popt: {popt}')
-            print([f"{c['fun'](popt):.2e}" for c in cons])
-            print(b)
-            print(A)
-            raise Exception(f'BAD composition for phase {name}')
+    # Set up the problem and solve it
+    # We catch inaccurate solution warnings,
+    # as we check for poor residuals at the end of this function
+    warns = []
+    prob = cp.Problem(objective, constraints)
+    try:
+        with warnings.catch_warnings(record=True) as w:
+            res = prob.solve(solver=cp.ECOS)
+            popt = np.array([x.value[i] for i in range(len(A.T))])
+            warns.extend(w)
+    except Exception as e:
+        print('ECOS Solver failed. Trying default solver.')
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                res = prob.solve()
+                popt = np.array([x.value[i] for i in range(len(A.T))])
+                warns.extend(w)
+        except Exception as e:
+            print('Oh dear, there seems to be a problem '
+                  'with the following composition:')
+            print(fitted_elements)
+            print(f'{b} (sum = {sum(b)})')
+            raise Exception(e)
 
     rms_norm = np.sqrt(np.mean((A.dot(popt)-b)**2))/np.sqrt(np.mean(np.array(b)**2))
     if rms_norm > 0.1:
@@ -277,23 +216,41 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
         print('This may be because you have set some of your '
               'variances too low,\nor because the provided composition '
               'does not match the stoichiometry of the desired phase.')
+        if len(warns) == 0:
+            print('There were no solver warnings.')
+        for w in warns:
+            print(w.message)
         print(A)
         print(np.sqrt(np.mean((A.dot(popt)-b)**2)))
+        print(fitted_elements)
+        print(f'{b} (sum = {sum(b)})')
         print(A.dot(popt))
-        print(b)
-        exit()
+        print(f'Endmember proportions: {popt}')
+        #exit()
+
+    if return_Ab:
+        pcov = 0.
+    else:
+        # Calculate the covariance matrix
+        # (also from https://stats.stackexchange.com/a/333551)
+        inv_Cov_b = np.linalg.inv(Cov_b)
+        pcov = np.linalg.inv(A.T.dot(inv_Cov_b.dot(A)))
 
     if normalize:
         sump = sum(popt)
         popt /= sump
-        pcov /= sump*sump
+        pcov /= sump * sump
         res /= sump
 
     popt[np.abs(popt) < 1.e-10] = 0
 
     if return_Ab:
-        return (popt, pcov, res, A, b, b_uncertainties)
+        return (popt, pcov, res, A, Cov_b, sump)
     else:
+        # Convert the variance-covariance matrix from endmember amounts to
+        # endmember proportions
+        dpdx = (np.eye(n_mbrs) - popt).T # same as (1. - p[i] if i == j else -p[i])
+        pcov = dpdx.dot(pcov).dot(dpdx.T)
         return (popt, pcov, res)
 
 
@@ -355,25 +312,21 @@ def compute_and_set_phase_composition(assemblage, phase_index,
                             'first setting state')
         try:
             equilibrium_order(phase)
-        except:
-            print('passing for now')
+        except Exception as e:
+            print(e)
+            print(phase.molar_fractions)
+            print('Could not equilibrate. Passing for now')
 
-        popt, pcov, res, A, b, b_uncertainties = sol
+        popt, pcov, res, A, Cov_b, sump = sol
 
         # store original linear problem
         assemblage.stored_compositions[phase_index] = (phase.molar_fractions,
-                                                       (A, b, b_uncertainties))
+                                                       (A, Cov_b, sump))
 
     else:
-
-        # Convert the variance-covariance matrix from endmember amounts to
-        # endmember proportions (which must sum to one)
         popt, pcov, res = sol
-        sum_popt = sum(popt)
-        dpdx = (np.eye(n_mbrs) - popt/sum_popt).T # same as (1. - p[i] if i == j else -p[i])
-        Cov_p = dpdx.dot(pcov).dot(dpdx.T)
 
-        if False in (Cov_p < 1.):
+        if False in (pcov < 1.):
             raise Exception(f'Error: The covariance matrix for the '
                             f'endmember proportions of '
                             f'{phase.name} contains '
@@ -384,10 +337,10 @@ def compute_and_set_phase_composition(assemblage, phase_index,
                             f'{fitted_elements}\n'
                             f'{composition}\n'
                             f'{phase.molar_fractions}\n'
-                            f'{Cov_p}')
+                            f'{pcov}')
 
         assemblage.stored_compositions[phase_index] = (phase.molar_fractions,
-                                                       Cov_p)
+                                                       pcov)
 
         # Optionally print some information to stdout
         if verbose:
@@ -395,7 +348,7 @@ def compute_and_set_phase_composition(assemblage, phase_index,
             for i in range(n_mbrs):
                 print('{0}: {1:.3f} +/- {2:.3f}'.format(phase.endmember_names[i],
                                                         popt[i],
-                                                        np.sqrt(Cov_p[i][i])))
+                                                        np.sqrt(pcov[i][i])))
 
 
 def compute_and_store_phase_compositions(assemblage, midpoint_proportion,

@@ -39,15 +39,15 @@ def compile_assemblages():
     dataset, storage, labels = create_dataset(import_assemblages=False)
 
     assemblages = []
-    for xpt_set in [#Beyer_et_al_2021_NCFMASO,
-                    #Carlson_Lindsley_1988_CMS_opx_cpx,
-                    #endmember_reactions,
+    for xpt_set in [Beyer_et_al_2021_NCFMASO,
+                    Carlson_Lindsley_1988_CMS_opx_cpx,
+                    endmember_reactions,
                     Frost_2003_FMASO_garnet,
                     Frost_2003_CFMASO_garnet,
                     Frost_2003_fper_ol_wad_rw,
                     Gasparik_1989_CMAS_px_gt,
                     Gasparik_1989_MAS_px_gt,
-                    Gasparik_1989_NCMAS_px_gt,  # equilibrium state problem
+                    ###Gasparik_1989_NCMAS_px_gt, # gts with very high Na, equilibrium state problem
                     Gasparik_1989_NMAS_px_gt,
                     Gasparik_1992_MAS_px_gt,
                     Gasparik_Newton_1984_MAS_opx_sp_fo,

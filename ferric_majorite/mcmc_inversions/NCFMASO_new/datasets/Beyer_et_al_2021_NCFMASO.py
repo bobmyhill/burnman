@@ -21,6 +21,14 @@ def get_assemblages(mineral_dataset):
     expt_capsules = [list(set([d[2] for d in ds if d[0] == expt]))
                      for expt in set_expts]
 
+    # exclude potentially dodgy experiments
+    excluded_expt_capsules = [['Z1700', 'MORB'],
+                              ['Z1785', 'MORB'],
+                              ['Z1786', 'MORB']]  # all have low totals for gt
+    for expt, cap in excluded_expt_capsules:
+        expt_idx = set_expts.index(expt)
+        expt_capsules[expt_idx].remove(cap)
+
     Beyer_et_al_2019_NCFMASO_assemblages = []
 
     # Loop over experiments

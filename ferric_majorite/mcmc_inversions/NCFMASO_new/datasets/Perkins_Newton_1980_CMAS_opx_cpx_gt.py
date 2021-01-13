@@ -58,7 +58,7 @@ def get_assemblages(mineral_dataset):
         Cacpx_unc, Mgcpx_unc, Alcpx_unc, Sicpx_unc = cerr[4:]
 
         store_composition(solutions['opx'],
-                          ['Mg', 'Ca', 'Al', 'Si',
+                          ['Ca', 'Mg', 'Al', 'Si',
                            'Fe', 'Na', 'Fef_A', 'Fef_B'],
                           np.array([Caopx, Mgopx, Alopx, Siopx,
                                     0., 0., 0., 0.]),
@@ -66,7 +66,7 @@ def get_assemblages(mineral_dataset):
                                     1.e-5, 1.e-5, 1.e-5, 1.e-5]))
 
         store_composition(solutions['cpx'],
-                          ['Mg', 'Ca', 'Al', 'Si',
+                          ['Ca', 'Mg', 'Al', 'Si',
                            'Fe', 'Na', 'Fef_A', 'Fef_B'],
                           np.array([Cacpx, Mgcpx, Alcpx, Sicpx,
                                     0., 0., 0., 0.]),

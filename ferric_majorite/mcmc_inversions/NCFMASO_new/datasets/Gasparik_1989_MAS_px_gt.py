@@ -38,10 +38,10 @@ def get_assemblages(mineral_dataset):
                 phases.append(solutions[phase_name])
 
                 store_composition(phases[-1],
-                                  ['Mg', 'Al', 'Si', 'Ca', 'Fe', 'Na', 'Fef_B'],
-                                  np.array([Mg, Al, Si, 0., 0., 0., 0.]),
+                                  ['Mg', 'Al', 'Si', 'Ca', 'Fe', 'Na', 'Fef_B', 'O'],
+                                  np.array([Mg, Al, Si, 0., 0., 0., 0., 6.]),
                                   np.array([0.02, 0.02, 0.02, 1.e-6,
-                                            1.e-6, 1.e-6, 1.e-6]))
+                                            1.e-6, 1.e-6, 1.e-6, 0.02]))
             elif phase_name == 'hpx':
                 phases.append(endmembers['hen'])  # within 0.5% of pure hen
             else:
