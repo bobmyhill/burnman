@@ -39,9 +39,9 @@ def compile_assemblages():
     dataset, storage, labels = create_dataset(import_assemblages=False)
 
     assemblages = []
-    for xpt_set in [Beyer_et_al_2021_NCFMASO,
-                    Carlson_Lindsley_1988_CMS_opx_cpx,
-                    endmember_reactions,
+    for xpt_set in [#Beyer_et_al_2021_NCFMASO,
+                    #Carlson_Lindsley_1988_CMS_opx_cpx,
+                    #endmember_reactions,
                     Frost_2003_FMASO_garnet,
                     Frost_2003_CFMASO_garnet,
                     Frost_2003_fper_ol_wad_rw,

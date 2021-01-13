@@ -51,18 +51,18 @@ def get_assemblages(mineral_dataset):
             assemblage.state_covariances = np.array([[1.e7*1.e7, 0.], [0., 100.]]) # small uncertainty for P, hyperparams for true uncertainty
 
             n_phases = len(assemblage.phases)
-            fitted_elements = ['Fe', 'Al', 'Si', 'Mg', 'Ca', 'Na', 'Fe_B', 'Mg_B']
+            fitted_elements = ['Fe', 'Al', 'Si', 'Mg', 'Ca', 'Na', 'Fef_B']
             for k in range(1, n_phases):  # fcc_iron is the only pure phase
                 phase = assemblage.phases[k]
                 d = ds[chamber_indices[k-1]]  # fcc_iron is the first phase
                 c = np.array(list(map(float,
                                       [d[5], d[7], d[9], d[11],
-                                       0., 0., 0., 0.])))
+                                       0., 0., 0.])))
 
                 sig_c = np.array([max(s, 0.01)
                                   for s in map(float, [d[6], d[8], d[10],
-                                                       d[12], 1.e-6,
-                                                       1.e-6, 1.e-6, 1.e-6])])
+                                                       d[12], 1.e-5,
+                                                       1.e-5, 1.e-5])])
 
                 store_composition(phase, fitted_elements, c, sig_c)
 

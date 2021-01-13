@@ -204,14 +204,14 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
     # ensure uncertainty matrix is not singular
     det = np.linalg.det(b_uncertainties)
     if det < 1.e-30:
-        # warnings.warn(f'The compositional covariance matrix for the {name}
-        # solution is nearly singular or not positive-definite
-        # (determinant = {det}). '
-        #              'This is likely to be because your fitting parameters
-        # are not independent. '
+        #print(b_uncertainties)
+        #warnings.warn(f'The compositional covariance matrix for the {name} '
+        #              'solution is nearly singular or not positive-definite '
+        #              f'(determinant = {det}). '
+        #              'This is likely to be because your fitting parameters '
+        #              'are not independent. '
         #              'For now, we increase all diagonal components by 1%. '
-        #              'However, you may wish to redefine your
-        # problem.')
+        #              'However, you may wish to redefine your problem.')
 
         b_uncertainties += np.diag(np.diag(b_uncertainties))*0.01
 
@@ -229,6 +229,8 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
         #             for i, eq in enumerate(stoic) if np.abs(b[i]) < 1.e-10])
         return cons
 
+    print('so', endmember_site_occupancies.T)
+    print('bu', b_uncertainties)
     cons = endmember_constraints(endmember_site_occupancies.T, A)
 
     p0 = np.array([0. for i in range(len(A.T))])
@@ -236,7 +238,7 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
 
     res = np.sqrt((A.dot(popt) - b).dot(np.linalg.solve(b_uncertainties,
                                                         A.dot(popt) - b)))
-
+    print(popt, res)
     # Check constraints
     if any([c['fun'](popt) < -1.e-10 for c in cons]):
         warnings.warn('Warning: Simple least squares predicts an unfeasible '
@@ -264,8 +266,22 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
         if not sol.success:
             print(sol)
             print(f'popt: {popt}')
-            print([c['fun'](popt) for c in cons])
+            print([f"{c['fun'](popt):.2e}" for c in cons])
+            print(b)
+            print(A)
             raise Exception(f'BAD composition for phase {name}')
+
+    rms_norm = np.sqrt(np.mean((A.dot(popt)-b)**2))/np.sqrt(np.mean(np.array(b)**2))
+    if rms_norm > 0.1:
+        print(f'COMPOSITIONAL RESIDUAL VERY HIGH FOR PHASE {name} {rms_norm} {res}')
+        print('This may be because you have set some of your '
+              'variances too low,\nor because the provided composition '
+              'does not match the stoichiometry of the desired phase.')
+        print(A)
+        print(np.sqrt(np.mean((A.dot(popt)-b)**2)))
+        print(A.dot(popt))
+        print(b)
+        exit()
 
     if normalize:
         sump = sum(popt)
