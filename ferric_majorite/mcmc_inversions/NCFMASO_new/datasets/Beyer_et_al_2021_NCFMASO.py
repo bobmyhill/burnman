@@ -22,12 +22,10 @@ def get_assemblages(mineral_dataset):
                      for expt in set_expts]
 
     # exclude potentially dodgy experiments
-    excluded_expt_capsules = [['Z1700', 'MORB'],
-                              ['Z1785', 'MORB'],
-                              ['Z1786', 'MORB']]  # all have low totals for gt
-    for expt, cap in excluded_expt_capsules:
-        expt_idx = set_expts.index(expt)
-        expt_capsules[expt_idx].remove(cap)
+    # excluded_expt_capsules = [['e.g. Z1700', 'e.g. MORB']]
+    # for expt, cap in excluded_expt_capsules:
+    #     expt_idx = set_expts.index(expt)
+    #     expt_capsules[expt_idx].remove(cap)
 
     Beyer_et_al_2019_NCFMASO_assemblages = []
 
@@ -98,25 +96,16 @@ def get_assemblages(mineral_dataset):
 
                         # Fef is only on site B for gt, cpx
                         # other phases assumed to be Fe3+-free
-                        if phase_name == 'sp':
-                            fitted_elements = ['Fe', 'Mg', 'Na', 'Ca',
-                                               'Al', 'Si', 'Fe',
-                                               'Fef_B', 'Fe_B', 'Mg_B']
-                            composition = np.array([Fe_total, Mg, Na, Ca,
-                                           Al, Si, Fe_total, Fef, 0., 0.])
-                            cov = np.array([Fe2_unc, Mg_unc, 1.e-5, 1.e-5,
-                                            1.e-5, 1.e-5, 1.e-5,
-                                            1.e-5, 1.e-5, 1.e-5])
-                        else:
-                            fitted_elements = ['Na', 'Ca', 'Mg',
-                                               'Al', 'Si', 'Fe', 'Fef_B']
-                            composition = [Na, Ca, Mg,
-                                           Al, Si, Fe_total, Fef]
-                            cov = np.zeros((7, 7))
-                            cov[:5, :5] = np.diag([np.max([1.e-10, u]) for u in
-                                                   [Na_var, Ca_var, Mg_var,
-                                                    Al_var, Si_var]])
-                            cov[5:, 5:] = covFe
+                        # sp assumed to be pure Mg-Fe ringwoodite
+                        fitted_elements = ['Na', 'Ca', 'Mg',
+                                           'Al', 'Si', 'Fe', 'Fef_B']
+                        composition = [Na, Ca, Mg,
+                                       Al, Si, Fe_total, Fef]
+                        cov = np.zeros((7, 7))
+                        cov[:5, :5] = np.diag([np.max([1.e-10, u]) for u in
+                                               [Na_var, Ca_var, Mg_var,
+                                                Al_var, Si_var]])
+                        cov[5:, 5:] = covFe
 
                     if phase_name in ['gt', 'ol', 'wad', 'sp',
                                       'opx', 'cpx', 'hpx']:

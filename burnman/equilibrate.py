@@ -826,7 +826,7 @@ def equilibrate(composition, assemblage, equality_constraints,
     return sol_list, prm
 
 
-def equilibrium_order(solution):
+def equilibrium_order_init(solution):
     """
     Finds the equilibrium molar fractions of the solution
     with the composition given by the input molar fractions and
@@ -845,3 +845,21 @@ def equilibrium_order(solution):
         print('Oh oh, could not find equilibrium order for one solution')
         solution.set_composition(f)
         raise Exception('equilibrium state not found')
+
+def minfunc(x, solution, f0, rxn):
+    solution.set_composition(f0 + x[0]*rxn)
+    F = solution.molar_gibbs
+    J = solution.partial_gibbs.dot(rxn)
+    return (np.array([F]), np.array([[J]]))
+
+def equilibrium_order_fast(solution, bounds):
+    f0 = np.copy(solution.molar_fractions)
+    rxn = solution.rxn_matrix[0,:]
+    sol = minimize(minfunc, [0.], jac=True,
+                   args=(solution, f0, rxn), bounds=(bounds,))
+
+    assert sol.success, 'Equilibration failed'
+    # Make sure to set the solution to the correct composition
+    solution.set_composition(f0 + sol.x[0]*rxn)
+
+    return sol.x[0]

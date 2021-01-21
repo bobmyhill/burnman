@@ -152,8 +152,6 @@ def minimize_func(params, dataset, storage, special_constraint_function):
 
                 if phase.ordered:
                     equilibrate_phase(assemblage, j)
-                    assemblage.stored_compositions[j] = (phase.molar_fractions,
-                                                         cov)
 
         # Calculate the misfit and store it
         assemblage.chisqr = assemblage_affinity_misfit(assemblage)

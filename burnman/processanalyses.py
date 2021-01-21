@@ -7,7 +7,7 @@ from __future__ import absolute_import
 import warnings
 import numpy as np
 import cvxpy as cp
-from scipy.optimize import minimize, LinearConstraint
+from scipy.optimize import minimize, LinearConstraint, curve_fit
 from scipy.linalg import inv, sqrtm
 from collections import Counter
 from copy import deepcopy
@@ -15,9 +15,18 @@ from copy import deepcopy
 from . import SolidSolution
 from .composite import Composite
 from .solutionbases import polytope_from_solution_model
-from .equilibrate import equilibrium_order
+from .equilibrate import equilibrium_order_init, equilibrium_order_fast
 
 class CompositionStorage(object):
+    """
+    A very simple class whose instantiation creates objects with attributes:
+    fitted_elements : list of strings
+        Element / species identifiers
+    composition : 1D numpy array
+        amounts of the fitted elements
+    compositional_uncertainties : 1D or 2D numpy array
+        uncertainties (1 sigma) or variance-covariance matrix
+    """
     def __init__(self, fitted_elements=None,
                  composition=None,
                  compositional_uncertainties=None):
@@ -27,11 +36,20 @@ class CompositionStorage(object):
 
 
 def store_composition(phase, fitted_elements, composition, compositional_uncertainties):
+    """
+    Attaches a phase_storage attribute to a phase object,
+    and assigns a CompositionStorage object to that attribute.
+    """
     phase.phase_storage = CompositionStorage(fitted_elements,
                                              composition,
                                              compositional_uncertainties)
 
 class AnalysedComposite(Composite):
+    """
+    A clone of the Composite class, which in addition to all of the standard
+    Composite attributes and methods also contains a
+    phase_storage attribute and a stored compositions attribute.
+    """
     def __init__(self, phases, fractions=None, fraction_type='molar', name='Unnamed composite'):
         Composite.__init__(self, phases, fractions, fraction_type, name)
         self.phase_storage = [CompositionStorage() for i in phases]
@@ -44,6 +62,51 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def linear_function(A, *b):
+    """
+    A function returning the dot product of a matrix A and
+    vector b.
+    """
+    return A.dot(b)
+
+
+def linear_jacobian(A, *b):
+    """
+    A function returning the matrix A,
+    for use as the Jacobian in linear least squares.
+    """
+    return A
+
+
+def unconstrained_least_squares(A, b, b_uncertainties, p0):
+    """
+    Solves Ap = b using linear least squares,
+    given uncertainties on b.
+    Parameters
+    ----------
+    A : 2D numpy array
+        The matrix A
+    b : 1D numpy array
+        The vector b
+    b_uncertainties : 1D or 2D numpy array
+        If 1D array, then this parameter is an array of 1 sigma uncertainties
+        on the parameters b. If 2D, this parameter is the variance-covariance
+        matrix of b
+    p0 : A starting guess for p
+    Returns
+    -------
+    popt : 1D numpy array
+        The optimized parameters
+    pcov : 2D numpy array
+        The covariance matrix of the parameters
+    """
+    popt, pcov = curve_fit(linear_function, A, b,
+                           p0=p0,
+                           jac=linear_jacobian,
+                           sigma=b_uncertainties, absolute_sigma=True)
+    return (popt, pcov)
 
 
 def equilibrate_phase(assemblage, phase_index):
@@ -82,10 +145,11 @@ def equilibrate_phase(assemblage, phase_index):
         The variance-covariance matrix of endmember proportions.
     """
     phase = assemblage.phases[phase_index]
-    A, Cov_b, sump = assemblage.stored_compositions[phase_index][1]
+    A, Cov_b_norm, bounds = assemblage.stored_compositions[phase_index][1]
 
     # Re-equilibrate at a constant bulk composition
-    equilibrium_order(phase)
+    #equilibrium_order(phase)
+    equilibrium_order_fast(phase, bounds)
 
     # add R.dot(H) to transformation matrix
     A_new = np.vstack((A, phase.rxn_matrix.dot(phase.gibbs_hessian)))
@@ -98,7 +162,7 @@ def equilibrate_phase(assemblage, phase_index):
     sig_G = 1. # nominal 1 J uncertainty
 
     Cov_b_new = np.zeros((n_var, n_var))
-    Cov_b_new[:n_b, :n_b] = Cov_b
+    Cov_b_new[:n_b, :n_b] = Cov_b_norm
     Cov_b_new[n_b:, n_b:] = np.eye(n_rxns) * sig_G * sig_G
 
 
@@ -108,8 +172,6 @@ def equilibrate_phase(assemblage, phase_index):
     # (also from https://stats.stackexchange.com/a/333551)
     inv_Cov_b_new = np.linalg.inv(Cov_b_new)
     pcov = np.linalg.inv(A_new.T.dot(inv_Cov_b_new.dot(A_new)))
-
-    pcov /= sump * sump
 
     # Convert the variance-covariance matrix from endmember amounts to
     # endmember proportions
@@ -233,17 +295,17 @@ def fit_composition(fitted_elements, composition, compositional_uncertainties,
         # (also from https://stats.stackexchange.com/a/333551)
         inv_Cov_b = np.linalg.inv(Cov_b)
         pcov = np.linalg.inv(A.T.dot(inv_Cov_b.dot(A)))
-
     if normalize:
         sump = sum(popt)
         popt /= sump
         pcov /= sump * sump
         res /= sump
+        Cov_b_norm = Cov_b / (sump * sump)
 
     popt[np.abs(popt) < 1.e-10] = 0
 
     if return_Ab:
-        return (popt, pcov, res, A, Cov_b, sump)
+        return (popt, pcov, res, A, Cov_b_norm)
     else:
         # Convert the variance-covariance matrix from endmember amounts to
         # endmember proportions
@@ -309,17 +371,40 @@ def compute_and_set_phase_composition(assemblage, phase_index,
                             'order-disorder compound requires '
                             'first setting state')
         try:
-            equilibrium_order(phase)
+            equilibrium_order_init(phase)
+
+            # calculate bounds for later equilibrations
+            A = phase.solution_model.endmember_occupancies.T
+            occs = A.dot(phase.molar_fractions)
+            assert(phase.rxn_matrix.shape[0] == 1)
+            d_occ_d_rxn = A.dot(phase.rxn_matrix[0,:])
+            potential_neg_bounds = np.array([-occs[i]/d_occ_d_rxn[i]
+                                             for i in range(len(occs))
+                                             if d_occ_d_rxn[i] > 1.e-10])
+
+            potential_pos_bounds = np.array([-occs[i]/d_occ_d_rxn[i]
+                                             for i in range(len(occs))
+                                             if d_occ_d_rxn[i] < -1.e-10])
+
+            min_bound = np.max(potential_neg_bounds)
+            max_bound = np.min(potential_pos_bounds)
+            bounds = (min_bound, max_bound)
+
+            # Uncomment to check equilibration.
+            # The result should be very close to zero.
+            # print(equilibrium_order_fast(phase, bounds)[0])
+
+
         except Exception as e:
             print(e)
             print(phase.molar_fractions)
-            print('Could not equilibrate. Passing for now')
+            raise Exception('Could not equilibrate during initialization.')
 
-        popt, pcov, res, A, Cov_b, sump = sol
+        _, pcov, res, A, Cov_b_norm = sol
 
         # store original linear problem
         assemblage.stored_compositions[phase_index] = (phase.molar_fractions,
-                                                       (A, Cov_b, sump))
+                                                       (A, Cov_b_norm, bounds))
 
     else:
         popt, pcov, res = sol
@@ -431,10 +516,14 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
         # d(partial_gibbs)i/d(variables)j can be split into blocks
         n_mbrs = reaction_matrix.shape[1]
         #print([ph.name for ph in assemblage.phases])
-        print(assemblage.pressure/1.e9,
-              [ph.molar_fractions for ph in assemblage.phases
-               if ph.name == 'garnet'][0])
+        #print(assemblage.pressure/1.e9,
+        #      [ph.molar_fractions for ph in assemblage.phases
+        #       if ph.name == 'garnet'][0])
         #print(reaction_matrix)
+        #XXXX TODO!!
+        #Check covariance matrix scaling.
+        #Check phase compositions.
+
         Cov_mu = np.zeros((n_mbrs, n_mbrs))
         dmudPT = np.zeros((n_mbrs, 2))
         mu = np.zeros(n_mbrs)
@@ -484,4 +573,5 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
             print([ph.name for ph in assemblage.phases])
             print(Cov_a)
             raise Exception('Could not find misfit for this assemblage')
+    print(chi_sqr)
     return chi_sqr
