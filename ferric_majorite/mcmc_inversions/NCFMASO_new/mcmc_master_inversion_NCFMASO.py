@@ -73,7 +73,7 @@ if run_inversion:
 
     p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
 
-    if platform.node() == "axolotl.gly.bris.ac.uk":  # "ix.gly.bris.ac.uk":
+    if platform.node() == "ix.gly.bris.ac.uk":  # "ix.gly.bris.ac.uk":
         print('This computer is ix.gly.bris.ac.uk. Leaving two cpus free.')
         processes = os.cpu_count()-2  # NT suggests keeping two cpus free
     else:
