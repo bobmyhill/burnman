@@ -848,8 +848,8 @@ def equilibrium_order_init(solution):
 
 def minfunc(x, solution, f0, rxn):
     solution.set_composition(f0 + x[0]*rxn)
-    F = solution.molar_gibbs
-    J = solution.partial_gibbs.dot(rxn)
+    F = solution.molar_gibbs / 1000.
+    J = solution.partial_gibbs.dot(rxn) / 1000.
     return (np.array([F]), np.array([[J]]))
 
 def equilibrium_order_fast(solution, bounds):
@@ -858,8 +858,12 @@ def equilibrium_order_fast(solution, bounds):
     sol = minimize(minfunc, [0.], jac=True,
                    args=(solution, f0, rxn), bounds=(bounds,))
 
-    assert sol.success, 'Equilibration failed'
-    # Make sure to set the solution to the correct composition
-    solution.set_composition(f0 + sol.x[0]*rxn)
+    if not sol.success:
+        print(sol)
+        print('Equilibration failed. Falling back to slow method')
+        equilibrium_order_init(solution)
+    else:
+        # Make sure to set the solution to the correct composition
+        solution.set_composition(f0 + sol.x[0]*rxn)
 
     return sol.x[0]

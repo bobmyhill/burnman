@@ -10,7 +10,7 @@ if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
 import burnman
 from burnman.processanalyses import equilibrate_phase
 from burnman.processanalyses import assemblage_affinity_misfit
-
+from global_constants import transition_chisqr, transition_chi
 
 class Storage(dict):
     def __init__(self, dictoflists):
@@ -155,9 +155,15 @@ def minimize_func(params, dataset, storage, special_constraint_function):
 
         # Calculate the misfit and store it
         assemblage.chisqr = assemblage_affinity_misfit(assemblage)
-        # print('assemblage chisqr', assemblage.experiment_id,
-        # [phase.name for phase in assemblage.phases], assemblage.chisqr)
-        chisqr.append(assemblage.chisqr)
+        # chisqr.append(assemblage.chisqr)
+
+        # Modify the chisqr because experimental chisqr
+        # distribution is long-tailed
+        if assemblage.chisqr < transition_chisqr:
+            chisqr.append(assemblage.chisqr)
+        else:
+            chisqr.append(-transition_chisqr
+                          + 2. * transition_chi * np.sqrt(assemblage.chisqr))
 
     # Endmember priors
     for p in storage['endmember_priors']:

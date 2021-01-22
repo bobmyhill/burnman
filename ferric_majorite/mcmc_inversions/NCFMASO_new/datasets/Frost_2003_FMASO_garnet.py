@@ -48,7 +48,7 @@ def get_assemblages(mineral_dataset):
 
             assemblage.experiment_id = 'Frost_2003_{0}'.format(run)
             assemblage.nominal_state = np.array([pressure, temperature])
-            assemblage.state_covariances = np.array([[1.e7*1.e7, 0.], [0., 100.]]) # small uncertainty for P, hyperparams for true uncertainty
+            assemblage.state_covariances = np.array([[1.e7*1.e7, 0.], [0., 100.]])  # small uncertainty for P, hyperparams for true uncertainty
 
             n_phases = len(assemblage.phases)
             fitted_elements = ['Fe', 'Al', 'Si', 'Mg', 'Ca', 'Na', 'Fef_B']
@@ -66,10 +66,10 @@ def get_assemblages(mineral_dataset):
 
                 store_composition(phase, fitted_elements, c, sig_c)
 
-            # Tweak compositions with 0.1% of a midpoint proportion
-            # Do not consider (transformed) endmembers with < 5% abundance
-            # in the solid solution. Copy the stored compositions from
-            # each phase to the assemblage storage.
+            # Tweak compositions with a proportion of a midpoint composition
+            # Do not consider (transformed) endmembers with < proportion_cutoff
+            # abundance in the solid solution. Copy the stored
+            # compositions from each phase to the assemblage storage.
             assemblage.set_state(*assemblage.nominal_state)
             compute_and_store_phase_compositions(assemblage,
                                                  midpoint_proportion,

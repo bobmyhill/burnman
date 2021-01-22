@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib import cm
 from scipy.optimize import fsolve
+from make_child_solutions import make_child_solutions
 
 from datasets import Frost_2003_fper_ol_wad_rw
 from datasets import Matsuzaka_et_al_2000_rw_wus_stv
@@ -14,6 +15,7 @@ if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
     sys.path.insert(1, os.path.abspath('../../..'))
 
 import burnman
+
 
 def chain_plotter(sampler, labels):
     samples = sampler.get_chain()
@@ -71,7 +73,7 @@ def affinity_ol_fper(v, x_ol, G, T, W_ol, W_fper):
 def plots(dataset, storage):
     endmembers = dataset['endmembers']
     solutions = dataset['solutions']
-    child_solutions = dataset['child_solutions']
+    child_solutions = make_child_solutions(solutions)
 
     # A few images
     ol_polymorph_img = mpimg.imread('figures/ol_polymorphs.png')
@@ -225,7 +227,6 @@ def plots(dataset, storage):
                    color=viridis((P - Pmin) / (Pmax - Pmin)),
                    linewidth=3., label='{0} GPa'.format(P/1.e9))
 
-
     Frost_2003_assemblages = Frost_2003_fper_ol_wad_rw.get_assemblages(dataset)
     P_Xol_RTlnKDs = []
     for assemblage in Frost_2003_assemblages:
@@ -241,23 +242,20 @@ def plots(dataset, storage):
             P_Xol_RTlnKDs.append([assemblage.nominal_state[0],
                                   x_ol, RTlnKD])
 
-
     pressures, x_ols, RTlnKDs = np.array(P_Xol_RTlnKDs).T
     ax[0].scatter(x_ols, RTlnKDs, c=pressures, s=80., label='data',
                   cmap=viridis, vmin=Pmin, vmax=Pmax)
 
-
     ax[0].set_xlim(0., 0.8)
     ax[0].legend(loc='best')
 
-
     # WADSLEYITE
-    ax[1].imshow(wad_fper_img, extent=[0.0, 0.4, -25000., -5000.], aspect='auto')
+    ax[1].imshow(wad_fper_img, extent=[0.0, 0.4, -25000., -5000.],
+                 aspect='auto')
 
     viridis = cm.get_cmap('viridis', 101)
     Pmin = 10.e9
     Pmax = 18.e9
-
 
     T = 1673.15
     for P in [10.e9, 12.e9, 14.e9, 16.e9, 18.e9]:
@@ -301,14 +299,12 @@ def plots(dataset, storage):
     ax[1].set_xlim(0., 0.4)
     ax[1].legend(loc='best')
 
-
     # RINGWOODITE
     # ax[2].imshow(rw_fper_part_img, extent=[0.0, 1., 0., 1.], aspect='auto')
 
     viridis = cm.get_cmap('viridis', 101)
     Pmin = 10.e9
     Pmax = 24.e9
-
 
     T = 1673.15
     for P in [10.e9, 12.5e9, 15.e9, 17.5e9, 20.e9]:
@@ -330,16 +326,14 @@ def plots(dataset, storage):
         ax[2].plot(x_rws, x_fpers, color=viridis((P-Pmin)/(Pmax-Pmin)),
                    linewidth=3., label=P/1.e9)
 
-
     P_Xrw_Xfper = []
     for assemblage in Frost_2003_assemblages:
-        if child_solutions['ring'] in assemblage.phases:
-            idx_rw = assemblage.phases.index(child_solutions['ring'])
+        if solutions['sp'] in assemblage.phases:
+            idx_rw = assemblage.phases.index(solutions['sp'])
             idx_mw = assemblage.phases.index(solutions['mw'])
             P_Xrw_Xfper.append([assemblage.nominal_state[0],
-                                assemblage.stored_compositions[idx_rw][0][1],
-                                assemblage.stored_compositions[idx_mw][0][1]])
-
+                                assemblage.stored_compositions[idx_rw][0][4],  # frw is the 5th element
+                                assemblage.stored_compositions[idx_mw][0][1]])  # fper is the 2nd element
 
     pressures, x_rws, x_fpers = np.array(P_Xrw_Xfper).T
     c = ax[2].scatter(x_rws, x_fpers, c=pressures, s=80., label='data',
@@ -562,34 +556,25 @@ def plots(dataset, storage):
     plt.scatter(x_rw[mask], P[mask]/1.e9, color='red', label='1873.15 K')
     plt.scatter(x_fper[mask], P[mask]/1.e9, color='red')
 
-
-    P_Xmg_phase = {'ol': [], 'wad': [], 'ring': []}
+    P_Xfe_phase = {'ol': [], 'wad': [], 'sp': []}
     for assemblage in Frost_2003_assemblages:
         if len(assemblage.phases) > 2:
             for i, phase in enumerate(assemblage.phases):
-                for m in ['ol', 'wad', 'ring']:
-                    try:
-                        if phase == solutions[m]:
-                            P_shift = storage['dict_experiment_uncertainties'][assemblage.experiment_id]['P']
+                for m in ['ol', 'wad', 'sp']:
+                    if phase == solutions[m]:
+                        P_shift = storage['dict_experiment_uncertainties'][assemblage.experiment_id]['P']
 
-                            P_Xmg_phase[m].append([assemblage.nominal_state[0],
-                                                   P_shift,
-                                                   assemblage.stored_compositions[i][0][1]])
-                    except:
-                        if phase == child_solutions[m]:
-                            P_shift = storage['dict_experiment_uncertainties'][assemblage.experiment_id]['P']
-
-                            P_Xmg_phase[m].append([assemblage.nominal_state[0],
-                                                   P_shift,
-                                                   assemblage.stored_compositions[i][0][1]])
+                        P_Xfe_phase[m].append([assemblage.nominal_state[0],
+                                               P_shift,
+                                               assemblage.stored_compositions[i][0][-1]])
 
     arrow_params = {'shape': 'full',
                     'width': 0.001,
                     'length_includes_head': True,
                     'head_starts_at_zero': False}
 
-    for m in ['ol', 'wad', 'ring']:
-        pressures, pressure_shift, xs = np.array(P_Xmg_phase[m]).T
+    for m in ['ol', 'wad', 'sp']:
+        pressures, pressure_shift, xs = np.array(P_Xfe_phase[m]).T
         for i in range(len(xs)):
             plt.arrow(xs[i], pressures[i]/1.e9, 0.,
                       pressure_shift[i]/1.e9,

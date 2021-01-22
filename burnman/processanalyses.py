@@ -573,5 +573,4 @@ def assemblage_affinity_misfit(assemblage, reuse_reaction_matrix=True):
             print([ph.name for ph in assemblage.phases])
             print(Cov_a)
             raise Exception('Could not find misfit for this assemblage')
-    print(chi_sqr)
     return chi_sqr

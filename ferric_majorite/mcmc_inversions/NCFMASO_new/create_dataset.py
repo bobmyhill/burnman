@@ -42,7 +42,7 @@ dataset_names = ['Beyer_et_al_2021_NCFMASO',
                  'Tsujino_et_al_2019_FMS_wad_rw',
                  'Woodland_ONeill_1993_FASO_alm_sk']
 
-dataset_names = ['Frost_2003_fper_ol_wad_rw']
+# dataset_names = ['Frost_2003_fper_ol_wad_rw']
 
 dataset_modules = OrderedDict()
 for x in dataset_names:
@@ -340,7 +340,20 @@ def create_dataset(import_assemblages=True):
     if import_assemblages:
         for dataset_name, dataset_module in dataset_modules.items():
             print(f'Importing experiments from {dataset_name}')
-            assemblages.extend(dataset_module.get_assemblages(mineral_dataset))
+            dataset_assemblages = dataset_module.get_assemblages(mineral_dataset)
+
+            # Store reaction matrices and only include assemblages
+            # which have at least 1 reaction
+            for assemblage in dataset_assemblages:
+                try:
+                    reaction_matrix = assemblage.stored_reaction_matrix
+                except AttributeError:
+                    reaction_matrix = assemblage.stoichiometric_matrix(calculate_subspaces=True,
+                                                                       use_transformed_solutions=True)[1]
+                    assemblage.stored_reaction_matrix = reaction_matrix
+
+                if len(reaction_matrix) > 0:
+                    assemblages.append(assemblage)
 
     dataset = {'endmembers': mineral_dataset['endmembers'],
                'solutions': mineral_dataset['solutions'],

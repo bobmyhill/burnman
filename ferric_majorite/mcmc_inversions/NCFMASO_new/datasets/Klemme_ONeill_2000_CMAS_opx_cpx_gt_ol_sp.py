@@ -61,10 +61,10 @@ def get_assemblages(mineral_dataset):
                                              TC+273.15])
         assemblage.state_covariances = np.array([[1.e8*1.e8, 0.], [0., 100.]])
 
-        # Tweak compositions with 0.1% of a midpoint proportion
-        # Do not consider (transformed) endmembers with < 5% abundance
-        # in the solid solution. Copy the stored compositions from
-        # each phase to the assemblage storage.
+        # Tweak compositions with a proportion of a midpoint composition
+        # Do not consider (transformed) endmembers with < proportion_cutoff
+        # abundance in the solid solution. Copy the stored
+        # compositions from each phase to the assemblage storage.
         assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,

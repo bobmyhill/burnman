@@ -50,10 +50,10 @@ def get_assemblages(mineral_dataset):
                           np.array([Fefper, Mgfper]),
                           np.array([Fefper_unc, Fefper_unc]))
 
-        # Tweak compositions with 0.1% of a midpoint proportion
-        # Do not consider (transformed) endmembers with < 5% abundance
-        # in the solid solution. Copy the stored compositions from
-        # each phase to the assemblage storage.
+        # Tweak compositions with a proportion of a midpoint composition
+        # Do not consider (transformed) endmembers with < proportion_cutoff
+        # abundance in the solid solution. Copy the stored
+        # compositions from each phase to the assemblage storage.
         assemblage.set_state(*assemblage.nominal_state)
         compute_and_store_phase_compositions(assemblage,
                                              midpoint_proportion,
