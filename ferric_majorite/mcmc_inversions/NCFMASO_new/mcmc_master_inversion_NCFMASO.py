@@ -15,7 +15,10 @@ from fitting_functions import get_params, set_params
 from fitting_functions import log_probability
 from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
+from datetime import datetime
 
+
+print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
 print('TODO!! Check endmembers and priors, add solution parameters and priors')
 if len(sys.argv) == 2:
@@ -45,7 +48,7 @@ if run_inversion:
     jiggle_x0 = 1.e-3
     walker_multiplication_factor = 4  # this number must be greater than 2!
     n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 2000  # number of steps in the full mcmc run
+    n_steps_mcmc = 20000  # number of steps in the full mcmc run
     n_discard = 0  # discard this number of steps from the full mcmc run
     thin = 1  # thin by this factor when calling get_chain
 
@@ -60,7 +63,7 @@ if run_inversion:
     print(f'Running MCMC inversion with {ndim} parameters '
           f'and {nwalkers} walkers')
     print(f'This inversion will involve {n_steps_burn_in} burn-in steps '
-          'and {n_steps_mcmc} stored steps')
+          f'and {n_steps_mcmc} stored steps')
     print('The walkers will be clustered around a start point '
           f'with a random jiggle of {jiggle_x0}')
     print('The samplers will be saved to the following hdf file:')
@@ -79,14 +82,20 @@ if run_inversion:
 
     with Pool(processes=processes) as pool:
         backend = emcee.backends.HDFBackend(hdffile)
-        # only reset backend if you want to start a new inversion!
-        # backend.reset(nwalkers, ndim)
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
                                         args=[dataset, storage,
                                               special_constraints],
                                         pool=pool, backend=backend)
 
-        state = sampler.run_mcmc(sampler._previous_state, n_steps_mcmc,
+        new_inversion = True
+        if new_inversion:
+            # only reset backend if you want to start a new inversion!
+            backend.reset(nwalkers, ndim)
+            p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
+        else:
+            p0 = sampler._previous_state
+
+        state = sampler.run_mcmc(p0, n_steps_mcmc,
                                  progress=True)
         print('100% complete.')
 
@@ -156,4 +165,6 @@ if run_inversion:
 print(get_params(storage))
 
 # Make plots
-plots(dataset, storage)
+# plots(dataset, storage)
+
+print(f'End time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')

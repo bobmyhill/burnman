@@ -848,8 +848,8 @@ def equilibrium_order_init(solution):
 
 def minfunc(x, solution, f0, rxn):
     solution.set_composition(f0 + x[0]*rxn)
-    F = solution.molar_gibbs / 1000.
-    J = solution.partial_gibbs.dot(rxn) / 1000.
+    F = solution.molar_gibbs / 10000.
+    J = solution.partial_gibbs.dot(rxn) / 10000.
     return (np.array([F]), np.array([[J]]))
 
 def equilibrium_order_fast(solution, bounds):

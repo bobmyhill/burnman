@@ -484,9 +484,9 @@ def declare_constrained_endmembers(assemblage, proportion_cutoff):
 def create_polytope_attributes(solution):
     solution.polytope = polytope_from_solution_model(solution.solution_model)
     A = solution.polytope.dependent_endmembers_as_independent_endmember_proportions
-    solution.all_endmembers_as_independent_endmember_proportions = A
+    solution.all_endmembers_as_independent_endmember_proportions = np.copy(A)
     solution.polytope_midpoint = np.sum(A, axis=0)/len(A)
-    solution.independent_row_indices = solution.polytope.independent_row_indices
+    solution.independent_row_indices = np.copy(solution.polytope.independent_row_indices)
 
 
 def create_reaction_matrix(solution):

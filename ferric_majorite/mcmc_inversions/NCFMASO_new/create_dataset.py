@@ -355,6 +355,11 @@ def create_dataset(import_assemblages=True):
                 if len(reaction_matrix) > 0:
                     assemblages.append(assemblage)
 
+    # cdd objects are sadly not yet picklable, so we delete them
+    # now that the assemblages have the required information
+    for (name, solution) in mineral_dataset['solutions'].items():
+        delattr(solution, "polytope")
+
     dataset = {'endmembers': mineral_dataset['endmembers'],
                'solutions': mineral_dataset['solutions'],
                'assemblages': assemblages}

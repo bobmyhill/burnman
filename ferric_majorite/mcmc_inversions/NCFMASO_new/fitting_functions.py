@@ -12,6 +12,7 @@ from burnman.processanalyses import equilibrate_phase
 from burnman.processanalyses import assemblage_affinity_misfit
 from global_constants import transition_chisqr, transition_chi
 
+
 class Storage(dict):
     def __init__(self, dictoflists):
         self.update(dictoflists)
@@ -154,7 +155,14 @@ def minimize_func(params, dataset, storage, special_constraint_function):
                     equilibrate_phase(assemblage, j)
 
         # Calculate the misfit and store it
-        assemblage.chisqr = assemblage_affinity_misfit(assemblage)
+        try:
+            assemblage.chisqr = assemblage_affinity_misfit(assemblage)
+        except Exception as e:
+            print(e)
+            print('Ooof, this is bad. '
+                  'assemblage_affinity_misfit threw an error.')
+            print('For now, we just provide a large misfit')
+            assemblage.chisqr = 200.
         # chisqr.append(assemblage.chisqr)
 
         # Modify the chisqr because experimental chisqr
@@ -192,6 +200,7 @@ def minimize_func(params, dataset, storage, special_constraint_function):
     # see http://www.physics.utah.edu/~detar/phys6720/handouts/
     # curve_fit/curve_fit/node2.html
     half_sqr_misfit = np.sum(chisqr) / 2.
+    print(f'Current misfit is {half_sqr_misfit*2.:.2f}')
 
     print_params = False
     if print_params:
