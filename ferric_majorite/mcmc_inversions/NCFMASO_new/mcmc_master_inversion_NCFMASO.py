@@ -54,7 +54,7 @@ def log_probability_global(params):
     return -minimize_func(params,
                           dataset,
                           storage,
-                          special_constraint_function)
+                          special_constraints)
 
 ########################
 # RUN THE MINIMIZATION #
