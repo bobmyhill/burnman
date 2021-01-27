@@ -2,11 +2,12 @@ import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 from collections import namedtuple
 
+
 def solve_constraint_lagrangian(x, jac_x, c_x, c_prime):
     """
     Function which solves the problem
-    minimize || J.dot(x_mod - x) || 
-    subject to C(x_mod) = 0 
+    minimize || J.dot(x_mod - x) ||
+    subject to C(x_mod) = 0
     via the method of Lagrange multipliers.
 
     Parameters
@@ -15,7 +16,7 @@ def solve_constraint_lagrangian(x, jac_x, c_x, c_prime):
         Parameter values at x
     jac_x : 2D numpy array.
         The (estimated, approximate or exact)
-        value of the Jacobian J(x)
+        value of the Jacobian J, evaluated at x)
     c_x : 1D numpy array
         Values of the constraints at x
     c_prime : 2D array of floats
@@ -28,7 +29,7 @@ def solve_constraint_lagrangian(x, jac_x, c_x, c_prime):
         The parameter values which minimizes the L2-norm
         of any function which has the Jacobian jac_x.
     lagrange_multipliers : 1D numpy array
-        The multipliers for each of the equality 
+        The multipliers for each of the equality
         constraints
     """
     n_x = len(x)
@@ -37,18 +38,18 @@ def solve_constraint_lagrangian(x, jac_x, c_x, c_prime):
     b = np.zeros(n)
 
     JTJ = jac_x.T.dot(jac_x)
-    A[:n_x,:n_x] = JTJ/np.linalg.norm(JTJ)*n*n # includes scaling
-    A[:n_x,n_x:] = c_prime.T
-    A[n_x:,:n_x] = c_prime
+    A[:n_x, :n_x] = JTJ/np.linalg.norm(JTJ) * n * n  # includes scaling
+    A[:n_x, n_x:] = c_prime.T
+    A[n_x:, :n_x] = c_prime
     b[n_x:] = c_x
 
+    luA = lu_factor(A)
+    dx_m = lu_solve(luA, -b)  # lu_solve computes the solution of ax = b
 
-    luA = lu_factor(A) 
-    dx_m = lu_solve(luA, -b) # lu_solve computes the solution of ax = b
-    
     x_mod = x + dx_m[:n_x]
     lagrange_multipliers = dx_m[n_x:]
     return (x_mod, lagrange_multipliers)
+
 
 def damped_newton_solve(F, J, guess, tol=1.e-6,
                         max_iterations=100,
@@ -56,37 +57,38 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
                         linear_constraints=(0., np.array([-1.])),
                         store_iterates=False):
     """
-    Solver for the multivariate nonlinear system F(x)=0 
+    Solver for the multivariate nonlinear system F(x)=0
     with Jacobian J(x), using the damped affine invariant modification
     to Newton's method (Deuflhard, 1974;1975;2004).
     Here we follow the algorithm as described in Nowak and Weimann (1991):
-    [Technical Report TR-91-10, Algorithm B], modified to accept 
+    [Technical Report TR-91-10, Algorithm B], modified to accept
     linear inequality constraints.
 
-    Linear inequality constraints are provided by the arrays constraints_A and 
+    Linear inequality constraints are provided by the arrays constraints_A and
     constraints_b. The constraints are satisfied if A*x + b <= 0.
     If any constraints are not satisfied by the current
     value of lambda, lambda is reduced to satisfy all the constraints.
 
-    If a current iterate starting point (x_i) lies on one or more constraints 
+    If a current iterate starting point (x_i) lies on one or more constraints
     and the Newton step violates one or more of those constraints, then
-    the next step is calculated via the method of Lagrangian multipliers, 
+    the next step is calculated via the method of Lagrangian multipliers,
     minimizing the L2-norm of F(x_i+1) subject to the violated constraints.
 
     Successful termination of the solver is based on three criteria:
     - all(np.abs(dx (simplified newton step) < tol))
-    - all(np.abs(dx (full Newton step) < sqrt(10*tol))) [avoiding pathological behaviour] and
+    - all(np.abs(dx (full Newton step) < sqrt(10*tol)))
+      [avoiding pathological behaviour] and
     - lambda = lambda_bounds(dx, x)[1] (lambda = 1 for a full Newton step).
 
-    If these criteria are not satisfied, iterations continue until one of the following
-    occurs:
+    If these criteria are not satisfied, iterations continue
+    until one of the following occurs:
     - the value of lmda is reduced to its minimum value
       (this happens if the problem is very nonlinear)
     - successive iterations have descent vectors which violate the constraints
     - the maximum number of iterations (given by max_iterations) is reached.
 
-    Information on the root (or lack of root) obtained by the solver is provided
-    in the returned namedtuple.
+    Information on the root (or lack of root) obtained by the solver
+    is provided in the returned namedtuple.
 
 
     Parameters
@@ -109,7 +111,7 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
         full newton step (dx).
     linear_constraints : tuple of a 2D numpy array (A) and 1D numpy array (b)
         Constraints are satisfied if A.x + b < eps
-        
+
 
     Returns
     -------
@@ -130,11 +132,11 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
                 0 -> Successful convergence
                 1 -> Failure due to solver hitting lower lambda bound
                 2 -> Failure due to descent vector crossing constraints
-                3 -> Failure due to solver reaching maximum number of iterations
+                3 -> Failure due to solver reaching max number of iterations
         text : string
             Description of the solver termination.
         success : bool
-            Solution convergence boolean. 
+            Solution convergence boolean.
         iterates : namedtuple
             Only present if store_iterates=True
             Includes the following attributes:
@@ -143,12 +145,13 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
             F : list of 2D numpy arrays of floats
                 The function for each iteration
             lmda : list of floats
-                The value of the damping parameter for each iteration 
-        
-    This function is available as ``burnman.damped_newton_solve``.    
+                The value of the damping parameter for each iteration
+
+    This function is available as ``burnman.damped_newton_solve``.
     """
 
-    # Make sure damping factor is within bounds, and that the bounds are reasonable
+    # Make sure damping factor is within bounds,
+    # and that the bounds are reasonable
     # Problem classes in Nowak and Weimann (1991); [lmda_min, lmda_max]:
     # linear: [0.1, 1.]
     # mildly nonlinear: [1.e-4, 1.]
@@ -159,29 +162,31 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
     def update_lmda(x, dx, h, lmda_bounds):
         assert lmda_bounds[1] < 1. + eps, 'The highest upper bound for lambda is 1. (a full Newton step)'
         assert lmda_bounds[0] > 1.e-8 - eps, 'The lowest lower bound for lambda is 1.e-8 (suitable only for extremely nonlinear systems)'
-        
-        lmda_j = min(1./(h + eps), lmda_bounds[1]) # this is lmda_j^0
+
+        # this is lmda_j^0
+        lmda_j = min(1./(h + eps), lmda_bounds[1])
         return max(lmda_j, lmda_bounds[0])
-    
-        
-    constraints = lambda x: np.dot(linear_constraints[0], x) + linear_constraints[1]
+
+    def constraints(x):
+        return np.dot(linear_constraints[0], x) + linear_constraints[1]
+
     assert np.all(constraints(guess) < eps), 'The starting guess is outside the supplied constraints.' # this starting instance can't be compared against eps because of limited precision of np.dot()/float
 
     if not isinstance(tol, float):
         assert len(tol) == len(guess), 'tol must either be a float or an array like guess.'
 
-    sol = namedtuple('Solution', ['x', 'n_it', 'F', 'F_norm', 'J', 'code', 'text', 'success'])
+    sol = namedtuple('Solution', ['x', 'n_it', 'F', 'F_norm',
+                                  'J', 'code', 'text', 'success'])
 
     # evaluate system
     sol.x = guess
     sol.F = F(sol.x)
-    
+
     if store_iterates:
         sol.iterates = namedtuple('iterates', ['x', 'F', 'lmda'])
         sol.iterates.x = [sol.x]
         sol.iterates.F = [sol.F]
         sol.iterates.lmda = [0.]
-        
 
     # Begin Newton loop
 
@@ -189,36 +194,48 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
     lmda = 0.
     dxprev = [1.]
     dxbar = [1.]
-    
+
     sol.n_it = 0
     n_constraints = len(constraints(sol.x))
     minimum_lmda = False
     minimum_lmda_on_constraint = False
     converged = False
     persistent_bound_violation = False
-    while (sol.n_it < max_iterations and
-           not minimum_lmda and
-           not persistent_bound_violation and
-           not minimum_lmda_on_constraint and
-           not converged):
+    while (sol.n_it < max_iterations
+           and not minimum_lmda
+           and not persistent_bound_violation
+           and not minimum_lmda_on_constraint
+           and not converged):
 
-        sol.J = J(sol.x) # evaluate Jacobian
-        luJ = lu_factor(sol.J) # storing the factorisation saves time later
-        dx = lu_solve(luJ, -sol.F) # compute ordinary Newton step
+        # evaluate Jacobian
+        sol.J = J(sol.x)
+
+        # storing the factorisation saves time later
+        luJ = lu_factor(sol.J)
+
+        # compute ordinary Newton step
+        dx = lu_solve(luJ, -sol.F)
         dx_norm = np.linalg.norm(dx, ord=2)
         lmda_bounds = lambda_bounds(dx, sol.x)
-        h = (lmda*np.linalg.norm((dxbar - dx), ord=2) * dx_norm /
-             (np.linalg.norm(dxprev, ord=2) * np.linalg.norm(dxbar, ord=2)))
+        h = (lmda*np.linalg.norm((dxbar - dx), ord=2) * dx_norm
+             / (np.linalg.norm(dxprev, ord=2) * np.linalg.norm(dxbar, ord=2)))
         lmda = update_lmda(sol.x, dx, h, lmda_bounds)
-        # Create the (k+1)^0 values 
+        # Create the (k+1)^0 values
         x_j = sol.x + lmda*dx
 
         # Check that all constraints are satisfied. If not, adjust lambda.
-        # This must be done just before every call to F() *if* lambda has been increased:
+        # This must be done just before every call to F()
+        # *if* lambda has been increased:
         c_x_j = constraints(x_j)
-        if not np.all(c_x_j < eps): # x allowed to lie on constraints but not in forbidden area
+
+        # x allowed to lie on constraints but not in forbidden area
+        if not np.all(c_x_j < eps):
             c_x = constraints(sol.x)
-            violated_constraints = sorted([(i, lmda*c_x[i] / (c_x[i] - c_x_j[i])) for i in range(n_constraints) if c_x_j[i]>=eps], key=lambda x: x[1])
+            violated_constraints = sorted([(i, lmda*c_x[i]
+                                            / (c_x[i] - c_x_j[i]))
+                                           for i in range(n_constraints)
+                                           if c_x_j[i] >= eps],
+                                          key=lambda x: x[1])
             lmda = violated_constraints[0][1]
             x_j = sol.x + lmda*dx
 
@@ -229,44 +246,62 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
         # We do this here using Lagrange multipliers
         if lmda < eps:
             bound_finding = True
-            dx_n = dx # newton_iterate
-            # The next two lines identify the bound-walking constraints, and all the others:
-            active_constraint_indices = [i for i, l in violated_constraints if l < eps]
+
+            # newton_iterate
+            dx_n = dx
+            # The next two lines identify the bound-walking constraints,
+            # and all the others:
+            active_constraint_indices = [i for i, l in violated_constraints
+                                         if l < eps]
             while bound_finding:
                 inactive_constraint_indices = [i for i in range(len(c_x_j))
-                                               if i not in active_constraint_indices]
+                                               if i not in
+                                               active_constraint_indices]
                 c_newton = constraints(sol.x + dx_n)[active_constraint_indices]
                 c_A = linear_constraints[0][active_constraint_indices]
-                x_n = sol.x + dx_n # newton iterate
-                if np.linalg.matrix_rank(c_A) == len(dx): # if true, we must leave a constraint here
+                x_n = sol.x + dx_n  # newton iterate
+
+                # if true, we must leave a constraint here
+                if np.linalg.matrix_rank(c_A) == len(dx):
                     n_act = len(active_constraint_indices)
                     for i_rm in range(n_act):
-                        potential_active_indices=[active_constraint_indices[i]
-                                                  for i in range(n_act) if i!=i_rm]
+                        potential_active_indices = [active_constraint_indices[i]
+                                                    for i in range(n_act) if i!=i_rm]
                         c_newton = constraints(sol.x + dx)[potential_active_indices]
                         c_A = linear_constraints[0][potential_active_indices]
                         x_m = solve_constraint_lagrangian(x_n, sol.J, c_newton, c_A)[0]
                         if constraints(x_m)[active_constraint_indices[i_rm]] < 0.:
                             break
                 else:
-                    x_m = solve_constraint_lagrangian(x_n, sol.J, c_newton, c_A)[0]
-                dx = x_m - sol.x # this is the next potential step, which might violate new constraints 
+                    x_m = solve_constraint_lagrangian(x_n, sol.J,
+                                                      c_newton, c_A)[0]
+
+                # this is the next potential step,
+                # which might violate new constraints
+                dx = x_m - sol.x
                 lmda_bounds = lambda_bounds(dx, sol.x)
-                lmda = lmda_bounds[1] # no a-priori maximum limit
-                x_j = sol.x + lmda*dx # this is the next maximum potential step, which could still violate new constraints
-                
+
+                # no a-priori maximum limit
+                lmda = lmda_bounds[1]
+
+                # this is the next maximum potential step,
+                # which could still violate new constraints
+                x_j = sol.x + lmda*dx
+
                 c_x = constraints(sol.x)
                 c_x_j = constraints(x_j)
                 violated_inactive_constraints = sorted([(i, c_x[i] / (c_x[i] - c_x_j[i]))
                                                         for i in inactive_constraint_indices
-                                                        if c_x_j[i]>=eps], key=lambda x: x[1])
+                                                        if c_x_j[i]>=eps],
+                                                       key=lambda x: x[1])
                 if violated_inactive_constraints != []:
-                    bound_finding = (lmda_bounds[1]*violated_inactive_constraints[0][1] <
-                                     lmda_bounds[0])
+                    bound_finding = (lmda_bounds[1]*violated_inactive_constraints[0][1]
+                                     < lmda_bounds[0])
                     if bound_finding:
                         dlmda = lmda_bounds[0] * violated_inactive_constraints[0][1]
                         active_constraint_indices.append(violated_inactive_constraints[0][0])
-                        dx_n = dx_n + dlmda*dx # tweak the newton step internally
+                        # tweak the newton step internally
+                        dx_n = dx_n + dlmda*dx
                     else:
                         lmda = lmda*violated_inactive_constraints[0][1]
                         x_j = sol.x + lmda*dx
@@ -280,19 +315,19 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
 
             if (dxbar_j_min_norm > dx_norm):
                 minimum_lmda_on_constraint = True
-                
+
             if (np.linalg.norm(dx, ord=2) < eps):
-                persistent_bound_violation=True
+                persistent_bound_violation = True
 
         F_j = F(x_j)
-        dxbar_j = lu_solve(luJ, -F_j) # this is the simplified newton step
+        dxbar_j = lu_solve(luJ, -F_j)  # this is the simplified newton step
         dxbar_j_norm = np.linalg.norm(dxbar_j, ord=2)
 
-        if (all(np.abs(dxbar_j) < tol) and                     # <- Success requirements
-            all(np.abs(dx) < np.sqrt(10.*tol)) and             # <- avoids pathological cases
-            np.abs(lmda - lmda_bounds[1]) < eps) :             # <- end on a maximal newton step
-            require_posteriori_loop = False                    # <- No need for the a posteriori loop
-            converged = True                                   # <- Successful convergence
+        if ((all(np.abs(dxbar_j) < tol)                   # <- Success requirements
+             and all(np.abs(dx) < np.sqrt(10.*tol))       # <- avoids pathological cases
+             and np.abs(lmda - lmda_bounds[1]) < eps)):   # <- end on a maximal newton step
+            require_posteriori_loop = False               # <- No need for the a posteriori loop
+            converged = True                              # <- Successful convergence
         else:
             require_posteriori_loop = True
 
@@ -302,25 +337,32 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
                and not persistent_bound_violation):
             # Monotonicity check
             # always based on the Newton step, even if on a constraint
-            if dxbar_j_norm <= dx_norm: 
-                if dxbar_j_norm < eps: # <- occasionally the simplified newton step finds the exact solution
+            if dxbar_j_norm <= dx_norm:
+                # occasionally the simplified newton step
+                # finds the exact solution
+                if dxbar_j_norm < eps:
                     converged = True
                 dxbar = dxbar_j
                 sol.x = x_j
                 sol.F = F_j
 
-                require_posteriori_loop = False # return to Newton step
-                sol.n_it += 1 # move to next iteration
-                dxprev = dx # to calculate the next value of h
+                require_posteriori_loop = False  # return to Newton step
+                sol.n_it += 1  # move to next iteration
+                dxprev = dx  # to calculate the next value of h
             else:
                 if np.abs(lmda - lmda_bounds[0]) < eps:
                     minimum_lmda = True
-                h_j = (2./lmda)*np.linalg.norm((dxbar_j - (1. - lmda)*dx), ord=2)/dx_norm
+                h_j = (2./lmda)*np.linalg.norm((dxbar_j - (1. - lmda)*dx),
+                                               ord=2)/dx_norm
                 lmda_j = min(lmda_bounds[1], 1./h_j)
                 lmda = min(lmda_j, lmda/2.)
-                lmda = max(lmda, lmda_bounds[0]) # allows a check of monotonicity once at minimum lmda
 
-                x_j = sol.x + lmda*dx # because lmda must be getting smaller, no need to check constraints
+                # allow a check of monotonicity once at minimum lmda
+                lmda = max(lmda, lmda_bounds[0])
+
+                # because lmda must be getting smaller,
+                # no need to check constraints
+                x_j = sol.x + lmda*dx
                 F_j = F(x_j)
                 dxbar_j = lu_solve(luJ, -F_j)
                 dxbar_j_norm = np.linalg.norm(dxbar_j, ord=2)
@@ -332,11 +374,14 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
 
     if converged and not persistent_bound_violation:
         sol.x = x_j + dxbar_j
-        # Even if the solver succeeds, there may be a small chance that the last simplified Newton step
+        # Even if the solver succeeds, there may be a small chance
+        # that the last simplified Newton step
         # shifts the solution just outside the constraints.
         # If so, shift the solution back to the allowed region
         c_x = constraints(sol.x)
-        if not np.all(c_x <= 0.): # x allowed to lie on constraints but not in forbidden area
+
+        # x allowed to lie on constraints but not in forbidden area
+        if not np.all(c_x <= 0.):
             sol.x -= dxbar_j
 
     sol.F = F(sol.x)
@@ -346,24 +391,31 @@ def damped_newton_solve(F, J, guess, tol=1.e-6,
     if store_iterates:
         sol.iterates.x = np.array(sol.iterates.x)
         sol.iterates.F = np.array(sol.iterates.F)
-    
+
     sol.success = False
     if converged:
         sol.success = True
-        sol.code = 0 
-        sol.text = 'The solver successfully found a root after {0} iterations'.format(sol.n_it)
+        sol.code = 0
+        sol.text = ('The solver successfully found a root '
+                    f'after {sol.n_it} iterations')
     elif minimum_lmda_on_constraint:
         sol.code = 0
-        sol.text = 'The minimum value of lambda does not improve the solution on the constraints with the following indices: {0}\nThis solution may be very close to the true solution.'.format([i for i, lmda in violated_constraints])
+        sol.text = ('The minimum value of lambda does not improve '
+                    'the solution on the constraints with the following '
+                    f'indices: {[i for i, lmda in violated_constraints]}\n'
+                    'This solution may be very close to the true solution.')
     elif minimum_lmda:
-        sol.code = 1 
-        sol.text = 'The function is too non-linear for lower lambda bound ({0})'.format(lmda_bounds[0])
+        sol.code = 1
+        sol.text = ('The function is too non-linear for '
+                    f'lower lambda bound ({lmda_bounds[0]})')
     elif persistent_bound_violation:
-        sol.code = 2 
-        sol.text = 'The descent vector crosses the constraints with the following indices: {0}'.format([i for i, lmda in violated_constraints])
+        sol.code = 2
+        sol.text = ('The descent vector crosses the constraints '
+                    'with the following indices: '
+                    f'{[i for i, lmda in violated_constraints]}')
     elif sol.n_it == max_iterations:
         sol.code = 3
-        sol.text = 'The solver reached max_iterations ({0})'.format(max_iterations)
+        sol.text = f'The solver reached max_iterations ({max_iterations})'
     else:
         raise Exception('Unknown termination of solver')
     return sol
