@@ -12,7 +12,7 @@ os.environ['MKL_NUM_THREADS'] = '1'
 
 import sys
 import numpy as np
-numpy.__config__.show()
+np.__config__.show()
 import matplotlib.pyplot as plt
 import emcee
 from multiprocessing import Pool
