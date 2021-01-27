@@ -177,7 +177,7 @@ from .mineral import Mineral
 from .material import Material
 from .perplex import PerplexMaterial
 from .composite import Composite
-from .assemblage import Assemblage
+#from .assemblage import Assemblage
 from .layer import Layer
 from .planet import Planet
 from .solutionmodel import SolutionModel
@@ -212,4 +212,4 @@ from . import nonlinear_solvers
 from . import eos_fitting
 from .partitioning import calculate_nakajima_fp_pv_partition_coefficient
 from .equilibrate import equilibrate
-from .equilibrate_new import equilibrate_new, check_derivatives
+#from .equilibrate_new import equilibrate_new, check_derivatives
