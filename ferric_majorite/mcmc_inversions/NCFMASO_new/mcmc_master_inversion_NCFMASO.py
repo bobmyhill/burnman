@@ -17,6 +17,10 @@ from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
 from datetime import datetime
 
+# The following line is recommended by emcee documentation
+# to turn off parallelization by numpy.
+# I suspect this was the cause of high load on ix.
+os.environ["OMP_NUM_THREADS"] = "1"
 
 print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
@@ -36,6 +40,17 @@ else:
 
 
 dataset, storage, labels = create_dataset()
+
+# Using this probability function with params as the only
+# argument means that we only pickle dataset, storage and
+# special_constraint_function once. Because these objects
+# are quite complex, this should be faster than passing
+# args to the EmsembleSampler.
+def log_probability_global(params):
+    return -minimize_func(params,
+                          dataset,
+                          storage,
+                          special_constraint_function)
 
 ########################
 # RUN THE MINIMIZATION #
@@ -82,12 +97,14 @@ if run_inversion:
 
     with Pool(processes=processes) as pool:
         backend = emcee.backends.HDFBackend(hdffile)
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
-                                        args=[dataset, storage,
-                                              special_constraints],
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
                                         pool=pool, backend=backend)
+        #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+        #                                args=[dataset, storage,
+        #                                      special_constraints],
+        #                                pool=pool, backend=backend)
 
-        new_inversion = True
+        new_inversion = False
         if new_inversion:
             # only reset backend if you want to start a new inversion!
             backend.reset(nwalkers, ndim)
