@@ -3,8 +3,16 @@ from __future__ import print_function
 
 import platform
 import os
+# The following line is recommended by emcee documentation
+# to turn off parallelization by numpy.
+# I suspect this was the cause of high load on ix.
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import sys
 import numpy as np
+numpy.__config__.show()
 import matplotlib.pyplot as plt
 import emcee
 from multiprocessing import Pool
@@ -12,15 +20,11 @@ import pandas as pd
 import seaborn as sns
 
 from fitting_functions import get_params, set_params
-from fitting_functions import log_probability
+from fitting_functions import minimize_func #, log_probability
 from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
 from datetime import datetime
 
-# The following line is recommended by emcee documentation
-# to turn off parallelization by numpy.
-# I suspect this was the cause of high load on ix.
-os.environ["OMP_NUM_THREADS"] = "1"
 
 print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
