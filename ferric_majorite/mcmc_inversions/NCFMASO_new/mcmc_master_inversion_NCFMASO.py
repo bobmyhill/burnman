@@ -100,7 +100,11 @@ if run_inversion:
         processes = None  # default is to use all of the cpus
 
     with Pool(processes=processes) as pool:
-        backend = emcee.backends.HDFBackend(hdffile+'.save')
+        new_outfile = False
+        if new_outfile:
+            backend = emcee.backends.HDFBackend(hdffile+'.save')
+        else:
+            backend = emcee.backends.HDFBackend(hdffile)
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
                                         pool=pool, backend=backend)
         #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
@@ -116,10 +120,11 @@ if run_inversion:
         else:
             p0 = sampler._previous_state
 
-        backend = emcee.backends.HDFBackend(hdffile)
-        backend.reset(nwalkers, ndim)
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
-                                        pool=pool, backend=backend)
+        if new_outfile:
+            backend = emcee.backends.HDFBackend(hdffile)
+            backend.reset(nwalkers, ndim)
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
+                                            pool=pool, backend=backend)
 
         state = sampler.run_mcmc(p0, n_steps_mcmc,
                                  progress=True)
