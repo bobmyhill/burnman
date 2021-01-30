@@ -73,10 +73,10 @@ def get_assemblages(mineral_dataset):
                             # FeO_total_unc_prop = c[21]
                             # unc_Fe2O3 = c[22]
                             Fef_over_Fetotal = c[23]
-                            unc_Fef_over_Fetotal = c[24]
+                            unc_Fef_over_Fetotal = np.max([1.e-3, c[24]])
 
-                            Fe_unc = (unc_FeO_total_EMPA
-                                      / FeO_total_EMPA * Fe_total)
+                            Fe_unc = np.max([1.e-3, (unc_FeO_total_EMPA
+                                      / FeO_total_EMPA * Fe_total)])
 
                             Fef = Fef_over_Fetotal * Fe_total
 
@@ -91,8 +91,8 @@ def get_assemblages(mineral_dataset):
                             Fe_total = Fe2
                             Fe_var = Fe2_unc * Fe2_unc
                             Fef = 0.
-                            covFe = np.array([[np.max([1.e-10, Fe_var]), 0.],
-                                              [0., 1.e-5]])
+                            covFe = np.array([[np.max([1.e-6, Fe_var]), 0.],
+                                              [0., 1.e-6]])
 
                         # Fef is only on site B for gt, cpx
                         # other phases assumed to be Fe3+-free
@@ -102,7 +102,7 @@ def get_assemblages(mineral_dataset):
                         composition = [Na, Ca, Mg,
                                        Al, Si, Fe_total, Fef]
                         cov = np.zeros((7, 7))
-                        cov[:5, :5] = np.diag([np.max([1.e-10, u]) for u in
+                        cov[:5, :5] = np.diag([np.max([1.e-6, u]) for u in
                                                [Na_var, Ca_var, Mg_var,
                                                 Al_var, Si_var]])
                         cov[5:, 5:] = covFe
