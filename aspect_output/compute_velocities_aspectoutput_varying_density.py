@@ -32,13 +32,20 @@ from model_parameters import *
 input
 '''
 # Model to load and plot
-# 'no_motion_of_melt', 'melt_is_less_dense', 'reference', 'with_heterogeneities'
-model_name = 'volume-1.7e-5'
-# Preset molar_volume value for this specific run 
+model_name = 'output-permeability-5e-12-melting-reduction-650-volume-1.7e-5-weakening-20-hdf5'
+# Preset molar_volume value for this specific run
 volume =1.7e-5
 
+# Resample nodes
+# For quick exploration, I resample every 10 nodes.
+# I change this to 1 to make high quality plots, but computation takes a
+# while...
+resample = 1
 
-# Here we import the relevant modules from BurnMan.
+'''
+create melt endmember
+'''
+# Creating melt endmember for which the volume is set self-consistent to what is used in the geodynamical model
 
 class Fe_endmember_melt(Mineral):
     """
@@ -61,20 +68,16 @@ class Mg_endmember_melt(Mineral):
 Fe_endmember_melt_mod = Fe_endmember_melt()
 Fe_endmember_melt_mod.params['V_0'] = volume
 
-# Resample nodes
-# For quick exploration, I resample every 10 nodes.
-# I change this to 1 to make high quality plots, but computation takes a
-# while...
-resample = 1
+
 
 '''
-load data
+load aspect output
 '''
 # aspect files
-print(glob.glob('output/' + model_name + '/solution/mesh-*.h5'))
-mesh_file = glob.glob('output/' + model_name + '/solution/mesh-*.h5')[0]
+print(glob.glob('hdf5/' + model_name + '/solution/mesh-*.h5'))
+mesh_file = glob.glob('hdf5/' + model_name + '/solution/mesh-*.h5')[0]
 solution_file = glob.glob(
-    'output/' +
+    'hdf5/' +
     model_name +
     '/solution/solution-*.h5')[0]
 
@@ -297,9 +300,9 @@ write out velocities and densities
 '''
 # Save computed velocities and density
 if resample == 1:
-    outfile = 'output/' + model_name + '/solution/seismic_velocities_correcteddensity.h5'
+    outfile = 'hdf5/' + model_name + '/solution/seismic_velocities_correcteddensity.h5'
 else:
-    outfile = 'output/' + model_name + \
+    outfile = 'hdf5/' + model_name + \
         '/solution/seismic_velocities_res' + str(resample) + '_correcteddensity.h5'
 with h5.File(outfile, "w") as f:
     f.create_dataset("x", data=x[::resample])
