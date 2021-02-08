@@ -7,15 +7,15 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
+    sys.path.insert(1, os.path.abspath('../../../'))
 
 import burnman
 from burnman.processchemistry import dictionarize_formula, formula_mass
 
 
 from model_parameters import *
-from modified_HP import thermodynamic_properties, average_solid_properties, average_melt_properties, average_composite_properties
+from eos_and_averaging import thermodynamic_properties, average_solid_properties, average_melt_properties, average_composite_properties
 
 mpv = burnman.Mineral(params=mpv_params)
 fpv = burnman.Mineral(params=fpv_params)
@@ -66,12 +66,3 @@ print((solid.C_p - solid_pty['molar_C_p'])/solid.C_p)
 print((solid.rho - solid_pty['rho'])/solid.rho)
 print((solid.V - solid_pty['V'])/solid.V)
 print((solid.alpha - solid_pty['alpha'])/solid.alpha)
-exit()
-
-melt_pty = average_melt_properties(pressure, temperature,
-                                   p_feliq)
-composite_pty = average_composite_properties(pressure, temperature,
-                                             p_fpv, p_wus, p_feliq,
-                                             mass_fraction_pv, phi)
-
-    

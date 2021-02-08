@@ -5,16 +5,18 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from collections import Counter
+from warnings import catch_warnings
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
+    sys.path.insert(1, os.path.abspath('../../../'))
 
 import burnman
 from burnman import Mineral
 from burnman.processchemistry import dictionarize_formula, formula_mass
 
-from modified_HP import thermodynamic_properties
+from eos_and_averaging import thermodynamic_properties
 
 gas_constant = 8.31446
 
@@ -97,7 +99,7 @@ wus = burnman.Mineral(params={'a_0': 3.22e-05,
 fe_mantle_melt = burnman.Mineral(params={'a_0': 2.9614332469401705e-05,
                                          'K_0': 166652774642.11273,
                                          'Pref': 100.e9,
-                                         'Cp_Pref': array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
+                                         'Cp_Pref': np.array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
                                          'H_Pref': -195245.49100022088,
                                          'Kprime_0': 5.0802472229003905,
                                          'T_0': 298.15,
@@ -114,7 +116,7 @@ fe_mantle_melt = burnman.Mineral(params={'a_0': 2.9614332469401705e-05,
 mg_mantle_melt = burnman.Mineral(params={'a_0': 2.0572748142847914e-05,
                                          'K_0': 231645314972.72287,
                                          'Pref': 100.e9,
-                                         'Cp_Pref': array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
+                                         'Cp_Pref': np.array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
                                          'H_Pref': -538009.8593335259,
                                          'Kprime_0': 4.252832366943359,
                                          'T_0': 298.15,
@@ -136,14 +138,14 @@ def liq_sol_molar_compositions(P, T,
                                melting_entropies,
                                melting_volumes,
                                n_mole_mix):
-    
+
     dG = ((melting_temperatures - T) * melting_entropies +
           (P - melting_reference_pressure) * melting_volumes)
-    
+
     Xls = 1.0 - ((1.0 - np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))) /
                  (np.exp(dG[0]/(n_mole_mix[0]*gas_constant*T)) -
                   np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))))
-           
+
     Xss = Xls * np.exp(dG[1]/(n_mole_mix[1]*gas_constant*T))
 
     return Xls, Xss
@@ -151,18 +153,18 @@ def liq_sol_molar_compositions(P, T,
 def calculate_xfe_in_fper_and_pv(pressure, temperature,
                                  x_Fe_in_solid, c_mantle):
     """
-    Calculates the proportion of wus in fper, fpv in pv, and 
+    Calculates the proportion of wus in fper, fpv in pv, and
     the MASS fraction of pv in the solid given
     the Fe number in the solid.
     """
     x_MgO = (1. - x_Fe_in_solid)*c_mantle[0]['MgO']
     x_FeO = x_Fe_in_solid*c_mantle[1]['FeO']
     x_SiO2 = (1. - x_Fe_in_solid)*c_mantle[0]['SiO2'] + x_Fe_in_solid*c_mantle[1]['SiO2']
-    
+
     norm = x_MgO + x_FeO
     f_FeO = x_FeO/norm
     f_SiO2 = x_SiO2/norm
-    
+
     for m in [mpv, fpv, per, wus]:
         m.set_state(pressure, temperature)
 
@@ -179,7 +181,7 @@ def calculate_xfe_in_fper_and_pv(pressure, temperature,
                (2. * f_SiO2 * (1. - KD)))
 
     p_wus = p_fpv / (((1. - p_fpv) * KD) + p_fpv)
-    
+
     f_pv = f_SiO2 # MOLAR mass of bridgmanite in the solid
 
     # finally, convert to mass fraction of bridgmanite in the solid
@@ -187,14 +189,14 @@ def calculate_xfe_in_fper_and_pv(pressure, temperature,
     molar_mass_pv = p_fpv*fpv.molar_mass + (1. - p_fpv)*mpv.molar_mass
 
     mass_fraction_pv = f_pv*molar_mass_pv/(f_pv*molar_mass_pv + (1. - f_pv)*molar_mass_fper)
-    
+
     return p_wus, p_fpv, mass_fraction_pv # f_pv is the molar fraction of pv
 
 
 def calculate_xfe_in_solid_from_molar_proportions(p_wus, p_fpv, mass_fraction_pv):
     """
-    Calculates the Fe number in the solid given 
-    the proportion of wus in fper, fpv in pv, and 
+    Calculates the Fe number in the solid given
+    the proportion of wus in fper, fpv in pv, and
     the molar fraction of pv in the solid.
     """
 
@@ -203,7 +205,7 @@ def calculate_xfe_in_solid_from_molar_proportions(p_wus, p_fpv, mass_fraction_pv
 
     f_pv = ((mass_fraction_pv/molar_mass_pv)/
             ((mass_fraction_pv/molar_mass_pv) + (1. - mass_fraction_pv)/molar_mass_fper)) # molar fraction of bridgmanite
-    
+
     return f_pv*p_fpv + (1. - f_pv)*p_wus
 
 ################# BEGIN PARAMETERS ###################
@@ -212,7 +214,7 @@ c_mantle = [{'MgO': 0.581, 'SiO2': 0.419},
             {'FeO': 0.908, 'SiO2': 0.092}] # molar_proportions
 
 melting_reference_pressure = 120.e9 # Pa
-melting_temperatures=np.array([4821.2, 3470.0]) # K 
+melting_temperatures=np.array([4821.2, 3470.0]) # K
 melting_entropies=np.array([34.33, 33.77]) # J/K/mol-cations
 melting_volumes=np.array([9.29e-08, 1.51e-07]) # m^3/mol-cations
 n_mole_mix = np.array([0.52, 0.56]) # having different "n"s would be incorrect for a solid solution, but this does a slightly better job than assuming the same number of moles mixing for each "endmember"... this model is not strictly thermodynamically correct anyway.
@@ -238,7 +240,6 @@ plt.plot(x_Fes, mass_f_pv, label='mass fraction pv', linestyle=':')
 plt.legend()
 plt.show()
 
-exit()
 
 
 P = 120.e9
@@ -269,22 +270,21 @@ ax[2].plot(xs, melting_volumes.dot(np.array([1 - xs, xs]))*1.e6)
 plt.show()
 
 
-exit()
-
-
 
 
 
 
 # Now for the fitting
 # First, the Fe endmember
-x_FeO = c_mantle[0]['FeO']
-x_SiO2 = c_mantle[0]['SiO2']
+print(c_mantle)
+x_FeO = c_mantle[1]['FeO']
+x_SiO2 = c_mantle[1]['SiO2']
 
 n_fpv = x_SiO2
 n_wus = (x_FeO - x_SiO2)
 
-burnman.tools.check_eos_consistency(fpv, P=80.e9, T=4000., verbose=True)
+with catch_warnings(record=True) as w:
+    burnman.tools.check_eos_consistency(fpv, P=80.e9, T=4000., verbose=True)
 
 
 temperatures = np.linspace(300., 7000., 101)
@@ -292,23 +292,24 @@ pressures = 100.e9 + 0.*temperatures
 
 fe_mantle = burnman.CombinedMineral([fpv, wus], [n_fpv, n_wus])
 heat_capacities = fe_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle='-', color='blue')
+plt.plot(temperatures, heat_capacities, linestyle='-', color='red', label='Fe-endmember')
 
 
 
 # Now the Mg endmember
-x_MgO = c_mantle[1]['MgO']
-x_SiO2 = c_mantle[1]['SiO2']
+x_MgO = c_mantle[0]['MgO']
+x_SiO2 = c_mantle[0]['SiO2']
 
 n_mpv = x_SiO2
 n_per = (x_MgO - x_SiO2)
 
 mg_mantle = burnman.CombinedMineral([mpv, per], [n_mpv, n_per])
 heat_capacities = mg_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle='-', color='red')
+plt.plot(temperatures, heat_capacities, linestyle='-', color='blue', label='Mg-endmember')
 
 plt.ylim(0., )
+
+plt.xlabel('Temperature (K)')
+plt.ylabel('Cp (J/K/mol)')
+plt.legend()
 plt.show()
-
-
-

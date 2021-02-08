@@ -195,7 +195,8 @@ def calculate_baseline_endmember_amounts(assemblage, equality_constraints, prm):
                        method='COBYLA', constraints=cons, tol=1.e-16)
 
         #assert(sol.status==1)
-        assert(cons_fun(sol.x) > -eps)
+        for c in cons_fun(sol.x):
+            assert(c > -eps)
 
         # add the reaction vector
         baseline_endmember_amounts += reaction_vectors.dot(sol.x)
@@ -878,7 +879,7 @@ def equilibrate(composition, assemblage, equality_constraints,
 
     # Finally, make dimensions of sol_list equal the input dimensions
     if len(sol_list[0]) == 1:
-        sol_list = list(zip(*sol_list)[0])
+        sol_list = list(zip(*sol_list))[0]
     if len(sol_list) == 1:
         sol_list = sol_list[0]
     return sol_list, prm

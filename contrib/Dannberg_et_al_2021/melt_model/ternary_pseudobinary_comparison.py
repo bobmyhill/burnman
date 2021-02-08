@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
+    sys.path.insert(1, os.path.abspath('../../..'))
 
 import burnman
 from burnman.equilibrate import equilibrate
@@ -328,5 +328,5 @@ tax.plot(np.array([c_MgO2, c_SiO22, c_FeO2]).T, linewidth=2.0, label="bdg-fper c
 tax.plot(np.array([c_MgO3, c_SiO23, c_FeO3]).T, linewidth=2.0, label="fper-stv cotectic")
 
 tax.plot(np.array([mbr_MgO, mbr_SiO2, mbr_FeO]).T, linewidth=2.0, linestyle='--', label="Linear cotectic")
-fig.savefig('FMS_ternary_{0:.0f}_GPa.pdf'.format(pressure/1.e9))
+fig.savefig('output_figures/FMS_ternary_{0:.0f}_GPa.pdf'.format(pressure/1.e9))
 plt.show()

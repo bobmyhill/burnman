@@ -10,7 +10,8 @@ import sys,os
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
 sys.path.insert(1, os.path.abspath('../'))
-sys.path.insert(1, os.path.abspath('../boukare/'))
+sys.path.insert(1, os.path.abspath('../../../burnman/'))
+sys.path.insert(1, os.path.abspath('../melt_model/'))
 
 import glob
 import ulvz_melt_model
@@ -61,7 +62,7 @@ model_names = [
     'output-permeability-5e-12-melting-reduction-650-volume-1.8e-5-weakening-20-hdf5',
     #'output-permeability-5e-12-melting-reduction-650-volume-1.9e-5-weakening-20-hdf5',
     'output-permeability-5e-12-melting-reduction-650-volume-2e-5-weakening-20-hdf5']
-    
+
 titles = [
     r'$\mathrm{\Delta \rho: 260 \  kg/m^3}$',
     r'$\mathrm{\Delta \rho: 60 \ kg/m^3}$',
@@ -86,14 +87,14 @@ fig, ax = plt.subplots(figsize=(15,12))
 
 if plot_aspect_output:
     for m, model_name in enumerate(model_names):
-        
+
         # Define mesh and solution file
         mesh_file = glob.glob(
             'hdf5/' +
             model_name +
             '/solution/mesh-*.h5')[0]
 
-            
+
 
         # Load the mesh
         mesh = h5.File(mesh_file, 'r')
@@ -186,7 +187,7 @@ if plot_aspect_output:
             plt.xlabel('(km)')
 
         plt.gca().set_aspect('equal', adjustable='box')
-        
+
 
     #plt.savefig('all_models_' + value_to_plot + '.pdf')
     #plt.show()
@@ -204,7 +205,7 @@ if plot_seismic_velocity:
                 model_name +
                 '/solution/solution-*.h5')[0]
         if m==2:
-        
+
             vel_file = glob.glob(
                 'hdf5/' +
                 model_name +
@@ -214,28 +215,28 @@ if plot_seismic_velocity:
                 'hdf5/' +
                 model_name +
                 '/solution/seismic_velocities*sity.h5')[0]
-                
+
         vels = h5.File(vel_file, 'r')
         vs = np.array(vels['vs'])
         x = np.array(vels['x'])
         y = np.array(vels['y'])
         # dVs/Vs with reference to 7.1 km/s
         dvs = (np.array(vs) / 7100 - 1.) * 100.
-        
+
         vp = np.array(vels['vp'])
         #dVp/Vp with reference to 13.9 km/s
         dvp = (np.array(vp) / 13900 - 1.) * 100.
-        
+
         rho = np.array(vels['rho'])
         #drho/rho with reference to 5.485 kg/m^3
         drho = (np.array(rho) / 5485 - 1.) * 100.
 
         plot_val = np.linspace(-40, 0, 41, endpoint=True)
         print(np.max(vs), np.max(vp), np.min(dvs), np.min(dvp))
-        
+
         # Plot velocity
         ax = plt.subplot(5,3, m*3 + 1)
-    
+
         pl1 = plt.tricontourf(
             x / 1.e3,
             y / 1.e3,
@@ -265,7 +266,7 @@ if plot_seismic_velocity:
             vmin=-100.,
             vmax=0,
             extend='both')
-        
+
         plt.xlim([250,350])
         plt.ylim([0,50])
         ax.get_xaxis().set_ticks([])
@@ -288,10 +289,10 @@ if plot_seismic_velocity:
                 cb = fig.colorbar(pl1, cax=cbar_ax, orientation="horizontal")
                 cb.ax.set_xlabel('relative S wave velocity (\%)', fontsize =14)
 
-                
+
         # P wave velocity
         ax = plt.subplot(5,3, m*3 + 2)
-        
+
         pl1 = plt.tricontourf(
             x / 1.e3,
             y / 1.e3,
@@ -313,7 +314,7 @@ if plot_seismic_velocity:
         linestyles = 'dashed',
         extend='both')
 
-        
+
         plt.xlim([250,350])
         plt.ylim([0,50])
         ax.get_xaxis().set_ticks([])
@@ -331,11 +332,11 @@ if plot_seismic_velocity:
                 cbar_ax = fig.add_axes([0.405, 0.08, 0.22, 0.01])
                 cb = fig.colorbar(pl1, cax=cbar_ax, orientation="horizontal")
                 cb.ax.set_xlabel('relative P wave velocity (\%)', fontsize =14)
-        
-                
+
+
     #
     #density - not shown in paper
-        
+
         ax = plt.subplot(5,3, m*3 + 3)
         plot_val = np.linspace(-10, 10, 40, endpoint=True)
         pl1 = plt.tricontourf(
@@ -368,11 +369,11 @@ if plot_seismic_velocity:
                 cbar_ax = fig.add_axes([0.68, 0.08, 0.22, 0.01])
                 cb = fig.colorbar(pl1, cax=cbar_ax, orientation="horizontal", ticks = [-10,-5,0,5,10])
                 cb.ax.set_xlabel('relative density (\%)', fontsize =14)
-                
-                cb.ax.set_xticklabels([-10,-5,0,5,10])
-        
 
-    
+                cb.ax.set_xticklabels([-10,-5,0,5,10])
+
+
+
 
     plt.savefig("all_models_vsvp.pdf")
     plt.show()

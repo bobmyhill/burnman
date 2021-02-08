@@ -109,22 +109,6 @@ wus_params={'a_0': 3.22e-05,
             'n': 2.0,
             'formula': {'Fe': 1.0, 'O': 1.0}}
 
-fe_mantle_melt_params={'a_0': 2.9614332469401705e-05,
-                       'K_0': 166652774642.11273,
-                       'Pref': 100.e9,
-                       'Cp_Pref': np.array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
-                       'H_Pref': -195245.49100022088,
-                       'Kprime_0': 5.0802472229003905,
-                       'T_0': 298.15,
-                       'T_einstein': 505.75,
-                       'Kdprime_0': -3.9742163085937504e-11,
-                       'V_0': 1.2325484447664221e-05,
-                       'name': 'Fe-bearing melt',
-                       'molar_mass': 0.0707624708,
-                       'S_Pref': 95.0299295525918,
-                       'equation_of_state': 'mod_hp_tmt',
-                       'n': 2.092,
-                       'formula': {'O': 1.092, 'Fe': 0.908, 'Si': 0.092}}
 
 mg_mantle_melt_params={'a_0': 2.0572748142847914e-05,
                        'K_0': 231645314972.72287,
@@ -142,6 +126,31 @@ mg_mantle_melt_params={'a_0': 2.0572748142847914e-05,
                        'equation_of_state': 'mod_hp_tmt',
                        'n': 2.419,
                        'formula': {'O': 1.419, 'Mg': 0.581, 'Si': 0.419}}
+
+
+# NOTE: If we had used the composition-dependent Cp(Pref) for melt, we would
+# have to adjust the standard state enthalpy and entropy for the Fe endmember:
+#'Cp_Pref': np.array([ 5.52715898e+01,  3.32839028e-03, -1.35622987e+06, -2.19458769e+01]),
+#'H_Pref': -45892.34598332329,
+#'S_Pref': 136.68675662899167,
+# This would not affect the melting model, as the volume and entropy of melting are
+# defined at the melting point at 100 GPa
+fe_mantle_melt_params={'a_0': 2.9614332469401705e-05,
+                       'K_0': 166652774642.11273,
+                       'Pref': 100.e9,
+                       'Cp_Pref': np.array([ 7.95326013e+01, -2.41909947e-03, -1.61692272e+06, -5.62222634e+02]),
+                       'H_Pref': -195245.49100022088,
+                       'Kprime_0': 5.0802472229003905,
+                       'T_0': 298.15,
+                       'T_einstein': 505.75,
+                       'Kdprime_0': -3.9742163085937504e-11,
+                       'V_0': 1.2325484447664221e-05,
+                       'name': 'Fe-bearing melt',
+                       'molar_mass': 0.0707624708,
+                       'S_Pref': 95.0299295525918,
+                       'equation_of_state': 'mod_hp_tmt',
+                       'n': 2.092,
+                       'formula': {'O': 1.092, 'Fe': 0.908, 'Si': 0.092}}
 
 
 H2O_mantle_melt_params={'name': 'H2O melt mantle component (data from Mookherjee et al., 2008; 10.1038/nature06918)',
@@ -216,4 +225,4 @@ c_pyrolite = {'FeO': 0.908*(1. - x), 'MgO': 0.581*x, 'SiO2': 0.419*x + 0.092*(1.
 
 #print('Fe/Si: {0}'.format(c_pyrolite['FeO']/c_pyrolite['SiO2']))
 #print('Mg/Si: {0}'.format(c_pyrolite['MgO']/c_pyrolite['SiO2']))
-print('Fe/Mg: {0} ({1})'.format(c_pyrolite['FeO']/c_pyrolite['MgO'], 5.8/50.))
+#print('Fe/Mg: {0} ({1})'.format(c_pyrolite['FeO']/c_pyrolite['MgO'], 5.8/50.))

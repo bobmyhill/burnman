@@ -11,7 +11,8 @@
 import sys,os
 # hack to allow scripts to be placed in subdirectories next to burnman:
 sys.path.insert(1, os.path.abspath('../'))
-sys.path.insert(1, os.path.abspath('../boukare/'))
+sys.path.insert(1, os.path.abspath('../../../burnman/'))
+sys.path.insert(1, os.path.abspath('../melt_model/'))
 
 
 import glob
@@ -186,7 +187,7 @@ for i in range(0, len(pressures), resample):
     # construct molar compositions using boukare model
     molar_fractions_in_composite, molar_volumes, molar_masses = ulvz_melt_model.calculate_endmember_proportions_volumes_masses(
         pressures[i], temperatures[i], solid_fe[i], melt_fe[i], melt_frac[i], c_mantle)
-        
+
     # initialize melt
     melt = burnman.CombinedMineral([Mg_endmember_melt(),Fe_endmember_melt()], [1-melt_fe[i], melt_fe[i]])
 

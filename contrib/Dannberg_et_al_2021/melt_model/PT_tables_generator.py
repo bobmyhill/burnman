@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
 
-
 from model_parameters import *
 from eos_and_averaging import thermodynamic_properties, average_solid_properties, average_melt_properties, average_composite_properties
 
@@ -21,7 +20,7 @@ derivative_pty_list=['V', 'rho', 'alpha', 'beta_T', 'molar_C_p', 'C_p_per_kilogr
 full_header = 'Pressure Temperature'
 for pty in full_pty_list:
     full_header += ' ' + pty
-    
+
 derivative_header = 'Pressure Temperature'
 for subsystem in ['SOLID', 'MELT', 'COMPOSITE']:
     derivative_header += ' ' + subsystem
@@ -33,7 +32,7 @@ for subsystem in ['SOLID', 'MELT', 'COMPOSITE']:
 # 2) Mixed solid and liquid table -> composite_properties.dat
 
 phi = 0.2
-mass_fraction_pv = 0.25 
+mass_fraction_pv = 0.25
 p_wus = 0.41
 p_fpv = 0.42
 p_feliq = 0.43
@@ -44,7 +43,7 @@ for i in range(len(pressures)):
     pty = thermodynamic_properties(pressures[i], temperatures[i], mpv_params)
     mpv_table.append([pressures[i], temperatures[i]])
     mpv_table[-1].extend([pty[p] for p in full_pty_list])
-    
+
     solid_pty = average_solid_properties(pressures[i], temperatures[i],
                                          p_fpv, p_wus, mass_fraction_pv)
     melt_pty = average_melt_properties(pressures[i], temperatures[i],
@@ -53,16 +52,12 @@ for i in range(len(pressures)):
                                                  p_fpv, p_wus, p_feliq,
                                                  mass_fraction_pv, phi)
 
-    
+
     composite_table.append([pressures[i], temperatures[i]])
     composite_table[-1].extend([solid_pty[p] for p in derivative_pty_list])
     composite_table[-1].extend([melt_pty[p] for p in derivative_pty_list])
     composite_table[-1].extend([composite_pty[p] for p in derivative_pty_list])
-    
-
-np.savetxt('PT_tables/mpv_properties.dat', mpv_table, header=full_header)
-np.savetxt('PT_tables/composite_properties.dat', composite_table, header=derivative_header)
-                  
 
 
-
+np.savetxt('output_data/PT_tables/mpv_properties.dat', mpv_table, header=full_header)
+np.savetxt('output_data/PT_tables/composite_properties.dat', composite_table, header=derivative_header)

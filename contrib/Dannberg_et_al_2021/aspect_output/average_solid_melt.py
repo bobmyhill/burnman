@@ -3,7 +3,7 @@
 # GPL v2 or later.
 from __future__ import absolute_import
 import sys,os
-sys.path.insert(1, os.path.abspath('../burnman'))
+sys.path.insert(1, os.path.abspath('../../../burnman'))
 
 from averaging_schemes import AveragingScheme
 import numpy as np
@@ -88,4 +88,3 @@ class contiguity_model_linear_approximation(AveragingScheme):
         if N < 0:
             N = 0
         return N
-

@@ -135,12 +135,12 @@ def solution_bounds(endmember_occupancies):
         bounds on the solution
     """
     # Find bounds for the solution
-    i_sorted =zip(*sorted([(i,
-                            sum([1 for val in endmember_occupancies.T[i]
-                                 if val>1.e-10]))
-                           for i in range(len(endmember_occupancies.T))
-                                          if np.any(endmember_occupancies.T[i] > 1.e-10)],
-                          key=lambda x: x[1]))[0]
+    i_sorted =list(zip(*sorted([(i,
+                                 sum([1 for val in endmember_occupancies.T[i]
+                                      if val>1.e-10]))
+                                for i in range(len(endmember_occupancies.T))
+                                if np.any(endmember_occupancies.T[i] > 1.e-10)],
+                          key=lambda x: x[1])))[0]
 
     solution_bounds = endmember_occupancies[:,i_sorted[0],np.newaxis]
     for i in i_sorted[1:]:

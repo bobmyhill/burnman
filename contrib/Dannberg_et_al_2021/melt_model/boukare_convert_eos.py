@@ -2,17 +2,21 @@ from __future__ import absolute_import
 
 import os
 import sys
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
+    sys.path.insert(1, os.path.abspath('../../..'))
 
 import burnman
 from burnman import Mineral
 from burnman.processchemistry import dictionarize_formula, formula_mass
+
+from model_parameters import *
+from eos_and_averaging import thermodynamic_properties
 
 Pref = 100.e9
 class mpv (Mineral):
@@ -101,7 +105,7 @@ class fper (Mineral):
             'molar_mass': formula_mass(formula)}
         Mineral.__init__(self)
 
-        
+
 b_wus = burnman.minerals.boukare.fe_bridgmanite_boukare()
 b_per = burnman.minerals.boukare.mg_bridgmanite_boukare()
 b_mpv = burnman.minerals.boukare.periclase_boukare()
@@ -128,6 +132,8 @@ from scipy.optimize import curve_fit
 func_Cp = lambda T, a, b, c, d: a + b*T + c/T/T + d/np.sqrt(T)
 temperatures = np.linspace(300., 2000., 101)
 pressures = Pref + 0.*temperatures
+print('We start by taking the heat capacities from the Holland et al., 2013 dataset'
+      'and fit the new heat capacity terms using them.')
 print('New heat capacities at a reference pressure of {0} GPa:'.format(Pref/1.e9))
 for m, m_mod in [[hp_mpv, mpv],
                  [hp_fpv, fpv],
@@ -156,7 +162,8 @@ x_SiO2 = mbr_SiO2[0]
 n_fpv = x_SiO2
 n_wus = (x_FeO - x_SiO2)
 
-burnman.tools.check_eos_consistency(fpv, P=80.e9, T=4000., verbose=True)
+with warnings.catch_warnings(record=True) as w:
+    burnman.tools.check_eos_consistency(fpv, P=80.e9, T=4000., verbose=True)
 
 
 hp_fe_mantle = burnman.CombinedMineral([hp_fpv, hp_wus], [n_fpv, n_wus])
@@ -167,9 +174,9 @@ temperatures = np.linspace(300., 7000., 101)
 pressures = 100.e9 + 0.*temperatures
 
 heat_capacities = hp_fe_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle=':', color='blue')
+plt.plot(temperatures, heat_capacities, linestyle=':', color='blue', label='Mg endmember, HHPH2013 dataset (Mod. Tait)')
 heat_capacities = fe_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle='-', color='blue')
+plt.plot(temperatures, heat_capacities, linestyle='-', color='blue', label='Fe endmember, New HP Modified Tait')
 #heat_capacities = b_fe_mantle.evaluate(['C_p'], pressures, temperatures)[0]
 #plt.plot(temperatures, heat_capacities, linestyle='-')
 
@@ -188,13 +195,14 @@ b_mg_mantle = burnman.CombinedMineral([b_mpv, b_per], [n_mpv, n_per])
 
 
 heat_capacities = hp_mg_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle=':', color='red')
+plt.plot(temperatures, heat_capacities, linestyle=':', color='red', label='Mg endmember, HHPH2013 dataset (Mod. Tait)')
 heat_capacities = mg_mantle.evaluate(['C_p'], pressures, temperatures)[0]
-plt.plot(temperatures, heat_capacities, linestyle='-', color='red')
+plt.plot(temperatures, heat_capacities, linestyle='-', color='red', label='Mg endmember, New HP Modified Tait')
 #heat_capacities = b_mg_mantle.evaluate(['C_p'], pressures, temperatures)[0]
 #plt.plot(temperatures, heat_capacities, linestyle='-')
 
 plt.ylim(0., )
+plt.legend()
 plt.show()
 
 """
@@ -214,10 +222,8 @@ plt.show()
 
 
 # Finally, let's create our combined mantle endmembers:
-print('WARNING, combining endmembers isn\'t great over large P-T regions')
-
 melting_reference_pressure = 120.e9 # Pa
-melting_temperatures=np.array([4821.2, 3470.0]) # K 
+melting_temperatures=np.array([4821.2, 3470.0]) # K
 melting_entropies=np.array([34.33, 33.77]) # J/K/mol-cations
 melting_volumes=np.array([9.29e-08, 1.51e-07]) # m^3/mol-cations
 
@@ -268,10 +274,10 @@ mg_melt.params['H_Pref'] += mg_mantle.gibbs - mg_melt.gibbs
 
 
 mg_melt.set_state(melting_reference_pressure, melting_temperatures[0])
-print('{0} GPa, {1} K:'.format(mg_melt.pressure/1.e9, mg_melt.temperature))
-print(mg_melt.V - mg_mantle.V)
-print(mg_melt.S - mg_mantle.S)
-print(mg_melt.gibbs - mg_mantle.gibbs)
+print('Melting temperature: {1} K ({0} GPa)'.format(mg_melt.pressure/1.e9, mg_melt.temperature))
+print(f'V_fusion: {mg_melt.V - mg_mantle.V}')
+print(f'S_fusion: {mg_melt.S - mg_mantle.S}')
+print(f'Check eqm (should be 0): {mg_melt.gibbs - mg_mantle.gibbs}')
 
 
 
@@ -286,14 +292,19 @@ dP = 1.e6
 Ks = fe_mantle.evaluate(['K_T'], [1.e5-dP, 1.e5, 1.e5+dP], [298.15, 298.15, 298.15])[0]
 Kdprime = (Ks[2] - 2.*Ks[1] + Ks[0])/(dP*dP) + 4.1e-12
 
+
+# NOTE: The commented out line is what we should strictly use
+# However, the Fe_melt and Mg_melt have similar Cps over the range of temperatures
+# considered in this study, so we here choose to make the melt Cp independent of composition at Pref.
 fe_mantle.set_state(1.e5, 298.15)
 fe_melt = burnman.Mineral(params = {'name': 'fe mantle',
                                    'formula': formula,
                                    'equation_of_state': 'mod_hp_tmt',
                                    'Pref': Pref,
-                                   'H_Pref': mpv.params['H_Pref']*n_mpv + per.params['H_Pref']*n_per,
-                                   'S_Pref': mpv.params['S_Pref']*n_mpv + per.params['S_Pref']*n_per,
+                                   'H_Pref': 0,
+                                   'S_Pref': 0,
                                    'Cp_Pref': mpv.params['Cp_Pref']*n_mpv + per.params['Cp_Pref']*n_per,
+                                   #'Cp_Pref': fpv.params['Cp_Pref']*n_fpv + wus.params['Cp_Pref']*n_wus,
                                    'V_0': fe_mantle.V,
                                    'a_0': fe_mantle.alpha,
                                    'K_0': fe_mantle.K_T,
@@ -323,20 +334,10 @@ fe_melt.params['H_Pref'] += fe_mantle.gibbs - fe_melt.gibbs
 
 
 fe_melt.set_state(melting_reference_pressure, melting_temperatures[1])
-print('{0} GPa, {1} K:'.format(fe_melt.pressure/1.e9, fe_melt.temperature))
-print(fe_melt.V - fe_mantle.V)
-print(fe_melt.S - fe_mantle.S)
-print(fe_melt.gibbs - fe_mantle.gibbs)
-
-
-
-for m in [fe_melt, mg_melt]:
-    print(m.params)
-
-
-
-
-
+print('Melting temperature: {1} K ({0} GPa)'.format(fe_melt.pressure/1.e9, fe_melt.temperature))
+print(f'V_fusion: {fe_melt.V - fe_mantle.V}')
+print(f'S_fusion: {fe_melt.S - fe_mantle.S}')
+print(f'Check eqm (should be 0): {fe_melt.gibbs - fe_mantle.gibbs}')
 
 
 
@@ -351,28 +352,35 @@ plt.plot(temperatures, heat_capacities, linestyle='--', color='red', linewidth=3
 
 
 
+heat_capacities = fe_mantle.evaluate(['C_p'], pressures, temperatures)[0]
+plt.plot(temperatures, heat_capacities, linestyle='-', color='blue')
+
 heat_capacities = mg_mantle.evaluate(['C_p'], pressures, temperatures)[0]
 plt.plot(temperatures, heat_capacities, linestyle='-', color='red')
 
 #plt.ylim(0., )
-
 plt.show()
 
+
+mg_melt.set_state(100.e9, 3000.)
+
+print('Compare the molar isobaric heat capacities for the Mg-bearing melt')
+print(f'New melt model (standalone function): {thermodynamic_properties(100.e9, 3000., mg_mantle_melt_params)["molar_C_p"]}')
+print(f'New melt model (burnman): {mg_melt.C_p}')
+
+Cp_sol_eqv = (n_mpv*thermodynamic_properties(100.e9, 3000., mpv_params)["molar_C_p"] +
+              n_per*thermodynamic_properties(100.e9, 3000., per_params)["molar_C_p"])
+print(f'Solids: {Cp_sol_eqv}')
+
+
+
+# Finally, let's print the new parameter dictionaries:
+print('Melt endmember parameter dictionaries:')
+for m in [fe_melt, mg_melt]:
+    print(m.params)
+
+print('Solid endmember parameter dictionaries:')
 print(mpv.params)
 print(fpv.params)
 print(per.params)
 print(wus.params)
-print(mg_melt.params)
-
-from model_parameters import *
-from eos_and_averaging import thermodynamic_properties
-mg_melt.set_state(100.e9, 3000.)
-
-print(thermodynamic_properties(100.e9, 3000., mg_mantle_melt_params)['molar_C_p'])
-print(mg_melt.C_p)
-
-
-
-
-print(n_mpv*thermodynamic_properties(100.e9, 3000., mpv_params)['molar_C_p'] + 
-      n_per*thermodynamic_properties(100.e9, 3000., per_params)['molar_C_p'])

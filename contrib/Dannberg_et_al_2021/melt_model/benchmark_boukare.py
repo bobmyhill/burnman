@@ -5,10 +5,11 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from scipy.optimize import fsolve
 
 # hack to allow scripts to be placed in subdirectories next to burnman:
-if not os.path.exists('burnman') and os.path.exists('../burnman'):
-    sys.path.insert(1, os.path.abspath('..'))
+if not os.path.exists('burnman') and os.path.exists('../../../burnman'):
+    sys.path.insert(1, os.path.abspath('../../..'))
 
 import burnman
 from burnman.equilibrate import equilibrate
@@ -87,7 +88,7 @@ sols, prm = equilibrate(composition, assemblage,
 
 temperatures, f_liq = np.array([[sol.assemblage.temperature, sol.assemblage.molar_fractions[2]] for sol in sols]).T
 
-plt.plot(temperatures, f_liq)
+plt.plot(temperatures, f_liq, label=f'bdg+fper+liq ({P/1.e9:.0f} GPa)')
 
 
 f = [assemblage.molar_fractions[0], assemblage.molar_fractions[2]]
@@ -103,13 +104,15 @@ sols, prm = equilibrate(composition, assemblage,
 
 temperatures, f_liq = np.array([[sol.assemblage.temperature, sol.assemblage.molar_fractions[1]] for sol in sols]).T
 
-plt.plot(temperatures, f_liq)
+plt.plot(temperatures, f_liq, label=f'bdg+liq ({P/1.e9:.0f} GPa)')
 
+plt.xlabel('Temperature (K)')
+plt.ylabel('Molar fraction liquid')
+plt.legend()
 plt.show()
 
-exit()
 
-    
+
 """
 liq_SiO2.params['S_0'] -= 15.
 T = 3650.
@@ -138,10 +141,10 @@ print(P_st(p, 27.4))
 fig = plt.figure()
 ax = [fig.add_subplot(2, 2, i) for i in range(1, 5)]
 
-boukare_sio2_volumes = mpimg.imread('boukare_sio2_volumes.png')
-boukare_sio2_energies = mpimg.imread('boukare_sio2_energies.png')
-boukare_sio2_akts = mpimg.imread('boukare_sio2_akts.png')
-boukare_sio2_cvs = mpimg.imread('boukare_sio2_cvs.png')
+boukare_sio2_volumes = mpimg.imread('benchmark_data/boukare_sio2_volumes.png')
+boukare_sio2_energies = mpimg.imread('benchmark_data/boukare_sio2_energies.png')
+boukare_sio2_akts = mpimg.imread('benchmark_data/boukare_sio2_akts.png')
+boukare_sio2_cvs = mpimg.imread('benchmark_data/boukare_sio2_cvs.png')
 
 ax[0].imshow(boukare_sio2_volumes, extent=[10., 30., -0.3, 300], aspect='auto')
 ax[1].imshow(boukare_sio2_energies, extent=[10., 30., -2400., -500.], aspect='auto')
@@ -157,7 +160,7 @@ pressures = np.linspace(5.e9, 200.e9, 101)
 for T in np.linspace(2000., 7000., 6):
     temperatures = T + pressures*0.
 
-    
+
     G, E, V, K_T, alpha, C_v = liq_SiO2.evaluate(['gibbs', 'molar_internal_energy', 'V', 'K_T', 'alpha', 'C_v'], pressures, temperatures)
     ax[0].plot(V*1.e6, pressures/1.e9, linestyle='--', linewidth=2.)
     ax[1].plot(V*1.e6, E/1000. - 1640., linestyle='--', linewidth=2.)
@@ -169,6 +172,14 @@ for T in np.linspace(2000., 7000., 6):
 
 ax[0].scatter(liq_SiO2.params['V_0']*1.e6, 1.e-4)
 
+for i in range(4):
+    ax[0].set_xlabel('Volume (cm$^3$/mol)')
+
+ax[0].set_ylabel('Pressure (GPa)')
+ax[1].set_ylabel('Energy (kJ/mol)')
+ax[2].set_ylabel('C$_v$ (J/K/mol)')
+ax[3].set_ylabel('$\\alpha K_T$ (GPa/K)')
+
 plt.show()
 
 
@@ -177,34 +188,6 @@ plt.show()
 
 fper.set_composition([0.9, 0.1])
 fper.set_state(100.e9, 2000)
-
-"""
-#bdg = burnman.minerals.SLB_2011.mg_fe_perovskite()
-#fper = burnman.minerals.SLB_2011.ferropericlase()
-# M_FeO = 0.071844 kg/mol
-
-#bdg.guess = np.array([0.985, 0.015, 0.0])
-bdg.guess = np.array([0.985, 0.015])
-fper.guess = np.array([0.90, 0.10])
-
-
-pressures = np.linspace(40.e9, 140.e9, 6)
-for press in pressures:
-    temperatures = np.linspace(2000., 4000., 21)
-    composition = {'Fe': 0.2, 'Mg': 1.8, 'Si': 1.5, 'O': 5.}
-    assemblage = burnman.Composite([bdg, fper])
-    equality_constraints = [('P', press), ('T', temperatures)]
-    sol, prm = equilibrate(composition, assemblage, equality_constraints, store_iterates=False)
-    P, T, x_bdg, p_fbdg, x_per, p_wus = np.array([s.x for s in sol]).T
-
-    plt.plot(T, p_fbdg*(1. - p_wus)/((1. - p_fbdg)*p_wus), label='{0} GPa'.format(press/1.e9))
-
-plt.legend(loc='best')
-plt.xlabel('Temperature (K)')
-plt.ylabel('[p$_{FeSiO_3}$p$_{MgO}$]/[p$_{MgSiO_3}$p$_{FeO}$]')
-plt.savefig('Fe_Mg_partitioning_Boukare_solids.pdf')
-plt.show()
-"""
 
 # FeO-SiO2 phase diagram
 P = 130.e9
@@ -221,7 +204,7 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'wus ({P/1.e9:.0f} GPa')
 
 composition = {'Fe': 0.01, 'Si': 0.99, 'O': 1.99}
 liq.guess = np.array([0.01, 0., 0.99])
@@ -236,8 +219,13 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'stv ({P/1.e9:.0f} GPa')
 plt.xlim(0., 1.)
+
+plt.xlabel('Molar fraction SiO$_2$')
+plt.ylabel('Liquidus temperature (K)')
+plt.legend()
+
 plt.show()
 
 
@@ -257,7 +245,7 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'per ({P/1.e9:.0f} GPa')
 
 composition = {'Mg': 0.01, 'Si': 0.99, 'O': 1.99}
 liq.guess = np.array([0., 0.01, 0.99])
@@ -272,7 +260,7 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'stv ({P/1.e9:.0f} GPa')
 
 
 composition = {'Mg': 0.49, 'Si': 0.51, 'O': 1.51}
@@ -288,7 +276,7 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'bdg ({P/1.e9:.0f} GPa')
 
 
 composition = {'Mg': 0.51, 'Si': 0.49, 'O': 1.49}
@@ -304,19 +292,23 @@ sols, prm = equilibrate(composition, assemblage,
                        store_iterates=False)
 T, Si_melt = np.array([[sol.x[1], sol.x[-1]] for sol in sols]).T
 
-plt.plot(Si_melt, T, label='{0} GPa'.format(P/1.e9))
+plt.plot(Si_melt, T, label=f'bdg ({P/1.e9:.0f} GPa')
 plt.xlim(0., 1.)
+
+plt.xlabel('Molar fraction SiO$_2$')
+plt.ylabel('Liquidus temperature (K)')
+plt.legend()
+
 plt.show()
 
 
-exit()
 
 # pressures, XFeOs
 pressures = np.linspace(100.e9, 140.e9, 6)
 x_Fe = 0.4
 for press in pressures:
     composition = {'Fe': 2.*x_Fe, 'Mg': 2.*(1. - x_Fe), 'Si': 1.5, 'O': 5.}
-    
+
     bdg.guess = np.array([1. - x_Fe, x_Fe])
     fper.guess = np.array([1. - x_Fe, x_Fe])
     x_Si = 0.5
@@ -329,15 +321,12 @@ for press in pressures:
     print(assemblage)
     #plt.plot(T, p_fbdg*(1. - p_wus)/((1. - p_fbdg)*p_wus), label='{0} GPa'.format(press/1.e9))
 
-exit()
 
+FeO_melting_curve = np.loadtxt('benchmark_data/boukare_melting_curves_FeO.dat')
+MgO_melting_curve = np.loadtxt('benchmark_data/boukare_melting_curves_MgO.dat')
+SiO2_melting_curve = np.loadtxt('benchmark_data/boukare_melting_curves_SiO2.dat')
 
-
-FeO_melting_curve = np.loadtxt('boukare_melting_curves_FeO.dat')
-MgO_melting_curve = np.loadtxt('boukare_melting_curves_MgO.dat')
-SiO2_melting_curve = np.loadtxt('boukare_melting_curves_SiO2.dat')
-
-boukare_densities = mpimg.imread('boukare_densities.png')
+boukare_densities = mpimg.imread('benchmark_data/boukare_densities.png')
 
 fig = plt.figure()
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
@@ -378,12 +367,7 @@ plt.show()
 
 
 
-
-
-from scipy.optimize import fsolve
-
-
-boukare_melting = mpimg.imread('boukare_melting_crop.png')
+boukare_melting = mpimg.imread('benchmark_data/boukare_melting_crop.png')
 plt.imshow(boukare_melting, extent=[20., 140., 2000, 8000], aspect='auto')
 
 pressures = np.linspace(20.e9, 140.e9, 25)
@@ -398,7 +382,7 @@ for i, P in enumerate(pressures):
     temperatures[i] = fsolve(affinity_2_mins, [guess], args=(P, liq_FeO, wus))[0]
     guess = temperatures[i]
 
-plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10.)
+plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10., label='wus')
 
 
 guess = 3000.
@@ -406,7 +390,7 @@ for i, P in enumerate(pressures):
     temperatures[i] = fsolve(affinity_2_mins, [guess], args=(P, liq_MgO, per))[0]
     guess = temperatures[i]
 
-plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10.)
+plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10., label='per')
 
 
 guess = 3000.
@@ -414,7 +398,9 @@ for i, P in enumerate(pressures):
     temperatures[i] = fsolve(affinity_2_mins, [guess], args=(P, liq_SiO2, stv))[0]
     guess = temperatures[i]
 
-plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10.)
+plt.plot(pressures/1.e9, temperatures, linestyle=':', linewidth=10., label='stv')
 
-
+plt.xlabel('Molar fraction SiO$_2$')
+plt.ylabel('Liquidus temperature (K)')
+plt.legend()
 plt.show()
