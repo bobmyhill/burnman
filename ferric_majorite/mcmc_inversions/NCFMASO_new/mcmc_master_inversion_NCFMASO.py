@@ -20,7 +20,7 @@ import pandas as pd
 import seaborn as sns
 
 from fitting_functions import get_params, set_params
-from fitting_functions import minimize_func #, log_probability
+from fitting_functions import minimize_func, log_probability
 from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
 from datetime import datetime
@@ -42,19 +42,18 @@ else:
     print('Not running inversion. Use --fit as command line argument'
           ' to invert parameters')
 
-
 dataset, storage, labels = create_dataset()
 
 # Using this probability function with params as the only
 # argument means that we only pickle dataset, storage and
 # special_constraint_function once. Because these objects
 # are quite complex, this should be faster than passing
-# args to the EmsembleSampler.
-def log_probability_global(params):
-    return -minimize_func(params,
-                          dataset,
-                          storage,
-                          special_constraints)
+# args to the EnsembleSampler.
+#def log_probability_global(params):
+#    return -minimize_func(params,
+#                          dataset,
+#                          storage,
+#                          special_constraints)
 
 ########################
 # RUN THE MINIMIZATION #
@@ -105,12 +104,12 @@ if run_inversion:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
         else:
             backend = emcee.backends.HDFBackend(hdffile)
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
-                                        pool=pool, backend=backend)
-        #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
-        #                                args=[dataset, storage,
-        #                                      special_constraints],
+        #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
         #                                pool=pool, backend=backend)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+                                        args=[dataset, storage,
+                                              special_constraints],
+                                        pool=pool, backend=backend)
 
         new_inversion = False
         if new_inversion:
@@ -123,7 +122,12 @@ if run_inversion:
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile)
             backend.reset(nwalkers, ndim)
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
+            #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
+            #                                pool=pool, backend=backend)
+
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+                                            args=[dataset, storage,
+                                                  special_constraints],
                                             pool=pool, backend=backend)
 
         state = sampler.run_mcmc(p0, n_steps_mcmc,
