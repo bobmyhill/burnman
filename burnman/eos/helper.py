@@ -20,6 +20,7 @@ from . import morse_potential
 from . import reciprocal_kprime
 from . import aa
 from . import brosh_calphad
+from . import pitzer_sterner
 from .equation_of_state import EquationOfState
 
 
@@ -50,6 +51,8 @@ def create(method):
             return morse_potential.Morse()
         elif method == "rkprime":
             return reciprocal_kprime.RKprime()
+        elif method == "pitzer-sterner":
+            return pitzer_sterner.PitzerSterner()
         elif method == "aa":
             return aa.AA()
         elif method == "mgd2":

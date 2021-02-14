@@ -60,4 +60,5 @@ from . import ICL_2018
 # Other
 from . import Sundman_1991
 from . import SE_2015
+from . import Pitzer_Sterner_1994
 from . import other
