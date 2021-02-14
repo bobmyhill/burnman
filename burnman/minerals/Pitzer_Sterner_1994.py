@@ -23,7 +23,7 @@ class H2O_Pitzer_Sterner (Mineral):
         self.params = {'name': 'H2O',
                        'equation_of_state': 'pitzer-sterner',
                        'formula': formula,
-                       'F_0': -249677.75163034006,  # Fit to Barin at 1.e5 Pa, 2000 K
+                       'F_0': -249677.75163034006 + 233.2550*298.15,  # Fit to Barin at 1.e5 Pa, 2000 K, convert from HSC->SUP convention
                        'Cv_0': 8.31446*2.25,  # Eyeball fit on Barin heat capacity
                        'Debye_0': 3800, # Eyeball fit on Barin entropy
                        'Debye_n': 1.2, # Eyeball fit on Barin entropy
