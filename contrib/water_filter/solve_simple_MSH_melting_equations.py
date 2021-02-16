@@ -36,7 +36,7 @@ def fn_RTlng_over_W_Mg2SiO4(temperature, Tm, b):
 def compositions(P, T, X_Mg2SiO4, X_H2O, X_MgSiO3, Tm,
                  fo_polymorph, H2MgSiO4_polymorph, MgSiO3_polymorph):
 
-    RTlng_over_W_Mg2SiO4 = fn_RTlng_over_W_Mg2SiO4(T, Tm, b=0.304)
+    RTlng_over_W_Mg2SiO4 = fn_RTlng_over_W_Mg2SiO4(T, Tm, b=0.305)
     p_H2OL = np.sqrt(RTlng_over_W_Mg2SiO4)
 
     lng_H2OL = (1. - p_H2OL) * (1. - p_H2OL) * W / (R*T)
@@ -170,18 +170,18 @@ data = np.genfromtxt('data/13GPa_fo-H2O.dat',
                      dtype=[float, float, float, (np.unicode_, 16)])
 phases = list(set([d[3] for d in data]))
 
-experiments = {ph: np.array([[d[0], d[1], d[2]] for d in data if d[3]==ph]).T
+experiments = {('melt + ' + ph.replace('_', ' ')).replace(' + liquid', ''): np.array([[d[0], d[1], d[2]] for d in data if d[3]==ph]).T
                for ph in phases}
 
-for phase, expts in experiments.items():
+for phase, expts in sorted(experiments.items(), key=lambda item: item[0]):
     #plt.scatter(expts[2]/100., expts[0], label=phase) # on a 1-cation basis
-    plt.scatter(expts[2]/(expts[1] + expts[2]), expts[0], label=('melt + ' + phase.replace('_', ' ')).replace(' + liquid', ''))
+    plt.scatter(expts[2]/(expts[1] + expts[2]), expts[0], label=phase)
 
 
 #plt.plot(foL_H2O, temperatures-273.15, label=f'model melt ({P1/1.e9} GPa)', color='green', linestyle=':')
 plt.plot(foL_H2Ob, temperatures-273.15, label=f'model melt ({P1b/1.e9} GPa)', color='green')
 
-plt.xlabel('x(MgSiO4) / (x(Mg2SiO4) + x(H2O)) (molar)')
+plt.xlabel('x(Mg2SiO4) / (x(Mg2SiO4) + x(H2O)) (molar)')
 plt.ylabel('Temperature (C)')
 #plt.plot(wadL_H2O, temperatures-273.15, label=f'model melt ({P2/1.e9} GPa)', color='orange')
 #plt.plot(wadL_H2Ob, temperatures-273.15, label=f'model melt ({P2b/1.e9} GPa)', color='orange', linestyle=':')

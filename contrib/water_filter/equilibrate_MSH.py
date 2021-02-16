@@ -12,14 +12,16 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy.optimize import curve_fit
 
+W = -91000.
+R = 8.31446
 
 class high_pressure_hydrous_melt(burnman.SolidSolution):
     def __init__(self, molar_fractions=None):
         self.name = 'melt'
         self.endmembers = [[Mg2SiO4L, '[Mg]'],
                            [H2OL, '[Hh]']] # associated solution model
-        self.solution_type = 'subregular'
-        self.energy_interaction = [[[-90000., -90000.]]]
+        self.solution_type = 'symmetric'
+        self.energy_interaction = [[W]]
         burnman.SolidSolution.__init__(self, molar_fractions=molar_fractions)
 
 
@@ -32,15 +34,37 @@ class hydrous_forsterite(burnman.SolidSolution):
         burnman.SolidSolution.__init__(self, molar_fractions=molar_fractions)
 
 
-hyfo = hydrous_forsterite()
+class hydrous_wadsleyite(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name = 'hydrous wadsleyite'
+        self.endmembers = [[wad, '[Mg]MgSiO4'],
+                           [H2MgSiO4wad, '[Hh]MgSiO4']] # ordered model
+        self.solution_type = 'ideal'
+        burnman.SolidSolution.__init__(self, molar_fractions=molar_fractions)
+
+class hydrous_ringwoodite(burnman.SolidSolution):
+    def __init__(self, molar_fractions=None):
+        self.name = 'hydrous ringwoodite'
+        self.endmembers = [[ring, '[Mg]MgSiO4'],
+                           [H2MgSiO4ring, '[Hh]MgSiO4']] # ordered model
+        self.solution_type = 'ideal'
+        burnman.SolidSolution.__init__(self, molar_fractions=molar_fractions)
+
+
+#hyfo = hydrous_forsterite()
 melt = high_pressure_hydrous_melt()
 
-composition = {'Mg': 2 , 'Si': 1 , 'O': 4.}
-assemblage = burnman.Composite([fo, Mg2SiO4L])
+#hyfo.guess = np.array([0.999, 0.001])
+melt.guess = np.array([0.01, 0.99])
+
 pressure = 13.e9
-assemblage.set_state(13.e9, 2600.)
+ol_polymorph = fo # ring # fo
+composition = {'Mg': 2 , 'Si': 1 , 'O': 4.}
+assemblage = burnman.Composite([ol_polymorph, Mg2SiO4L])
+
+assemblage.set_state(pressure, 2600.)
 equality_constraints = [('P', pressure),
-                        ('phase_proportion', (fo, np.array([0.0])))]
+                        ('phase_proportion', (ol_polymorph, np.array([0.0])))]
 sols, prm = equilibrate(composition, assemblage,
                         equality_constraints,
                         initial_state_from_assemblage=True,
@@ -50,16 +74,12 @@ Tm = assemblage.temperature
 
 
 composition = {'Mg': 2 , 'Si': 1.5 , 'O': 5.01, 'H': 0.02}
-#assemblage = burnman.Composite([hen, fo, melt])
-assemblage = burnman.Composite([hen, fo, melt])
-pressure = 13.e9
-temperatures = np.linspace(1000., 2559., 101)
+
+assemblage = burnman.Composite([hen, ol_polymorph, melt])
+temperatures = np.linspace(1000., Tm-1., 101)
 
 assemblage.set_state(pressure, 1400.)
 
-hyfo.guess = np.array([0.999, 0.001])
-melt.guess = np.array([0.01, 0.99])
-#('phase_proportion', (hyfo, np.array([0.0])))
 equality_constraints = [('P', pressure),
                         ('T', temperatures)]
 sols, prm = equilibrate(composition, assemblage,
@@ -91,10 +111,6 @@ def fit_RTlng_Mg2SiO4(Tm, R, W):
         return a*((temperatures - Tm)*(temperatures - Tm) + (1. - b**2)*Tm*(temperatures - Tm))
     return fn_RTlng_Mg2SiO4
 
-
-Tm = 2560
-W = -91000
-R = 8.31446
 """
 temperatures = np.linspace(b*Tm, 2560, 1001)
 
@@ -103,7 +119,7 @@ p_H2OL = np.sqrt(lnRTg_Mg2SiO4/W)
 plt.plot(temperatures, p_H2OL)
 """
 sol = curve_fit(fit_RTlng_Mg2SiO4(Tm, R, W), temperatures, R*temperatures*lngammas[0], [0.5])[0]
-print(Tm, sol)
+print(Tm, sol[0], sol[0]*Tm, Tm- sol[0]*Tm)
 
 RTlng_Mg2SiO4 = fit_RTlng_Mg2SiO4(Tm, R, W)(temperatures, *sol)
 ps_H2O = np.sqrt(RTlng_Mg2SiO4/W)
