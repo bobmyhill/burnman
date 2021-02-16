@@ -32,10 +32,40 @@ hen = SLB_2011.hp_clinoenstatite()
 # phA = (MgO)7(SiO2)2(H2O)3
 E_phA_HSC_to_SUP = S_el_MgO*7. + S_el_SiO2*2. + S_el_H2O*3.
 
+V_ex = 2.5e-5
 H2MgSiO4fo = burnman.CombinedMineral([HP_2011_ds62.phA(),
                                       SLB_2011.mg_wadsleyite(),
                                       SLB_2011.hp_clinoenstatite()],
-                                      [1./3., -5./3., 1.], [E_phA_HSC_to_SUP/3. - 1100.e3, 0., 0.])
+                                      [1./3., -5./3., 1.], [-1055745. + 25000 + 1523*230. - 13.e9*V_ex, 230., V_ex])
+
+H2MgSiO4wad = burnman.CombinedMineral([HP_2011_ds62.phA(),
+                                      SLB_2011.mg_wadsleyite(),
+                                      SLB_2011.hp_clinoenstatite()],
+                                      [1./3., -5./3., 1.], [-1055745. + 2000 + 1523*225. - 13.e9*V_ex, 225., V_ex])
+
+H2MgSiO4ring = burnman.CombinedMineral([HP_2011_ds62.phA(),
+                                      SLB_2011.mg_wadsleyite(),
+                                      SLB_2011.hp_clinoenstatite()],
+                                      [1./3., -5./3., 1.], [-1055745. -3000. + 1523*230. - 13.e9*V_ex, 230., V_ex])
+
+#H2MgSiO4fo = burnman.CombinedMineral([H2O_Pitzer_Sterner(),
+#                                      SLB_2011.hp_clinoenstatite()],
+#                                      [1., 1.], [100000., -5., 0.])
+
+
+#H2MgSiO4wad = burnman.CombinedMineral([H2O_Pitzer_Sterner(),
+#                                       SLB_2011.hp_clinoenstatite()],
+#                                       [1., 1.], [15000. + 1000 * -20, -20., 0.])
+
+#H2MgSiO4old.set_state(13.e9, 1500.)
+#H2MgSiO4wad.set_state(13.e9, 1500.)
+#print(H2MgSiO4old.gibbs - H2MgSiO4wad.gibbs)
+#exit()
+
+#H2MgSiO4ring = burnman.CombinedMineral([H2O_Pitzer_Sterner(),
+#                                        SLB_2011.hp_clinoenstatite()],
+#                                        [1., 1.], [100000., -5., 0.])
+
 
 # Liquid endmembers
 Mg2SiO4L = DKS_2013_liquids.Mg2SiO4_liquid()
