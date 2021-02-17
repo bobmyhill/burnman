@@ -51,8 +51,15 @@ def compositions(P, T, X_Mg2SiO4, X_H2O, X_MgSiO3, Tm,
     #bulk_constraint_3 = (x_fo * p_Mg2SiO4fo) + (x_L * p_Mg2SiO4L) - X_Mg2SiO4
 
     x_fo = -(X_H2O*(p_H2OL - 1) + X_Mg2SiO4*p_H2OL)/(p_H2MgSiO4fo - p_H2OL)
-    x_en = (X_H2O*p_H2MgSiO4fo*p_H2OL - X_H2O*p_H2MgSiO4fo + X_Mg2SiO4*p_H2MgSiO4fo*p_H2OL + X_MgSiO3*p_H2MgSiO4fo - X_MgSiO3*p_H2OL)/(p_H2MgSiO4fo - p_H2OL)
+    x_en = X_MgSiO3 - p_H2MgSiO4fo*x_fo
     x_L = (X_H2O*(p_H2MgSiO4fo - 1) + X_Mg2SiO4*p_H2MgSiO4fo)/(p_H2MgSiO4fo - p_H2OL)
+
+
+
+
+X_MgSiO3 - p_H2MgSiO4fo*x_fo
+
+
 
     return (x_fo, x_en, x_L, p_H2OL, p_H2MgSiO4fo)
 
@@ -165,7 +172,7 @@ for i, T in enumerate(temperatures):
 #hyfo_img = mpimg.imread('data/hyfo_melting_Myhill_et_al_2017.png')
 #plt.imshow(hyfo_img, extent=[0.0, 1.0, 1073.15, 2873.15], aspect='auto')
 
-
+"""
 data = np.genfromtxt('data/13GPa_fo-H2O.dat',
                      dtype=[float, float, float, (np.unicode_, 16)])
 phases = list(set([d[3] for d in data]))
@@ -191,6 +198,7 @@ plt.ylabel('Temperature (C)')
 plt.legend()
 plt.savefig('output_figures/melt_compositions_at_13GPa.pdf')
 plt.show()
+"""
 
 # Olivine
 plt.plot(fo_wtpctH2Os, temperatures-273.15, label=f'model melt ({P1/1.e9} GPa)', color='green', linestyle=':')

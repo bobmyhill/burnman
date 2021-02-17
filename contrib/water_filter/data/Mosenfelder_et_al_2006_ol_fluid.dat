@@ -1,0 +1,21 @@
+# Expt id		Pressure (GPa)	Temperature C	Duration (h)	Capsule	Buffer	Excess fluid?	ppm wt H2O (Bell calibration)
+# Piston cylinder
+R056		1.8	1300	48	AuPd	none	yes	375
+# Multi-anvil	Fe-bearing
+ww296		5.65	1000	24	Ni/AuPd	NNO	yes	2113
+ww329		6	1000	25	Ni/AuPd	NNO	yes	1705
+ww327		6	1100	8	Ni/AuPd	NNO	no	1451
+ww328		6	1100	8	Ni/AuPd	NNO	no	1730
+ww228		6	1150	24	Pt	none	no	1576
+ww317		8	1000	30	Ni/AuPd	NNO	yes	3032
+ww320		8	1100	24	Ni/AuPd	NNO	no	3007
+ww322		8	1100	12	Ni/AuPd	NNO	no	3035
+ww323		8	1100	8	Ni/AuPd	NNO	yes	1657
+ww227		8	1150	24	Pt	none	no	2177
+ww325		8	1200	4	Ni/AuPd	NNO	yes	2398
+ww263		10	1200	24	AuPd	none	yes	5055
+ww268		10	1200	24	AuPd	NNO	no	1141
+ww256		10	1250	24	Pt	none	no	1895
+ww225		12	1100	24	Pt	none	no	6399
+# Multi-anvil	experiments	nominally	Fe-free
+ww276		5.65	1175	15	Pt	none	no	2040

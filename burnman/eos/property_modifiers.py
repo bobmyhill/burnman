@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 import numpy as np
 import scipy.optimize as opt
+from scipy.special import expi
 from ..constants import gas_constant
 from . import debye, einstein
 
@@ -276,6 +277,43 @@ def _linear_excesses(pressure, temperature, params):
     dGdP = params["delta_V"]
     d2GdT2 = 0.0
     d2GdP2 = 0.0
+    d2GdPdT = 0.0
+
+    excesses = {
+        "G": G,
+        "dGdT": dGdT,
+        "dGdP": dGdP,
+        "d2GdT2": d2GdT2,
+        "d2GdP2": d2GdP2,
+        "d2GdPdT": d2GdPdT,
+    }
+
+    return (excesses, None)
+
+
+def _li(x):
+    return expi(np.log(x))
+
+
+def _linlog_excesses(pressure, temperature, params):
+    """
+    Applies the 'Darken's quadratic formalism' correction described
+    in _linear_excesses, plus an additional term
+    which corresponds to a gibbs excess of a*ln(ln(b*pressure + c)).
+    """
+
+    f = params["b"] * pressure + params["c"]
+
+    G = (
+        params["delta_E"]
+        - (temperature) * params["delta_S"]
+        + (pressure) * params["delta_V"]
+        + params["a"] / params["b"] * (_li(f) - _li(params["c"]))
+    )
+    dGdT = -params["delta_S"]
+    dGdP = params["delta_V"] + params["a"] / np.log(f)
+    d2GdT2 = 0.0
+    d2GdP2 = -(params["a"] * params["b"]) / (f * np.log(f) ** 2.0)
     d2GdPdT = 0.0
 
     excesses = {
@@ -707,6 +745,8 @@ def calculate_property_modifications(mineral):
             xs_function = _einstein_excesses
         elif modifier[0] == "einstein_delta":
             xs_function = _einstein_delta_excesses
+        elif modifier[0] == "linlog":
+            xs_function = _linlog_excesses
         else:
             raise Exception(
                 f"Property modifier label for {mineral.name} ({modifier[0]}) not recognised."
