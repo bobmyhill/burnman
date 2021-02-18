@@ -16,7 +16,8 @@ if solve_melting_equations:
     X_MgSiO3 = Symbol('X_MgSiO3')
     X_Mg2SiO4 = Symbol('X_Mg2SiO4')
 
-    x_fo = Symbol('x_fo')
+    x_fo0 = Symbol('x_fo0')
+    x_fo1 = Symbol('x_fo1')
     x_en = Symbol('x_en')
     x_L = Symbol('x_L')
     p_H2OL = Symbol('p_H2OL')
@@ -29,25 +30,30 @@ if solve_melting_equations:
     # z = gamma_Mg2SiO4L * np.exp(-(G_Mg2SiO4fo(P, T) - G_Mg2SiO4L(P, T)) / (R*T))
     z = Symbol('z')
 
-    p_H2MgSiO4fo = Symbol('p_H2MgSiO4fo')
+    f = Symbol('f')
+    p_H2MgSiO4fo0 = Symbol('p_H2MgSiO4fo0')
+    p_H2MgSiO4fo1 = Symbol('p_H2MgSiO4fo1')
 
     # Proportions sum to 1
     p_Mg2SiO4L = 1 - p_H2OL
-    p_Mg2SiO4fo = 1 - p_H2MgSiO4fo
+    p_Mg2SiO4fo0 = 1 - p_H2MgSiO4fo0
+    p_Mg2SiO4fo1 = 1 - p_H2MgSiO4fo1
 
 
     # Constraints
-    bulk_constraint_1 = (x_fo * p_H2MgSiO4fo) + (x_L * p_H2OL) - X_H2O
-    bulk_constraint_2 = x_en + (x_fo * p_H2MgSiO4fo) - X_MgSiO3
-    bulk_constraint_3 = (x_fo * p_Mg2SiO4fo) + (x_L * p_Mg2SiO4L) - X_Mg2SiO4
+    bulk_constraint_1 = (x_fo0 * p_H2MgSiO4fo0) + (x_fo1 * p_H2MgSiO4fo1) + (x_L * p_H2OL) - X_H2O
+    bulk_constraint_2 = x_en + (x_fo0 * p_H2MgSiO4fo0) + (x_fo1 * p_H2MgSiO4fo1) - X_MgSiO3
+    bulk_constraint_3 = (x_fo0 * p_Mg2SiO4fo0) + (x_fo1 * p_Mg2SiO4fo1) + (x_L * p_Mg2SiO4L) - X_Mg2SiO4
 
+    transition_constraint = x_fo1 - f * (x_fo0 + x_fo1)
 
     # The solve needs to be a square matrix, even if there is a non-trivial nullspace
     equations = (bulk_constraint_1,
                  bulk_constraint_2,
-                 bulk_constraint_3)
+                 bulk_constraint_3,
+                 transition_constraint)
 
-    eqs = solve(equations, (x_fo, x_en, x_L), dict=True)[0]
+    eqs = solve(equations, (x_fo0, x_fo1, x_en, x_L), dict=True)[0]
     print(eqs)
     exit()
 

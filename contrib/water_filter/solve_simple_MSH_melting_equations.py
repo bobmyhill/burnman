@@ -54,13 +54,6 @@ def compositions(P, T, X_Mg2SiO4, X_H2O, X_MgSiO3, Tm,
     x_en = X_MgSiO3 - p_H2MgSiO4fo*x_fo
     x_L = (X_H2O*(p_H2MgSiO4fo - 1) + X_Mg2SiO4*p_H2MgSiO4fo)/(p_H2MgSiO4fo - p_H2OL)
 
-
-
-
-X_MgSiO3 - p_H2MgSiO4fo*x_fo
-
-
-
     return (x_fo, x_en, x_L, p_H2OL, p_H2MgSiO4fo)
 
 def proportion_H2MgSiO4_to_wtpercent_H2O(p_H2MgSiO4fo):
