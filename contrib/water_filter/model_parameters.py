@@ -1,17 +1,15 @@
-import numpy as np
-
 R = 8.31446  # gas constant
 
-
-Tm_fraction_pure_H2O_melt = 0.31
-W = -91000.
+liq_sp = {'H_poly': -94000.,
+          'S_poly': -75.,
+          'r': 4.}  # 4 oxygens per Mg2SiO4
 
 ol = {'E': -16982.,
       'S': 4.6,
       'V': 1.89e-6,
-      'hyE': -1272564.8,
-      'hyS': 208,
-      'hyV': 2.8e-05,
+      'hyE': 74000.,
+      'hyS': 15.,
+      'hyV': -2.e-6,
       'feE': 0.,  # NEED TO CHANGE
       'feS': 0.,  # NEED TO CHANGE
       'feV': 0.}  # NEED TO CHANGE
@@ -19,9 +17,9 @@ ol = {'E': -16982.,
 wad = {'E': 0.,
        'S': 0.,
        'V': 0.,
-       'hyE': -1306930.55,
-       'hyS': 203,
-       'hyV': 2.8e-05,
+       'hyE': 34500.,
+       'hyS': 15.,
+       'hyV': 0.,
        'feE': 0.,  # NEED TO CHANGE
        'feS': 0.,  # NEED TO CHANGE
        'feV': 0.}  # NEED TO CHANGE
@@ -29,9 +27,9 @@ wad = {'E': 0.,
 ring = {'E': 7060.,
         'S': -4.8,
         'V': -8.12e-7,
-        'hyE': -1304564.8,
-        'hyS': 208,
-        'hyV': 2.8e-05,
+        'hyE': 32500.,
+        'hyS': 15.,
+        'hyV': 0.,
         'feE': 0.,  # NEED TO CHANGE
         'feS': 0.,  # NEED TO CHANGE
         'feV': 0.}  # NEED TO CHANGE
@@ -39,9 +37,9 @@ ring = {'E': 7060.,
 lm = {'E': 77858.,
       'S': -0.645,
       'V': -3.53e-6,
-      'hyE': -1272564.8,  # NEED TO CHANGE
-      'hyS': 208,  # NEED TO CHANGE
-      'hyV': 2.8e-05,  # NEED TO CHANGE
+      'hyE': 100000.,  # NEED TO CHANGE
+      'hyS': -12,  # NEED TO CHANGE
+      'hyV': 0.,  # NEED TO CHANGE
       'feE': 0.,  # NEED TO CHANGE
       'feS': 0.,  # NEED TO CHANGE
       'feV': 0.}  # NEED TO CHANGE
@@ -52,7 +50,6 @@ melt = {'E': 175553.,
         'a': 2.60339693e-06,
         'b': 2.64753089e-11,
         'c': 1.18703511e+00}
-
 
 
 olwad = {'Delta_E': ol['E'] - wad['E'],

@@ -10,7 +10,7 @@ def gibbs(mineral, P, T):
     mineral.set_state(P, T)
     return mineral.gibbs
 
-solve_melting_equations = True
+solve_melting_equations = False
 if solve_melting_equations:
     X_H2O = Symbol('X_H2O')
     X_MgSiO3 = Symbol('X_MgSiO3')

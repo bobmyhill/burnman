@@ -1,7 +1,8 @@
 import numpy as np
 from model_parameters import R, ol, wad, ring, lm, melt, olwad, wadring, ringlm
-from model_parameters import W, Tm_fraction_pure_H2O_melt
+from model_parameters import liq_sp
 from scipy.special import expi
+import matplotlib.pyplot as plt
 
 
 def _li(x):
@@ -20,15 +21,34 @@ def melting_temperature(solid, P):
             / (melt['S'] - solid['S']))
 
 
-def fn_RTlng_over_W_Mg2SiO4(temperature, Tm, Tm_fraction_pure_H2O_melt):
-    if temperature > Tm:
-        return 0.
-    elif temperature > Tm_fraction_pure_H2O_melt * Tm:
-        a = -1./((Tm_fraction_pure_H2O_melt - 1.)**2*Tm*temperature)
-        return a*((temperature - Tm)*(temperature - Tm)
-                  + (1. - Tm_fraction_pure_H2O_melt**2)*Tm*(temperature - Tm))
-    else:
-        return 1.
+def ax_melt(T, Tm, S_fusion):
+    """
+    Activity-composition model for a hydrous silicate melt
+    The following expressions are taken from Silver and Stolper (1985),
+    and assume an ideal solution of oxygens (the silicate network is ignored),
+    OH and H2O molecules.
+
+    The function takes the temperature and the melting temperature and
+    entropy of fusion of the anhydrous silicate (on an "r"-oxygen basis),
+    and returns the activity and proportion of water in the melt
+    (where the proportion of silicate in the melt is (1 - X_H2O), considered
+    on the same "r"-oxygen basis).
+    """
+    K1 = np.exp((liq_sp['H_poly'] - liq_sp['S_poly']*T)/(R*T))
+
+    X_O = np.exp(S_fusion*(T - Tm)/(liq_sp['r']*R*T))  # equation 13
+    X_B = (1. - X_O
+           + 1./4.*(K1 * X_O - np.sqrt((K1 * X_O)**2.
+                                       + 4.*K1*X_O
+                                       - 4.*K1*X_O**2.)))  # equation 14
+    a_H2O = X_B - ((0.5 - np.sqrt(0.25 - ((K1 - 4.)/K1)*(X_B - X_B**2.)))
+                   / ((K1 - 4.)/K1))  # equation 5.2
+
+    # X_B (the bulk liquid H2O content) is defined on the basis of 1 oxygen,
+    # so a conversion back to an "r" oxygen basis is necessary
+    p_H2O = X_B/(X_B + (1. - X_B)/liq_sp['r'])
+
+    return (a_H2O, p_H2O)
 
 
 def solve_quadratic(a, b, c, sgn):
@@ -62,17 +82,15 @@ def partition(p_Fe_bulk, f_liq, KD):
 
 
 def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
+    assert (X_Mg2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
+
     # Calculate the melting temperature of the olivine polymorph
     Tm = melting_temperature(phase, P)
 
     # Calculate the proportions of the melt and olivine polymorph endmembers
     # in their respective phases.
-    p_sqr = fn_RTlng_over_W_Mg2SiO4(T, Tm, Tm_fraction_pure_H2O_melt)
-    p_H2OL = np.sqrt(p_sqr)
-
-    lng_H2OL = (1. - p_H2OL) * (1. - p_H2OL) * W / (R * T)
-
-    a_H2OL = p_H2OL*np.exp(lng_H2OL)
+    S_fusion = melt['S'] - phase['S']
+    a_H2OL, p_H2OL = ax_melt(T, Tm, S_fusion)
 
     p_H2MgSiO4fo = a_H2OL*np.exp(-(phase['hyE']
                                    - T*phase['hyS']
@@ -86,6 +104,11 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
     x_fo = (X_H2O*p_Mg2SiO4L - X_Mg2SiO4*p_H2OL)/(p_H2MgSiO4fo - p_H2OL)
     x_maj = X_MgSiO3 - p_H2MgSiO4fo*x_fo
     x_L = (-X_H2O*p_Mg2SiO4fo + X_Mg2SiO4*p_H2MgSiO4fo)/(p_H2MgSiO4fo - p_H2OL)
+
+    # checks:
+    assert np.abs(X_Mg2SiO4 - x_fo*p_Mg2SiO4fo - x_L * p_Mg2SiO4L) < 1.e-10
+    assert np.abs(X_MgSiO3 - x_fo*p_H2MgSiO4fo - x_maj) < 1.e-10
+    assert np.abs(X_H2O - x_fo*p_H2MgSiO4fo - x_L * p_H2OL) < 1.e-10
 
     # Calculate the iron partitioning between the melt and the solid
     # a) Calculate the total amount of
@@ -118,8 +141,9 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
     X_Fe2SiO4_solid = ((x_D_solid * p_Fe_sol)/2.) / X_total_solid
     X_Mg2SiO4_solid = ((x_fo * p_Mg2SiO4fo) / X_total_solid) - X_Fe2SiO4_solid
 
-    p_melt = 1./(1. + X_total_solid)
-    #assert (p_melt == (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid))
+    p_melt = x_L/(x_L + X_total_solid)
+    assert np.abs(p_melt - (X_H2O - X_H2O_solid)
+                  / (X_H2O_melt - X_H2O_solid)) < 1.e-5
 
     f = melt['b']*T + melt['c']
 
@@ -133,16 +157,26 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
                          + 0.5 * p_H2MgSiO4fo * phase['hyV']) / X_total_solid
     betaV_xs_solid = 0.
 
-    return np.array([p_melt,
-                     X_H2O_melt, X_MgSiO3_melt,
-                     X_Fe2SiO4_melt, X_Mg2SiO4_melt,
-                     X_H2O_solid, X_MgSiO3_solid,
-                     X_Fe2SiO4_solid, X_Mg2SiO4_solid,
-                     S_xs_melt, V_xs_melt, betaV_xs_melt,
-                     S_xs_solid, V_xs_solid, betaV_xs_solid])
+    return {'p_melt': p_melt,
+            'X_H2O_melt': X_H2O_melt,
+            'X_MgSiO3_melt': X_MgSiO3_melt,
+            'X_Fe2SiO4_melt': X_Fe2SiO4_melt,
+            'X_Mg2SiO4_melt': X_Mg2SiO4_melt,
+            'X_H2O_solid': X_H2O_solid,
+            'X_MgSiO3_solid': X_MgSiO3_solid,
+            'X_Fe2SiO4_solid': X_Fe2SiO4_solid,
+            'X_Mg2SiO4_solid': X_Mg2SiO4_solid,
+            'S_xs_melt': S_xs_melt,
+            'V_xs_melt': V_xs_melt,
+            'betaV_xs_melt': betaV_xs_melt,
+            'S_xs_solid': S_xs_solid,
+            'V_xs_solid': V_xs_solid,
+            'betaV_xs_solid': betaV_xs_solid}
 
 
 def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
+
+    assert (X_Mg2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
 
     # Calculate the melting temperature of the olivine polymorph
     Tm = ((1. - f_tr)*melting_temperature(phases[0], P)
@@ -150,12 +184,8 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
 
     # Calculate the proportions of the melt and olivine polymorph endmembers
     # in their respective phases.
-    p_sqr = fn_RTlng_over_W_Mg2SiO4(T, Tm, Tm_fraction_pure_H2O_melt)
-    p_H2OL = np.sqrt(p_sqr)
-
-    lng_H2OL = (1. - p_H2OL) * (1. - p_H2OL) * W / (R * T)
-
-    a_H2OL = p_H2OL*np.exp(lng_H2OL)
+    S_fusion = melt['S'] - (1. - f_tr)*phases[0]['S'] - f_tr*phases[1]['S']
+    a_H2OL, p_H2OL = ax_melt(T, Tm, S_fusion)
 
     p_H2MgSiO4fo0 = a_H2OL*np.exp(-(phases[0]['hyE']
                                     - T*phases[0]['hyS']
@@ -180,6 +210,12 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
     x_maj = X_MgSiO3 - p_H2MgSiO4fo0*x_fo0 - p_H2MgSiO4fo1*x_fo1
     x_L = ((-X_H2O*(1. - p_H2MgSiO4fo_eff) + X_Mg2SiO4*p_H2MgSiO4fo_eff)
            / (p_H2MgSiO4fo_eff - p_H2OL))
+
+
+    # checks:
+    assert np.abs(X_Mg2SiO4 - x_fo0*p_Mg2SiO4fo0 - x_fo1*p_Mg2SiO4fo1 - x_L * p_Mg2SiO4L) < 1.e-10
+    assert np.abs(X_MgSiO3 - x_fo0*p_H2MgSiO4fo0 - x_fo1*p_H2MgSiO4fo1 - x_maj) < 1.e-10
+    assert np.abs(X_H2O - x_fo0*p_H2MgSiO4fo0 - x_fo1*p_H2MgSiO4fo1 - x_L * p_H2OL) < 1.e-10
 
     # Calculate the iron partitioning between the melt and the solid
     # a) Calculate the total amount of
@@ -226,8 +262,8 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
                          + x_fo1 * p_Mg2SiO4fo1) / X_total_solid)
                        - X_Fe2SiO4_solid)
 
-    p_melt = 1./(1. + X_total_solid)
-    #assert (p_melt == (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid))
+    p_melt = x_L/(x_L + X_total_solid)
+    assert np.abs(p_melt - (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid)) < 1.e-5
 
     f = melt['b']*T + melt['c']
 
@@ -249,13 +285,21 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
                      + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV'])) / X_total_solid
     betaV_xs_solid = 0.
 
-    return np.array([p_melt,
-                     X_H2O_melt, X_MgSiO3_melt,
-                     X_Fe2SiO4_melt, X_Mg2SiO4_melt,
-                     X_H2O_solid, X_MgSiO3_solid,
-                     X_Fe2SiO4_solid, X_Mg2SiO4_solid,
-                     S_xs_melt, V_xs_melt, betaV_xs_melt,
-                     S_xs_solid, V_xs_solid, betaV_xs_solid])
+    return {'p_melt': p_melt,
+            'X_H2O_melt': X_H2O_melt,
+            'X_MgSiO3_melt': X_MgSiO3_melt,
+            'X_Fe2SiO4_melt': X_Fe2SiO4_melt,
+            'X_Mg2SiO4_melt': X_Mg2SiO4_melt,
+            'X_H2O_solid': X_H2O_solid,
+            'X_MgSiO3_solid': X_MgSiO3_solid,
+            'X_Fe2SiO4_solid': X_Fe2SiO4_solid,
+            'X_Mg2SiO4_solid': X_Mg2SiO4_solid,
+            'S_xs_melt': S_xs_melt,
+            'V_xs_melt': V_xs_melt,
+            'betaV_xs_melt': betaV_xs_melt,
+            'S_xs_solid': S_xs_solid,
+            'V_xs_solid': V_xs_solid,
+            'betaV_xs_solid': betaV_xs_solid}
 
 
 def equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk):
@@ -301,9 +345,29 @@ def equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk):
     return props
 
 
-pressures = np.linspace(6.e9, 25.e9, 101)
-for P in pressures:
-    T = 1600.
-    X_Mg2SiO4, X_MgSiO3, X_H2O = [1., 1., 1.]
-    p_Fe_bulk = 0.1
-    print(equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk))
+if __name__ == '__main__':
+    #                [p_melt,
+    #                 X_H2O_melt, X_MgSiO3_melt,
+    #                 X_Fe2SiO4_melt, X_Mg2SiO4_melt,
+    #                 X_H2O_solid, X_MgSiO3_solid,
+    #                 X_Fe2SiO4_solid, X_Mg2SiO4_solid,
+    #                 S_xs_melt, V_xs_melt, betaV_xs_melt,
+    #                 S_xs_solid, V_xs_solid, betaV_xs_solid])
+    pressures = np.linspace(6.e9, 25.e9, 101)
+    p_melts = np.empty_like(pressures)
+    X_H2O_melts = np.empty_like(pressures)
+    X_H2O_solids = np.empty_like(pressures)
+    for i, P in enumerate(pressures):
+        T = 1600.
+        X_Mg2SiO4, X_MgSiO3, X_H2O = [1./3., 1./3., 1./3.]
+        p_Fe_bulk = 0.1
+        eqm = equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk)
+        p_melts[i] = eqm['p_melt']
+        X_H2O_melts[i] = eqm['X_H2O_melt']
+        X_H2O_solids[i] = eqm['X_H2O_solid']
+
+    plt.plot(pressures/1.e9, p_melts, label='proportion melt')
+    plt.plot(pressures/1.e9, X_H2O_solids, label='X_H2O solid')
+    plt.plot(pressures/1.e9, X_H2O_melts, label='X_H2O melt')
+    plt.legend()
+    plt.show()

@@ -24,7 +24,7 @@ S_el_H2O = 233.2550
 
 # Master endmembers
 H2OL = H2O_Pitzer_Sterner()
-hen = SLB_2011.hp_clinoenstatite()
+maj = burnman.CombinedMineral([SLB_2011.mg_majorite()], [0.25], name='MgSiO3 majorite')
 wad = SLB_2011.mg_wadsleyite()
 
 # Make other endmembers:
@@ -81,22 +81,15 @@ Mg2SiO4L.property_modifiers = [['linlog', {'delta_E': 175553., 'delta_S': 100.3,
                                            'a': 2.60339693e-06, 'b': 2.64753089e-11, 'c': 1.18703511e+00}]]
 
 
-
-
-V_ex = 2.8e-05
-
-H2MgSiO4fo = burnman.CombinedMineral([H2OL,
-                                      hen],
-                                      [1., 0.5], [-1173380. + 1273.15*208 - 13.e9*V_ex, 208, V_ex])
+H2MgSiO4fo = burnman.CombinedMineral([H2OL, maj], [1., 1.],
+                                     [27500. + 1500.*15. + 12.e9*2e-6, 15., -2e-6])
 
 # No clear pressure trend in Demouchy wad data
-H2MgSiO4wad = burnman.CombinedMineral([H2OL,
-                                      hen],
-                                      [1., 0.5], [-1173380. - 28000. + 1273.15*203 - 13.e9*V_ex, 203, V_ex])
+H2MgSiO4wad = burnman.CombinedMineral([H2OL, maj], [1., 1.],
+                                      [12000. + 1500.*15., 15., 0.])
 
-H2MgSiO4ring = burnman.CombinedMineral([H2OL,
-                                        hen],
-                                       [1., 0.5], [-1173380. - 32000. + 1273.15*208 - 13.e9*V_ex, 208, V_ex])
+H2MgSiO4ring = burnman.CombinedMineral([H2OL, maj], [1., 1.],
+                                       [10000. + 1500*15, 15., 0.])
 
 """
 Mg2SiO4L = DKS_2013_liquids.Mg2SiO4_liquid()
