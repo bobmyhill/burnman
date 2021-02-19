@@ -55,17 +55,17 @@ melt = {'E': 175553.,
 olwad = {'Delta_E': ol['E'] - wad['E'],
          'Delta_S': ol['S'] - wad['S'],
          'Delta_V': ol['V'] - wad['V'],
-         'halfPint0': 1.e9,  # NEED TO CHANGE
-         'dhalfPintdT': 0.}  # NEED TO CHANGE
+         'halfPint0': 0.976e9,  # estimated from SLB2011 Figure
+         'dhalfPintdT': -4.05e5} # estimated from SLB2011 Figure
 
 wadring = {'Delta_E': wad['E'] - ring['E'],
            'Delta_S': wad['S'] - ring['S'],
            'Delta_V': wad['V'] - ring['V'],
-           'halfPint0': 1.e9,  # NEED TO CHANGE
-           'dhalfPintdT': 0.}  # NEED TO CHANGE
+           'halfPint0': 2.286e9,   # estimated from SLB2011 Figure
+           'dhalfPintdT': -8.85e5} # estimated from SLB2011 Figure
 
 ringlm = {'Delta_E': ring['E'] - lm['E'],
           'Delta_S': ring['S'] - lm['S'],
           'Delta_V': ring['V'] - lm['V'],
-          'halfPint0': 1.e9,  # NEED TO CHANGE
-          'dhalfPintdT': 0.}  # NEED TO CHANGE
+          'halfPint0': 0.1e9,  # Something small
+          'dhalfPintdT': 0.}  # 0.

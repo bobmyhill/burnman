@@ -1,5 +1,6 @@
 import numpy as np
-from model_parameters import R, ol, wad, ring, lm, melt, olwad, wadring, ringlm
+from model_parameters import R, ol, wad, ring, lm, melt
+from model_parameters import olwad, wadring, ringlm
 from model_parameters import liq_sp
 from scipy.special import expi
 import matplotlib.pyplot as plt
@@ -82,7 +83,6 @@ def partition(p_Fe_bulk, f_liq, KD):
 
 
 def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
-    assert (X_Mg2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
 
     # Calculate the melting temperature of the olivine polymorph
     Tm = melting_temperature(phase, P)
@@ -95,7 +95,6 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
     p_H2MgSiO4fo = a_H2OL*np.exp(-(phase['hyE']
                                    - T*phase['hyS']
                                    + P*phase['hyV']) / (R*T))
-
     # Dependent fractions
     p_Mg2SiO4L = 1. - p_H2OL
     p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
@@ -104,6 +103,24 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
     x_fo = (X_H2O*p_Mg2SiO4L - X_Mg2SiO4*p_H2OL)/(p_H2MgSiO4fo - p_H2OL)
     x_maj = X_MgSiO3 - p_H2MgSiO4fo*x_fo
     x_L = (-X_H2O*p_Mg2SiO4fo + X_Mg2SiO4*p_H2MgSiO4fo)/(p_H2MgSiO4fo - p_H2OL)
+
+    if x_L <= 0.:
+        # Composition is completely solid
+        x_fo = X_H2O + X_Mg2SiO4
+        x_maj = X_MgSiO3 - X_H2O
+        x_L = 0.
+
+        p_H2MgSiO4fo = X_H2O / x_fo
+        p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
+
+    elif x_fo <= 0.:
+        # The olivine polymorph has been exhausted
+        x_fo = 0.
+        x_maj = X_MgSiO3
+        x_L = X_Mg2SiO4 + X_H2O
+
+        p_H2OL = X_H2O / x_L
+        p_Mg2SiO4L = 1. - p_H2OL
 
     # checks:
     assert np.abs(X_Mg2SiO4 - x_fo*p_Mg2SiO4fo - x_L * p_Mg2SiO4L) < 1.e-10
@@ -176,8 +193,6 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
 
 def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
 
-    assert (X_Mg2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
-
     # Calculate the melting temperature of the olivine polymorph
     Tm = ((1. - f_tr)*melting_temperature(phases[0], P)
           + f_tr*melting_temperature(phases[1], P))
@@ -211,6 +226,28 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
     x_L = ((-X_H2O*(1. - p_H2MgSiO4fo_eff) + X_Mg2SiO4*p_H2MgSiO4fo_eff)
            / (p_H2MgSiO4fo_eff - p_H2OL))
 
+    if x_L <= 0.:
+        # Composition is completely solid
+        x_fo0 = (1. - f_tr)*(X_H2O + X_Mg2SiO4)
+        x_fo1 = f_tr*(X_H2O + X_Mg2SiO4)
+        x_maj = X_MgSiO3 - X_H2O
+        x_L = 0.
+
+        r = p_H2MgSiO4fo1 / p_H2MgSiO4fo0
+        p_H2MgSiO4fo0 = X_H2O / (x_fo0 + x_fo1*r)
+        p_H2MgSiO4fo1 = X_H2O / (x_fo1 + x_fo0/r)
+        p_Mg2SiO4fo0 = 1. - p_H2MgSiO4fo0
+        p_Mg2SiO4fo1 = 1. - p_H2MgSiO4fo1
+
+    elif x_fo0 <= 0.:
+        # The olivine polymorphs have been exhausted
+        x_fo0 = 0.
+        x_fo1 = 0.
+        x_maj = X_MgSiO3
+        x_L = X_Mg2SiO4 + X_H2O
+
+        p_H2OL = X_H2O / x_L
+        p_Mg2SiO4L = 1. - p_H2OL
 
     # checks:
     assert np.abs(X_Mg2SiO4 - x_fo0*p_Mg2SiO4fo0 - x_fo1*p_Mg2SiO4fo1 - x_L * p_Mg2SiO4L) < 1.e-10
@@ -303,7 +340,7 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
 
 
 def equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk):
-
+    assert (X_Mg2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
     # Determine from the pressure and temperature
     # which assemblage(s) is/are stable at a given point.
     P_olwad = -(olwad['Delta_E'] - T*olwad['Delta_S']) / olwad['Delta_V']
@@ -353,13 +390,13 @@ if __name__ == '__main__':
     #                 X_Fe2SiO4_solid, X_Mg2SiO4_solid,
     #                 S_xs_melt, V_xs_melt, betaV_xs_melt,
     #                 S_xs_solid, V_xs_solid, betaV_xs_solid])
-    pressures = np.linspace(6.e9, 25.e9, 101)
+    pressures = np.linspace(6.e9, 25.e9, 1001)
     p_melts = np.empty_like(pressures)
     X_H2O_melts = np.empty_like(pressures)
     X_H2O_solids = np.empty_like(pressures)
     for i, P in enumerate(pressures):
         T = 1600.
-        X_Mg2SiO4, X_MgSiO3, X_H2O = [1./3., 1./3., 1./3.]
+        X_Mg2SiO4, X_MgSiO3, X_H2O = [0.7, 0.1, 0.2]
         p_Fe_bulk = 0.1
         eqm = equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk)
         p_melts[i] = eqm['p_melt']
