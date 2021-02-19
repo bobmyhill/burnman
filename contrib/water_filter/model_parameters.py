@@ -67,5 +67,5 @@ wadring = {'Delta_E': wad['E'] - ring['E'],
 ringlm = {'Delta_E': ring['E'] - lm['E'],
           'Delta_S': ring['S'] - lm['S'],
           'Delta_V': ring['V'] - lm['V'],
-          'halfPint0': 0.1e9,  # Something small
+          'halfPint0': 0.1e9,  # Something small, could increase this to simulate garnet decomposition.
           'dhalfPintdT': 0.}  # 0.
