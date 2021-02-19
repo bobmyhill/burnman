@@ -19,6 +19,7 @@ from .birch_murnaghan_4th import BM4
 from .mie_grueneisen_debye import MGD2, MGD3
 from .slb import SLB2, SLB3
 from .modified_tait import MT
+from .modified_hp import MOD_HP_TMT
 from .hp import HP_TMT
 from .hp import HP_TMTL
 from .hp import HP98

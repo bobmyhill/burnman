@@ -21,6 +21,7 @@ from . import reciprocal_kprime
 from . import aa
 from . import brosh_calphad
 from . import pitzer_sterner
+from . import modified_hp
 from .equation_of_state import EquationOfState
 
 
@@ -77,6 +78,8 @@ def create(method):
             return hp.HP_TMT()
         elif method == "hp_tmtL":
             return hp.HP_TMTL()
+        elif method == "mod_hp_tmt":
+            return modified_hp.MOD_HP_TMT()
         elif method == "cork":
             return cork.CORK()
         elif method == "dks_l":
