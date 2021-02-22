@@ -58,7 +58,6 @@ def solve_quadratic(a, b, c, sgn):
     sgn should be either +1 or -1, depending on the root
     the user wishes to return
     """
-    print(a, b, c, sgn)
     return (-b + sgn*np.sqrt(b*b - 4.*a*c))/(2.*a)
 
 
@@ -158,8 +157,8 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
     X_Fe2SiO4_solid = ((x_D_solid * p_Fe_sol)/2.) / X_total_solid
     X_Mg2SiO4_solid = ((x_fo * p_Mg2SiO4fo) / X_total_solid) - X_Fe2SiO4_solid
 
-    p_melt = x_L/(x_L + X_total_solid)
-    assert np.abs(p_melt - (X_H2O - X_H2O_solid)
+    f_melt = x_L/(x_L + X_total_solid)
+    assert np.abs(f_melt - (X_H2O - X_H2O_solid)
                   / (X_H2O_melt - X_H2O_solid)) < 1.e-5
 
     f = melt['b']*T + melt['c']
@@ -174,7 +173,7 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phase):
                          + 0.5 * p_H2MgSiO4fo * phase['hyV']) / X_total_solid
     betaV_xs_solid = 0.
 
-    return {'p_melt': p_melt,
+    return {'molar_fraction_melt': f_melt,
             'X_H2O_melt': X_H2O_melt,
             'X_MgSiO3_melt': X_MgSiO3_melt,
             'X_Fe2SiO4_melt': X_Fe2SiO4_melt,
@@ -259,7 +258,8 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
     # divalent cation (Mg+Fe) in the solid and melt
     x_D_melt = 2. * x_L * p_Mg2SiO4L
     x_D_solid = (x_fo0 * (2. * p_Mg2SiO4fo0 + p_H2MgSiO4fo0)
-                 + x_fo1 * (2. * p_Mg2SiO4fo1 + p_H2MgSiO4fo1) + x_maj)
+                 + x_fo1 * (2. * p_Mg2SiO4fo1 + p_H2MgSiO4fo1)
+                 + x_maj)
 
     # b) Calculate the fraction of divalent cation in the liquid
     f_divalent_liq = x_D_melt / (x_D_melt + x_D_solid)
@@ -299,8 +299,8 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
                          + x_fo1 * p_Mg2SiO4fo1) / X_total_solid)
                        - X_Fe2SiO4_solid)
 
-    p_melt = x_L/(x_L + X_total_solid)
-    assert np.abs(p_melt - (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid)) < 1.e-5
+    f_melt = x_L/(x_L + X_total_solid)
+    assert np.abs(f_melt - (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid)) < 1.e-5
 
     f = melt['b']*T + melt['c']
 
@@ -322,7 +322,7 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk, phases, f_tr):
                      + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV'])) / X_total_solid
     betaV_xs_solid = 0.
 
-    return {'p_melt': p_melt,
+    return {'molar_fraction_melt': f_melt,
             'X_H2O_melt': X_H2O_melt,
             'X_MgSiO3_melt': X_MgSiO3_melt,
             'X_Fe2SiO4_melt': X_Fe2SiO4_melt,
@@ -383,7 +383,7 @@ def equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk):
 
 
 if __name__ == '__main__':
-    #                [p_melt,
+    #                [f_melt,
     #                 X_H2O_melt, X_MgSiO3_melt,
     #                 X_Fe2SiO4_melt, X_Mg2SiO4_melt,
     #                 X_H2O_solid, X_MgSiO3_solid,
@@ -391,20 +391,24 @@ if __name__ == '__main__':
     #                 S_xs_melt, V_xs_melt, betaV_xs_melt,
     #                 S_xs_solid, V_xs_solid, betaV_xs_solid])
     pressures = np.linspace(6.e9, 25.e9, 1001)
-    p_melts = np.empty_like(pressures)
+    f_melts = np.empty_like(pressures)
     X_H2O_melts = np.empty_like(pressures)
     X_H2O_solids = np.empty_like(pressures)
+    KD = np.empty_like(pressures)
     for i, P in enumerate(pressures):
         T = 1600.
         X_Mg2SiO4, X_MgSiO3, X_H2O = [0.7, 0.1, 0.2]
         p_Fe_bulk = 0.1
         eqm = equilibrate(P, T, X_Mg2SiO4, X_MgSiO3, X_H2O, p_Fe_bulk)
-        p_melts[i] = eqm['p_melt']
+        f_melts[i] = eqm['molar_fraction_melt']
         X_H2O_melts[i] = eqm['X_H2O_melt']
         X_H2O_solids[i] = eqm['X_H2O_solid']
+        KD[i] = (2.*eqm['X_Fe2SiO4_solid']*(2. * eqm['X_Mg2SiO4_melt'] + eqm['X_MgSiO3_melt'])
+                 / (2.*eqm['X_Fe2SiO4_melt']*(2. * eqm['X_Mg2SiO4_solid'] + eqm['X_MgSiO3_solid'])))
 
-    plt.plot(pressures/1.e9, p_melts, label='proportion melt')
+    plt.plot(pressures/1.e9, f_melts, label='molar_fraction melt')
     plt.plot(pressures/1.e9, X_H2O_solids, label='X_H2O solid')
     plt.plot(pressures/1.e9, X_H2O_melts, label='X_H2O melt')
+    plt.plot(pressures/1.e9, KD, label='K_D')
     plt.legend()
     plt.show()
