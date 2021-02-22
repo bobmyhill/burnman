@@ -1,5 +1,4 @@
 import numpy as np
-from model_parameters import Mg2SiO4_params, Fe2SiO4_params, MgSiO3_params, H2O_params
 
 eps = np.finfo(float).eps
 gas_constant = 8.31446
@@ -173,68 +172,7 @@ def thermodynamic_properties(pressure, temperature, params):
             'rho': density,
             'alpha': thermal_expansivity,
             'beta_T': 1./isothermal_bulk_modulus,
+            'dVdP': -volume/isothermal_bulk_modulus,
             'molar_C_p': heat_capacity_p,
-            'C_p_per_kilogram': heat_capacity_p/params['molar_mass']} # C_p here is a molar quantity. Divide through by molar mass to get J/K/kg.
-
-
-# PROPERTY AVERAGING #
-# 4 parameters:
-# proportions of fe perovskite, wuestite and fe_endmember melt in their respective phases (p_fpv, p_wus, p_feliq),
-# mass fraction perovskite (mass_f_pv)
-# porosity (phi)
-
-def phase_properties(pressure, temperature, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O):
-
-    fractions = [X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O]
-
-    properties = [thermodynamic_properties(pressure, temperature, Mg2SiO4_params),
-                  thermodynamic_properties(pressure, temperature, Fe2SiO4_params),
-                  thermodynamic_properties(pressure, temperature, MgSiO3_params),
-                  thermodynamic_properties(pressure, temperature, H2O_params)]
-
-    molar_masses = [Mg2SiO4_params['molar_mass'],
-                    Fe2SiO4_params['molar_mass'],
-                    MgSiO3_params['molar_mass'],
-                    H2O_params['molar_mass']]
-
-    alphas = [prp['alpha'] for prp in properties]
-    volumes = [prp['V'] for prp in properties]
-    beta_Ts = [prp['beta_T'] for prp in properties]
-    C_ps = [prp['molar_C_p'] for prp in properties]
-
-    V_molar = np.sum([fractions[i]*volumes[i] for i in range(4)])
-    M_molar = np.sum([fractions[i]*molar_masses[i] for i in range(4)])
-    return {'molar mass': M_molar,
-            'V': V_molar,
-            'alpha': 1./V_molar*np.sum([fractions[i]*alphas[i]*volumes[i] for i in range(4)]),
-            'rho': M_molar/V_molar,
-            'beta_T': 1./V_molar*np.sum([fractions[i]*beta_Ts[i]*volumes[i] for i in range(4)]),
-            'molar_C_p': np.sum([fractions[i]*C_ps[i] for i in range(4)]),
-            'C_p_per_kilogram': np.sum([fractions[i]*C_ps[i] for i in range(2)])/M_molar}
-
-"""
-def average_composite_properties(pressure, temperature, p_fpv, p_wus, p_feliq, mass_f_pv, phi):
-
-    # solid, liquid
-    properties = [average_solid_properties(pressure, temperature, p_fpv, p_wus, mass_f_pv),
-                  average_melt_properties(pressure, temperature, p_feliq)]
-
-    molar_masses = [prp['molar mass'] for prp in properties]
-    alphas = [prp['alpha'] for prp in properties]
-    volumes = [prp['V'] for prp in properties]
-    beta_Ts = [prp['beta_T'] for prp in properties]
-    C_ps = [prp['molar_C_p'] for prp in properties]
-
-    n_moles = (1. - phi)/volumes[0] + phi/volumes[1]
-    fractions = [(1. - phi)/volumes[0]/n_moles, phi/volumes[1]/n_moles]
-
-    V_molar = np.sum([fractions[i]*volumes[i] for i in range(2)])
-    M_molar = np.sum([fractions[i]*molar_masses[i] for i in range(2)])
-    return {'molar mass': M_molar,
-            'V': V_molar,
-            'alpha': 1./V_molar*np.sum([fractions[i]*alphas[i]*volumes[i] for i in range(2)]),
-            'rho': M_molar/V_molar,
-            'beta_T': 1./V_molar*np.sum([fractions[i]*beta_Ts[i]*volumes[i] for i in range(2)]),
-            'molar_C_p': np.sum([fractions[i]*C_ps[i] for i in range(2)]),
-            'C_p_per_kilogram': np.sum([fractions[i]*C_ps[i] for i in range(2)])/M_molar}
-"""
+            'C_p_per_kilogram': heat_capacity_p/params['molar_mass'], # C_p is a molar quantity. Divide through by molar mass to get J/K/kg.
+            'molar_mass': params['molar_mass']}
