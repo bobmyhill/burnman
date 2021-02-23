@@ -107,8 +107,6 @@ def evaluate(P, T,
     porosity = V_melt / (V_melt + V_solid)
 
     # 9) Calculate the melt density and pressure gradient of the density
-    # (to compute density gradients we will ignore thermal gradients
-    # and compositional gradients along the gravity vector)
     M_melt_molar = (prps['X_Mg2SiO4_melt'] * c_prps[0]['molar_mass']
                     + prps['X_Fe2SiO4_melt'] * c_prps[1]['molar_mass']
                     + prps['X_H2O_melt'] * c_prps[3]['molar_mass'])
@@ -118,6 +116,9 @@ def evaluate(P, T,
                          + prps['X_H2O_melt'] * c_prps[3]['dVdP']) + prps['dVdP_xs_melt']
 
     melt_density = M_melt_molar / V_melt_molar
+
+    # To compute the density gradient we will ignore thermal gradients
+    # and compositional gradients along the gravity vector
     melt_drhodP = - M_melt_molar / (V_melt_molar**2) * dVdP_melt_molar
 
     # 10) Calculate the bulk properties

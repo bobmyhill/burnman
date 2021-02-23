@@ -14,7 +14,10 @@ def _li(x):
 
 
 def melting_temperature(solid, P):
-
+    """
+    Computes the melting temperature of a solid at a given pressure
+    This solid may be metastable.
+    """
     f = melt['b']*P + melt['c']
 
     return (((melt['E'] - solid['E']) + P * (melt['V'] - solid['V'])
@@ -91,6 +94,10 @@ def partition(p_Fe_bulk, f_liq, KD):
 
 
 def melt_excess_volume(P, T, X_Mg2SiO4, X_Fe2SiO4, X_H2O):
+    """
+    Computes the excess volume of a melt at a given pressure,
+    temperature and composition
+    """
     p_H2OL = X_H2O / (X_Mg2SiO4 + X_Fe2SiO4 + X_H2O)
     p_Mg2SiO4L = 1. - p_H2OL
     f = melt['b']*T + melt['c']
@@ -99,6 +106,13 @@ def melt_excess_volume(P, T, X_Mg2SiO4, X_Fe2SiO4, X_H2O):
 
 
 def solid_excess_volume(P, T, X_ol_comps, X_MgSiO3, X_H2O, phases, f_tr):
+    """
+    Computes the excess volume of a solid at a given pressure,
+    temperature and composition. The solid may be contain either
+    one or two olivine phases.
+
+    X_ol_comps = X_Mg2SiO4 + X_Fe2SiO4
+    """
     x_fo0 = (1. - f_tr)*(X_H2O + X_ol_comps)
     x_fo1 = f_tr*(X_H2O + X_ol_comps)
     # x_maj = X_MgSiO3 - X_H2O
@@ -117,14 +131,18 @@ def solid_excess_volume(P, T, X_ol_comps, X_MgSiO3, X_H2O, phases, f_tr):
     p_Mg2SiO4fo0 = 1. - p_H2MgSiO4fo0
     p_Mg2SiO4fo1 = 1. - p_H2MgSiO4fo1
 
-    V_xs_solid = ((1. - f_tr) * x_fo0 * (p_Mg2SiO4fo0 * phases[0]['V']
-                                         + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
-                  + f_tr * x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
-                                    + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV']))
+    V_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['V']
+                           + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
+                  + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
+                             + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV']))
     return V_xs_solid
 
 
 def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
+    """
+    Calculate the equilibrium properties within an assemblage
+    containing a single olivine polymorph
+    """
     p_Fe_bulk = 2. * X_Fe2SiO4 / (2.*(X_Mg2SiO4 + X_Fe2SiO4) + X_MgSiO3)
 
     # Calculate the melting temperature of the olivine polymorph
@@ -206,6 +224,8 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
     assert np.abs(f_melt - (X_H2O - X_H2O_solid)
                   / (X_H2O_melt - X_H2O_solid)) < 1.e-5
 
+    S_conf_fo = -R*(p_Mg2SiO4fo * np.log(p_Mg2SiO4fo)
+                    + p_H2MgSiO4fo * np.log(p_H2MgSiO4fo))
     f = melt['b']*T + melt['c']
 
     S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
@@ -213,7 +233,8 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
     dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])/(f * np.log(f)**2.))
 
     S_xs_solid = x_fo * (p_Mg2SiO4fo * phase['S']
-                         + 0.5 * p_H2MgSiO4fo * phase['hyS']) / X_total_solid
+                         + 0.5 * p_H2MgSiO4fo * phase['hyS']
+                         + S_conf_fo) / X_total_solid
     V_xs_solid = x_fo * (p_Mg2SiO4fo * phase['V']
                          + 0.5 * p_H2MgSiO4fo * phase['hyV']) / X_total_solid
     dVdP_xs_solid = 0.
@@ -236,9 +257,13 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
 
 
 def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
+    """
+    Calculate the equilibrium properties within an assemblage
+    containing two olivine polymorphs
+    """
     p_Fe_bulk = 2. * X_Fe2SiO4 / (2.*(X_Mg2SiO4 + X_Fe2SiO4) + X_MgSiO3)
 
-    # Calculate the melting temperature of the olivine polymorph
+    # Calculate the melting temperature of the "effective" olivine polymorph
     Tm = ((1. - f_tr)*melting_temperature(phases[0], P)
           + f_tr*melting_temperature(phases[1], P))
 
@@ -396,6 +421,10 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
 
 
 def stable_phases(P, T):
+    """
+    Calculate the stable olivine polymorph(s)
+    at a given pressure and temperature
+    """
     # Determine from the pressure and temperature
     # which assemblage(s) is/are stable at a given point.
     P_olwad = -(olwad['Delta_E'] - T*olwad['Delta_S']) / olwad['Delta_V']
@@ -435,6 +464,11 @@ def stable_phases(P, T):
 
 
 def equilibrate(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O):
+    """
+    A helper function that calculates the stable olivine polymorph(s)
+    at the provided pressure and temperature, and then calculates the
+    properties of the assemblage at the given composition
+    """
     assert (X_Mg2SiO4 + X_Fe2SiO4 + X_MgSiO3 + X_H2O - 1.) < 1.e-12
 
     phases, f_tr = stable_phases(P, T)
@@ -462,6 +496,10 @@ if __name__ == '__main__':
     X_H2O_melts = np.empty_like(pressures)
     X_H2O_solids = np.empty_like(pressures)
     KD = np.empty_like(pressures)
+    S_xs_melt = np.empty_like(pressures)
+    S_xs_solid = np.empty_like(pressures)
+    V_xs_melt = np.empty_like(pressures)
+    V_xs_solid = np.empty_like(pressures)
     for i, P in enumerate(pressures):
         T = 1600.
         X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O = [0.65, 0.05, 0.1, 0.2]
@@ -472,9 +510,25 @@ if __name__ == '__main__':
         KD[i] = (2.*eqm['X_Fe2SiO4_solid']*(2. * eqm['X_Mg2SiO4_melt'] + eqm['X_MgSiO3_melt'])
                  / (2.*eqm['X_Fe2SiO4_melt']*(2. * eqm['X_Mg2SiO4_solid'] + eqm['X_MgSiO3_solid'])))
 
-    plt.plot(pressures/1.e9, f_melts, label='molar_fraction melt')
-    plt.plot(pressures/1.e9, X_H2O_solids, label='X_H2O solid')
-    plt.plot(pressures/1.e9, X_H2O_melts, label='X_H2O melt')
-    plt.plot(pressures/1.e9, KD, label='K_D')
-    plt.legend()
+        S_xs_solid[i] = eqm['S_xs_solid']
+        S_xs_melt[i] = eqm['S_xs_melt']
+        V_xs_solid[i] = eqm['V_xs_solid']
+        V_xs_melt[i] = eqm['V_xs_melt']
+
+    fig = plt.figure()
+    ax = [fig.add_subplot(1, 3, i) for i in range(1, 4)]
+    ax[0].plot(pressures/1.e9, f_melts, label='molar_fraction melt')
+    ax[0].plot(pressures/1.e9, X_H2O_solids, label='X_H2O solid')
+    ax[0].plot(pressures/1.e9, X_H2O_melts, label='X_H2O melt')
+    ax[0].plot(pressures/1.e9, KD, label='K_D')
+    ax[1].plot(pressures/1.e9, S_xs_solid, label='S_xs_solid')
+    ax[1].plot(pressures/1.e9, S_xs_melt, label='S_xs_melt')
+    ax[1].plot(pressures/1.e9, f_melts*S_xs_melt + (1. - f_melts)*S_xs_solid, label='S_xs_bulk')
+    ax[2].plot(pressures/1.e9, V_xs_solid, label='V_xs_solid')
+    ax[2].plot(pressures/1.e9, V_xs_melt, label='V_xs_melt')
+    ax[2].plot(pressures/1.e9, f_melts*V_xs_melt + (1. - f_melts)*V_xs_solid, label='V_xs_bulk')
+
+    ax[0].legend()
+    ax[1].legend()
+    ax[2].legend()
     plt.show()
