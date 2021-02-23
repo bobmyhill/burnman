@@ -42,14 +42,23 @@ def ax_melt(T, Tm, S_fusion):
            + 1./4.*(K1 * X_O - np.sqrt((K1 * X_O)**2.
                                        + 4.*K1*X_O
                                        - 4.*K1*X_O**2.)))  # equation 14
-    a_H2O = X_B - ((0.5 - np.sqrt(0.25 - ((K1 - 4.)/K1)*(X_B - X_B**2.)))
+    X_H2O = X_B - ((0.5 - np.sqrt(0.25 - ((K1 - 4.)/K1)*(X_B - X_B**2.)))
                    / ((K1 - 4.)/K1))  # equation 5.2
 
-    # X_B (the bulk liquid H2O content) is defined on the basis of 1 oxygen,
+    X_OH = 2.*(X_B - X_H2O)
+    S_conf = -R*((X_OH + X_H2O) * np.log(X_H2O)
+                 + (X_OH + X_O) * np.log(X_O))
+
+    a_H2O = X_H2O
+
+    # X_B and S_conf (the bulk liquid H2O content and configurational entropy)
+    # are defined on the basis of 1 oxygen,
     # so a conversion back to an "r" oxygen basis is necessary
     p_H2O = X_B/(X_B + (1. - X_B)/liq_sp['r'])
+    n_O = p_H2O + (1. - p_H2O)*liq_sp['r']
+    S_conf = S_conf * n_O
 
-    return (a_H2O, p_H2O)
+    return (a_H2O, p_H2O, S_conf)
 
 
 def solve_quadratic(a, b, c, sgn):
@@ -124,7 +133,7 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
     # Calculate the proportions of the melt and olivine polymorph endmembers
     # in their respective phases.
     S_fusion = melt['S'] - phase['S']
-    a_H2OL, p_H2OL = ax_melt(T, Tm, S_fusion)
+    a_H2OL, p_H2OL, S_conf_melt = ax_melt(T, Tm, S_fusion)
 
     p_H2MgSiO4fo = a_H2OL*np.exp(-(phase['hyE']
                                    - T*phase['hyS']
@@ -199,7 +208,7 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
 
     f = melt['b']*T + melt['c']
 
-    S_xs_melt = p_Mg2SiO4L * melt['S']
+    S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
     dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])/(f * np.log(f)**2.))
 
@@ -236,7 +245,7 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
     # Calculate the proportions of the melt and olivine polymorph endmembers
     # in their respective phases.
     S_fusion = melt['S'] - (1. - f_tr)*phases[0]['S'] - f_tr*phases[1]['S']
-    a_H2OL, p_H2OL = ax_melt(T, Tm, S_fusion)
+    a_H2OL, p_H2OL, S_conf_melt = ax_melt(T, Tm, S_fusion)
 
     p_H2MgSiO4fo0 = a_H2OL*np.exp(-(phases[0]['hyE']
                                     - T*phases[0]['hyS']
@@ -341,29 +350,32 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
     f_melt = x_L/(x_L + X_total_solid)
 
     # Check that the bulk composition is conserved
-    assert np.abs(f_melt - (X_Mg2SiO4 - X_Mg2SiO4_solid)/(X_Mg2SiO4_melt - X_Mg2SiO4_solid)) < 1.e-10
-    assert np.abs(f_melt - (X_Fe2SiO4 - X_Fe2SiO4_solid)/(X_Fe2SiO4_melt - X_Fe2SiO4_solid)) < 1.e-10
-    assert np.abs(f_melt - (X_MgSiO3 - X_MgSiO3_solid)/(X_MgSiO3_melt - X_MgSiO3_solid)) < 1.e-10
-    assert np.abs(f_melt - (X_H2O - X_H2O_solid)/(X_H2O_melt - X_H2O_solid)) < 1.e-10
+    assert np.abs(f_melt*X_Mg2SiO4_melt + (1. - f_melt)*X_Mg2SiO4_solid - X_Mg2SiO4) < 1.e-10
+    assert np.abs(f_melt*X_Fe2SiO4_melt + (1. - f_melt)*X_Fe2SiO4_solid - X_Fe2SiO4) < 1.e-10
+    assert np.abs(f_melt*X_MgSiO3_melt + (1. - f_melt)*X_MgSiO3_solid - X_MgSiO3) < 1.e-10
+    assert np.abs(f_melt*X_H2O_melt + (1. - f_melt)*X_H2O_solid - X_H2O) < 1.e-10
+
+    S_conf_fo0 = -R*(p_Mg2SiO4fo0 * np.log(p_Mg2SiO4fo0)
+                     + p_H2MgSiO4fo0 * np.log(p_H2MgSiO4fo0))
+    S_conf_fo1 = -R*(p_Mg2SiO4fo1 * np.log(p_Mg2SiO4fo1)
+                     + p_H2MgSiO4fo1 * np.log(p_H2MgSiO4fo1))
 
     f = melt['b']*T + melt['c']
 
-    S_xs_melt = p_Mg2SiO4L * melt['S']
+    S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
     dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])/(f * np.log(f)**2.))
 
-    S_xs_solid = ((1. - f_tr) * x_fo0
-                  * (p_Mg2SiO4fo0 * phases[0]['S']
-                     + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyS'])
-                  + f_tr * x_fo1
-                  * (p_Mg2SiO4fo1 * phases[1]['S']
-                     + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyS'])) / X_total_solid
-    V_xs_solid = ((1. - f_tr) * x_fo0
-                  * (p_Mg2SiO4fo0 * phases[0]['V']
-                     + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
-                  + f_tr * x_fo1
-                  * (p_Mg2SiO4fo1 * phases[1]['V']
-                     + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV'])) / X_total_solid
+    S_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['S']
+                           + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyS']
+                           + S_conf_fo0)
+                  + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['S']
+                             + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyS']
+                             + S_conf_fo1)) / X_total_solid
+    V_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['V']
+                           + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
+                  + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
+                             + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV'])) / X_total_solid
     dVdP_xs_solid = 0.
 
     return {'molar_fraction_melt': f_melt,
