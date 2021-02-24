@@ -99,7 +99,7 @@ if run_inversion:
         processes = None  # default is to use all of the cpus
 
     with Pool(processes=processes) as pool:
-        new_outfile = False
+        new_outfile = True
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
         else:
