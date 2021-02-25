@@ -120,7 +120,7 @@ if run_inversion:
 
     with Pool(processes=processes) as pool:
         new_outfile = True
-        use_nth_to_last_sample=2  # default is 1, i.e. the last sample in the chain
+        use_nth_to_last_sample=100  # default is 1, i.e. the last sample in the chain
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
         else:
