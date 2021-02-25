@@ -41,12 +41,10 @@ def get_nth_to_last_sample(backend, n):
         blobs = backend.get_blobs(discard=it - n)
         if blobs is not None:
             blobs = blobs[0]
-        return State(
-            backend.get_chain(discard=it - n)[0],
-            log_prob=backend.get_log_prob(discard=it - n)[0],
-            blobs=blobs,
-            random_state=backend.random_state,
-        )
+        return emcee.State(backend.get_chain(discard=it - n)[0],
+                           log_prob=backend.get_log_prob(discard=it - n)[0],
+                           blobs=blobs,
+                           random_state=backend.random_state)
 
 print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
