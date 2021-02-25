@@ -886,15 +886,19 @@ def minfunc(x, solution, f0, rxn):
 def equilibrium_order_fast(solution, bounds):
     f0 = np.copy(solution.molar_fractions)
     rxn = solution.rxn_matrix[0, :]
-    sol = minimize(minfunc, [0.], jac=True,
-                   args=(solution, f0, rxn), bounds=(bounds,))
+    try:
+        sol = minimize(minfunc, [0.], jac=True,
+                       args=(solution, f0, rxn), bounds=(bounds,))
 
-    if not sol.success:
-        print(sol)
-        print('Equilibration failed. Falling back to slow method')
+        if not sol.success:
+            print(sol)
+            print('Equilibration failed. Falling back to slow method')
+            equilibrium_order_init(solution)
+        else:
+            # Make sure to set the solution to the correct composition
+            solution.set_composition(f0 + sol.x[0]*rxn)
+    except:
+        print('Equilibration failed (probably a problem related to the reaction matrix). Falling back to slow method')
         equilibrium_order_init(solution)
-    else:
-        # Make sure to set the solution to the correct composition
-        solution.set_composition(f0 + sol.x[0]*rxn)
 
     return sol.x[0]
