@@ -25,6 +25,28 @@ from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
 from datetime import datetime
 
+def get_nth_to_last_sample(backend, n):
+        """
+        Access the nth to last sample in the chain
+        If n == 1, the last sample is returned
+        """
+
+        if (not backend.initialized) or backend.iteration <= n - 1:
+            raise AttributeError(
+                "you must run the sampler with "
+                "'store == True' before accessing the "
+                "results"
+            )
+        it = backend.iteration
+        blobs = backend.get_blobs(discard=it - n)
+        if blobs is not None:
+            blobs = blobs[0]
+        return State(
+            backend.get_chain(discard=it - n)[0],
+            log_prob=backend.get_log_prob(discard=it - n)[0],
+            blobs=blobs,
+            random_state=backend.random_state,
+        )
 
 print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
@@ -100,6 +122,7 @@ if run_inversion:
 
     with Pool(processes=processes) as pool:
         new_outfile = True
+        use_nth_to_last_sample=2  # default is 1, i.e. the last sample in the chain
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
         else:
@@ -117,7 +140,10 @@ if run_inversion:
             backend.reset(nwalkers, ndim)
             p0 = x0 + jiggle_x0*np.random.randn(nwalkers, ndim)
         else:
-            p0 = sampler._previous_state
+            if use_nth_to_last_sample == 1:
+                p0 = sampler._previous_state
+            else:
+                p0 = get_nth_to_last_sample(backend, use_nth_to_last_sample)
 
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile)
