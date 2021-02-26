@@ -173,6 +173,8 @@ def thermodynamic_properties(pressure, temperature, params):
             'alpha': thermal_expansivity,
             'beta_T': 1./isothermal_bulk_modulus,
             'dVdP': -volume/isothermal_bulk_modulus,
+            'dVdT': volume * thermal_expansivity,
+            'dSdT': heat_capacity_p / temperature,
             'molar_C_p': heat_capacity_p,
             'C_p_per_kilogram': heat_capacity_p/params['molar_mass'], # C_p is a molar quantity. Divide through by molar mass to get J/K/kg.
             'molar_mass': params['molar_mass']}
