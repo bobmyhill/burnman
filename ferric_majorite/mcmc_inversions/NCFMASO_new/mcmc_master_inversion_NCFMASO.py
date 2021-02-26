@@ -119,11 +119,14 @@ if run_inversion:
         processes = None  # default is to use all of the cpus
 
     with Pool(processes=processes) as pool:
-        new_outfile = True
-        use_nth_to_last_sample=100  # default is 1, i.e. the last sample in the chain
+        new_outfile = False
+        use_nth_to_last_sample=1  # default is 1, i.e. the last sample in the chain
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
         else:
+            # use_nth_to_last_sample must == 1
+            # for continuation of existing chain.
+            use_nth_to_last_sample = 1
             backend = emcee.backends.HDFBackend(hdffile)
         #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability_global,
         #                                pool=pool, backend=backend)
