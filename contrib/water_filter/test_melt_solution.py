@@ -21,7 +21,8 @@ class melt_half_solid(SolidSolution):
 
         SolidSolution.__init__(self, molar_fractions=molar_fractions)
 
-melt = melt_half_solid([0.15, 0.05, 0.8])
+composition = [0.38627502932533253, 0.13620393497687355, 0.47752103569779397]
+melt = melt_half_solid(composition)
 
 melt.set_state(13.e9, 2500.)
 
@@ -50,7 +51,7 @@ class melt_all_liquid(SolidSolution):
 
         SolidSolution.__init__(self, molar_fractions=molar_fractions)
 
-melt = melt_all_liquid([0.38627502932533253, 0.13620393497687355, 0.47752103569779397])
+melt = melt_all_liquid(composition)
 
 melt.set_state(13.e9, 2200.)
 
