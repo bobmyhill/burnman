@@ -25,7 +25,7 @@ from create_dataset import create_dataset, special_constraints
 from output_plots import chain_plotter, plots
 from datetime import datetime
 
-def get_nth_to_last_sample(backend, n):
+def get_nth_to_last_sample(backend, n, return_state):
         """
         Access the nth to last sample in the chain
         If n == 1, the last sample is returned
@@ -41,10 +41,14 @@ def get_nth_to_last_sample(backend, n):
         blobs = backend.get_blobs(discard=it - n)
         if blobs is not None:
             blobs = blobs[0]
-        return emcee.State(backend.get_chain(discard=it - n)[0],
-                           log_prob=backend.get_log_prob(discard=it - n)[0],
-                           blobs=blobs,
-                           random_state=backend.random_state)
+
+        if return_state:
+            return emcee.State(backend.get_chain(discard=it - n)[0],
+                               log_prob=backend.get_log_prob(discard=it - n)[0],
+                               blobs=blobs,
+                               random_state=backend.random_state)
+        else:
+            return backend.get_chain(discard=it - n)[0]
 
 print(f'Start time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
 
@@ -75,28 +79,29 @@ dataset, storage, labels = create_dataset()
 #                          storage,
 #                          special_constraints)
 
+# Make sure we always get the same walker starting points
+# (good for bug checking)
+np.random.seed(1234)
+
+jiggle_x0 = 1.e-3
+walker_multiplication_factor = 4  # this number must be greater than 2!
+n_steps_burn_in = 0  # number of steps in the burn in period (not used)
+n_steps_mcmc = 20000  # number of steps in the full mcmc run
+n_discard = 0  # discard this number of steps from the full mcmc run
+thin = 1  # thin by this factor when calling get_chain
+
+x0 = get_params(storage)
+ndim = len(x0)
+nwalkers = ndim*walker_multiplication_factor
+
+thisfilename = os.path.basename(__file__)
+base = os.path.splitext(thisfilename)[0]
+hdffile = base+'_sampler_after_mcmc_run.hdf5'
+
 ########################
 # RUN THE MINIMIZATION #
 ########################
 if run_inversion:
-    # Make sure we always get the same walker starting points
-    # (good for bug checking)
-    np.random.seed(1234)
-
-    jiggle_x0 = 1.e-3
-    walker_multiplication_factor = 4  # this number must be greater than 2!
-    n_steps_burn_in = 0  # number of steps in the burn in period (not used)
-    n_steps_mcmc = 20000  # number of steps in the full mcmc run
-    n_discard = 0  # discard this number of steps from the full mcmc run
-    thin = 1  # thin by this factor when calling get_chain
-
-    x0 = get_params(storage)
-    ndim = len(x0)
-    nwalkers = ndim*walker_multiplication_factor
-
-    thisfilename = os.path.basename(__file__)
-    base = os.path.splitext(thisfilename)[0]
-    hdffile = base+'_sampler_after_mcmc_run.hdf5'
 
     print(f'Running MCMC inversion with {ndim} parameters '
           f'and {nwalkers} walkers')
@@ -123,6 +128,7 @@ if run_inversion:
         use_nth_to_last_sample=1  # default is 1, i.e. the last sample in the chain
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile+'.save')
+            backend.reset(nwalkers, ndim)
         else:
             # use_nth_to_last_sample must == 1
             # for continuation of existing chain.
@@ -144,7 +150,7 @@ if run_inversion:
             if use_nth_to_last_sample == 1:
                 p0 = sampler._previous_state
             else:
-                p0 = get_nth_to_last_sample(backend, use_nth_to_last_sample)
+                p0 = get_nth_to_last_sample(backend, use_nth_to_last_sample, return_state=False)
 
         if new_outfile:
             backend = emcee.backends.HDFBackend(hdffile)
@@ -161,72 +167,80 @@ if run_inversion:
                                  progress=True)
         print('100% complete.')
 
-    print('Chain shape: {0}'.format(sampler.get_chain().shape))
-    mean_acceptance_fraction = np.mean(sampler.acceptance_fraction)
-    print(f'Mean acceptance fraction: {mean_acceptance_fraction:.2f}'
-          ' (should ideally be between 0.25 and 0.5)')
+else:
+    backend = emcee.backends.HDFBackend(hdffile)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability,
+                                    args=[dataset, storage,
+                                          special_constraints],
+                                    backend=backend)
 
-    if mean_acceptance_fraction < 0.15:
-        print(sampler.get_chain().shape)
-        print(sampler.acceptance_fraction)
-        exit()
+print('Chain shape: {0}'.format(sampler.get_chain().shape))
+mean_acceptance_fraction = np.mean(sampler.acceptance_fraction)
+print(f'Mean acceptance fraction: {mean_acceptance_fraction:.2f}'
+      ' (should ideally be between 0.25 and 0.5)')
 
-    try:
-        tau = sampler.get_autocorr_time()
-        print(tau)
-    except emcee.autocorr.AutocorrError as e:
-        print(e)
+"""
+if mean_acceptance_fraction < 0.15:
+    print(sampler.get_chain().shape)
+    print(sampler.acceptance_fraction)
+    exit()
+"""
+try:
+    tau = sampler.get_autocorr_time()
+    print(tau)
+except emcee.autocorr.AutocorrError as e:
+    print(e)
 
-    plot_chains = False
-    if plot_chains:
-        chain_plotter(sampler, labels)
+plot_chains = False
+if plot_chains:
+    chain_plotter(sampler, labels)
 
-    flat_samples = sampler.get_chain(discard=1600, thin=thin, flat=True)
+flat_samples = sampler.get_chain(discard=1600, thin=thin, flat=True)
 
-    # use the 50th percentile as an estimate for each param
-    # (this might not represent the best fit
-    # if the distribution is strongly non-Gaussian...)
-    mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0]
-                            for i in range(ndim)])
-    mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84])
-                         for i in range(ndim)])
+# use the 50th percentile as an estimate for each param
+# (this might not represent the best fit
+# if the distribution is strongly non-Gaussian...)
+mcmc_params = np.array([np.percentile(flat_samples[:, i], [50])[0]
+                        for i in range(ndim)])
+mcmc_unc = np.array([np.percentile(flat_samples[:, i], [16, 50, 84])
+                     for i in range(ndim)])
 
-    for i in range(ndim):
-        mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])
-        q = np.diff(mcmc_i)
-        txt = "\\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
-        txt = txt.format(mcmc_i[1], q[0], q[1], labels[i])
-        print(txt)
+for i in range(ndim):
+    mcmc_i = np.percentile(flat_samples[:, i], [16, 50, 84])
+    q = np.diff(mcmc_i)
+    txt = "\\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+    txt = txt.format(mcmc_i[1], q[0], q[1], labels[i])
+    print(txt)
 
-    Mcorr = np.corrcoef(flat_samples.T)
-    triu_Mcorr = np.triu(m=Mcorr, k=1)
-    abs_Mcorr_sorted_indices = np.unravel_index(np.argsort(np.abs(triu_Mcorr),
-                                                           axis=None)[::-1],
-                                                triu_Mcorr.shape)
-    Mcov = np.cov(flat_samples.T)  # rows corresponds to variables
-    # import corner
-    # fig = corner.corner(flat_samples, labels=labels);
-    # fig.savefig('corner_plot.pdf')
-    # plt.show()
+Mcorr = np.corrcoef(flat_samples.T)
+triu_Mcorr = np.triu(m=Mcorr, k=1)
+abs_Mcorr_sorted_indices = np.unravel_index(np.argsort(np.abs(triu_Mcorr),
+                                                       axis=None)[::-1],
+                                            triu_Mcorr.shape)
+Mcov = np.cov(flat_samples.T)  # rows corresponds to variables
+# import corner
+# fig = corner.corner(flat_samples, labels=labels);
+# fig.savefig('corner_plot.pdf')
+# plt.show()
 
-    fig, ax = plt.subplots(figsize=(50, 50))
-    cmap = sns.diverging_palette(250, 10, as_cmap=True)
-    ax = sns.heatmap(pd.DataFrame(Mcorr),
-                     xticklabels=labels,
-                     yticklabels=labels,
-                     cmap=cmap,
-                     vmin=-1.,
-                     center=0.,
-                     vmax=1.)
-    fig.savefig('parameter_correlations.pdf')
-    plt.show()
+fig, ax = plt.subplots(figsize=(50, 50))
+cmap = sns.diverging_palette(250, 10, as_cmap=True)
+ax = sns.heatmap(pd.DataFrame(Mcorr),
+                 xticklabels=labels,
+                 yticklabels=labels,
+                 cmap=cmap,
+                 vmin=-1.,
+                 center=0.,
+                 vmax=1.)
+fig.savefig('parameter_correlations.pdf')
+plt.show()
 
-    set_params(mcmc_params, dataset, storage, special_constraints)
+set_params(mcmc_params, dataset, storage, special_constraints)
 
 # Print the current parameters
 print(get_params(storage))
 
 # Make plots
-# plots(dataset, storage)
+plots(dataset, storage)
 
 print(f'End time: {datetime.now().strftime("%Y/%m/%d %H:%M:%S")}')
