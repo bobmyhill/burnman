@@ -59,6 +59,13 @@ melt = {'E': 175553.,
         'b': 2.64753089e-11,
         'c': 1.18703511e+00}
 
+melt = {'E': 175553. - 100.3*300, # shifted
+        'S': 100.3,
+        'V': -3.277e-6,
+        'a': 2.60339693e-06,
+        'b': 2.64753089e-11,
+        'c': 1.18703511e+00}
+
 
 olwad = {'Delta_E': ol['E'] - wad['E'],
          'Delta_S': ol['S'] - wad['S'],
@@ -134,7 +141,7 @@ MgSiO3_params = {'name': 'MgSiO3 (based on majorite)',
                  'formula': {'O': 3.0, 'Mg': 1.0, 'Si': 1.0}}
 
 
-H2O_params = {'name': 'H2O (based on water)',
+H2O_params = {'name': 'H2O (based on Pitzer and Sterner (1994) water)',
               'equation_of_state': 'mod_hp_tmt',
               'T_0': 298.15,
               'Pref': 17500000000.0,
@@ -148,5 +155,24 @@ H2O_params = {'name': 'H2O (based on water)',
               'S_Pref': -28.056180880343014,
               'Cp_Pref': np.array([7.31268765e+01,  1.14832240e-03,
                                    1.91210537e+07, -1.02859341e+03]),
-              'molar_mass': 0.01801528, 'n': 3.0,
+              'molar_mass': 0.01801528,
+              'n': 3.0,
+              'formula': {'H': 2.0, 'O': 1.0}}
+
+H2O_params = {'name': 'H2O (shifted)',
+              'equation_of_state': 'mod_hp_tmt',
+              'T_0': 298.15,
+              'Pref': 17500000000.0,
+              'V_0': 9.846716340870048e-06,
+              'K_0': 23715512343.826958,
+              'Kprime_0': 2.1394130559174642,
+              'Kdprime_0': -5.6049084716638196e-11,
+              'a_0': 0.00024234121534892915,
+              'T_einstein': -0.961404949012957,
+              'H_Pref': -63479.066549524505,
+              'S_Pref': -28.056180880343014,
+              'Cp_Pref': np.array([7.31268765e+01, 1.14832240e-03,
+                                   1.91210537e+07, -1.02859341e+03]),
+              'molar_mass': 0.01801528,
+              'n': 3.0,
               'formula': {'H': 2.0, 'O': 1.0}}

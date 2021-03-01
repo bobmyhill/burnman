@@ -262,7 +262,7 @@ if __name__ == '__main__':
     bulk_Cp = np.empty_like(pressures)
 
     T = 2200.
-    for T in np.linspace(1400., 2200., 5):
+    for T in np.linspace(1400., 2000., 4):
         c = [0.65, 0.1, 0.2, 0.05]
         for i, P in enumerate(pressures):
             X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O = c
@@ -368,7 +368,7 @@ if __name__ == '__main__':
         ax[3].set_ylim(-0.006, 0.0001)
         ax[4].set_ylim(0., 3.5e-10)
         ax[5].set_ylim(-8000., 2000.)
-        fig.suptitle(f'{T} K')
+        fig.suptitle(f'{T} K, modified H$_2$O EoS (-1.5 GPa, -2.5e-6 m$^3$/mol) and anhydrous liquidus (-300 K)')
         fig.tight_layout()
         fig.savefig(f'output_figures/model_properties_{c[0]}_{c[1]}_{c[2]}_{c[3]}_{T}_K.pdf')
     plt.show()
