@@ -100,8 +100,9 @@ def melt_excess_volume(P, T, X_Mg2SiO4, X_Fe2SiO4, X_H2O):
     """
     p_H2OL = X_H2O / (X_Mg2SiO4 + X_Fe2SiO4 + X_H2O)
     p_Mg2SiO4L = 1. - p_H2OL
-    f = melt['b']*T + melt['c']
+    f = melt['b']*P + melt['c']
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
+
     return V_xs_melt
 
 
@@ -239,7 +240,7 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
 
     S_conf_fo = -R*(p_Mg2SiO4fo * np.log(p_Mg2SiO4fo)
                     + p_H2MgSiO4fo * np.log(p_H2MgSiO4fo))
-    f = melt['b']*T + melt['c']
+    f = melt['b']*P + melt['c']
 
     S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
@@ -397,7 +398,7 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
     S_conf_fo1 = -R*(p_Mg2SiO4fo1 * np.log(p_Mg2SiO4fo1)
                      + p_H2MgSiO4fo1 * np.log(p_H2MgSiO4fo1))
 
-    f = melt['b']*T + melt['c']
+    f = melt['b']*P + melt['c']
 
     S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))

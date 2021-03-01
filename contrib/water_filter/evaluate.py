@@ -15,6 +15,7 @@ def evaluate(P, T,
              X_Mg2SiO4_melt, X_Fe2SiO4_melt, X_H2O_melt,
              porosity):
 
+    assert(X_Mg2SiO4_solid + X_Fe2SiO4_solid > 0.)
     # 1) Calculate reference component properties
     c_prps = [thermodynamic_properties(P, T, Mg2SiO4_params),
               thermodynamic_properties(P, T, Fe2SiO4_params),
@@ -30,6 +31,7 @@ def evaluate(P, T,
     # melt is not allowed to solidify and melt and solid are not allowed to
     # react with each other until after this step.
     X_ol_solid = X_Mg2SiO4_solid + X_Fe2SiO4_solid
+
     V_xs_solid = solid_excess_volume(P, T,
                                      X_ol_solid, X_MgSiO3_solid,
                                      X_H2O_solid, phases, f_tr)
@@ -232,10 +234,14 @@ if __name__ == '__main__':
     #                 X_Fe2SiO4_solid, X_Mg2SiO4_solid,
     #                 S_xs_melt, V_xs_melt, dVdP_xs_melt,
     #                 S_xs_solid, V_xs_solid, dVdP_xs_solid])
-    pressures = np.linspace(6.e9, 30.e9, 101)
+    pressures = np.linspace(6.e9, 30.e9, 201)
     porosity = np.empty_like(pressures)
     X_H2O_melts = np.empty_like(pressures)
+    X_Mg2SiO4_melts = np.empty_like(pressures)
+    X_Fe2SiO4_melts = np.empty_like(pressures)
     X_H2O_solids = np.empty_like(pressures)
+    X_Mg2SiO4_solids = np.empty_like(pressures)
+    X_Fe2SiO4_solids = np.empty_like(pressures)
     KD = np.empty_like(pressures)
     S_xs_melt = np.empty_like(pressures)
     S_xs_solid = np.empty_like(pressures)
@@ -249,7 +255,7 @@ if __name__ == '__main__':
     bulk_beta = np.empty_like(pressures)
     bulk_Cp = np.empty_like(pressures)
 
-    T = 1600.
+    T = 1800.
     c = [0.65, 0.1, 0.2, 0.05]
     for i, P in enumerate(pressures):
         X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O = c
@@ -301,7 +307,11 @@ if __name__ == '__main__':
         bulk_Cp[i] = out['bulk_specific_C_p']
 
         X_H2O_melts[i] = out['X_H2O_melt']
+        X_Mg2SiO4_melts[i] = out['X_Mg2SiO4_melt']
+        X_Fe2SiO4_melts[i] = out['X_Fe2SiO4_melt']
         X_H2O_solids[i] = out['X_H2O_solid']
+        X_Mg2SiO4_solids[i] = out['X_Mg2SiO4_solid']
+        X_Fe2SiO4_solids[i] = out['X_Fe2SiO4_solid']
         KD[i] = (2.*out['X_Fe2SiO4_solid']*(2. * out['X_Mg2SiO4_melt'] + out['X_MgSiO3_melt'])
                  / (2.*out['X_Fe2SiO4_melt']*(2. * out['X_Mg2SiO4_solid'] + out['X_MgSiO3_solid'])))
 
@@ -314,12 +324,16 @@ if __name__ == '__main__':
     ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
     ax[0].plot(pressures/1.e9, porosity, label='porosity')
     ax[0].plot(pressures/1.e9, X_H2O_solids, label='X_H2O solid')
+    # ax[0].plot(pressures/1.e9, X_Mg2SiO4_solids, label='X_Mg2SiO4 solid')
+    # ax[0].plot(pressures/1.e9, X_Fe2SiO4_solids, label='X_Fe2SiO4 solid')
     ax[0].plot(pressures/1.e9, X_H2O_melts, label='X_H2O melt')
+    # ax[0].plot(pressures/1.e9, X_Mg2SiO4_melts, label='X_Mg2SiO4 melt')
+    # ax[0].plot(pressures/1.e9, X_Fe2SiO4_melts, label='X_Fe2SiO4 melt')
     ax[0].plot(pressures/1.e9, KD, label='K_D')
-    #ax[1].plot(pressures/1.e9, S_xs_solid, label='S_xs_solid')
-    #ax[1].plot(pressures/1.e9, S_xs_melt, label='S_xs_melt')
-    #ax[2].plot(pressures/1.e9, V_xs_solid, label='V_xs_solid')
-    #ax[2].plot(pressures/1.e9, V_xs_melt, label='V_xs_melt')
+    # ax[1].plot(pressures/1.e9, S_xs_solid, label='S_xs_solid')
+    # ax[1].plot(pressures/1.e9, S_xs_melt, label='S_xs_melt')
+    # ax[2].plot(pressures/1.e9, V_xs_solid, label='V_xs_solid')
+    # ax[2].plot(pressures/1.e9, V_xs_melt, label='V_xs_melt')
 
     ax[1].plot(pressures/1.e9, solid_density, label='solid')
     ax[1].plot(pressures/1.e9, melt_density, label='melt')
