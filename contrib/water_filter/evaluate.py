@@ -14,10 +14,8 @@ def evaluate(P, T,
              X_Mg2SiO4_solid, X_Fe2SiO4_solid, X_MgSiO3_solid, X_H2O_solid,
              X_Mg2SiO4_melt, X_Fe2SiO4_melt, X_H2O_melt,
              porosity):
-    dT = 0.1
-    dP = 10.
 
-    assert(X_Mg2SiO4_solid + X_Fe2SiO4_solid > 0.)
+    assert(X_Mg2SiO4_solid + X_Fe2SiO4_solid >= 0.)
     # 1) Calculate reference component properties
     c_prps = [thermodynamic_properties(P, T, Mg2SiO4_params),
               thermodynamic_properties(P, T, Fe2SiO4_params),
@@ -66,20 +64,23 @@ def evaluate(P, T,
     assert (X_Mg2SiO4_bulk + X_Fe2SiO4_bulk
             + X_MgSiO3_bulk + X_H2O_bulk - 1.) < 1.e-12
 
-    # Not correctly centered, but this won't make a big difference.
-    sign = 1.
+    dT = 0.1
+    dP = 10.
     if f_tr > 0.5:
-        sign = -1
+        dT = -0.1
+        dP = -10.
+
+    # Not correctly centered, but this won't make a big difference.
     if len(phases) == 1:
         prps = one_phase_eqm(P, T,
                              X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                              X_MgSiO3_bulk, X_H2O_bulk,
                              phases[0])
-        prpsdP = one_phase_eqm(P + sign*dP, T,
+        prpsdP = one_phase_eqm(P + dP, T,
                                X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                                X_MgSiO3_bulk, X_H2O_bulk,
                                phases[0])
-        prpsdT = one_phase_eqm(P, T + sign*dT,
+        prpsdT = one_phase_eqm(P, T + dT,
                                X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                                X_MgSiO3_bulk, X_H2O_bulk,
                                phases[0])
@@ -88,14 +89,14 @@ def evaluate(P, T,
                              X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                              X_MgSiO3_bulk, X_H2O_bulk,
                              phases, f_tr)
-        prpsdP = two_phase_eqm(P+sign*dP, T,
+        prpsdP = two_phase_eqm(P+dP, T,
                                X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                                X_MgSiO3_bulk, X_H2O_bulk,
-                               phases, f_tr + sign*df_trdP*dP)
-        prpsdT = two_phase_eqm(P, T+sign*dT,
+                               phases, f_tr + df_trdP*dP)
+        prpsdT = two_phase_eqm(P, T+dT,
                                X_Mg2SiO4_bulk, X_Fe2SiO4_bulk,
                                X_MgSiO3_bulk, X_H2O_bulk,
-                               phases, f_tr + sign*df_trdT*dT)
+                               phases, f_tr + df_trdT*dT)
 
     # 8) Calculate the new porosity
     V_solid_molar = (((prps['X_Mg2SiO4_solid'] * c_prps[0]['V']
@@ -128,13 +129,13 @@ def evaluate(P, T,
     dVdP_melt_molar = ((prps['X_Mg2SiO4_melt'] * c_prps[0]['dVdP']
                         + prps['X_Fe2SiO4_melt'] * c_prps[1]['dVdP']
                         + prps['X_H2O_melt'] * c_prps[3]['dVdP'])
-                       + sign*(prpsdP['V_xs_melt'] - prps['V_xs_melt'])/dP)
+                       + (prpsdP['V_xs_melt'] - prps['V_xs_melt'])/dP)
 
     dVdP_solid_molar = ((prps['X_Mg2SiO4_solid'] * c_prps[0]['dVdP']
                          + prps['X_Fe2SiO4_solid'] * c_prps[1]['dVdP']
                          + prps['X_MgSiO3_solid'] * c_prps[2]['dVdP']
                          + prps['X_H2O_solid'] * c_prps[3]['dVdP'])
-                        + sign*(prpsdP['V_xs_solid'] - prps['V_xs_solid'])/dP)
+                        + (prpsdP['V_xs_solid'] - prps['V_xs_solid'])/dP)
 
     solid_density = M_solid_molar / V_solid_molar
     melt_density = M_melt_molar / V_melt_molar
@@ -152,20 +153,20 @@ def evaluate(P, T,
     S_xs_bulk = (prps['S_xs_melt'] * prps['molar_fraction_melt']
                  + prps['S_xs_solid'] * (1. - prps['molar_fraction_melt']))
 
-    dVdP_xs_bulk = sign*((prpsdP['V_xs_melt'] * prpsdP['molar_fraction_melt']
-                          + prpsdP['V_xs_solid']
-                          * (1. - prpsdP['molar_fraction_melt']))
-                         - V_xs_bulk) / dP
+    dVdP_xs_bulk = ((prpsdP['V_xs_melt'] * prpsdP['molar_fraction_melt']
+                     + prpsdP['V_xs_solid']
+                     * (1. - prpsdP['molar_fraction_melt']))
+                    - V_xs_bulk) / dP
 
-    dVdT_xs_bulk = sign*((prpsdT['V_xs_melt'] * prpsdT['molar_fraction_melt']
-                          + prpsdT['V_xs_solid']
-                          * (1. - prpsdT['molar_fraction_melt']))
-                         - V_xs_bulk) / dT
+    dVdT_xs_bulk = ((prpsdT['V_xs_melt'] * prpsdT['molar_fraction_melt']
+                     + prpsdT['V_xs_solid']
+                     * (1. - prpsdT['molar_fraction_melt']))
+                    - V_xs_bulk) / dT
 
-    dSdT_xs_bulk = sign*((prpsdT['S_xs_melt'] * prpsdT['molar_fraction_melt']
-                          + prpsdT['S_xs_solid']
-                          * (1. - prpsdT['molar_fraction_melt']))
-                         - S_xs_bulk) / dT
+    dSdT_xs_bulk = ((prpsdT['S_xs_melt'] * prpsdT['molar_fraction_melt']
+                     + prpsdT['S_xs_solid']
+                     * (1. - prpsdT['molar_fraction_melt']))
+                    - S_xs_bulk) / dT
 
     V_bulk = ((X_Mg2SiO4_bulk * c_prps[0]['V']
                + X_Fe2SiO4_bulk * c_prps[1]['V']
@@ -241,6 +242,7 @@ if __name__ == '__main__':
     #                 S_xs_melt, V_xs_melt, dVdP_xs_melt,
     #                 S_xs_solid, V_xs_solid, dVdP_xs_solid])
     pressures = np.linspace(6.e9, 30.e9, 1001)
+    #pressures = np.linspace(6.e9, 10.e9, 11)
     porosity = np.empty_like(pressures)
     X_H2O_melts = np.empty_like(pressures)
     X_Mg2SiO4_melts = np.empty_like(pressures)
@@ -364,10 +366,10 @@ if __name__ == '__main__':
 
         ax[0].set_ylim(0., 1.)
         ax[1].set_ylim(2000., 4500.)
-        ax[2].set_ylim(2000., 3000.)
-        ax[3].set_ylim(-0.006, 0.0001)
+        ax[2].set_ylim(2000., 3500.)
+        ax[3].set_ylim(-0.002, 0.0001)
         ax[4].set_ylim(0., 3.5e-10)
-        ax[5].set_ylim(-8000., 2000.)
+        ax[5].set_ylim(000., 3000.)
         fig.suptitle(f'{T} K, modified H$_2$O EoS (-1.5 GPa, -2.5e-6 m$^3$/mol) and anhydrous liquidus (-300 K)')
         fig.tight_layout()
         fig.savefig(f'output_figures/model_properties_{c[0]}_{c[1]}_{c[2]}_{c[3]}_{T}_K.pdf')

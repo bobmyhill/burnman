@@ -114,42 +114,45 @@ def solid_excess_volume(P, T, X_ol_comps, X_MgSiO3, X_H2O, phases, f_tr):
 
     X_ol_comps = X_Mg2SiO4 + X_Fe2SiO4
     """
-    if len(phases) == 1:
-        x_fo = X_H2O + X_ol_comps
+    if (X_H2O + X_ol_comps > 0.):
+        if len(phases) == 1:
+            x_fo = X_H2O + X_ol_comps
 
-        p_H2MgSiO4fo = np.exp(-(phases[0]['hyE']
-                                 - T*phases[0]['hyS']
-                                 + P*phases[0]['hyV']) / (R*T))
-        p_H2MgSiO4fo = X_H2O / x_fo
-        p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
+            p_H2MgSiO4fo = np.exp(-(phases[0]['hyE']
+                                    - T*phases[0]['hyS']
+                                    + P*phases[0]['hyV']) / (R*T))
+            p_H2MgSiO4fo = X_H2O / x_fo
+            p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
 
-        V_xs_solid = (x_fo * (p_Mg2SiO4fo * phases[0]['V']
-                              + 0.5 * p_H2MgSiO4fo * phases[0]['hyV']))
+            V_xs_solid = (x_fo * (p_Mg2SiO4fo * phases[0]['V']
+                                  + 0.5 * p_H2MgSiO4fo * phases[0]['hyV']))
 
+        else:
+            x_fo0 = (1. - f_tr)*(X_H2O + X_ol_comps)
+            x_fo1 = f_tr*(X_H2O + X_ol_comps)
+            # x_maj = X_MgSiO3 - X_H2O
+
+            p_H2MgSiO4fo0 = np.exp(-(phases[0]['hyE']
+                                     - T*phases[0]['hyS']
+                                     + P*phases[0]['hyV']) / (R*T))
+
+            p_H2MgSiO4fo1 = np.exp(-(phases[1]['hyE']
+                                     - T*phases[1]['hyS']
+                                     + P*phases[1]['hyV']) / (R*T))
+
+            r = p_H2MgSiO4fo1 / p_H2MgSiO4fo0
+            p_H2MgSiO4fo0 = X_H2O / (x_fo0 + x_fo1*r)
+            p_H2MgSiO4fo1 = X_H2O / (x_fo1 + x_fo0/r)
+            p_Mg2SiO4fo0 = 1. - p_H2MgSiO4fo0
+            p_Mg2SiO4fo1 = 1. - p_H2MgSiO4fo1
+
+            V_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['V']
+                                   + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
+                          + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
+                                     + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV']))
+        return V_xs_solid
     else:
-        x_fo0 = (1. - f_tr)*(X_H2O + X_ol_comps)
-        x_fo1 = f_tr*(X_H2O + X_ol_comps)
-        # x_maj = X_MgSiO3 - X_H2O
-
-        p_H2MgSiO4fo0 = np.exp(-(phases[0]['hyE']
-                                 - T*phases[0]['hyS']
-                                 + P*phases[0]['hyV']) / (R*T))
-
-        p_H2MgSiO4fo1 = np.exp(-(phases[1]['hyE']
-                                 - T*phases[1]['hyS']
-                                 + P*phases[1]['hyV']) / (R*T))
-
-        r = p_H2MgSiO4fo1 / p_H2MgSiO4fo0
-        p_H2MgSiO4fo0 = X_H2O / (x_fo0 + x_fo1*r)
-        p_H2MgSiO4fo1 = X_H2O / (x_fo1 + x_fo0/r)
-        p_Mg2SiO4fo0 = 1. - p_H2MgSiO4fo0
-        p_Mg2SiO4fo1 = 1. - p_H2MgSiO4fo1
-
-        V_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['V']
-                               + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyV'])
-                      + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
-                                 + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV']))
-    return V_xs_solid
+        return 0.
 
 
 def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
@@ -170,6 +173,7 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
     p_H2MgSiO4fo = a_H2OL*np.exp(-(phase['hyE']
                                    - T*phase['hyS']
                                    + P*phase['hyV']) / (R*T))
+
     # Dependent fractions
     p_Mg2SiO4L = 1. - p_H2OL
     p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
@@ -180,7 +184,17 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
     x_maj = X_MgSiO3 - p_H2MgSiO4fo*x_fo
     x_L = (-X_H2O*p_Mg2SiO4fo + X_ol_comps*p_H2MgSiO4fo)/(p_H2MgSiO4fo - p_H2OL)
 
-    if x_L <= 0.:
+    if x_fo <= 0. or p_H2OL <= 0.:
+        # The olivine polymorph has been exhausted
+        # or we are above the anhydrous liquidus
+        x_fo = 0.
+        x_maj = X_MgSiO3
+        x_L = X_ol_comps + X_H2O
+
+        p_H2OL = X_H2O / x_L
+        p_Mg2SiO4L = 1. - p_H2OL
+
+    elif x_L <= 0.:
         # Composition is completely solid
         x_fo = X_H2O + X_ol_comps
         x_maj = X_MgSiO3 - X_H2O
@@ -188,15 +202,6 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
 
         p_H2MgSiO4fo = X_H2O / x_fo
         p_Mg2SiO4fo = 1. - p_H2MgSiO4fo
-
-    elif x_fo <= 0.:
-        # The olivine polymorph has been exhausted
-        x_fo = 0.
-        x_maj = X_MgSiO3
-        x_L = X_ol_comps + X_H2O
-
-        p_H2OL = X_H2O / x_L
-        p_Mg2SiO4L = 1. - p_H2OL
 
     # checks:
     assert np.abs(X_ol_comps - x_fo*p_Mg2SiO4fo - x_L * p_Mg2SiO4L) < 1.e-10
@@ -244,8 +249,8 @@ def one_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phase):
 
     S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
-    dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])
-                                  / (f * np.log(f)**2.))
+    # dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])
+    #                              / (f * np.log(f)**2.))
 
     S_xs_solid = x_fo * (p_Mg2SiO4fo * phase['S']
                          + 0.5 * p_H2MgSiO4fo * phase['hyS']
@@ -310,7 +315,18 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
     x_L = ((-X_H2O*(1. - p_H2MgSiO4fo_eff) + X_ol_comps*p_H2MgSiO4fo_eff)
            / (p_H2MgSiO4fo_eff - p_H2OL))
 
-    if x_L <= 0.:
+    if x_fo0 <= 0. or p_H2OL <= 0.:
+        # The olivine polymorph has been exhausted
+        # or we are above the anhydrous liquidus
+        x_fo0 = 0.
+        x_fo1 = 0.
+        x_maj = X_MgSiO3
+        x_L = X_ol_comps + X_H2O
+
+        p_H2OL = X_H2O / x_L
+        p_Mg2SiO4L = 1. - p_H2OL
+
+    elif x_L <= 0.:
         # Composition is completely solid
         x_fo0 = (1. - f_tr)*(X_H2O + X_ol_comps)
         x_fo1 = f_tr*(X_H2O + X_ol_comps)
@@ -322,16 +338,6 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
         p_H2MgSiO4fo1 = X_H2O / (x_fo1 + x_fo0/r)
         p_Mg2SiO4fo0 = 1. - p_H2MgSiO4fo0
         p_Mg2SiO4fo1 = 1. - p_H2MgSiO4fo1
-
-    elif x_fo0 <= 0.:
-        # The olivine polymorphs have been exhausted
-        x_fo0 = 0.
-        x_fo1 = 0.
-        x_maj = X_MgSiO3
-        x_L = X_ol_comps + X_H2O
-
-        p_H2OL = X_H2O / x_L
-        p_Mg2SiO4L = 1. - p_H2OL
 
     # checks:
     assert np.abs(X_ol_comps - x_fo0*p_Mg2SiO4fo0 - x_fo1*p_Mg2SiO4fo1 - x_L * p_Mg2SiO4L) < 1.e-10
@@ -402,8 +408,8 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
 
     S_xs_melt = p_Mg2SiO4L * melt['S'] + S_conf_melt
     V_xs_melt = p_Mg2SiO4L * (melt['V'] + melt['a']/np.log(f))
-    dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])
-                                  / (f * np.log(f)**2.))
+    # dVdP_xs_melt = -p_Mg2SiO4L * ((melt['a'] * melt['b'])
+    #                              / (f * np.log(f)**2.))
 
     S_xs_solid = (x_fo0 * (p_Mg2SiO4fo0 * phases[0]['S']
                            + 0.5 * p_H2MgSiO4fo0 * phases[0]['hyS']
@@ -416,7 +422,7 @@ def two_phase_eqm(P, T, X_Mg2SiO4, X_Fe2SiO4, X_MgSiO3, X_H2O, phases, f_tr):
                   + x_fo1 * (p_Mg2SiO4fo1 * phases[1]['V']
                              + 0.5 * p_H2MgSiO4fo1 * phases[1]['hyV'])) / X_total_solid
 
-    dVdP_xs_solid = 0.
+    # dVdP_xs_solid = 0.
 
     return {'molar_fraction_melt': f_melt,
             'X_Mg2SiO4_melt': X_Mg2SiO4_melt,
