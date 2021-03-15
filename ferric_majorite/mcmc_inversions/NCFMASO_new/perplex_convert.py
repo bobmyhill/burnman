@@ -134,7 +134,20 @@ for nm, m in dataset['endmembers'].items():
 
 for name, m in dataset['solutions'].items():
     print(name)
-    e_names = [e[0].params['name'] for e in m.endmembers]
+    # ensure that endmember names are the same as given in the original dataset
+    e_names = []
+    for e in m.endmembers:
+        if e[0] in dataset['endmembers'].values():
+            e_names.append(list(dataset['endmembers'].keys())[list(dataset['endmembers'].values()).index(e[0])])
+        else:
+            e_names.append(list(dataset['combined_endmembers'].keys())[list(dataset['combined_endmembers'].values()).index(e[0])])
+
+
+    #e_names = [list(dataset['endmembers'].keys())[list(dataset['endmembers'].values()).index(e[0])]
+    #           if e[0] in dataset['endmembers'].values()
+    #           else list(dataset['combined_endmembers'].keys())[list(dataset['combined_endmembers'].values()).index(e[0])]
+    #           for e in m.endmembers]
+    #e_names = [e[0].params['name'] for e in m.endmembers]
 
     for i, n0 in enumerate(e_names):
         for j, n1 in enumerate(e_names[i+1:]):

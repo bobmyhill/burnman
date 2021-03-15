@@ -463,21 +463,21 @@ def create_minerals():
                                        [0., 0.],
                                        [0.]])
 
-    cor = Solution(name='corundum with order-disorder',
-                   solution_type='symmetric',
-                   endmembers=[[cor, '[Al][Al]O3'],
-                               [hem, '[Fef][Fef]O3'],
-                               [facor, '[Fef][Al]O3'],
-                               [mcor, '[Mg][Si]O3'],
-                               [fcor, '[Fe][Si]O3']],
-                   energy_interaction=[[0., 0., 6.e3, 0.],
-                                       [0., 0., 0.],
-                                       [0., 0.],
-                                       [0.]],
-                   volume_interaction=[[0., 0., 0., 0.],
-                                       [0., 0., 0.],
-                                       [0., 0.],
-                                       [0.]])
+    cor_od = Solution(name='corundum with order-disorder',
+                      solution_type='symmetric',
+                      endmembers=[[cor, '[Al][Al]O3'],
+                                  [hem, '[Fef][Fef]O3'],
+                                  [facor, '[Fef][Al]O3'],
+                                  [mcor, '[Mg][Si]O3'],
+                                  [fcor, '[Fe][Si]O3']],
+                      energy_interaction=[[0., 0., 6.e3, 0.],
+                                          [0., 0., 0.],
+                                          [0., 0.],
+                                          [0.]],
+                      volume_interaction=[[0., 0., 0., 0.],
+                                          [0., 0., 0.],
+                                          [0., 0.],
+                                          [0.]])
 
     fper = Solution(name='ferropericlase',
                     solution_type='symmetric',
@@ -633,7 +633,7 @@ def create_minerals():
                  'opx': opx_od,
                  'hpx': hpx_od,
                  'bdg': bdg,
-                 'cor': cor}
+                 'cor': cor_od}
 
     # Add polytope stuff to each solution
     for name in solutions:
@@ -690,12 +690,25 @@ def create_minerals():
                   'hfm':      hfm,
                   'mbdg':     mbdg,
                   'fbdg':     fbdg,
+                  'abdg':     abdg,
+                  'fefbdg':   fefbdg,
                   'cpv':      cpv,
                   'qtz':      qtz,  # SiO2 polymorphs
                   'coe':      coe,
                   'stv':      stv,
-                  'hem':      hem}  # hem only in Woodland
+                  'cor':      cor,
+                  'mcor':     mcor,
+                  'hem':      hem,
+                  'mak':      mak,
+                  'fak':      fak}  # hem only in Woodland
+
+    combined_endmembers =  {'fabdg':  fabdg,
+                            'ofm':    ofm,
+                            'hfm':    hfm,
+                            'fcor':   fcor,
+                            'facor':  facor,}
 
     mineral_dataset = {'endmembers': endmembers,
-                       'solutions': solutions}
+                       'solutions': solutions,
+                       'combined_endmembers': combined_endmembers}
     return mineral_dataset

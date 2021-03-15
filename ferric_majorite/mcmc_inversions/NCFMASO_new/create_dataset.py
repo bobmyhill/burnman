@@ -362,6 +362,7 @@ def create_dataset(import_assemblages=True):
 
     dataset = {'endmembers': mineral_dataset['endmembers'],
                'solutions': mineral_dataset['solutions'],
+               'combined_endmembers': mineral_dataset['combined_endmembers'],
                'assemblages': assemblages}
 
     # Initialize parameters and prepare internal arrays
