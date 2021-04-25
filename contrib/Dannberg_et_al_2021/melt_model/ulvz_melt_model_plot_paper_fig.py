@@ -11,10 +11,31 @@ from ulvz_melt_model import melting_enthalpy
 from ulvz_melt_model import calculate_endmember_proportions_volumes_masses
 from ulvz_melt_model import calculate_xfe_in_solid_from_molar_proportions
 
+from scipy.optimize import fsolve
+
+def solidus_T_Xl(x_solid, P):
+    def delta_solidus_composition(T):
+        Xls, Xss = liq_sol_molar_compositions(P, T,
+                                              melting_reference_pressure,
+                                              melting_temperatures,
+                                              melting_entropies,
+                                              melting_volumes,
+                                              n_mole_mix)
+        return Xss - x_solid
+
+    temperature = fsolve(delta_solidus_composition, [4000.])[0]
+    Xls, Xss = liq_sol_molar_compositions(P, temperature,
+                                          melting_reference_pressure,
+                                          melting_temperatures,
+                                          melting_entropies,
+                                          melting_volumes,
+                                          n_mole_mix)
+    return (temperature, Xls)
+
 
 if __name__ == '__main__':
     ################# BEGIN PLOTS ######################
-    plt.rc('font', family='DejaVu sans', size=15.)
+    plt.rc('font', family='DejaVu sans', size=14.)
 
 
     # 1) Plot phase proportions as a function of the 1D compositional parameter x_Fe
@@ -175,14 +196,13 @@ if __name__ == '__main__':
         ax[0].plot(Xls[mask], temperatures[mask], label='liquid composition, {0} GPa'.format(P/1.e9))
         ax[0].plot(Xss[mask], temperatures[mask], label='solid composition, {0} GPa'.format(P/1.e9))
 
+        ax[1].plot(Xss[mask], solrhos[mask], label='solid'.format(P/1.e9), linestyle='--')
+        ax[1].plot(Xss[mask], melt2rhos[mask], label='liquid with solid composition'.format(P/1.e9), linestyle=':')
+        ax[1].plot(Xss[mask], meltrhos[mask], label='equilibrium liquid (model 1)'.format(P/1.e9))
+        ax[1].plot(Xss[mask], meltrhos_mod[mask], label='equilibrium liquid (model 2)'.format(P/1.e9))
 
-        ax[1].plot(Xss[mask], solrhos[mask], label='solid (solidus)'.format(P/1.e9), linestyle='--')
-        ax[1].plot(Xss[mask], melt2rhos[mask], label='isochem. liquid (solidus)'.format(P/1.e9), linestyle=':')
-        ax[1].plot(Xss[mask], meltrhos[mask], label='eqm liquid (solidus,mod1)'.format(P/1.e9))
-        ax[1].plot(Xss[mask], meltrhos_mod[mask], label='eqm liquid (solidus,mod2)'.format(P/1.e9))
 
-
-        ax[1].fill_between(Xss[mask], melt3rhos[mask], melt5rhos[mask], label='eqm liquid (solidus,expt)'.format(P/1.e9), alpha=0.2)
+        ax[1].fill_between(Xss[mask], melt3rhos[mask], melt5rhos[mask], label='equilibrium liquid (expt)'.format(P/1.e9), alpha=0.2)
 
         #print('NOTE: this estimate of solid density does not include metallic iron or CaPv')
         #ax[1].plot(Xss[mask], sol4rhos[mask], label='solid at solidus (expt)'.format(P/1.e9))
@@ -199,7 +219,7 @@ if __name__ == '__main__':
     melt_volumes = np.empty_like(xs)
     for j, x_Fe_bearing_endmember in enumerate(xs):
         n_cations_solid = 1./((1. - x_Fe_bearing_endmember)*c_mantle[0]['MgO'] + x_Fe_bearing_endmember*c_mantle[1]['FeO'])
-        molar_volumes = calculate_endmember_proportions_volumes_masses(pressure = 100.e9, temperature = 3600.,
+        molar_volumes = calculate_endmember_proportions_volumes_masses(pressure = 130.e9, temperature = 3600.,
                                                                        x_Fe_bearing_endmember=x_Fe_bearing_endmember,
                                                                        x_Fe_bearing_endmember_in_melt=x_Fe_bearing_endmember, # again, the proportion of the Fe-rich composition
                                                                        porosity=0.0,
@@ -215,6 +235,10 @@ if __name__ == '__main__':
 
     ax[1].plot([0.07, 0.07], [4500., 8000.], label='model mantle composition', color='black')
     ax[1].set_ylim(4500., 8000.)
+
+    T_solidus, Xl_solidus = solidus_T_Xl(x_solid=0.07, P=130.e9)
+    ax[0].plot([0.07, Xl_solidus], [T_solidus, T_solidus], linestyle=':')
+    ax[0].scatter([Xl_solidus], [T_solidus], label='melt composition at mantle solidus')
 
     for i in range(2):
         ax[i].set_xlim(0., 1.)
