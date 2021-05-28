@@ -1,0 +1,24 @@
+Fit results
+,Chi^2,(14) zero-pressure volume (A^3),(15) bulk modulus (GPa),(16) pressure deriv. of bulk mod.,(18) zero-pressure volume (A^3),(19) bulk modulus (GPa),(22) transition pressure (GPa)
+value,3.579E-01, 7.71533E+01, 1.60436E+02, 4.05097E+00, 7.37385E+01, 1.71433E+02, 6.35877E+01
+error,1.092E-01, 1.09889E-01, 1.23276E+00, 1.73349E-01, 1.13451E+00, 1.37527E+01, 2.53276E+00
+
+Correlation matrix
+,(14) zero-pressure volume (A^3),(15) bulk modulus (GPa),(16) pressure deriv. of bulk mod.,(18) zero-pressure volume (A^3),(19) bulk modulus (GPa),(22) transition pressure (GPa)
+(14) zero-pressure volume (A^3), 1.00000E+00,-2.59707E-01,-6.68686E-01,-3.86567E-01, 3.76138E-01, 3.61966E-01
+(15) bulk modulus (GPa),-2.59707E-01, 1.00000E+00,-2.98511E-01,-5.84849E-02, 5.65863E-02, 5.60845E-02
+(16) pressure deriv. of bulk mod.,-6.68686E-01,-2.98511E-01, 1.00000E+00, 7.03352E-01,-6.86199E-01,-6.59476E-01
+(18) zero-pressure volume (A^3),-3.86567E-01,-5.84849E-02, 7.03352E-01, 1.00000E+00,-9.98417E-01,-9.10994E-01
+(19) bulk modulus (GPa), 3.76138E-01, 5.65863E-02,-6.86199E-01,-9.98417E-01, 1.00000E+00, 8.96939E-01
+(22) transition pressure (GPa), 3.61966E-01, 5.60845E-02,-6.59476E-01,-9.10994E-01, 8.96939E-01, 1.00000E+00
+
+Iteration history
+Chi^2,Quality,(14) zero-pressure volume (A^3),,(15) bulk modulus (GPa),,(16) pressure deriv. of bulk mod.,,(18) zero-pressure volume (A^3),,(19) bulk modulus (GPa),,(22) transition pressure (GPa),,
+9.872E-01, 1.232E+00, 7.715E+01,  , 1.600E+02,  , 4.200E+00,  , 7.500E+01,  , 1.600E+02,  , 6.300E+01,  
+3.751E-01, 5.046E-03, 7.711E+01,  , 1.603E+02,  , 4.201E+00,  , 7.487E+01,  , 1.587E+02,  , 6.064E+01,  
+3.716E-01, 1.337E-02, 7.711E+01,  , 1.603E+02,  , 4.180E+00,  , 7.486E+01,  , 1.587E+02,  , 6.104E+01,  
+3.624E-01, 3.787E-03, 7.714E+01,  , 1.604E+02,  , 4.102E+00,  , 7.431E+01,  , 1.645E+02,  , 6.242E+01,  
+3.599E-01, 2.345E-03, 7.714E+01,  , 1.604E+02,  , 4.091E+00,  , 7.416E+01,  , 1.664E+02,  , 6.272E+01,  
+3.583E-01, 5.956E-04, 7.715E+01,  , 1.604E+02,  , 4.066E+00,  , 7.391E+01,  , 1.693E+02,  , 6.325E+01,  
+3.579E-01, 5.364E-05, 7.715E+01,  , 1.604E+02,  , 4.055E+00,  , 7.378E+01,  , 1.709E+02,  , 6.350E+01,  
+  0.36,, 7.715E+01,  , 1.604E+02,  , 4.051E+00,  , 7.374E+01,  , 1.714E+02,  , 6.359E+01,  

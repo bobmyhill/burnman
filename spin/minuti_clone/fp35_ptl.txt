@@ -1,0 +1,206 @@
+
+        |>\    #      #  #I##  #    ##  ##   ##  T##T##  ###I   /<|
+        |>>\   ##    ##   ##   ##   N#  ##   #U    ##     I#   /<<|
+        |>>>\  #M#  ###   ##   ###  ##  #U   ##    ##     ##  /<<<|
+        |~~~~| ## ## #M   I#   ## # ##  ##   ##    T#     ## |~~~~|
+        |>>>/  ##    ##   ##   N#  #N#  U#   ##    ##     #I  \<<<|
+        |>>/   M#    ##   ##   ##   ##   ## U#     ##     ##   \<<|
+        |>/    ##    M#  ###I  #N    #    ###      #T    I###   \<|
+
+                   ##    MINeral physics UTIlities   ##
+                   ##  module SEOS - version @1:     ##
+                   ##      written by W.Sturhahn     ##
+
+                   ##  date 11/29/17  time 10:55:08  ##
+
+
+  Input parameters -->
+
+   Composition formula     : Fe_1.4 Mg_2.6 O_4
+
+   Measured data from file : "fp35.dat"
+
+   Temperature     :  300.0 K
+   Pressure range  :    0.0 to 150.0 GPa
+   Pressure points :    151
+
+   Equation of state type : Birch-Murnaghan, 3rd order
+     Low-pressure phase EOS ->
+      Density at 0 GPa      :   4.421 g/cm^3
+      Volume at 0 GPa       :  77.2 A^3
+      Bulk modulus at 0 GPa : 160.0 GPa
+      dK/dP at 0 GPa        :   4.2
+      d^2K/dP^2 at 0 GPa    :  -0.0258 1/GPa
+     High-pressure phase EOS ->
+      Volume at 0 GPa       :  75.0 A^3
+      Bulk modulus at 0 GPa : 160.0 GPa
+      dK/dP at 0 GPa        :   4.0
+      d^2K/dP^2 at 0 GPa    :  -0.0243 1/GPa
+
+   Reference temperature           :  300.0 K
+   Debye temperature               :  800.0 K
+   Grueneisen parameter            :    1.45
+   Exponent of Grueneisen param.   :    0.80
+
+   Conduction electron temperature : 2000.0 K
+   Scaling parameter               :    0.00
+   Exponent of scaling parameter   :    1.00
+
+   Transition pressure             :  63.00 GPa
+   Spin state energies             :  0.0  1.0  2.0
+   Orbital degeneracies            :    1    6    3
+   Number of unpaired electrons    :    0    2    4
+
+
+  Calculated parameters -->
+
+   Spin state population at zero pressure:
+    0.000000    0.000054    0.999946
+
+   Spin state population at high pressure:
+    0.999183    0.000817    0.000000
+
+
+  Fit parameters -->
+
+     |     name                       |   start  |   prior  | prior rms |
+     |--------------------------------+----------+----------+-----------|
+     | (14) zero-pressure volume (A^3 | 7.72E+01 |          |           |
+     | (15) bulk modulus (GPa)        | 1.60E+02 | 1.60E+02 |  5.00E+00 |
+     | (16) pressure deriv. of bulk m | 4.20E+00 |          |           |
+     | (18) zero-pressure volume (A^3 | 7.50E+01 |          |           |
+     | (19) bulk modulus (GPa)        | 1.60E+02 |          |           |
+     | (22) transition pressure (GPa) | 6.30E+01 |          |           |
+      ------------------------------------------------------------------
+
+
+  Results --> 
+
+     Normalized Chi^2 value:      0.36 +-   0.11
+     (1 - r^2)             :      0.07 %
+
+     | parameter name           | ## |  value      +- error   | % error |
+     |--------------------------+----+------------------------+---------|
+     | (14) zero-pressure volum |  1 |  7.7153D+01 +- 1.1D-01 |   0.142 |
+     | (15) bulk modulus (GPa)  |  2 |  1.6044D+02 +- 1.2D+00 |   0.768 |
+     | (16) pressure deriv. of  |  3 |  4.0510D+00 +- 1.7D-01 |   4.279 |
+     | (18) zero-pressure volum |  4 |  7.3739D+01 +- 1.1D+00 |   1.539 |
+     | (19) bulk modulus (GPa)  |  5 |  1.7143D+02 +- 1.4D+01 |   8.022 |
+     | (22) transition pressure |  6 |  6.3588D+01 +- 2.5D+00 |   3.983 |
+      ------------------------------------------------------------------
+       Error estimates give a 68% confidence interval.
+
+
+   Error correlation matrix -> 
+
+      ## |    1      2      3      4      5      6
+     ----+-------------------------------------------
+       1 |    1   -0.260 -0.669 -0.387  0.376  0.362
+       2 | -0.260    1   -0.299 -0.058  0.057  0.056
+       3 | -0.669 -0.299    1    0.703 -0.686 -0.659
+       4 | -0.387 -0.058  0.703    1   -0.998 -0.911
+       5 |  0.376  0.057 -0.686 -0.998    1    0.897
+       6 |  0.362  0.056 -0.659 -0.911  0.897    1  
+
+
+   Smallest eigenvalues of Fisher information matrix -> 
+
+     fixed | none    1    2    3    4    5    6
+    -------+------------------------------------
+      none |   1     2    1    5  558  503   17
+        1  |   2     2    2    4 1017  899   18
+        2  |   1     2    1    5  711  633   17
+        3  |   5     4    5    5 1404 1336   22
+        4  | 558  1017  711 1404  558  749  600
+        5  | 503   899  633 1336  749  503  579
+        6  |  17    18   17   22  600  579   17
+
+
+   Low-pressure phase EOS ->
+    d^2K/dP^2 at 0 GPa :  -0.0246 1/GPa
+   High-pressure phase EOS ->
+    d^2K/dP^2 at 0 GPa :  -0.0227 1/GPa
+
+   Average temperature deviation :    0.0 K
+   RMS of temperature deviation  :    0.0 K
+
+
+  Spin transition --> 
+
+     pressure from Delta=Pi :         59.622 GPa
+     pressure from 50% vol. change :  63.846 GPa
+     pressure from 50% unp. elec.  :  64.154 GPa
+
+     width from 20/80% vol. change :  13.249 GPa
+     width from 20/80% unp. elec.  :  13.565 GPa
+
+     no hysteresis detected
+
+
+  Created files -->
+
+   Protocol of calculations      : fp35_ptl.txt
+   List of all iteration steps   : fp35_ite.csv
+   Volume vs. pressure           : fp35_vol.dat
+   Volume, low-pressure phase    : fp35_vll.dat
+   Volume, high-pressure phase   : fp35_vlh.dat
+   Relative volume change        : fp35_vls.dat
+   Volume, reduced to ref. temp. : fp35_vrd.dat
+   Residuals, normalized         : fp35_rsd.dat
+   Density vs. pressure          : fp35_dns.dat
+   Bulk modulus vs. pressure     : fp35_bmt.dat
+   Bulk modulus, high-P phase    : fp35_bml.dat
+   Bulk modulus, high-P phase    : fp35_bmh.dat
+   Relative bulk modulus change  : fp35_bms.dat
+   Pressure deriv. of bulk mod.  : fp35_bdp.dat
+   Temp. derivative of bulk mod. : fp35_bdt.dat
+   Seismic velocity vs. pressure : fp35_smv.dat
+   Thermal volume expansion      : fp35_thx.dat
+   Parameter error ellipses      : fp35_p01v02_eel.dat
+                                   fp35_p01v03_eel.dat
+                                   fp35_p01v04_eel.dat
+                                   fp35_p01v05_eel.dat
+                                   fp35_p01v06_eel.dat
+                                   fp35_p02v03_eel.dat
+                                   fp35_p02v04_eel.dat
+                                   fp35_p02v05_eel.dat
+                                   fp35_p02v06_eel.dat
+                                   fp35_p03v04_eel.dat
+                                   fp35_p03v05_eel.dat
+                                   fp35_p03v06_eel.dat
+                                   fp35_p04v05_eel.dat
+                                   fp35_p04v06_eel.dat
+                                   fp35_p05v06_eel.dat
+                                   fp35_p01v02_nel.dat
+                                   fp35_p01v03_nel.dat
+                                   fp35_p01v04_nel.dat
+                                   fp35_p01v05_nel.dat
+                                   fp35_p01v06_nel.dat
+                                   fp35_p02v03_nel.dat
+                                   fp35_p02v04_nel.dat
+                                   fp35_p02v05_nel.dat
+                                   fp35_p02v06_nel.dat
+                                   fp35_p03v04_nel.dat
+                                   fp35_p03v05_nel.dat
+                                   fp35_p03v06_nel.dat
+                                   fp35_p04v05_nel.dat
+                                   fp35_p04v06_nel.dat
+                                   fp35_p05v06_nel.dat
+   Unpaired electrons            : fp35_unp.dat
+   Spin state populations        : fp35_01_ssp.dat
+                                   fp35_02_ssp.dat
+                                   fp35_03_ssp.dat
+   XES K_beta' intensity         : fp35_xes.dat
+   Spin part of free energy      : fp35_fre.dat
+   Spin part of entropy          : fp35_etp.dat
+   Internal energy               : fp35_int.dat
+   Spin part of internal energy  : fp35_ins.dat
+   Specific heat                 : fp35_ccv.dat
+   Thermal pressure              : fp35_prt.dat
+   Spin pressure                 : fp35_prs.dat
+   f-F plot, theory              : fp35_fft.dat
+   f-F plot, measurement         : fp35_ffm.dat
+   V-K-K' covariance matrix      : fp35_vkk.csv    
+   rho-v_phi covariance matrix   : fp35_dsv.csv    
+   Delta-Pi energy difference    : fp35_dpv.dat
+                                   fp35_dpp.dat
