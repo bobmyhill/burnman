@@ -1,4 +1,5 @@
-# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for
+# the Earth and Planetary Sciences
 # Copyright (C) 2012 - 2017 by the BurnMan team, released under the GNU
 # GPL v2 or later.
 
@@ -7,10 +8,9 @@ from __future__ import print_function
 
 import operator
 import bisect
-import os
 import pkgutil
 import numpy as np
-from scipy.optimize import fsolve, curve_fit
+from scipy.optimize import fsolve
 from scipy.ndimage.filters import gaussian_filter
 from scipy.interpolate import interp2d
 import scipy.integrate as integrate
@@ -19,12 +19,13 @@ import itertools
 import warnings
 
 from . import constants
-import itertools
+
 
 def copy_documentation(copy_from):
     """
-    Decorator @copy_documentation(another_function) will copy the documentation found in a different
-    function (for example from a base class). The docstring applied to some function a() will be ::
+    Decorator @copy_documentation(another_function) will copy the documentation
+    found in a different function (for example from a base class).
+    The docstring applied to some function a() will be ::
 
         (copied from BaseClass.some_function):
         <documentation from BaseClass.some_function>
@@ -46,10 +47,15 @@ def copy_documentation(copy_from):
         return wrapper
     return mydecorator
 
-def flatten(l): return flatten(l[0]) + (flatten(l[1:]) if len(l) > 1 else []) if type(l) is list or type(l) is np.ndarray else [l]
+
+def flatten(arr):
+    return (flatten(arr[0]) + (flatten(arr[1:]) if len(arr) > 1 else [])
+            if type(arr) is list or type(arr) is np.ndarray else [arr])
+
 
 def round_to_n(x, xerr, n):
     return round(x, -int(np.floor(np.log10(np.abs(xerr)))) + (n - 1))
+
 
 def unit_normalize(a, order=2, axis=-1):
     """
@@ -58,8 +64,9 @@ def unit_normalize(a, order=2, axis=-1):
     """
     l2 = np.atleast_1d(np.apply_along_axis(np.linalg.norm, axis, a, order))
 
-    l2[l2==0] = 1
+    l2[l2 == 0] = 1
     return a / np.expand_dims(l2, axis)[0][0]
+
 
 def pretty_print_values(popt, pcov, params):
     """
@@ -79,7 +86,8 @@ def pretty_print_values(popt, pcov, params):
 
         scale = np.power(10., p_expnt)
         nd = p_expnt - np.floor(np.log10(np.abs(c_rnd)))
-        print ('{0:s}: ({1:{4}{5}f} +/- {2:{4}{5}f}) x {3:.0e}'.format(p, p_rnd/scale, c_rnd/scale, scale, 0, (nd)/10.))
+        print('{0:s}: ({1:{4}{5}f} +/- {2:{4}{5}f}) x {3:.0e}'.format(p, p_rnd/scale, c_rnd/scale, scale, 0, (nd)/10.))
+
 
 def pretty_print_table(table, use_tabs=False):
     """
@@ -100,9 +108,11 @@ def pretty_print_table(table, use_tabs=False):
     # create a format string with the first column left aligned, the others right
     # example:   {:<27}{:>11}{:>6}{:>8}
     frmt = "".join(
-        [('{:<' if i == 0 else '{:>') + str(1 + col_width(table, i)) + '}' for i in range(len(table[0]))])
+        [('{:<' if i == 0 else '{:>') + str(1 + col_width(table, i)) + '}'
+         for i in range(len(table[0]))])
     for r in table:
         print(frmt.format(*r))
+
 
 def pretty_plot():
     """
@@ -113,6 +123,7 @@ def pretty_plot():
     plt.rc('text', usetex=True)
     plt.rcParams['text.latex.preamble'] = '\\usepackage{relsize}'
     plt.rc('font', family='sanserif')
+
 
 def sort_table(table, col=0):
     """
@@ -144,7 +155,8 @@ def linear_interpol(x, x1, x2, y1, y2):
 def read_table(filename):
     datastream = pkgutil.get_data('burnman', 'data/' + filename)
     datalines = [line.strip()
-                 for line in datastream.decode('ascii').split('\n') if line.strip()]
+                 for line in datastream.decode('ascii').split('\n')
+                 if line.strip()]
     table = []
 
     for line in datalines:
@@ -216,7 +228,8 @@ def molar_volume_from_unit_cell_volume(unit_cell_v, z):
     return V
 
 
-def equilibrium_pressure(minerals, stoichiometry, temperature, pressure_initial_guess=1.e5):
+def equilibrium_pressure(minerals, stoichiometry, temperature,
+                         pressure_initial_guess=1.e5):
     """
     Given a list of minerals, their reaction stoichiometries
     and a temperature of interest, compute the
@@ -254,7 +267,8 @@ def equilibrium_pressure(minerals, stoichiometry, temperature, pressure_initial_
     return pressure
 
 
-def equilibrium_temperature(minerals, stoichiometry, pressure, temperature_initial_guess=1000.):
+def equilibrium_temperature(minerals, stoichiometry, pressure,
+                            temperature_initial_guess=1000.):
     """
     Given a list of minerals, their reaction stoichiometries
     and a pressure of interest, compute the
@@ -430,7 +444,7 @@ def convert_fractions(composite, phase_fractions, input_type, output_type):
         List of output phase fractions (of type output_type)
     """
     if input_type == 'volume' or output_type == 'volume':
-        if composite.temperature == None:
+        if composite.temperature is None:
             raise Exception(
                 composite.to_string() + ".set_state(P, T) has not been called, so volume fractions are currently undefined. Exiting.")
 
@@ -441,24 +455,28 @@ def convert_fractions(composite, phase_fractions, input_type, output_type):
             volume_fraction / phase.molar_volume for volume_fraction,
             phase in zip(phase_fractions, composite.phases))
         molar_fractions = [volume_fraction / (phase.molar_volume * total_moles)
-                           for volume_fraction, phase in zip(phase_fractions, composite.phases)]
+                           for volume_fraction, phase in zip(phase_fractions,
+                                                             composite.phases)]
     if input_type == 'mass':
         total_moles = sum(mass_fraction / phase.molar_mass for mass_fraction,
                           phase in zip(phase_fractions, composite.phases))
         molar_fractions = [mass_fraction / (phase.molar_mass * total_moles)
-                           for mass_fraction, phase in zip(phase_fractions, composite.phases)]
+                           for mass_fraction, phase in zip(phase_fractions,
+                                                           composite.phases)]
 
     if output_type == 'volume':
         total_volume = sum(
             molar_fraction * phase.molar_volume for molar_fraction,
             phase in zip(molar_fractions, composite.phases))
-        output_fractions = [molar_fraction * phase.molar_volume /
-                            total_volume for molar_fraction, phase in zip(molar_fractions, composite.phases)]
+        output_fractions = [molar_fraction * phase.molar_volume
+                            / total_volume for molar_fraction, phase
+                            in zip(molar_fractions, composite.phases)]
     elif output_type == 'mass':
         total_mass = sum(molar_fraction * phase.molar_mass for molar_fraction,
                          phase in zip(molar_fractions, composite.phases))
-        output_fractions = [molar_fraction * phase.molar_mass /
-                            total_mass for molar_fraction, phase in zip(molar_fractions, composite.phases)]
+        output_fractions = [molar_fraction * phase.molar_mass
+                            / total_mass for molar_fraction, phase
+                            in zip(molar_fractions, composite.phases)]
     elif output_type == 'molar':
         output_fractions = molar_fractions
 
@@ -508,14 +526,17 @@ def bracket(fn, x0, dx, args=(), ratio=1.618, maxiter=100):
 
     # Overshot zero, try making dx smaller
     if (f0 - f_left) * (f_right - f0) < 0.:
-        while (f0 - f_left) * (f_right - f0) < 0. and dx > np.finfo('float').eps and niter < maxiter:
+        while ((f0 - f_left) * (f_right - f0) < 0.
+               and dx > np.finfo('float').eps
+               and niter < maxiter):
             dx /= ratio
             x_left = x0 - dx
             x_right = x0 + dx
             f_left = fn(x_left, *args)
             f_right = fn(x_right, *args)
             niter += 1
-        if niter == maxiter:  # Couldn't find something with same slope in both directions
+        if niter == maxiter:
+            # Couldn't find something with same slope in both directions
             raise ValueError('Cannot find zero.')
 
     niter = 0
@@ -551,6 +572,7 @@ def bracket(fn, x0, dx, args=(), ratio=1.618, maxiter=100):
     else:
         return x0, x1, f0, f1
 
+
 def check_eos_consistency(m, P=1.e9, T=300., tol=1.e-4, verbose=False,
                           including_shear_properties=True):
     """
@@ -579,7 +601,7 @@ def check_eos_consistency(m, P=1.e9, T=300., tol=1.e-4, verbose=False,
 
     Returns
     -------
-    consistency: boolean
+    eos_is_consistent: boolean
         If all checks pass, returns True
 
     """
@@ -601,7 +623,6 @@ def check_eos_consistency(m, P=1.e9, T=300., tol=1.e-4, verbose=False,
     S1 = m.S
     V1 = m.V
 
-
     m.set_state(P + dP, T)
     G2 = m.gibbs
     V2 = m.V
@@ -619,18 +640,19 @@ def check_eos_consistency(m, P=1.e9, T=300., tol=1.e-4, verbose=False,
     eq.extend([[m.V, (G2 - G0)/dP],
                [m.K_T, -0.5*(V2 + V0)*dP/(V2 - V0)]])
 
-
-    expr.extend(['C_v = Cp - alpha^2*K_T*V*T', 'K_S = K_T*Cp/Cv', 'gr = alpha*K_T*V/Cv'])
-    eq.extend([[m.molar_heat_capacity_v, m.molar_heat_capacity_p - m.alpha*m.alpha*m.K_T*m.V*T],
+    expr.extend(['C_v = Cp - alpha^2*K_T*V*T', 'K_S = K_T*Cp/Cv',
+                 'gr = alpha*K_T*V/Cv'])
+    eq.extend([[m.molar_heat_capacity_v,
+                m.molar_heat_capacity_p - m.alpha*m.alpha*m.K_T*m.V*T],
                [m.K_S, m.K_T*m.molar_heat_capacity_p/m.molar_heat_capacity_v],
                [m.gr, m.alpha*m.K_T*m.V/m.molar_heat_capacity_v]])
-
 
     expr.append('Vphi = np.sqrt(K_S/rho)')
     eq.append([m.bulk_sound_velocity, np.sqrt(m.K_S/m.rho)])
 
     if including_shear_properties:
-        expr.extend(['Vp = np.sqrt((K_S + 4G/3)/rho)', 'Vs = np.sqrt(G_S/rho)'])
+        expr.extend(['Vp = np.sqrt((K_S + 4G/3)/rho)',
+                     'Vs = np.sqrt(G_S/rho)'])
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -646,19 +668,21 @@ def check_eos_consistency(m, P=1.e9, T=300., tol=1.e-4, verbose=False,
         note = ' (not including shear properties)'
 
     consistencies = [np.abs(e[0] - e[1]) < np.abs(tol*e[1]) + np.finfo('float').eps for e in eq]
-    consistency = np.all(consistencies)
+    eos_is_consistent = np.all(consistencies)
 
-    if verbose == True:
-        print('Checking EoS consistency for {0:s}{1}'.format(m.to_string(), note))
+    if verbose:
+        print('Checking EoS consistency for {0:s}{1}'.format(m.to_string(),
+                                                             note))
         print('Expressions within tolerance of {0:2f}'.format(tol))
         for i, c in enumerate(consistencies):
             print('{0:10s} : {1:5s}'.format(expr[i], str(c)))
-        if consistency == True:
+        if eos_is_consistent:
             print('All EoS consistency constraints satisfied for {0:s}'.format(m.to_string()))
         else:
             print('Not satisfied all EoS consistency constraints for {0:s}'.format(m.to_string()))
 
-    return consistency
+    return eos_is_consistent
+
 
 def _pad_ndarray_inverse_mirror(array, padding):
     """
@@ -687,22 +711,31 @@ def _pad_ndarray_inverse_mirror(array, padding):
     padded_shape = [n + 2*padding[i] for i, n in enumerate(array.shape)]
     padded_array = np.zeros(padded_shape)
 
-    slices = tuple([ slice(padding[i], padding[i] + l) for i, l in enumerate(array.shape)])
+    slices = tuple([slice(padding[i], padding[i] + l)
+                    for i, l in enumerate(array.shape)])
     padded_array[slices] = array
 
-    padded_array_indices = list(itertools.product(*[range(n + 2*padding[i]) for i, n in enumerate(array.shape)]))
-    inserted_indices = list(itertools.product(*[range(padding[i], padding[i] + l) for i, l in enumerate(array.shape)]))
+    padded_array_indices = list(itertools.product(*[range(n + 2*padding[i])
+                                                    for i, n in enumerate(array.shape)]))
+    inserted_indices = list(itertools.product(*[range(padding[i],
+                                                      padding[i] + l)
+                                                for i, l in enumerate(array.shape)]))
     padded_array_indices.extend(inserted_indices)
 
     counter = Counter(padded_array_indices)
     keys = list(counter.keys())
-    padded_indices = [keys[i] for i, value in enumerate(counter.values()) if value == 1]
+    padded_indices = [keys[i] for i, value in enumerate(counter.values())
+                      if value == 1]
     edge_indices = tuple([tuple([np.min([np.max([axis_idx, padding[dimension]]), padded_array.shape[dimension] - padding[dimension] - 1])
-                                 for dimension, axis_idx in enumerate(idx)]) for idx in padded_indices])
-    mirror_indices = tuple([tuple([2*edge_indices[i][j] - padded_indices[i][j] for j in range(len(array.shape))]) for i in range(len(padded_indices))])
+                                 for dimension, axis_idx in enumerate(idx)])
+                          for idx in padded_indices])
+    mirror_indices = tuple([tuple([2*edge_indices[i][j] - padded_indices[i][j]
+                                   for j in range(len(array.shape))])
+                            for i in range(len(padded_indices))])
 
     for i, idx in enumerate(padded_indices):
-        padded_array[idx] = 2.*padded_array[edge_indices[i]] - padded_array[mirror_indices[i]]
+        padded_array[idx] = (2.*padded_array[edge_indices[i]]
+                             - padded_array[mirror_indices[i]])
 
     return padded_array
 
@@ -752,7 +785,8 @@ def smooth_array(array, grid_spacing,
         padded_array = _pad_ndarray_inverse_mirror(array, padding)
         smoothed_padded_array = gaussian_filter(padded_array,
                                                 sigma=sigma)
-        slices = tuple([ slice(padding[i], padding[i] + l) for i, l in enumerate(array.shape)])
+        slices = tuple([slice(padding[i], padding[i] + l)
+                        for i, l in enumerate(array.shape)])
         smoothed_array = smoothed_padded_array[slices]
     else:
         smoothed_array = gaussian_filter(array, sigma=sigma, mode=mode)
@@ -806,21 +840,22 @@ def interp_smoothed_array_and_derivatives(array,
 
     """
 
-
     dx = x_values[1] - x_values[0]
     dy = y_values[1] - y_values[0]
 
     if indexing == 'xy':
-        smoothed_array = smooth_array(array = array,
-                                      grid_spacing = np.array([dy, dx]),
-                                      gaussian_rms_widths = np.array([y_stdev, x_stdev]),
+        smoothed_array = smooth_array(array=array,
+                                      grid_spacing=np.array([dy, dx]),
+                                      gaussian_rms_widths=np.array([y_stdev,
+                                                                    x_stdev]),
                                       truncate=truncate,
                                       mode=mode)
 
     elif indexing == 'ij':
-        smoothed_array = smooth_array(array = array,
-                                      grid_spacing = np.array([dx, dy]),
-                                      gaussian_rms_widths = np.array([x_stdev, y_stdev]),
+        smoothed_array = smooth_array(array=array,
+                                      grid_spacing=np.array([dx, dy]),
+                                      gaussian_rms_widths=np.array([x_stdev,
+                                                                    y_stdev]),
                                       truncate=truncate,
                                       mode=mode).T
 
@@ -868,6 +903,7 @@ def attribute_function(m, attributes, powers=[]):
         attributes = [attributes]
     if powers == []:
         powers = [1. for a in attributes]
+
     def f(x):
         P, T, V = x
         m.set_state(P, T)
@@ -880,41 +916,45 @@ def attribute_function(m, attributes, powers=[]):
 
 def compare_l2(depth, calc, obs):
     """
-    Computes the L2 norm for N profiles at a time (assumed to be linear between points).
+    Computes the L2 norm for N profiles at a time
+    (assumed to be linear between points).
 
     :type depths: array of float
     :param depths: depths. :math:`[m]`
     :type calc: list of arrays of float
     :param calc: N arrays calculated values, e.g. [mat_vs,mat_vphi]
     :type obs: list of arrays of float
-    :param obs: N arrays of values (observed or calculated) to compare to , e.g. [seis_vs, seis_vphi]
+    :param obs: N arrays of values (observed or calculated) to compare to,
+    e.g. [seis_vs, seis_vphi]
 
     :returns: array of L2 norms of length N
     :rtype: array of floats
     """
     err = []
-    for l in range(len(calc)):
-        err.append(l2(depth, calc[l], obs[l]))
+    for i in range(len(calc)):
+        err.append(l2(depth, calc[i], obs[i]))
 
     return err
 
 
 def compare_chifactor(calc, obs):
     """
-    Computes the chi factor for N profiles at a time. Assumes a 1% a priori uncertainty on the seismic model.
+    Computes the chi factor for N profiles at a time.
+    Assumes a 1% a priori uncertainty on the seismic model.
 
 
     :type calc: list of arrays of float
     :param calc: N arrays calculated values, e.g. [mat_vs,mat_vphi]
     :type obs: list of arrays of float
-    :param obs: N arrays of values (observed or calculated) to compare to , e.g. [seis_vs, seis_vphi]
+    :param obs: N arrays of values (observed or calculated) to compare to,
+    e.g. [seis_vs, seis_vphi]
 
     :returns: error array of length N
     :rtype: array of floats
     """
     err = []
-    for l in range(len(calc)):
-        err.append(chi_factor(calc[l], obs[l]))
+    for i in range(len(calc)):
+        err.append(chi_factor(calc[i], obs[i]))
 
     return err
 
@@ -963,7 +1003,8 @@ def nrmse(x, funca, funcb):
 
 def chi_factor(calc, obs):
     """
-    :math:`\\chi` factor for one profile assuming 1% uncertainty on the reference model (obs)
+    :math:`\\chi` factor for one profile assuming
+    1% uncertainty on the reference model (obs)
     :type calc: list of arrays of float
     :param calc: array calculated values
     :type obs: list of arrays of float
