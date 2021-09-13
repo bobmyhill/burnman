@@ -244,7 +244,7 @@ if run_fitting:
     nsteps = 100000
 
     ncpu = cpu_count()
-    ncpus_for_mp = ncpu - 20
+    ncpus_for_mp = ncpu - 30
 
     print(f"{ncpu} CPUs total on machine, running with {ncpus_for_mp} CPUs")
     print(f"Running for {nsteps} steps.")
