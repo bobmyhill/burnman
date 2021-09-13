@@ -27,9 +27,9 @@ import os
 from multiprocessing import cpu_count
 from multiprocessing import Pool
 
-os.environ["OMP_NUM_THREADS"] = "1"  # important to kill numpy multiprocessing
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
+#os.environ["OMP_NUM_THREADS"] = "1"  # important to kill numpy multiprocessing
+#os.environ['OPENBLAS_NUM_THREADS'] = '1'
+#os.environ['MKL_NUM_THREADS'] = '1'
 
 assert burnman_path  # silence pyflakes warning
 
@@ -244,7 +244,7 @@ if run_fitting:
     nsteps = 100000
 
     ncpu = cpu_count()
-    ncpus_for_mp = ncpu - 30
+    ncpus_for_mp = 1 # ncpu - 30
 
     print(f"{ncpu} CPUs total on machine, running with {ncpus_for_mp} CPUs")
     print(f"Running for {nsteps} steps.")
