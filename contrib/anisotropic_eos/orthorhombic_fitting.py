@@ -28,6 +28,8 @@ from multiprocessing import cpu_count
 from multiprocessing import Pool
 
 os.environ["OMP_NUM_THREADS"] = "1"  # important to kill numpy multiprocessing
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 assert burnman_path  # silence pyflakes warning
 
@@ -137,72 +139,77 @@ if run_fitting:
 
         chisqr = 0.
 
-        #print(repr(x))
+        try:
+            #print(repr(x))
 
-        for d in ol_data:
+            for d in ol_data:
 
-            TK, PGPa, rho, rhoerr = d[:4]
-            C11, C11err = d[4:6]
-            C22, C22err = d[6:8]
-            C33, C33err = d[8:10]
-            C44, C44err = d[10:12]
-            C55, C55err = d[12:14]
-            C66, C66err = d[14:16]
-            C12, C12err = d[16:18]
-            C13, C13err = d[18:20]
-            C23, C23err = d[20:22]
+                TK, PGPa, rho, rhoerr = d[:4]
+                C11, C11err = d[4:6]
+                C22, C22err = d[6:8]
+                C33, C33err = d[8:10]
+                C44, C44err = d[10:12]
+                C55, C55err = d[12:14]
+                C66, C66err = d[14:16]
+                C12, C12err = d[16:18]
+                C13, C13err = d[18:20]
+                C23, C23err = d[20:22]
 
-            PPa = PGPa * 1.e9
+                PPa = PGPa * 1.e9
 
-            m.set_state(PPa, TK)
+                m.set_state(PPa, TK)
 
-            CN = m.isentropic_stiffness_tensor/1.e9
+                CN = m.isentropic_stiffness_tensor/1.e9
 
-            chisqr += np.power((m.density/1000. - rho)/rhoerr, 2.)
-            chisqr += np.power((CN[0,0] - C11)/C11err, 2.)
-            chisqr += np.power((CN[1,1] - C22)/C22err, 2.)
-            chisqr += np.power((CN[2,2] - C33)/C33err, 2.)
-            chisqr += np.power((CN[3,3] - C44)/C44err, 2.)
-            chisqr += np.power((CN[4,4] - C55)/C55err, 2.)
-            chisqr += np.power((CN[5,5] - C66)/C66err, 2.)
-            chisqr += np.power((CN[0,1] - C12)/C12err, 2.)
-            chisqr += np.power((CN[0,2] - C13)/C13err, 2.)
-            chisqr += np.power((CN[1,2] - C23)/C23err, 2.)
+                chisqr += np.power((m.density/1000. - rho)/rhoerr, 2.)
+                chisqr += np.power((CN[0,0] - C11)/C11err, 2.)
+                chisqr += np.power((CN[1,1] - C22)/C22err, 2.)
+                chisqr += np.power((CN[2,2] - C33)/C33err, 2.)
+                chisqr += np.power((CN[3,3] - C44)/C44err, 2.)
+                chisqr += np.power((CN[4,4] - C55)/C55err, 2.)
+                chisqr += np.power((CN[5,5] - C66)/C66err, 2.)
+                chisqr += np.power((CN[0,1] - C12)/C12err, 2.)
+                chisqr += np.power((CN[0,2] - C13)/C13err, 2.)
+                chisqr += np.power((CN[1,2] - C23)/C23err, 2.)
 
-        """
-        # Data from Singh and Simmons
-        # Not very high quality, so we turn it off here.
-        d0 = ol_1bar_lattice_data[0]
-        for d in ol_1bar_lattice_data:
-            m.set_state(1.e5, d[0] + 273.15) # T in C
+            """
+            # Data from Singh and Simmons
+            # Not very high quality, so we turn it off here.
+            d0 = ol_1bar_lattice_data[0]
+            for d in ol_1bar_lattice_data:
+                m.set_state(1.e5, d[0] + 273.15) # T in C
 
-            a = np.diag(m.cell_vectors) / cell_lengths
-            a_expt = d[1:4] / d0[1:4]
+                a = np.diag(m.cell_vectors) / cell_lengths
+                a_expt = d[1:4] / d0[1:4]
 
-            # typical error taken from Boufidh et al.
-            # If the unit vector is smaller, the relative error is larger
-            a_err = d0[1]/d0[1:4] * 0.001
-            for i in range(3):
-                chisqr += np.power((a[i] - a_expt[i])/a_err[i], 2.)
-        """
+                # typical error taken from Boufidh et al.
+                # If the unit vector is smaller, the relative error is larger
+                a_err = d0[1]/d0[1:4] * 0.001
+                for i in range(3):
+                    chisqr += np.power((a[i] - a_expt[i])/a_err[i], 2.)
+            """
 
-        for d in ol_1bar_lattice_data_Suzuki:
-            m.set_state(1.e5, d[0] + 273.15) # T in C
+            for d in ol_1bar_lattice_data_Suzuki:
+                m.set_state(1.e5, d[0] + 273.15) # T in C
 
-            Y = ((np.diag(m.cell_vectors) / cell_lengths) - 1.)*1.e4
-            Y_expt = d[1:4]
-            Y_err = 0.05*Y_expt + 1.
-            for i in range(3):
-                chisqr += np.power((Y_expt[i] - Y[i])/Y_err[i], 2.)
+                Y = ((np.diag(m.cell_vectors) / cell_lengths) - 1.)*1.e4
+                Y_expt = d[1:4]
+                Y_err = 0.05*Y_expt + 1.
+                for i in range(3):
+                    chisqr += np.power((Y_expt[i] - Y[i])/Y_err[i], 2.)
 
-        #if chisqr < 1500.:
-        #    print(chisqr)
-        #m.set_state(1.e5, 300)
-        #print(np.diag(m.thermal_expansivity_tensor))
+            #if chisqr < 1500.:
+            #    print(chisqr)
+            #m.set_state(1.e5, 300)
+            #print(np.diag(m.thermal_expansivity_tensor))
 
-        if np.isnan(chisqr):
-            print(d, "Noooo, there was a nan")
+            if np.isnan(chisqr):
+                print(d, "Noooo, there was a nan")
+                chisqr = 1.e7
+
+        except:
             chisqr = 1.e7
+
         return chisqr
 
     def log_prob(x):
@@ -227,11 +234,15 @@ if run_fitting:
    -2.28433767e+00,  1.47642448e-01, -4.03397688e-01, -6.78582327e-01,
     7.89748310e-01])
 
-    new_inversion = False
-    nsteps = 2
+
+    """
+    PARAMETERS FOR RUNNING SIMULATION!!
+    """
+    new_inversion = True
+    nsteps = 100000
 
     ncpu = cpu_count()
-    ncpus_for_mp = ncpu - 3
+    ncpus_for_mp = ncpu - 4
 
     print(f"{ncpu} CPUs total on machine, running with {ncpus_for_mp} CPUs")
     print(f"Running for {nsteps} steps.")
