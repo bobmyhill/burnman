@@ -172,11 +172,11 @@ if run_fitting:
                 chisqr += np.power((CN[0,2] - C13)/C13err, 2.)
                 chisqr += np.power((CN[1,2] - C23)/C23err, 2.)
 
-            """
-            # Data from Singh and Simmons
-            # Not very high quality, so we turn it off here.
+
+            # Data from Singh and Simmons, 1976
+            # first data point is at room temperature
             d0 = ol_1bar_lattice_data[0]
-            for d in ol_1bar_lattice_data:
+            for d in ol_1bar_lattice_data[1:]:
                 m.set_state(1.e5, d[0] + 273.15) # T in C
 
                 a = np.diag(m.cell_vectors) / cell_lengths
@@ -184,11 +184,12 @@ if run_fitting:
 
                 # typical error taken from Boufidh et al.
                 # If the unit vector is smaller, the relative error is larger
-                a_err = d0[1]/d0[1:4] * 0.001
+                a_err = 0.001 / d0[1:4]
                 for i in range(3):
                     chisqr += np.power((a[i] - a_expt[i])/a_err[i], 2.)
-            """
 
+            """
+            # Not San Carlos, fo92.3, not fo90.4
             for d in ol_1bar_lattice_data_Suzuki:
                 m.set_state(1.e5, d[0] + 273.15) # T in C
 
@@ -197,6 +198,7 @@ if run_fitting:
                 Y_err = 0.05*Y_expt + 1.
                 for i in range(3):
                     chisqr += np.power((Y_expt[i] - Y[i])/Y_err[i], 2.)
+            """
 
             #if chisqr < 1500.:
             #    print(chisqr)
@@ -238,11 +240,11 @@ if run_fitting:
     """
     PARAMETERS FOR RUNNING SIMULATION!!
     """
-    new_inversion = True
+    new_inversion = False
     nsteps = 100000
 
     ncpu = cpu_count()
-    ncpus_for_mp = ncpu - 4
+    ncpus_for_mp = ncpu - 20
 
     print(f"{ncpu} CPUs total on machine, running with {ncpus_for_mp} CPUs")
     print(f"Running for {nsteps} steps.")
