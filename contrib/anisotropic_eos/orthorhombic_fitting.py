@@ -240,11 +240,11 @@ if run_fitting:
     """
     PARAMETERS FOR RUNNING SIMULATION!!
     """
-    new_inversion = False
+    new_inversion = True
     nsteps = 100000
 
     ncpu = cpu_count()
-    ncpus_for_mp = 1 # ncpu - 30
+    ncpus_for_mp = 4 # ncpu - 30
 
     print(f"{ncpu} CPUs total on machine, running with {ncpus_for_mp} CPUs")
     print(f"Running for {nsteps} steps.")
