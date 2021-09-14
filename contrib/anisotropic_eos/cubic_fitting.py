@@ -150,7 +150,7 @@ for T in temperatures:
     ax[1].plot(pressures/1.e9, C12/1.e9, label=f'{T} K')
     ln = ax[2].plot(pressures/1.e9, C44/1.e9, label=f'{T} K')
 
-    ax[2].plot(pressures/1.e9, C44_slb/1.e9, label='C44 (SLB)',
+    ax[2].plot(pressures/1.e9, C44_slb/1.e9, label='C44 (SLB2011)',
                color=ln[0].get_color(), linestyle='--')
 
     # T, PGPa, Perr, rho, rhoerr, C11S, C11Serr, C12S, C12Serr, C44S, C44Serr
@@ -175,7 +175,7 @@ for i, T in enumerate(temperatures):
 ax[3].plot(temperatures, C11/1.e9, label='C11_N')
 ax[3].plot(temperatures, C12/1.e9, label='C12_N')
 ln = ax[3].plot(temperatures, C44/1.e9, label='C44_N')
-ax[3].plot(temperatures, C44_slb/1.e9, label='C44 (SLB)',
+ax[3].plot(temperatures, C44_slb/1.e9, label='C44 (SLB2011)',
            color=ln[0].get_color(), linestyle='--')
 
 # T, PGPa, Perr, rho, rhoerr, C11S, C11Serr, C12S, C12Serr, C44S, C44Serr

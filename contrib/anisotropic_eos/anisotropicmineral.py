@@ -74,8 +74,11 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         sum_lower_off_diagonal_block = np.sum(anisotropic_parameters[3:, :3,
                                                                      :, :],
                                               axis=1)
+
+        self.orthotropic = True
         for i, s in enumerate(sum_lower_off_diagonal_block):
             if not np.all(s == 0):
+                self.orthotropic = False
                 warn('This material appears to be monoclinic or triclinic. '
                      'Rotations are not yet accounted for.', stacklevel=2)
 
@@ -160,8 +163,31 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         return F
 
     @property
-    def cell_vectors(self):
+    def unrotated_cell_vectors(self):
         return self.deformation_gradient_tensor.dot(self.cell_vectors_0)
+
+    @property
+    def deformed_coordinate_frame(self):
+
+        M = self.unrotated_cell_vectors
+        Q = np.empty((3, 3))
+        Q[0] = M[0] / np.linalg.norm(M[0])
+        Q[2] = np.cross(M[0], M[1])/np.linalg.norm(np.cross(M[0], M[1]))
+        Q[1] = np.cross(Q[2], Q[0])
+        return Q
+
+    @property
+    def rotation_matrix(self):
+        return self.deformed_coordinate_frame.T
+
+    @property
+    def cell_vectors(self):
+        if self.orthotropic:
+            return self.unrotated_cell_vectors
+        else:
+            return np.einsum('ij, jk->ik',
+                             self.unrotated_cell_vectors,
+                             self.rotation_matrix)
 
     @property
     def cell_parameters(self):
@@ -195,8 +221,39 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
 
     @property
     def isothermal_compliance_tensor(self):
-        return (self.isothermal_compressibility_reuss
-                * (self.dXdf_Voigt + self.dXdPth_Voigt * self.dPthdf))
+        S_T = (self.isothermal_compressibility_reuss
+               * (self.dXdf_Voigt + self.dXdPth_Voigt * self.dPthdf))
+        if self.orthotropic:
+            return S_T
+        else:
+            R = self.rotation_matrix
+            S = self._voigt_notation_to_compliance_tensor(S_T)
+            S_rotated = np.einsum('mi, nj, ok, pl, ijkl->mnop', R, R, R, R, S)
+            return self._contract_compliances(S_rotated)
+
+    @property
+    def thermal_expansivity_tensor(self):
+        a = self.alpha * (self.dXdf_Voigt
+                          + self.dXdPth_Voigt
+                          * (self.dPthdf
+                             + 1./self.isothermal_compressibility_reuss))
+        alpha = np.einsum('ijkl, kl',
+                          self._voigt_notation_to_compliance_tensor(a),
+                          np.eye(3))
+
+        if self.orthotropic:
+            return alpha
+        else:
+            return np.einsum('mi, nj, ij->mn', R, R, alpha)
+
+    # Derived properties start here
+    @property
+    def full_isentropic_compliance_tensor(self):
+        return (self.full_isothermal_compliance_tensor
+                - np.einsum('ij, kl->ijkl',
+                            self.thermal_expansivity_tensor,
+                            self.thermal_expansivity_tensor)
+                * self.V * self.temperature / self.C_p)
 
     @property
     def isothermal_stiffness_tensor(self):
@@ -210,24 +267,6 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
     @property
     def full_isothermal_stiffness_tensor(self):
         return self._expand_stiffnesses(self.isothermal_stiffness_tensor)
-
-    @property
-    def thermal_expansivity_tensor(self):
-        a = self.alpha * (self.dXdf_Voigt
-                          + self.dXdPth_Voigt
-                          * (self.dPthdf
-                             + 1./self.isothermal_compressibility_reuss))
-        return np.einsum('ijkl, kl',
-                         self._voigt_notation_to_compliance_tensor(a),
-                         np.eye(3))
-
-    @property
-    def full_isentropic_compliance_tensor(self):
-        return (self.full_isothermal_compliance_tensor
-                - np.einsum('ij, kl->ijkl',
-                            self.thermal_expansivity_tensor,
-                            self.thermal_expansivity_tensor)
-                * self.V * self.temperature / self.C_p)
 
     @property
     def isentropic_compliance_tensor(self):

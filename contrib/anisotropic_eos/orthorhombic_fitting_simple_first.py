@@ -22,7 +22,6 @@ import burnman
 from anisotropicmineral import AnisotropicMineral
 
 from tools import print_table_for_mineral_constants
-from tools import plot_projected_elastic_properties
 
 assert burnman_path  # silence pyflakes warning
 
@@ -99,19 +98,17 @@ def make_orthorhombic_mineral_from_parameters(x):
             i += 1
 
         for (m, n) in ((0, 1),
-                       (1, 1),
-                       (2, 1),
-                       (3, 1)):
+                       (1, 1)):
             constants[p-1, q-1, m, n] = x[i]*1.e-11
             constants[q-1, p-1, m, n] = x[i]*1.e-11
             i += 1
 
-        for (m, n) in ((0, 2),):
-            constants[p-1, q-1, m, n] = x[i]*1.e-22
-            constants[q-1, p-1, m, n] = x[i]*1.e-22
-            i += 1
+        #for (m, n) in ((0, 2),):
+        #    constants[p-1, q-1, m, n] = x[i]*1.e-22
+        #    constants[q-1, p-1, m, n] = x[i]*1.e-22
+        #    i += 1
 
-    assert i == 69 # 40 parameters
+    assert i == 45 # 40 parameters
 
     # Fill the values for the dependent element c[2,3]
     constants[1,2,1,0] = (1. - np.sum(constants[:3,:3,1,0])) / 2.
@@ -134,12 +131,17 @@ run_fitting = False
 sol = []
 if run_fitting:
 
-    def orthorhombic_misfit(x, imin):
+    def orthorhombic_misfit(x, index):
         m = make_orthorhombic_mineral_from_parameters(x)
 
         chisqr = 0.
+
         try:
+            if index[0][0] % 100 == 1:
+                print(repr(x))
+
             for d in ol_data:
+
                 TK, PGPa, rho, rhoerr = d[:4]
                 C11, C11err = d[4:6]
                 C22, C22err = d[6:8]
@@ -192,7 +194,7 @@ if run_fitting:
 
                 Y = ((np.diag(m.cell_vectors) / np.diag(m.cell_vectors_0)) - 1.)*1.e4
                 Y_expt = d[1:4]
-                Y_err = 0.01*Y_expt + 1.
+                Y_err = 0.05*Y_expt + 1.
                 for i in range(3):
                     chisqr += np.power((Y_expt[i] - Y[i])/Y_err[i], 2.)
 
@@ -209,35 +211,28 @@ if run_fitting:
         except:
             print('There was an exception')
             chisqr = 1.e7
-        imin[0][0] += 1
-        if chisqr < imin[0][1]:
-            imin[0][1] = chisqr
-            print(imin[0])
-            print(repr(x))
+        index[0][0] += 1
+        print(index[0][0], chisqr)
         return chisqr
 
-    guesses = np.array([ 1.00261177e+00,  9.91759509e-01,  1.00180767e+00,  1.12629568e+00,
-        3.13913957e-01,  4.43835171e-01, -9.38192626e-01,  8.57450038e-01,
-        2.63521201e-01,  3.10992538e-01, -5.84207311e+00,  1.22205974e+01,
-        5.11362234e-01,  7.76039201e-01, -1.00640533e+00,  5.66780847e+00,
-        5.12401782e-01,  1.59529634e+00,  1.23345902e+01, -7.60264507e+00,
-        3.06123818e-01,  6.62862573e-01, -6.29539285e-01,  9.07101981e+00,
-        1.70501045e+00,  1.90725482e+00,  6.48576298e+00,  2.99733967e+00,
-        3.62644594e-01,  1.96838589e+00, -4.97224163e-01,  2.08768703e+01,
-       -2.66242709e+00,  2.32579910e+00, -6.26342959e+00,  1.10758805e+01,
-       -4.99496737e+00,  1.61144010e+00, -1.85034515e+00,  2.32110973e+01,
-       -3.15692901e+00,  2.65209318e+00,  4.39232410e-01,  4.71069329e+00,
-       -6.24379333e+00,  1.55360338e+00, -1.42688476e+00,  1.26449796e+01,
-       -3.69943280e-01,  5.71780041e+00,  6.49141249e+00, -3.81945412e+00,
-       -1.25012075e+00, -1.20402033e-01,  4.38934297e-01, -1.17987749e+00,
-        4.61289178e-01, -2.21403680e-01,  7.81563940e+00,  8.17777878e+00,
-       -1.34030384e-02, -1.01671929e-01,  2.70232982e-01, -2.68143106e+00,
-       -6.93075277e-01, -4.04634113e-01, -3.49178491e+00,  1.09213501e+01,
-        4.91098948e-02])
+
+    #guesses = [ 1.00263119e+00,  1.00503329e+00,  7.99519521e-01,  1.40122330e+00, 1.10634879e+00,
+    #guesses = [ 1, 1, 1, 1, 1,
+    guesses = np.array([ 1.00251449e+00,  9.88647516e-01,  1.00050976e+00,  1.15348177e+00,
+        1.47769682e-02,  4.47786840e-01, -9.28130118e-01,  4.73175719e-01,
+        2.55952386e-01,  1.20129983e-01,  7.63438290e-01, -1.06450597e+00,
+        5.80632935e+00,  5.18769305e-01,  1.89075061e+00,  6.35870834e-01,
+       -5.54918950e-01,  1.15219383e+01,  1.70727271e+00,  4.01087083e+00,
+        2.01058369e+00, -3.12695375e-01,  1.45938964e+01,  3.71999568e-01,
+        2.10897454e+00,  1.62360737e+00, -1.98177749e+00,  2.04428746e+01,
+       -1.08862822e+00,  2.11245573e+00,  1.54555199e+00, -1.94706523e+00,
+        1.14066000e+01,  3.54333966e+00,  4.81936376e+00, -1.22611088e-01,
+        4.26151874e-01, -1.32871927e+00,  4.73979931e-01,  2.07631306e-01,
+       -9.80828642e-02,  2.56158987e-01, -2.61268766e+00, -6.88787067e-01,
+       -8.02639561e-01])
 
     i = 0
-    min = 1.e10
-    sol = minimize(orthorhombic_misfit, guesses, method='COBYLA', args=[[i, min]], options={'rhobeg': 0.2, 'maxiter': 10000})
+    sol = minimize(orthorhombic_misfit, guesses, method='COBYLA', args=[[i]])
     print(sol)
 
 do_plotting = True
@@ -246,76 +241,40 @@ if do_plotting:
         m = make_orthorhombic_mineral_from_parameters(sol.x)
     else:
         # Not final solution, but taken while improvement was slowing down.
-        m = make_orthorhombic_mineral_from_parameters([ 1.00261177e+00,  9.91759509e-01,  1.00180767e+00,  1.12629568e+00,
-        3.13913957e-01,  4.43835171e-01, -9.38192626e-01,  8.57450038e-01,
-        2.63521201e-01,  3.10992538e-01, -5.84207311e+00,  1.22205974e+01,
-        5.11362234e-01,  7.76039201e-01, -1.00640533e+00,  5.66780847e+00,
-        5.12401782e-01,  1.59529634e+00,  1.23345902e+01, -7.60264507e+00,
-        3.06123818e-01,  6.62862573e-01, -6.29539285e-01,  9.07101981e+00,
-        1.70501045e+00,  1.90725482e+00,  6.48576298e+00,  2.99733967e+00,
-        3.62644594e-01,  1.96838589e+00, -4.97224163e-01,  2.08768703e+01,
-       -2.66242709e+00,  2.32579910e+00, -6.26342959e+00,  1.10758805e+01,
-       -4.99496737e+00,  1.61144010e+00, -1.85034515e+00,  2.32110973e+01,
-       -3.15692901e+00,  2.65209318e+00,  4.39232410e-01,  4.71069329e+00,
-       -6.24379333e+00,  1.55360338e+00, -1.42688476e+00,  1.26449796e+01,
-       -3.69943280e-01,  5.71780041e+00,  6.49141249e+00, -3.81945412e+00,
-       -1.25012075e+00, -1.20402033e-01,  4.38934297e-01, -1.17987749e+00,
-        4.61289178e-01, -2.21403680e-01,  7.81563940e+00,  8.17777878e+00,
-       -1.34030384e-02, -1.01671929e-01,  2.70232982e-01, -2.68143106e+00,
-       -6.93075277e-01, -4.04634113e-01, -3.49178491e+00,  1.09213501e+01,
-        4.91098948e-02])
+        m = make_orthorhombic_mineral_from_parameters([ 1.00251449e+00,  9.88647516e-01,  1.00050976e+00,  1.15348177e+00,
+        1.47769682e-02,  4.47786840e-01, -9.28130118e-01,  4.73175719e-01,
+        2.55952386e-01,  1.20129983e-01,  7.63438290e-01, -1.06450597e+00,
+        5.80632935e+00,  5.18769305e-01,  1.89075061e+00,  6.35870834e-01,
+       -5.54918950e-01,  1.15219383e+01,  1.70727271e+00,  4.01087083e+00,
+        2.01058369e+00, -3.12695375e-01,  1.45938964e+01,  3.71999568e-01,
+        2.10897454e+00,  1.62360737e+00, -1.98177749e+00,  2.04428746e+01,
+       -1.08862822e+00,  2.11245573e+00,  1.54555199e+00, -1.94706523e+00,
+        1.14066000e+01,  3.54333966e+00,  4.81936376e+00, -1.22611088e-01,
+        4.26151874e-01, -1.32871927e+00,  4.73979931e-01,  2.07631306e-01,
+       -9.80828642e-02,  2.56158987e-01, -2.61268766e+00, -6.88787067e-01,
+       -8.02639561e-01])
 
-    print('The following parameters were used for the volumetric part of '
-          f'the isotropic model: $V_0$: {m.params["V_0"]*1.e6:.5f} cm$^3$/mol, '
-          f'$K_0$: {m.params["K_0"]/1.e9:.5f} GPa, '
-          f'$K\'_0$: {m.params["Kprime_0"]:.5f}, '
-          f'$\Theta_0$: {m.params["Debye_0"]:.5f} K, '
-          f'$\gamma_0$: {m.params["grueneisen_0"]:.5f}, '
-          f'and $q_0$: {m.params["q_0"]:.5f}.')
 
     print_table_for_mineral_constants(m, [(1, 1), (2, 2), (3, 3),
                                           (4, 4), (5, 5), (6, 6),
                                           (1, 2), (1, 3), (2, 3)])
 
-    # Plot thermal expansion figure
     fig = plt.figure(figsize=(8, 4))
     ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 
-    temperatures = np.linspace(10., 1600., 101)
-    alphas = np.empty((101,4))
+    temperatures = np.linspace(10., 1300., 101)
+    alphas = np.empty((101,3))
     extensions = np.empty((101,3))
-    vectors = np.empty((101,4))
-
-    labels = ['a', 'b', 'c', 'V']
-
+    vectors = np.empty((101,3))
     for i, T in enumerate(temperatures):
         m.set_state(1.e5, T)
-        alphas[i,:3] = np.diag(m.thermal_expansivity_tensor)*1.e5
-        alphas[i,3] = m.alpha*1.e5 / 3.
+        alphas[i] = np.diag(m.thermal_expansivity_tensor)*1.e5
         extensions[i] = ((np.diag(m.cell_vectors) / np.diag(m.cell_vectors_0)) - 1.)*1.e4
-        vectors[i,:3] = np.diag(m.cell_vectors)
-
-
-        vectors[i,3] = m.V
-
-    for i in range(4):
-        label = f'$\\alpha_{{{labels[i]}}}$'
-        if i == 3:
-            ln =ax[0].plot(temperatures, alphas[:,i], label=label+'/3')
-            ol_SLB = burnman.minerals.SLB_2011.mg_fe_olivine([0.903, 0.097])
-            pressures = 1.e5 + 0.*temperatures
-            ax[0].plot(temperatures,
-                       ol_SLB.evaluate(['alpha'], pressures,
-                                       temperatures)[0]*1.e5/3.,
-                       label=label+'/3 (SLB2011)',
-                       linestyle='--', color=ln[0].get_color())
-
-        else:
-            ax[0].plot(temperatures, alphas[:,i], label=label)
-
+        vectors[i] = np.diag(m.cell_vectors)
 
     for i in range(3):
-        l = ax[1].plot(temperatures, extensions[:,i], label=labels[i])
+        ax[0].plot(temperatures, alphas[:,i])
+        l = ax[1].plot(temperatures, extensions[:,i])
         ax[1].scatter(ol_1bar_lattice_data_Suzuki[:,0]+273.15,
                       ol_1bar_lattice_data_Suzuki[:,1+i],
                       color=l[0].get_color())
@@ -324,39 +283,11 @@ if do_plotting:
         #               / ol_1bar_lattice_data[0,1+i])
         #              - 1.)*1.e4)
 
-    Vthird_expansion = 1.e4*(np.power(np.prod(extensions*1.e-4 + 1, axis=1), 1./3.) - 1.)
-    ln =ax[1].plot(temperatures, Vthird_expansion, label='$V^{1/3}$')
-    ol_SLB = burnman.minerals.SLB_2011.mg_fe_olivine([0.903, 0.097])
-    ol_SLB.set_state(1.e5, 300)
-    V_0 = ol_SLB.V
-    pressures = 1.e5 + 0.*temperatures
-    ax[1].plot(temperatures,
-               1.e4*(np.power(ol_SLB.evaluate(['V'], pressures,
-                               temperatures)[0]/V_0, 1./3.) - 1.),
-               label='$V^{1/3}$ (SLB2011)',
-               linestyle='--', color=ln[0].get_color())
-
-    Vthird_expansion = 1.e4*(np.power(np.prod(ol_1bar_lattice_data_Suzuki[:,1:4]*1.e-4 + 1, axis=1), 1./3.) - 1.)
-    ax[1].scatter(ol_1bar_lattice_data_Suzuki[:,0]+273.15,
-                  Vthird_expansion,
-                  color=ln[0].get_color())
-
-
+    ax[0].set_xlim(0.,)
     ax[0].set_ylim(0.,)
-
-    for i in range(2):
-        ax[i].set_xlim(0.,1600.)
-        ax[i].set_xlabel('Temperature (K)')
-        ax[i].legend()
-
-    ax[0].set_ylabel('Thermal expansivity (10$^{-5}$/K)')
-    ax[1].set_ylabel('Relative length change ($10^{4} (x/x_0 - 1)$)')
-
-    fig.set_tight_layout(True)
-    fig.savefig('olivine_expansivities.pdf')
     plt.show()
 
-    # Start plotting Cij figure
+
     fig = plt.figure(figsize=(12, 12))
     ax = [fig.add_subplot(3, 3, i) for i in range(1, 10)]
 
@@ -378,6 +309,14 @@ if do_plotting:
             (1, 3),
             (2, 3))
 
+    m.set_state(1.e5, 300.)
+    print(m.thermal_expansivity_tensor)
+    print(m.alpha)
+    fo = burnman.minerals.SLB_2011.forsterite()
+    fo = burnman.minerals.HP_2011_ds62.fo()
+    fo.set_state(1.e5, 300.)
+    print(fo.alpha)
+
     temperatures = [300., 500., 750., 900.]
     for T in temperatures:
         for i, P in enumerate(pressures):
@@ -394,41 +333,35 @@ if do_plotting:
         #C12, C12err = d[16:18]
         #C13, C13err = d[18:20]
         #C23, C23err = d[20:22]
-        T_data = np.array([d for d in ol_data if np.abs(d[0] - T) < 1])
+        T_data = np.array([[d[1],
+                            d[4], d[6], d[8],
+                            d[10], d[12], d[14],
+                            d[16], d[18], d[20]]
+                           for d in ol_data if np.abs(d[0] - T) < 1])
 
         for i, (p, q) in enumerate(i_pq):
-            ln = ax[i].plot(pressures/1.e9, C[:, p-1, q-1]/1.e9, label=f'{T} K')
-            j = 4 + 2*i
-            ax[i].scatter(T_data[:,1], T_data[:,j], color=ln[0].get_color())
-            ax[i].errorbar(T_data[:,1], T_data[:,j], yerr=T_data[:,j+1],
-                           linestyle='None', color=ln[0].get_color())
+            ax[i].plot(pressures/1.e9, C[:, p-1, q-1]/1.e9, label=f'{T} K')
+            ax[i].scatter(T_data[:,0], T_data[:,1+i])
+
+
 
     for i, (p, q) in enumerate(i_pq):
         ax[i].set_xlabel('Pressure (GPa)')
-        ax[i].set_ylabel(f'$C_{{N {p}{q}}}$ (GPa)')
+        ax[i].set_ylabel(f'$C_{{N {p}{q}}}$')
         ax[i].legend()
 
     fig.set_tight_layout(True)
-    fig.savefig('olivine_CNijs.pdf')
     plt.show()
 
-    fig = plt.figure(figsize=(12, 7))
-    ax = [fig.add_subplot(2, 3, i, projection='polar') for i in range(1, 7)]
-
-    P = 1.e9
-    T = 1500.
-    m.set_state(P, T)
-    plot_types = ['vp', 'vs1', 'vp/vs1',
-                  's anisotropy', 'linear compressibility', 'youngs modulus']
-
-    contour_sets, ticks, lines = plot_projected_elastic_properties(m,
-                                                                   plot_types,
-                                                                   ax)
-    for i in range(len(contour_sets)):
-        cbar = fig.colorbar(contour_sets[i], ax=ax[i],
-                            ticks=ticks[i], pad = 0.1)
-        cbar.add_lines(lines[i])
-
-    fig.set_tight_layout(True)
-    fig.savefig(f'olivine_seismic_properties_{P/1.e9:.2f}_GPa_{int(T)}_K.pdf')
-    plt.show()
+"""
+# These parameters are from before adding in the thermal expansivity constraints
+m = make_orthorhombic_mineral_from_parameters([ 1.00332023,  0.99306332,  0.26844583,  1.33251424,  1.03601286,
+    0.45788811, -0.80718029,  1.3205917 ,  0.31268015,  0.12705779,
+    0.81875369, -0.98232261,  5.09371197,  1.21339423,  1.02020599,
+    0.6744214 , -0.82763648,  9.61277771,  0.18059782,  2.63862882,
+    1.98732745, -1.26043057, 12.77807779, -1.74008056,  1.3066505 ,
+    1.71020558, -1.83503072, 18.16393737, -3.14111273,  0.81273168,
+    1.57182711, -1.3640314 , 13.2638437 ,  3.34240458, -0.86396854,
+   -0.11468532,  0.47858299, -0.20309022,  0.62263923,  0.86583006,
+   -0.11372523,  0.20516553, -3.30323097, -0.52180018, -0.92712402])
+"""
