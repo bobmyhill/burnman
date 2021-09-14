@@ -5,18 +5,33 @@
 import numpy as np
 from scipy.linalg import expm
 from numpy.linalg import cond
-from warnings import warn
 from burnman import Mineral
-from burnman.anisotropy import AnisotropicMaterial
+from burnman.anisotropy import AnisotropicMaterial, voigt_compliance_factors
+from burnman.material import Material, material_property
+from burnman.tools import copy_documentation
 
+def cell_parameters_to_vectors(cell_parameters):
+    """
+    Converts cell parameters to unit cell vectors.
 
-def cell_parameters_to_vectors(a, b, c, alpha_deg, beta_deg, gamma_deg):
+    Parameters
+    ----------
+    cell_parameters : 1D numpy array
+        An array containing the three lengths of the unit cell vectors [m],
+        and the three angles [degrees].
+        The first angle :math:`\\alpha` corresponds to the angle between the
+        second and the third cell vectors, the second (:math:`\\beta`) to the
+        angle between the first and third cell vectors, and the third
+        (:math:`\\gamma`) to the angle between the first and second vectors.
+
+    Returns
+    -------
+    M : 2D numpy array
+        The three vectors defining the parallelopiped cell [m].
+        This function assumes that the first cell vector is parallel to the
+        x-axis, and the second is perpendicular to the z-axis.
     """
-    Convert cell parameters from a, b, c, alpha, beta, gamma (in degrees)
-    to the unit cell vectors
-    Scrounged from https://chemistry.stackexchange.com/questions/136836/
-    converting-fractional-coordinates-into-cartesian-coordinates-for-crystallography
-    """
+    a, b, c, alpha_deg, beta_deg, gamma_deg = cell_parameters
     alpha = np.radians(alpha_deg)
     beta = np.radians(beta_deg)
     gamma = np.radians(gamma_deg)
@@ -30,8 +45,24 @@ def cell_parameters_to_vectors(a, b, c, alpha_deg, beta_deg, gamma_deg):
 
 def cell_vectors_to_parameters(M):
     """
-    Convert unit cell vectors to
-    cell parameters in the format a, b, c, alpha, beta, gamma (in degrees)
+    Converts unit cell vectors to cell parameters. This function assumes that
+    the first cell_vector is parallel to the x-axis, and the
+    second is perpendicular to the z-axis.
+
+    Parameters
+    ----------
+    M : 2D numpy array
+        The three vectors defining the parallelopiped cell [m]
+
+    Returns
+    -------
+    cell_parameters : 1D numpy array
+        An array containing the three lengths of the unit cell vectors [m],
+        and the three angles [degrees].
+        The first angle :math:`\\alpha` corresponds to the angle between the
+        second and the third cell vectors, the second (:math:`\\beta`) to the
+        angle between the first and third cell vectors, and the third
+        (:math:`\\gamma`) to the angle between the first and second vectors.
     """
 
     assert M[0, 1] == 0
@@ -52,16 +83,46 @@ def cell_vectors_to_parameters(M):
     beta_deg = np.degrees(beta)
     alpha_deg = np.degrees(alpha)
 
-    return (a, b, c, alpha_deg, beta_deg, gamma_deg)
+    return np.array([a, b, c, alpha_deg, beta_deg, gamma_deg])
 
 
 class AnisotropicMineral(Mineral, AnisotropicMaterial):
     """
-    Anisotropic mineral equation of state
-    Myhill (2021)
+    A class implementing the anisotropic mineral equation of state
+    (Myhill, 2021). This class is derived from both Mineral
+    and AnisotropicMaterial, and inherits most of the methods from both classes.
+
+    Instantiation of an AnisotropicMineral takes three arguments;
+    a reference Mineral (i.e. a standard isotropic mineral which provides
+    volume as a function of pressure and temperature), cell_parameters,
+    which give the lengths of the molar cell vectors and the angles between
+    them, and a 4D array of anisotropic parameters which describe the
+    anisotropic behaviour of the mineral. For a description of these parameters,
+    please refer to the code or to the original paper.
+
+    States of the mineral can only be queried after setting the
+    pressure and temperature using set_state().
+
+    This class is available as ``burnman.AnisotropicMineral``.
+
+    All the material parameters are expected to be in plain SI units.  This
+    means that the elastic moduli should be in Pascals and NOT Gigapascals.
+    Additionally, the cell parameters should be in m/(mol formula unit)
+    and not in unit cell lengths. To convert unit cell lengths given in
+    Angstrom to molar cell parameters you should multiply by 10^(-10) *
+    (N_a / Z)^1/3, where N_a is Avogadro's number
+    and Z is the number of formula units per unit cell.
+    You can look up Z in many places, including www.mindat.org.
+
+    Finally, it is assumed that the unit cell of the anisotropic material
+    is aligned in a particular way relative to the coordinate axes
+    (the anisotropic_parameters are defined relative to the coordinate axes).
+    The crystallographic a-axis is assumed to be parallel to the first
+    spatial coordinate axis, and the crystallographic b-axis is assumed to
+    be perpendicular to the third spatial coordinate axis.
     """
 
-    def __init__(self, isotropic_material, cell_parameters, anisotropic_parameters):
+    def __init__(self, isotropic_mineral, cell_parameters, anisotropic_parameters):
 
         assert (np.all(anisotropic_parameters[:, :, 0, 0] == 0)), "anisotropic_parameters_pqmn should be set to zero for all m = n = 0"
         sum_ijij_block = np.sum(anisotropic_parameters[:3, :3, :, :], axis=(0, 1))
@@ -71,32 +132,29 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
 
         assert (cond(anisotropic_parameters[:, :, 1, 0]) < 1/np.finfo(float).eps), "anisotropic_parameters[:, :, 1, 0] is singular"
 
-        sum_lower_off_diagonal_block = np.sum(anisotropic_parameters[3:, :3,
-                                                                     :, :],
+        sum_lower_off_diagonal_block = np.sum(anisotropic_parameters[3:, :3, :, :],
                                               axis=1)
 
         self.orthotropic = True
         for i, s in enumerate(sum_lower_off_diagonal_block):
             if not np.all(s == 0):
                 self.orthotropic = False
-                warn('This material appears to be monoclinic or triclinic. '
-                     'Rotations are not yet accounted for.', stacklevel=2)
 
-        self.cell_vectors_0 = cell_parameters_to_vectors(*cell_parameters)
+        self.cell_vectors_0 = cell_parameters_to_vectors(cell_parameters)
         assert (np.abs(np.linalg.det(self.cell_vectors_0)
-                       - isotropic_material.params['V_0'])
+                       - isotropic_mineral.params['V_0'])
                 < np.finfo(float).eps)
 
         self.c = anisotropic_parameters
 
-        if 'name' in isotropic_material.params:
-            self.name = isotropic_material.params['name']
+        if 'name' in isotropic_mineral.params:
+            self.name = isotropic_mineral.params['name']
 
-        Mineral.__init__(self, isotropic_material.params,
-                         isotropic_material.property_modifiers)
+        Mineral.__init__(self, isotropic_mineral.params,
+                         isotropic_mineral.property_modifiers)
 
+    @copy_documentation(Material.set_state)
     def set_state(self, pressure, temperature):
-
         # 1) Compute dPthdf
         dP = 1000.
         Mineral.set_state(self, pressure-dP/2., temperature)
@@ -140,48 +198,94 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         self.dXdf_Voigt = np.einsum('ikn, n->ik', dxdf, np.power(Pth, ns))
 
     def _contract_compliances(self, compliances):
-        try:  # numpy.block was new in numpy version 1.13.0.
-            block = np.block([[np.ones((3, 3)), 2.*np.ones((3, 3))],
-                              [2.*np.ones((3, 3)), 4.*np.ones((3, 3))]])
-        except:
-            block = np.array(np.bmat([[[[1.]*3]*3, [[2.]*3]*3],
-                                      [[[2.]*3]*3, [[4.]*3]*3]]))
-
+        """
+        Takes a compliance tensor in standard (3x3x3x3) form
+        and returns the Voigt form (6x6). Note the compliance factors
+        which are required to maintain the inverse relationship with the
+        corresponding stiffness tensor.
+        """
         voigt_notation = np.zeros((6, 6))
         for m in range(6):
             i, j = self._voigt_index_to_ij(m)
             for n in range(6):
                 k, l = self._voigt_index_to_ij(n)
                 voigt_notation[m, n] = compliances[i, j, k, l]
-        return np.multiply(voigt_notation, block)
+        return np.multiply(voigt_notation, voigt_compliance_factors)
 
-    @property
+    @material_property
     def deformation_gradient_tensor(self):
+        """
+        Returns
+        -------
+        deformation_gradient_tensor : 2D numpy array
+            The deformation gradient tensor describing the deformation of the
+            mineral from its undeformed state
+            (i.e. the state at the reference pressure and temperature).
+        """
         F = expm(np.einsum('ijkl, kl',
                            self._voigt_notation_to_compliance_tensor(self.X_Voigt),
                            np.eye(3)))
         return F
 
-    @property
+    @material_property
     def unrotated_cell_vectors(self):
+        """
+        Returns
+        -------
+        unrotated_cell_vectors : 2D numpy array
+            The vectors of the cell constructed from one mole of formula units
+            after deformation of the mineral from its undeformed state
+            (i.e. the state at the reference pressure and temperature).
+            Each vector is given in [m]. See class documentation
+            (above) for the assumed relationships between the cell vectors and
+            spatial coordinate axes.
+        """
         return self.deformation_gradient_tensor.dot(self.cell_vectors_0)
 
-    @property
+    @material_property
     def deformed_coordinate_frame(self):
+        """
+        Returns
+        -------
+        deformed_coordinate_frame : 2D numpy array
+            The orientations of the three spatial coordinate axes
+            after deformation of the mineral. For orthotropic minerals,
+            this is equal to the identity matrix, as hydrostatic stresses only
+            induce rotations in monoclinic and triclinic crystals.
+        """
+        if self.orthotropic:
+            return np.eye(3)
+        else:
+            M = self.unrotated_cell_vectors
+            Q = np.empty((3, 3))
+            Q[0] = M[0] / np.linalg.norm(M[0])
+            Q[2] = np.cross(M[0], M[1])/np.linalg.norm(np.cross(M[0], M[1]))
+            Q[1] = np.cross(Q[2], Q[0])
+            return Q
 
-        M = self.unrotated_cell_vectors
-        Q = np.empty((3, 3))
-        Q[0] = M[0] / np.linalg.norm(M[0])
-        Q[2] = np.cross(M[0], M[1])/np.linalg.norm(np.cross(M[0], M[1]))
-        Q[1] = np.cross(Q[2], Q[0])
-        return Q
-
-    @property
+    @material_property
     def rotation_matrix(self):
+        """
+        Returns
+        -------
+        rotation_matrix : 2D numpy array
+            The matrix required to rotate the properties of the deformed
+            mineral into the deformed coordinate frame. For orthotropic
+            minerals, this is equal to the identity matrix.
+        """
         return self.deformed_coordinate_frame.T
 
-    @property
+    @material_property
     def cell_vectors(self):
+        """
+        Returns
+        -------
+        cell_vectors : 2D numpy array
+            The vectors of the cell constructed from one mole of formula units.
+            Each vector is given in [m]. See class documentation
+            (above) for the assumed relationships between the cell vectors and
+            spatial coordinate axes.
+        """
         if self.orthotropic:
             return self.unrotated_cell_vectors
         else:
@@ -189,38 +293,98 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
                              self.unrotated_cell_vectors,
                              self.rotation_matrix)
 
-    @property
+    @material_property
     def cell_parameters(self):
+        """
+        Returns
+        -------
+        cell_parameters : 1D numpy array
+            The molar cell parameters of the mineral, given in standard form:
+            [:math:`a`, :math:`b`, :math:`c`,
+            :math:`\\alpha`, :math:`\\beta`, :math:`\\gamma`],
+            where the first three floats are the lengths of the vectors in [m]
+            defining the cell constructed from one mole of formula units.
+            The last three floats are angles between vectors (given in radians).
+            See class documentation (above) for the assumed relationships
+            between the cell vectors and spatial coordinate axes.
+        """
         return cell_vectors_to_parameters(self.cell_vectors)
 
-    @property
+    @material_property
     def shear_modulus(self):
-        raise NotImplementedError("anisotropic materials do not have a shear "
+        """
+        Anisotropic minerals do not (in general) have a single shear modulus.
+        This function returns a NotImplementedError. Users should instead
+        consider directly querying the elements in the
+        isothermal_stiffness_tensor or isentropic_stiffness_tensor.
+        """
+        raise NotImplementedError("anisotropic minerals do not have a shear "
                                   "modulus property. Return elements of "
                                   "the stiffness tensor instead")
 
-    @property
+    @material_property
     def isothermal_bulk_modulus(self):
+        """
+        Anisotropic minerals do not have a single isothermal bulk modulus.
+        This function returns a NotImplementedError. Users should instead
+        consider either using isothermal_bulk_modulus_reuss,
+        isothermal_bulk_modulus_voigt,
+        or directly querying the elements in the isothermal_stiffness_tensor.
+        """
         raise NotImplementedError("isothermal_bulk_modulus is not "
                                   "sufficiently explicit for an "
-                                  "anisotropic material. Did you mean "
+                                  "anisotropic mineral. Did you mean "
                                   "isothermal_bulk_modulus_reuss?")
 
-    @property
+    @material_property
     def isentropic_bulk_modulus(self):
+        """
+        Anisotropic minerals do not have a single isentropic bulk modulus.
+        This function returns a NotImplementedError. Users should instead
+        consider either using isentropic_bulk_modulus_reuss,
+        isentropic_bulk_modulus_voigt (both derived from Anisotropicmineral),
+        or directly querying the elements in the isentropic_stiffness_tensor.
+        """
         raise NotImplementedError("isentropic_bulk_modulus is not "
                                   "sufficiently explicit for an "
-                                  "anisotropic material. Did you mean "
+                                  "anisotropic mineral. Did you mean "
                                   "isentropic_bulk_modulus_reuss?")
 
+    #@copy_documentation(Mineral.isothermal_bulk_modulus)
     isothermal_bulk_modulus_reuss = Mineral.isothermal_bulk_modulus
 
-    @property
+    @material_property
+    def isothermal_bulk_modulus_voigt(self):
+        """
+        Returns
+        -------
+        isothermal_bulk_modulus_voigt : float
+            The Voigt bound on the isothermal bulk modulus in [Pa].
+        """
+        K = np.sum([[self.isothermal_stiffness_tensor[i][k]
+                     for k in range(3)]
+                    for i in range(3)])/9.
+        return K
+
+    @material_property
     def isothermal_compressibility_reuss(self):
+        """
+        Returns
+        -------
+        isothermal_compressibility_reuss : float
+            The Reuss bound on the isothermal compressibility in [1/Pa].
+        """
         return 1./self.isothermal_bulk_modulus_reuss
 
-    @property
+    @material_property
     def isothermal_compliance_tensor(self):
+        """
+        Returns
+        -------
+        isothermal_compliance_tensor : 2D numpy array
+            The isothermal compliance tensor [1/Pa]
+            in Voigt form (:math:`\\mathbb{S}_{\\text{T} pq}`).
+        """
         S_T = (self.isothermal_compressibility_reuss
                * (self.dXdf_Voigt + self.dXdPth_Voigt * self.dPthdf))
         if self.orthotropic:
@@ -231,8 +395,14 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
             S_rotated = np.einsum('mi, nj, ok, pl, ijkl->mnop', R, R, R, R, S)
             return self._contract_compliances(S_rotated)
 
-    @property
+    @material_property
     def thermal_expansivity_tensor(self):
+        """
+        Returns
+        -------
+        thermal_expansivity_tensor : 2D numpy array
+            The tensor of thermal expansivities [1/K].
+        """
         a = self.alpha * (self.dXdf_Voigt
                           + self.dXdPth_Voigt
                           * (self.dPthdf
@@ -247,38 +417,98 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
             return np.einsum('mi, nj, ij->mn', R, R, alpha)
 
     # Derived properties start here
-    @property
+    @material_property
+    def isothermal_stiffness_tensor(self):
+        """
+        Returns
+        -------
+        isothermak_stiffness_tensor : 2D numpy array
+            The isothermal stiffness tensor [Pa]
+            in Voigt form (:math:`\\mathbb{C}_{\\text{T} pq}`).
+        """
+        return np.linalg.inv(self.isothermal_compliance_tensor)
+
+    @material_property
+    def full_isothermal_compliance_tensor(self):
+        """
+        Returns
+        -------
+        full_isothermak_stiffness_tensor : 4D numpy array
+            The isothermal compliance tensor [1/Pa]
+            in standard form (:math:`\\mathbb{S}_{\\text{T} ijkl}`).
+        """
+        return self._voigt_notation_to_compliance_tensor(self.isothermal_compliance_tensor)
+
+    @material_property
+    def full_isothermal_stiffness_tensor(self):
+        """
+        Returns
+        -------
+        full_isothermak_stiffness_tensor : 4D numpy array
+            The isothermal stiffness tensor [Pa]
+            in standard form (:math:`\\mathbb{C}_{\\text{T} ijkl}`).
+        """
+        return self._expand_stiffnesses(self.isothermal_stiffness_tensor)
+
+    @material_property
     def full_isentropic_compliance_tensor(self):
+        """
+        Returns
+        -------
+        full_isothermak_stiffness_tensor : 4D numpy array
+            The isentropic compliance tensor [1/Pa]
+            in standard form (:math:`\\mathbb{S}_{\\text{N} ijkl}`).
+        """
         return (self.full_isothermal_compliance_tensor
                 - np.einsum('ij, kl->ijkl',
                             self.thermal_expansivity_tensor,
                             self.thermal_expansivity_tensor)
                 * self.V * self.temperature / self.C_p)
 
-    @property
-    def isothermal_stiffness_tensor(self):
-        return np.linalg.inv(self.isothermal_compliance_tensor)
-
-    @property
-    def full_isothermal_compliance_tensor(self):
-        return self._voigt_notation_to_compliance_tensor(self.isothermal_compliance_tensor)
-
-
-    @property
-    def full_isothermal_stiffness_tensor(self):
-        return self._expand_stiffnesses(self.isothermal_stiffness_tensor)
-
-    @property
+    @material_property
     def isentropic_compliance_tensor(self):
+        """
+        Returns
+        -------
+        isentropic_compliance_tensor : 2D numpy array
+            The isentropic compliance tensor [1/Pa]
+            in Voigt form (:math:`\\mathbb{S}_{\\text{N} pq}`).
+        """
         return self._contract_compliances(self.full_isentropic_compliance_tensor)
 
-    @property
+    @material_property
     def isentropic_stiffness_tensor(self):
+        """
+        Returns
+        -------
+        isentropic_stiffness_tensor : 2D numpy array
+            The isentropic stiffness tensor [Pa]
+            in Voigt form (:math:`\\mathbb{C}_{\\text{N} pq}`).
+        """
         return np.linalg.inv(self.isentropic_compliance_tensor)
 
-    @property
+    @material_property
+    def full_isentropic_stiffness_tensor(self):
+        """
+        Returns
+        -------
+        full_isentropic_stiffness_tensor : 4D numpy array
+            The isentropic stiffness tensor [Pa]
+            in standard form (:math:`\\mathbb{C}_{\\text{N} ijkl}`).
+        """
+        return self._voigt_notation_to_stiffness_tensor(self.isentropic_stiffness_tensor)
+
+    @material_property
     def grueneisen_tensor(self):
+        """
+        Returns
+        -------
+        grueneisen_tensor : 2D numpy array
+            The grueneisen tensor.
+            This is defined as :cite:`BarronMunn1967` as
+            :math:`\\mathbb{C}_{\\text{N} ijkl} \\alpha_{kl} V/C_{P}`.
+        """
         return (np.einsum('ijkl, kl->ij',
-                          self.full_isothermal_stiffness_tensor,
-                          self.thermal_expansivity_tensor)
-                * self.molar_volume / self.molar_heat_capacity_v)
+                          self.full_isentropic_stiffness_tensor,
+                          self.thermal_expansivity_tensor,
+                * self.molar_volume / self.molar_heat_capacity_p)
