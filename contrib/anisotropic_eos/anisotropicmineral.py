@@ -275,3 +275,10 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
     @property
     def isentropic_stiffness_tensor(self):
         return np.linalg.inv(self.isentropic_compliance_tensor)
+
+    @property
+    def grueneisen_tensor(self):
+        return (np.einsum('ijkl, kl->ij',
+                          self.full_isothermal_stiffness_tensor,
+                          self.thermal_expansivity_tensor)
+                * self.molar_volume / self.molar_heat_capacity_v)

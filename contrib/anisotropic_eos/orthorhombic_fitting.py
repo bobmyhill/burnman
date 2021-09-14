@@ -415,8 +415,8 @@ if do_plotting:
     fig = plt.figure(figsize=(12, 7))
     ax = [fig.add_subplot(2, 3, i, projection='polar') for i in range(1, 7)]
 
-    P = 1.e9
-    T = 1500.
+    P = 3.e9
+    T = 1600.
     m.set_state(P, T)
     plot_types = ['vp', 'vs1', 'vp/vs1',
                   's anisotropy', 'linear compressibility', 'youngs modulus']
