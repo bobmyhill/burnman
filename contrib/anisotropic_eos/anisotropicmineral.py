@@ -346,9 +346,12 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         consider directly querying the elements in the
         isothermal_stiffness_tensor or isentropic_stiffness_tensor.
         """
-        raise NotImplementedError("anisotropic minerals do not have a shear "
-                                  "modulus property. Return elements of "
-                                  "the stiffness tensor instead")
+        raise NotImplementedError("Anisotropic minerals do not have a shear "
+                                  "modulus property. Query "
+                                  "the isentropic or isothermal stiffness "
+                                  "tensors directory, or use"
+                                  "isentropic_shear_modulus_reuss or "
+                                  "isentropic_shear_modulus_voigt.")
 
     @material_property
     def isothermal_bulk_modulus(self):
@@ -540,3 +543,15 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
                           self.full_isentropic_stiffness_tensor,
                           self.thermal_expansivity_tensor)
                 * self.molar_volume / self.molar_heat_capacity_p)
+
+    @material_property
+    def grueneisen_parameter(self):
+        """
+        Anisotropic minerals do not (in general) have a single grueneisen
+        parameter. This function returns a NotImplementedError.
+        Users should instead consider directly querying the elements in the
+        grueneisen_tensor.
+        """
+        raise NotImplementedError("Anisotropic minerals do not have a single "
+                                  "grueneisen parameter. Query "
+                                  "the grueneisen_tensor instead.")
