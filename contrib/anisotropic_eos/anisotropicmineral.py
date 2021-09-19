@@ -143,7 +143,7 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         self.cell_vectors_0 = cell_parameters_to_vectors(cell_parameters)
         assert (np.abs(np.linalg.det(self.cell_vectors_0)
                        - isotropic_mineral.params['V_0'])
-                < np.finfo(float).eps)
+                < np.finfo(float).eps), f"The standard state unit vectors are inconsistent with the volume. Suggest multiplying each by {np.cbrt( isotropic_mineral.params['V_0'] / np.linalg.det(self.cell_vectors_0))}"
 
         self.c = anisotropic_parameters
 
@@ -510,5 +510,5 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         """
         return (np.einsum('ijkl, kl->ij',
                           self.full_isentropic_stiffness_tensor,
-                          self.thermal_expansivity_tensor,
+                          self.thermal_expansivity_tensor)
                 * self.molar_volume / self.molar_heat_capacity_p)
