@@ -124,26 +124,54 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
 
     def __init__(self, isotropic_mineral, cell_parameters, anisotropic_parameters):
 
-        assert (np.all(anisotropic_parameters[:, :, 0, 0] == 0)), "anisotropic_parameters_pqmn should be set to zero for all m = n = 0"
-        sum_ijij_block = np.sum(anisotropic_parameters[:3, :3, :, :], axis=(0, 1))
-        assert (np.abs(sum_ijij_block[1, 0] - 1.) < 1.e-5), f'The sum of the upper 3x3 pq-block of anisotropic_parameters_pqmn must equal 1 for m=1, n=0 for consistency with the volume. Value is {np.abs(sum_ijij_block[1, 0]) - 1.}'
-        assert (np.all(np.abs(sum_ijij_block[2:, 0]) < 1.e-10)), "The sum of the upper 3x3 pq-block of anisotropic_parameters_pqmn must equal 0 for all m > 1 for consistency with the volume"
-        assert (np.all(np.abs(sum_ijij_block[:, 1:]) < 1.e-10)), "The sum of the upper 3x3 pq-block of anisotropic_parameters_pqmn must equal 0 for all n > 0 for consistency with the volume"
+        if not np.all(anisotropic_parameters[:, :, 0, 0] == 0):
+            raise Exception("anisotropic_parameters_pqmn should be set to "
+                            "zero for all m = n = 0")
 
-        assert (cond(anisotropic_parameters[:, :, 1, 0]) < 1/np.finfo(float).eps), "anisotropic_parameters[:, :, 1, 0] is singular"
+        sum_ijij_block = np.sum(anisotropic_parameters[:3, :3, :, :], axis=(0, 1))
+
+        if np.abs(sum_ijij_block[1, 0] - 1.) > 1.e-5:
+            raise Exception('The sum of the upper 3x3 pq-block of '
+                            'anisotropic_parameters_pqmn must equal '
+                            '1 for m=1, n=0 for consistency with the volume. '
+                            f'Value is {sum_ijij_block[1, 0]}')
+
+        for m in range(2, len(sum_ijij_block)):
+            if np.abs(sum_ijij_block[m, 0]) > 1.e-10:
+                raise Exception('The sum of the upper 3x3 pq-block of '
+                                'anisotropic_parameters_pqmn must equal 0 for'
+                                f'm={m}, n=0 for consistency with the volume. '
+                                f'Value is {sum_ijij_block[m, 0]}')
+
+        for m in range(len(sum_ijij_block)):
+             for n in range(1, len(sum_ijij_block[0])):
+                 if np.abs(sum_ijij_block[m, n]) > 1.e-10:
+                     raise Exception('The sum of the upper 3x3 pq-block of '
+                                     'anisotropic_parameters_pqmn must equal '
+                                     f'0 for m={m}, n={n} for '
+                                     'consistency with the volume. '
+                                     f'Value is {sum_ijij_block[m, n]}')
+
+        if cond(anisotropic_parameters[:, :, 1, 0]) > 1/np.finfo(float).eps:
+            raise Exception('anisotropic_parameters[:, :, 1, 0] is singular')
 
         sum_lower_off_diagonal_block = np.sum(anisotropic_parameters[3:, :3, :, :],
                                               axis=1)
 
         self.orthotropic = True
         for i, s in enumerate(sum_lower_off_diagonal_block):
-            if not np.all(s == 0):
+            if not np.all(np.abs(s) < 1.e-10):
                 self.orthotropic = False
 
         self.cell_vectors_0 = cell_parameters_to_vectors(cell_parameters)
-        assert (np.abs(np.linalg.det(self.cell_vectors_0)
-                       - isotropic_mineral.params['V_0'])
-                < np.finfo(float).eps), f"The standard state unit vectors are inconsistent with the volume. Suggest multiplying each by {np.cbrt( isotropic_mineral.params['V_0'] / np.linalg.det(self.cell_vectors_0))}"
+
+        if (np.abs(np.linalg.det(self.cell_vectors_0)
+                   - isotropic_mineral.params['V_0']) > np.finfo(float).eps):
+            factor = np.cbrt(isotropic_mineral.params['V_0']
+                             / np.linalg.det(self.cell_vectors_0))
+            raise Exception('The standard state unit vectors are inconsistent '
+                            'with the volume. Suggest multiplying each '
+                            f'by {factor}.')
 
         self.c = anisotropic_parameters
 
