@@ -183,8 +183,11 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
 
     @copy_documentation(Material.set_state)
     def set_state(self, pressure, temperature):
-        # 1) Compute dPthdf
-        dP = 1000.
+        # 1) Compute dPthdf|T
+        # relatively large dP needed for accurate estimate of dPthdf
+        Mineral.set_state(self, pressure, temperature)
+        dP = self.isothermal_bulk_modulus_reuss*1.e-5
+
         Mineral.set_state(self, pressure-dP/2., temperature)
         V1 = self.V
         Pth1 = pressure-dP/2. - self.method.pressure(self.params['T_0'],
@@ -555,3 +558,27 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         raise NotImplementedError("Anisotropic minerals do not have a single "
                                   "grueneisen parameter. Query "
                                   "the grueneisen_tensor instead.")
+
+    @material_property
+    def isothermal_compressibility_tensor(self):
+        """
+        Returns
+        -------
+        isothermal_compressibility_tensor : 2D numpy array
+            The isothermal compressibility tensor.
+        """
+        return np.einsum('ijkl, kl->ij',
+                         self.full_isothermal_compliance_tensor,
+                         np.eye(3))
+
+    @material_property
+    def isentropic_compressibility_tensor(self):
+        """
+        Returns
+        -------
+        isentropic_compressibility_tensor : 2D numpy array
+            The isentropic compressibility tensor.
+        """
+        return np.einsum('ijkl, kl->ij',
+                         self.full_isentropic_compliance_tensor,
+                         np.eye(3))
