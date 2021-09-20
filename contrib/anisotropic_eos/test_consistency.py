@@ -1,5 +1,7 @@
 import numpy as np
 import warnings
+from scipy.linalg import logm
+
 def check_anisotropic_eos_consistency(m, P=1.e9, T=2000., tol=1.e-4, verbose=False):
     """
     Compute numerical derivatives of the gibbs free energy of a mineral
@@ -68,19 +70,39 @@ def check_anisotropic_eos_consistency(m, P=1.e9, T=2000., tol=1.e-4, verbose=Fal
                [m.isentropic_bulk_modulus_reuss, m.isothermal_bulk_modulus_reuss*m.molar_heat_capacity_p/m.molar_heat_capacity_v]])
 
     # Third derivative
-    dP = 10000.
-    dT = 1.
     m.set_state(P + 0.5 * dP, T)
     b0 = m.isothermal_compressibility_tensor
+    F0 = m.deformation_gradient_tensor
 
     m.set_state(P + 0.5 * dP, T + dT)
     b1 = m.isothermal_compressibility_tensor
+    F1 = m.deformation_gradient_tensor
 
     m.set_state(P, T + 0.5 * dT)
     a0 = m.thermal_expansivity_tensor
+    F2 = m.deformation_gradient_tensor
 
     m.set_state(P + dP, T + 0.5 * dT)
     a1 = m.thermal_expansivity_tensor
+    F3 = m.deformation_gradient_tensor
+
+    m.set_state(P + 0.5 * dP, T + 0.5 * dT)
+
+    beta0 = -(logm(F3) - logm(F2))/dP
+    beta1 = m.isothermal_compressibility_tensor
+    alpha0 = (logm(F1) - logm(F0))/dT
+    alpha1 = m.thermal_expansivity_tensor
+
+
+    expr.extend([f'SI = -d(lnm(F))/dP ({i}{j})'
+                 for i in range(3) for j in range(i, 3)])
+    eq.extend([[beta0[i,j], beta1[i,j]]
+               for i in range(3) for j in range(i, 3)])
+
+    expr.extend([f'alpha = d(lnm(F))/dT ({i}{j})'
+                 for i in range(3) for j in range(i, 3)])
+    eq.extend([[alpha0[i,j], alpha1[i,j]]
+               for i in range(3) for j in range(i, 3)])
 
     expr.extend([f'd(alpha)/dP = -d(beta_T)/dT ({i}{j})'
                  for i in range(3) for j in range(i, 3)])
