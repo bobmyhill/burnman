@@ -448,6 +448,7 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         if self.orthotropic:
             return alpha
         else:
+            R = self.rotation_matrix
             return np.einsum('mi, nj, ij->mn', R, R, alpha)
 
     # Derived properties start here

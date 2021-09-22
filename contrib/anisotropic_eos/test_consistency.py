@@ -89,10 +89,14 @@ def check_anisotropic_eos_consistency(m, P=1.e9, T=2000., tol=1.e-4, verbose=Fal
     m.set_state(P + 0.5 * dP, T + 0.5 * dT)
 
     beta0 = -(logm(F3) - logm(F2))/dP
-    beta1 = m.isothermal_compressibility_tensor
     alpha0 = (logm(F1) - logm(F0))/dT
+
+    Q = m.deformed_coordinate_frame
+    beta1 = m.isothermal_compressibility_tensor
     alpha1 = m.thermal_expansivity_tensor
 
+    beta1 = np.einsum('mi, nj, ij->mn', Q, Q, beta1)
+    alpha1 = np.einsum('mi, nj, ij->mn', Q, Q, alpha1)
 
     expr.extend([f'SI = -d(lnm(F))/dP ({i}{j})'
                  for i in range(3) for j in range(i, 3)])

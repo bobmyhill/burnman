@@ -147,6 +147,8 @@ m = make_orthorhombic_mineral_from_parameters([ 1.00261177e+00,  9.91759509e-01,
 -1.34030384e-02, -1.01671929e-01,  2.70232982e-01, -2.68143106e+00,
 -6.93075277e-01, -4.04634113e-01, -3.49178491e+00,  1.09213501e+01,
 4.91098948e-02])
-
+np.set_printoptions(precision=2)
+print(np.array_repr(m.c[:,:,1,0]))
+exit()
 
 check_anisotropic_eos_consistency(m, verbose=True)
