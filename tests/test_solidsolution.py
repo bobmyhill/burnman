@@ -518,6 +518,21 @@ class test_solidsolution(BurnManTest):
         self.assertArraysAlmostEqual(opx.reaction_basis[0],
                                      [-1./2., -1./2., 1., 0., 0., 0., 0.])
 
+    def test_reset(self):
+        olivine = burnman.minerals.SLB_2011.mg_fe_olivine()
+        olivine.set_state(1.e9, 2000.)
+        olivine.set_composition([0.1, 0.9])
+        G0 = olivine.gibbs
+
+        olivine.set_composition([0.2, 0.8])
+        G1 = olivine.gibbs
+
+        olivine.set_state(1.e9, 1500.)
+        G2 = olivine.gibbs
+
+        self.assertTrue(G0 != G1)
+        self.assertTrue(G1 != G2)
+
 
 if __name__ == '__main__':
     unittest.main()
