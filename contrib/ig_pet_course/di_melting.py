@@ -45,11 +45,11 @@ ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 ax[0].plot(temperatures, pressures/1.e9)
 
 temperatures = np.linspace(1600., 2200., 101)
-pressures = temperatures*0. + PGPa*1e9
+Ps = temperatures*0. + PGPa*1e9
 ax[0].plot(temperatures, pressures/1.e9, linestyle=':')
 
-di_gibbs = di.evaluate(['gibbs'], pressures, temperatures)[0]
-diL_gibbs = diL.evaluate(['gibbs'], pressures, temperatures)[0]
+di_gibbs = di.evaluate(['gibbs'], Ps, temperatures)[0]
+diL_gibbs = diL.evaluate(['gibbs'], Ps, temperatures)[0]
 ax[1].plot(temperatures, di_gibbs/1.e3, label='solid di')
 ax[1].plot(temperatures, diL_gibbs/1.e3, label='liquid di')
 
@@ -94,7 +94,7 @@ for i in range(3):
     ax[i].set_xlabel('Pressure (GPa)')
 
 
-ax[1].set_ylim(0.,100.)
+ax[1].set_ylim(0., 100.)
 
 ax[0].set_ylabel('Temperature (K)')
 ax[1].set_ylabel('Entropy (J/K/mol)')
