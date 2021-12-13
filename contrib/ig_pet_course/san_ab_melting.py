@@ -72,8 +72,12 @@ for i, x in enumerate(x_ab_fsps):
 
 fig = plt.figure(figsize=(8, 3))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
+fig2 = plt.figure(figsize=(8, 3))
+ax2 = [fig2.add_subplot(1, 2, i) for i in range(1, 3)]
 ax[0].plot(x_ab_fsps, Ts)
 ax[0].plot(x_ab_liqs, Ts)
+ax2[0].plot(x_ab_fsps, Ts)
+ax2[0].plot(x_ab_liqs, Ts)
 ax[1].plot(x_ab_fsps, H_fsps/1.e3, color='k')
 ax[1].plot(x_ab_liqs, H_liqs/1.e3, color='k')
 
@@ -83,6 +87,8 @@ Ts = np.linspace(1320., 1420., 6)
 
 H_fsps = np.empty_like(x_ab_fsps)
 H_liqs = np.empty_like(x_ab_fsps)
+G_fsps = np.empty_like(x_ab_fsps)
+G_liqs = np.empty_like(x_ab_fsps)
 
 
 for i, T in enumerate(Ts):
@@ -90,9 +96,11 @@ for i, T in enumerate(Ts):
         liq.set_composition([x, 1.-x])
         liq.set_state(P, T)
         H_liqs[j] = liq.molar_enthalpy/1.e3
+        G_liqs[j] = liq.molar_gibbs/1.e3
         fsp.set_composition([x, 1.-x])
         fsp.set_state(P, T)
         H_fsps[j] = fsp.molar_enthalpy/1.e3
+        G_fsps[j] = fsp.molar_gibbs/1.e3
 
     xHs = []
 
@@ -152,20 +160,38 @@ for i, T in enumerate(Ts):
 
     xHs = np.array(xHs).T
     ln, = ax[1].plot(xHs[0], xHs[1], label=f'{T} K')
+    ln, = ax2[1].plot(x_ab_fsps, G_fsps,
+                      linestyle=':')
+    ln, = ax2[1].plot(x_ab_fsps, G_liqs, label=f'{T} K',
+                      color=ln.get_color())
 
 ax[1].legend(ncol=2)
+ax2[1].legend(ncol=2)
 
 for i in range(2):
     ax[i].set_xlabel('$x_{{ab}}$')
     ax[i].set_xlim(0., 1.)
+    ax2[i].set_xlabel('$x_{{ab}}$')
+    ax2[i].set_xlim(0., 1.)
 
 ax[0].text(0.5, 1380., 'melt')
 ax[0].text(0.5, 1280., 'fsp')
 ax[0].set_ylabel('Temperature (K)')
+ax2[0].text(0.5, 1380., 'melt')
+ax2[0].text(0.5, 1280., 'fsp')
+ax2[0].set_ylabel('Temperature (K)')
+
 ax[1].set_ylabel('Enthalpy (kJ/mol)')
+ax2[1].set_ylabel('Gibbs energy (kJ/mol)')
 
 ax[0].set_ylim(1250., 1450.)
+ax2[0].set_ylim(1250., 1450.)
+
 ax[1].set_ylim(-3740., -3500.)
+ax2[1].set_ylim(-4580., -4420.)
+
 fig.set_tight_layout(True)
-fig.savefig('figures/or_ab_melting.pdf')
+fig2.set_tight_layout(True)
+fig.savefig('figures/or_ab_melting_H.pdf')
+fig2.savefig('figures/or_ab_melting_G.pdf')
 plt.show()
