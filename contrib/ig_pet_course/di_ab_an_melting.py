@@ -37,10 +37,17 @@ liq = burnman.SolidSolution(name='di-an-ab liquid',
                             energy_interaction=[[-15.e3, 0.],
                                                 [-15.e3]])
 
-xs = np.linspace(0.01, 0.99, 11)
+T_contours_di = np.linspace(1150.+273.15, 1350.+273.15, 5)
+T_contours_plag = np.linspace(1150.+273.15, 1500.+273.15, 8)
+xs = np.linspace(0.00001, 0.99999, 501)
+
+X_liq_contours_di = np.nan * np.empty((len(T_contours_di), len(xs), 3))
+X_liq_contours_plag = np.nan * np.empty((len(T_contours_plag), len(xs), 3))
+
 eut_temperatures = np.empty_like(xs)
 lines = []
 for i, x in enumerate(xs):
+    print(i)
     plag.set_composition([x, 1. - x])
 
     total = sum(plag.formula.values())
@@ -81,6 +88,43 @@ for i, x in enumerate(xs):
     line[:, [0, 1]] = line[:, [1, 0]]
     lines.append(line)
 
+    X_liq = liq.molar_fractions
+    X_plag = plag.molar_fractions
+    
+    assemblage = burnman.Composite([liq, di])
+    for j, T in enumerate(T_contours_di):
+        equality_constraints = [('phase_fraction', (di, np.array([0.0]))),
+                                ('T', T),
+                                ('P', 1.e5)]
+
+        sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                                free_compositional_vectors,
+                                verbose=False)
+        if sol.success and liq.molar_fractions[0] > X_liq[0]:
+            X_liq_contours_di[j, i, 0] = sol.assemblage.phases[0].molar_fractions[1]
+            X_liq_contours_di[j, i, 1] = sol.assemblage.phases[0].molar_fractions[0]
+            X_liq_contours_di[j, i, 2] = sol.assemblage.phases[0].molar_fractions[2]
+            
+    assemblage = burnman.Composite([liq, plag])
+    for j, T in enumerate(T_contours_plag):
+        # liq.set_composition([0.1, 0.1, 0.8])
+        # plag.set_composition([0.1, 0.9])
+        try:
+            equality_constraints = [('phase_fraction', (plag, np.array([0.]))),
+                                    ('T', T),
+                                    ('P', 1.e5)]
+
+            sol, prm = equilibrate(composition, assemblage, equality_constraints,
+                                   free_compositional_vectors,
+                                   verbose=False)
+            
+            if sol.success and liq.molar_fractions[0] < X_liq[0]:
+                X_liq_contours_plag[j, i, 0] = sol.assemblage.phases[0].molar_fractions[1]
+                X_liq_contours_plag[j, i, 1] = sol.assemblage.phases[0].molar_fractions[0]
+                X_liq_contours_plag[j, i, 2] = sol.assemblage.phases[0].molar_fractions[2]
+        except:
+            pass
+
 lines = np.array(lines)
 
 
@@ -95,6 +139,7 @@ sol, prm = equilibrate(composition, assemblage, equality_constraints,
                        verbose=False)
 T_liq = sol.assemblage.temperature
 X_liq = liq.molar_fractions
+X_first_plag = [plag.molar_fractions[0], 0., plag.molar_fractions[1]]
 
 assemblage = burnman.Composite([di, plag, liq])
 equality_constraints = [('phase_fraction', (di, np.array([0.0]))),
@@ -136,6 +181,17 @@ liq_compositions2 = np.array([sol.assemblage.phases[2].molar_fractions
                               for sol in sols])
 liq_compositions2[:, [0, 1]] = liq_compositions2[:, [1, 0]]
 
+plag_compositions2 = np.zeros_like(liq_compositions2)
+plag_compositions2[:, 0] = [sol.assemblage.phases[1].molar_fractions[0]
+                            for sol in sols]
+plag_compositions2[:, 2] = [sol.assemblage.phases[1].molar_fractions[1]
+                            for sol in sols]
+
+lines_batch = np.zeros((len(plag_compositions2), 4, 3))
+lines_batch[:, 0, 1] = 1.  # diopside
+lines_batch[:, 1, :] = liq_compositions2
+lines_batch[:, 2, :] = plag_compositions2
+lines_batch[:, 3, 1] = 1.  # diopside
 
 # Step 3: Fractional crystallisation
 dT = 1.
@@ -174,6 +230,8 @@ while process:
 
 T_eut_frac = T_eut_frac
 X_eut_frac = liq_compositions_frac[-1]
+plag_compositions_frac = [np.array([plag.molar_fractions[0], 0.,
+                                    plag.molar_fractions[1]])]
 
 process = True
 
@@ -199,15 +257,24 @@ while process:
                            equality_constraints,
                            verbose=False)
     liq_compositions_frac.append(liq.molar_fractions)
+    plag_compositions_frac.append(np.array([plag.molar_fractions[0], 0.,
+                                            plag.molar_fractions[1]]))
     composition = liq.formula
 
+
+plag_compositions_frac = np.array(plag_compositions_frac)
+liq_compositions_frac = np.array(liq_compositions_frac)
+liq_compositions_frac[:, [0, 1]] = liq_compositions_frac[:, [1, 0]]
 
 T_sol_frac = T_sol_frac
 X_sol_frac = liq_compositions_frac[-1]
 
+lines_frac = np.zeros((len(plag_compositions_frac), 4, 3))
+lines_frac[:, 0, 1] = 1.  # diopside
+lines_frac[:, 1, :] = liq_compositions_frac[-len(plag_compositions_frac):, :]
+lines_frac[:, 2, :] = plag_compositions_frac
+lines_frac[:, 3, 1] = 1.  # diopside
 
-liq_compositions_frac = np.array(liq_compositions_frac)
-liq_compositions_frac[:, [0, 1]] = liq_compositions_frac[:, [1, 0]]
 
 figure = plt.figure()
 ax = [figure.add_subplot(1, 1, 1)]
@@ -223,10 +290,28 @@ tax.right_corner_label("an", fontsize=fontsize, offset=offset)
 tax.plot(lines[:, 0, :], linewidth=1.0, label="eutectic")
 
 # Plot the data
-for i, line in enumerate(lines[2:5]):
-    tax.plot(line, linewidth=1.0,
-             color='grey', label=f"eutectic coexistence at {eut_temperatures[i+2]:.0f} K")
+# for i, line in enumerate(lines[2:5]):
+#    tax.plot(line, linewidth=1.0,
+#             color='grey', label=f"eutectic coexistence at {eut_temperatures[i+2]:.0f} K")
 
+for i in range(len(T_contours_di)):
+    tax.plot(X_liq_contours_di[i], linewidth=1.0,
+             color='purple')
+for i in range(len(T_contours_plag)):
+    tax.plot(X_liq_contours_plag[i], linewidth=1.0,
+             color='purple')
+    
+tax.plot(lines_batch[0], linewidth=1.0,
+         color='grey', label=f"eutectic coexistence at {T_eut:.0f} K")
+tax.plot(lines_batch[-1], linewidth=1.0,
+         color='grey', label=f"eutectic coexistence at {T_sol:.0f} K")
+tax.plot(lines_frac[0], linewidth=1.0,
+         color='grey', label=f"eutectic coexistence at {T_eut_frac:.0f} K")
+
+tax.scatter([[X_liq[1], X_liq[0], X_liq[2]]], color='red',
+            label=f'bulk (liquidus at {T_liq:.0f} K)')
+tax.plot([X_first_plag, liq_compositions1[0]],
+         color='orange', label=f"plag-liq coexistence at {T_liq:.0f} K)")
 
 tax.plot(liq_compositions1, linewidth=2.0,
          color='blue', label="liquid line of descent (batch)")
@@ -238,20 +323,17 @@ tax.plot(liq_compositions_frac, linewidth=2.0,
 tax.ticks(axis='lbr', multiple=0.2, linewidth=1,
           offset=0.025, tick_formats="%.1f")
 
-tax.scatter([[X_liq[1], X_liq[0], X_liq[2]]], color='red',
-            label=f'bulk (liquidus at {T_liq:.0f} K)')
 tax.scatter([[X_eut[1], X_eut[0], X_eut[2]]], marker='+', color='blue',
             label=f'eutectic liquid (batch) at {T_eut:.0f} K')
 tax.scatter([[X_eut_frac[1], X_eut_frac[0], X_eut_frac[2]]], marker='+', color='red',
             label=f'eutectic liquid (frac.) at {T_eut_frac:.0f} K')
 tax.scatter([[X_sol[1], X_sol[0], X_sol[2]]], marker='*', color='blue',
             label=f'last liquid (batch) at {T_sol:.0f} K')
-tax.scatter([[X_sol_frac[1], X_sol_frac[0], X_sol_frac[2]]],
-            marker='*', color='red',
+tax.scatter([X_sol_frac], marker='*', color='red',
             label=f'last liquid (frac.) at {T_sol_frac:.0f} K')
 
-tax.legend()
-
+leg = tax.legend(bbox_to_anchor=(1., 1.), bbox_transform=ax[0].transAxes, prop={'size': 8})
+figure.set_tight_layout(True)
 tax.get_axes().axis('off')
 tax.clear_matplotlib_ticks()
 tax.get_axes().set_aspect(1)

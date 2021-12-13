@@ -71,6 +71,7 @@ figsp = plt.figure(figsize=(8, 3))
 axsp = [figsp.add_subplot(1, 2, i) for i in range(1, 3)]
 
 ax[0].plot([0., 1.], [T_C_eutectic, T_C_eutectic], color='k')
+axpd[0].text(0.88, T_C_eutectic + 5, f'{T_C_eutectic:.0f}$^{{\\circ}}$C')
 axpd[0].plot([0., 1.], [T_C_eutectic, T_C_eutectic], color='k')
 axsp[0].plot([0., 1.], [T_C_eutectic, T_C_eutectic], color='k')
 
