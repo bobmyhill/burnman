@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import burnman
 from burnman import equilibrate
 from burnman.minerals import HGP_2018_ds633
-
+from copy import copy
 
 abL = HGP_2018_ds633.abL()
 kspL = HGP_2018_ds633.kspL()
@@ -45,6 +45,32 @@ fsp = burnman.SolidSolution(name='C1 ab-san',
                             volume_interaction=[[0.338e-5]],
                             alphas=[0.643, 1.])
 
+
+temperatures = np.linspace(300., 921.0, 201)
+fsp1 = copy(fsp)
+fsp2 = copy(fsp)
+
+fsp1.set_composition([0.01, 0.99])
+fsp2.set_composition([0.99, 0.01])
+assemblage = burnman.Composite([fsp1, fsp2])
+fsp.set_composition([0.6575, 0.3425])
+composition = fsp.formula
+equality_constraints = [['P', 1.e5],
+                        ['T', temperatures]]
+sols, prm = equilibrate(composition, assemblage,
+                        equality_constraints, verbose=True)
+Ts_solvus = [sol.assemblage.temperature
+             for sol in sols if sol.success]
+Ts_solvus.extend(Ts_solvus[::-1])
+xs_solvus = [sol.assemblage.phases[0].molar_fractions[0]
+             for sol in sols if sol.success]
+xs_solvus.extend([sol.assemblage.phases[1].molar_fractions[0]
+                  for sol in sols if sol.success][::-1])
+
+#plt.plot(xs, Ts)
+#plt.show()
+#exit()
+
 assemblage = burnman.Composite([liq, fsp])
 assemblage.set_state(P, 1473.15)
 
@@ -70,12 +96,18 @@ for i, x in enumerate(x_ab_fsps):
     H_liqs[i] = sol.assemblage.phases[0].molar_enthalpy
     H_fsps[i] = sol.assemblage.phases[1].molar_enthalpy
 
+fig_all = plt.figure(figsize=(4, 3))
+ax_all = [fig_all.add_subplot(1, 1, 1)]
 fig = plt.figure(figsize=(8, 3))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 fig2 = plt.figure(figsize=(8, 3))
 ax2 = [fig2.add_subplot(1, 2, i) for i in range(1, 3)]
 ax[0].plot(x_ab_fsps, Ts)
 ax[0].plot(x_ab_liqs, Ts)
+ax_all[0].plot(x_ab_fsps, Ts)
+ax_all[0].plot(x_ab_liqs, Ts)
+ax_all[0].plot(xs_solvus, Ts_solvus)
+
 ax2[0].plot(x_ab_fsps, Ts)
 ax2[0].plot(x_ab_liqs, Ts)
 ax[1].plot(x_ab_fsps, H_fsps/1.e3, color='k')
@@ -168,6 +200,10 @@ for i, T in enumerate(Ts):
 ax[1].legend(ncol=2)
 ax2[1].legend(ncol=2)
 
+
+ax_all[0].set_xlabel('$x_{{ab}}$')
+ax_all[0].set_xlim(0., 1.)
+    
 for i in range(2):
     ax[i].set_xlabel('$x_{{ab}}$')
     ax[i].set_xlim(0., 1.)
@@ -176,7 +212,12 @@ for i in range(2):
 
 ax[0].text(0.5, 1380., 'melt')
 ax[0].text(0.5, 1280., 'fsp')
+ax_all[0].text(0.5, 1380., 'melt')
+ax_all[0].text(0.5, 1100., 'feldspar')
+ax_all[0].text(0.5, 600., '2 feldspars')
+
 ax[0].set_ylabel('Temperature (K)')
+ax_all[0].set_ylabel('Temperature (K)')
 ax2[0].text(0.5, 1380., 'melt')
 ax2[0].text(0.5, 1280., 'fsp')
 ax2[0].set_ylabel('Temperature (K)')
@@ -190,8 +231,10 @@ ax2[0].set_ylim(1250., 1450.)
 ax[1].set_ylim(-3740., -3500.)
 ax2[1].set_ylim(-4580., -4420.)
 
+fig_all.set_tight_layout(True)
 fig.set_tight_layout(True)
 fig2.set_tight_layout(True)
+fig_all.savefig('figures/or_ab_phase_diagram.pdf')
 fig.savefig('figures/or_ab_melting_H.pdf')
 fig2.savefig('figures/or_ab_melting_G.pdf')
 plt.show()
