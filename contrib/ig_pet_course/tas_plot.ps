@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tasplot import add_LeMaitre_fields
+
+
+fig = plt.figure(figsize=(6, 5))
+ax = [fig.add_subplot(1, 1, 1)]
+
+ax[0].set_xlabel('SiO$_2$, wt%')
+ax[0].set_ylabel('Na$_2$O+K$_2$O, wt%')
+add_LeMaitre_fields(ax[0])
+
+def subalkaline_boundary(A):
+    """
+    In MOLE PERCENT %
+    """
+    return (-3.3539e-4 * np.power(A, 6)
+            + 1.2030e-2 * np.power(A, 5)
+            - 1.5188e-1 * np.power(A, 4)
+            + 8.6096e-1 * np.power(A, 3)
+            - 2.1111 * np.power(A, 2)
+            + 3.9492 * A + 39.0)
+
+As = np.linspace(0., 12, 101)
+plt.fill_between(subalkaline_boundary(As), 0.*As, As, alpha=0.2)
+plt.fill_between(subalkaline_boundary(As), As, 14.*As, alpha=0.2)
+
+plt.plot(subalkaline_boundary(As), As,
+         linestyle=':', color='blue',
+         label='approx. boundary (defined as mol%)')
+plt.text(65, 4, 'subalkaline', color='blue')
+plt.text(72, 12, 'alkaline', color='blue')
+ax[0].set_xlim(41., 80.)
+ax[0].set_ylim(0., 14.)
+ax[0].legend()
+fig.set_tight_layout(True)
+fig.savefig('figures/tas_subalkaline_alkaline_boundary.pdf')
+plt.show()
