@@ -37,6 +37,8 @@ from lmfit import Model
 def fn_quartic(x, a, b, c, d, e):
     return a + b * x + c * x ** 2 + d * x ** 3 + e * x ** 4
 
+def fn_linear_plus_scaled_einstein(x, a, b):
+    return a/b*(1. - 0.5*(b*x) - (b*x)/(np.exp(b*x) - 1.))
 
 run_fitting = True
 
@@ -65,12 +67,18 @@ def make_voigt_matrix_inverse(Cs):
         C[i, i] = C11
     for i in range(3, 6):
         C[i, i] = C44
+        
+    compliance = np.linalg.inv(C)
+    
+    beta = np.sum(compliance[:3, :3])
+    print(beta)
+    
+    dpsidf = compliance / beta
+    
     per2.set_state(P, T)
-    beta = per2.beta_T
-    dpsidf = np.linalg.inv(C) / beta
     f = -np.log(per2.V / per2.params['V_0'])
     f2 = 0.5*(np.power(per2.V / per2.params['V_0'], -2./3.) - 1.)
-    print(per2.V, f)
+
     return np.array([T, P, f, f2, dpsidf[0, 0], dpsidf[0, 1], dpsidf[3, 3]])
 
 dpsidf_data = np.empty((per_data.shape[0], per_data.shape[1]+2))
@@ -84,7 +92,7 @@ pmodel = Model(fn_quartic)
 
 dpsidf0 = dpsidf_data[0, 4:]
 
-for idx in range(3):  # only plot 300 K data
+for idx in [0]:  # only plot 300 K data
     T = dpsidf_data[idx*16, 0]
     P = dpsidf_data[idx*16:(idx+1)*16, 1]
     f = dpsidf_data[idx*16:(idx+1)*16, 2] # /2.6
@@ -109,9 +117,21 @@ for idx in range(3):  # only plot 300 K data
 labels = ['11', '12', '44']
 for i in range(3):
     ax[i].legend()
-    ax[i].set_xlabel('$f2$')
+    ax[i].set_xlabel('$f$')
     ax[i].set_ylabel(f'$\\psi_{{{labels[i]}}} - d\\psi_{{{labels[i]}}}/df(0)f$')
     
+x = np.linspace(0., 0.4, 101)
+
+a = 0.27
+b = 18.
+ax[0].plot(x, fn_linear_plus_scaled_einstein(x, a, b))
+a = -0.135
+b = 18.
+ax[1].plot(x, fn_linear_plus_scaled_einstein(x, a, b))
+a = -1.35
+b = 18.
+ax[2].plot(x, fn_linear_plus_scaled_einstein(x, a, b))
+ax[2].plot(x, x*x*2)
 fig.set_tight_layout(True)
 plt.show()
 
