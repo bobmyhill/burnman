@@ -98,6 +98,10 @@ for i, x in enumerate(x_ab_fsps):
 
 fig_all = plt.figure(figsize=(4, 3))
 ax_all = [fig_all.add_subplot(1, 1, 1)]
+
+fig_G = plt.figure(figsize=(4, 3))
+ax_G = [fig_G.add_subplot(1, 1, 1)]
+
 fig = plt.figure(figsize=(8, 3))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 fig2 = plt.figure(figsize=(8, 3))
@@ -237,4 +241,27 @@ fig2.set_tight_layout(True)
 fig_all.savefig('figures/or_ab_phase_diagram.pdf')
 fig.savefig('figures/or_ab_melting_H.pdf')
 fig2.savefig('figures/or_ab_melting_G.pdf')
+
+
+
+xs = np.linspace(0., 1., 101)
+Gs = np.empty_like(xs)
+Ts = [600, 800, 1000]
+
+for T in Ts:
+    fsp.set_state(1.e5, T)
+
+    for i, x in enumerate(xs):
+        fsp.set_composition([x, 1.-x])
+        Gs[i] = fsp.excess_gibbs
+    ax_G[0].plot(xs, Gs/1000., label=f'{T} K')
+
+ax_G[0].set_xlabel('$x_{{ab}}$')
+ax_G[0].set_ylabel('Excess Gibbs energy (kJ/mol)')
+ax_G[0].set_xlim(0., 1.)
+ax_G[0].legend()
+fig_G.set_tight_layout(True)
+fig_G.savefig('figures/or_ab_excess_energies.pdf')
+
+
 plt.show()
