@@ -92,17 +92,17 @@ pmodel = Model(fn_quartic)
 
 dpsidf0 = dpsidf_data[0, 4:]
 
-for idx in [0]:  # only plot 300 K data
+for idx in [0, 1, 2]:  # only plot 300 K data
     T = dpsidf_data[idx*16, 0]
     P = dpsidf_data[idx*16:(idx+1)*16, 1]
-    f = dpsidf_data[idx*16:(idx+1)*16, 2] # /2.6
+    f = dpsidf_data[idx*16:(idx+1)*16, 2]  # /2.6
     f2 = dpsidf_data[idx*16:(idx+1)*16, 3]
     d = dpsidf_data[idx*16:(idx+1)*16, 4:].T
     intd = cumulative_trapezoid(d, f, initial=0)
 
     for j in range(3):
         print(d[j,0])
-        ln, = ax[j].plot(f, intd[j] - dpsidf0[j]*f, label=f'{T} K')
+        ln = ax[j].scatter(f, intd[j] - dpsidf0[j]*f, label=f'{T} K', c='red')
         # ax[j].plot(f2, intd[j] - dpsidf0[j]*f, label=f'{T} K', color=ln.get_color(), linestyle=':')
 
         params = pmodel.make_params(a=0, b=0, c=0, d=0, e=0)
@@ -120,7 +120,7 @@ for i in range(3):
     ax[i].set_xlabel('$f$')
     ax[i].set_ylabel(f'$\\psi_{{{labels[i]}}} - d\\psi_{{{labels[i]}}}/df(0)f$')
     
-x = np.linspace(0., 0.4, 101)
+x = np.linspace(0., 0.5, 101)
 
 a = 0.27
 b = 18.
@@ -131,7 +131,7 @@ ax[1].plot(x, fn_linear_plus_scaled_einstein(x, a, b))
 a = -1.35
 b = 18.
 ax[2].plot(x, fn_linear_plus_scaled_einstein(x, a, b))
-ax[2].plot(x, x*x*2)
+ax[2].plot(x, 2.55*np.power(x, 2.2), linestyle=':')
 fig.set_tight_layout(True)
 plt.show()
 
