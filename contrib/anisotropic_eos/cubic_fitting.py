@@ -59,14 +59,14 @@ def make_cubic_mineral_from_parameters(x):
     constants[:3, :3, 1, 0] = S12_0
     constants[:3, :3, 2, 0] = dS12df
     constants[:3, :3, 3, 0] = d2S12df2
-    constants[:3, :3, 0, 1] = dS12dPth
+    constants[:3, :3, 0, 1] = 0. # dS12dPth
     constants[:3, :3, 1, 1] = d2S12dfdPth
     for i in range(3):
         constants[i, i, 1, 0] = S11_0
         constants[i, i, 2, 0] = dS11df
         constants[i, i, 3, 0] = d2S11df2
 
-        constants[i, i, 0, 1] = dS11dPth
+        constants[i, i, 0, 1] = 0. # dS11dPth
         constants[i, i, 1, 1] = d2S11dfdPth
 
     for i in range(3, 6):
@@ -74,7 +74,7 @@ def make_cubic_mineral_from_parameters(x):
         constants[i, i, 2, 0] = dS44df
         constants[i, i, 3, 0] = d2S44df2
 
-        constants[i, i, 0, 1] = dS44dPth
+        constants[i, i, 0, 1] = 0. # dS44dPth
         constants[i, i, 1, 1] = d2S44dfdPth
 
     return AnisotropicMineral(per, cell_parameters, constants)
@@ -118,6 +118,7 @@ if not run_fitting:
                   0.06480835,  0.52939447]
 
 m = make_cubic_mineral_from_parameters(parameters)
+
 
 m.set_state(1.e5, 300.)
 
