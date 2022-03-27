@@ -10,6 +10,7 @@ an_di_melting
 """
 
 from __future__ import absolute_import
+from copy import deepcopy
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -322,5 +323,15 @@ for j, T_C in enumerate(T_Cs):
 
 
 fig.savefig('figures/an_di_melting.pdf')
+
+
 figpd.savefig('figures/an_di_melting_phase_diagram.pdf')
+
+
+axpd[0].set_xlim(0., 0.3)
+axpd[0].set_ylim(1300., 1400.)
+axpd[0].text(0.2, 1380., 'L', horizontalalignment='center', verticalalignment='center')
+figpd.savefig('figures/di_rich_an_di_melting.pdf')
+
+
 plt.show()

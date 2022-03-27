@@ -28,8 +28,9 @@ of BurnMan objects:
 
   - :mod:`~examples.example_mineral`,
   - :mod:`~examples.example_gibbs_modifiers`,
-  - :mod:`~examples.example_solid_solution`,
+  - :mod:`~examples.example_solution`,
   - :mod:`~examples.example_composite`,
+  - :mod:`~examples.example_calibrants`,
   - :mod:`~examples.example_anisotropy`,
   - :mod:`~examples.example_anisotropic_mineral`,
   - :mod:`~examples.example_geotherms`, and
@@ -53,17 +54,17 @@ of BurnMan objects:
 
   .. image:: figures/example_gibbs_modifiers_figure_4.png
 
-  .. automodule:: examples.example_solid_solution
+  .. automodule:: examples.example_solution
 
   *Resulting figures:*
 
-  .. image:: figures/example_solid_solution_1.png
+  .. image:: figures/example_solution_1.png
 
-  .. image:: figures/example_solid_solution_2.png
+  .. image:: figures/example_solution_2.png
 
-  .. image:: figures/example_solid_solution_3.png
+  .. image:: figures/example_solution_3.png
 
-  .. image:: figures/example_solid_solution_4.png
+  .. image:: figures/example_solution_4.png
 
   .. automodule:: examples.example_composite
 
@@ -72,6 +73,12 @@ of BurnMan objects:
   .. image:: figures/example_composite_figure_1.png
 
   .. image:: figures/example_composite_figure_2.png
+
+
+  .. automodule:: examples.example_mineral
+
+
+  .. automodule:: examples.example_calibrants
 
 
   .. automodule:: examples.example_anisotropy
@@ -156,8 +163,10 @@ Advanced examples:
   - :mod:`~examples.example_optimize_pv`,
   - :mod:`~examples.example_compare_all_methods`,
   - :mod:`~examples.example_build_planet`,
-  - :mod:`~examples.example_fit_eos`,,
-  - :mod:`~examples.example_fit_composition`
+  - :mod:`~examples.example_fit_composition`,
+  - :mod:`~examples.example_fit_data`,
+  - :mod:`~examples.example_fit_eos`,
+  - :mod:`~examples.example_fit_solution`,
   - :mod:`~examples.example_equilibrate`, and
   - :mod:`~examples.example_olivine_binary`.
 
@@ -197,6 +206,14 @@ Advanced examples:
 .. image:: figures/example_build_planet.png
 
 
+.. automodule:: examples.example_fit_composition
+
+
+*Resulting figure:*
+
+.. image:: figures/example_fit_composition_Figure_1.png
+
+
 .. automodule:: examples.example_fit_data
 
 *Resulting figures:*
@@ -206,14 +223,6 @@ Advanced examples:
 .. image:: figures/example_fit_data2.png
 
 .. image:: figures/example_fit_data3.png
-
-
-.. automodule:: examples.example_fit_composition
-
-
-*Resulting figure:*
-
-.. image:: figures/example_fit_composition_Figure_1.png
 
 
 .. automodule:: examples.example_fit_eos
@@ -235,6 +244,32 @@ Advanced examples:
 
 .. image:: figures/example_fit_eos17.png
 
+
+
+.. automodule:: examples.example_fit_solution
+
+
+*Resulting figures:*
+
+.. figure:: figures/example_fit_solution_01.png
+
+  Data residuals relative to the model fitted using all the provided data.
+
+.. figure:: figures/example_fit_solution_02.png
+
+  Data residuals relative to the model fitted using the provided data after semi-automatic removal of spurious data.
+
+.. figure:: figures/example_fit_solution_03.png
+
+  The variance-covariance matrix of the optimized parameters shown as a corner plot.
+
+.. figure:: figures/example_fit_solution_04.png
+
+  A P-T plot showing the weighted residuals of each piece of volume data.
+
+.. figure:: figures/example_fit_solution_05.png
+
+  A P-T plot showing the weighted residuals of each piece of P-wave velocity data.
 
 
 .. automodule:: examples.example_equilibrate

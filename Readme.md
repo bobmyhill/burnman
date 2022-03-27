@@ -43,6 +43,14 @@ Installation of BurnMan is mostly platform independent.
 As long as you know how to use a terminal, the process should be straightforward.
 The following instructions should help, but let us know if you have any problems.
 
+### Environment management
+We strongly recommend using a python environment manager like conda or pyenv to install
+burnman and its dependencies. This is especially the case for installations on modern Mac systems.
+
+For pyenv, we suggest you select the most recent version of python supported by BurnMan, install all of the dependencies into that environment and set the burnman root directory to use that environment automatically.
+
+For conda, we suggest making a new environment for the burnman installation, install the most recent version of python supported by BurnMan into that environment, and install all of the dependencies into that environment. Remember to activate the environment before installing new dependencies or using BurnMan.
+
 ### Dependencies
 First, make sure you have a sufficiently recent version of python installed on your machine (see above for the latest requirements).  To check your version of python, type the following in a terminal:
     python --version
@@ -74,7 +82,7 @@ Once the repository is cloned, navigate to the top-level directory by typing `cd
 
 ### Checking that the installation worked
 
-To check that the installation has worked, you can run the test suite (`./test.sh`). This takes a few minutes to run.
+To check that the installation has worked, you can run the test suite (`./test.sh`). This takes a few minutes to run. You may find that you need to install some other dependencies (latex, pycddlib) if you don't already have them on your system.
 
 A more basic check that BurnMan is installed is to navigate to the Burnman examples directory and type:
 
@@ -118,6 +126,6 @@ coding novices. For those of you who have little experience with Python,
 here are some specific features and pitfalls of the language:
 
 * Python uses specific indentation. A script might fail if a code block is not indented correctly. We use four spaces and no tabs. Mixing spaces and tabs can cause trouble.
-* Indices require square brackets and function or method calls require parentheses (different from Matlab).
+* Indices should be given inside square brackets and function or method call arguments inside parentheses (different from Matlab).
 * The first index of an array or list is 0 (e.g. x[0]), not 1.
-* Put dots after numbers to make them floats instead of integers (e.g. 5/3 will give 1 (Python 3.x rounds downward), while 5./3. will give 1.66666666667)
+* Put dots after numbers to make them floats instead of integers.

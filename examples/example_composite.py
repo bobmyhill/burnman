@@ -16,12 +16,12 @@ class.
 
 * :doc:`mineral_database`
 * :class:`burnman.Mineral`
-* :class:`burnman.SolidSolution`
+* :class:`burnman.Solution`
 * :class:`burnman.Composite`
 
 *Demonstrates:*
 
-* How to initialize a composite object containing minerals and solid solutions
+* How to initialize a composite object containing minerals and solutions
 * How to set state and composition of composite objects
 * How to interrogate composite objects for their
   compositional, thermodynamic and thermoelastic properties.
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     # In BurnMan, composite materials are those made up of a mechanical
     # mixture of other materials. Those materials could be minerals,
-    # solid solutions or other composites.
+    # solutions or other composites.
 
     # Initialising a composite material is easy; first initialise all the
     # material objects you want to add to the composite, and then call the
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     table.extend([list(s) for s in rock.stoichiometric_array])
 
     print('Stoichiometric array:')
-    burnman.tools.misc.pretty_print_table(table)
+    burnman.utils.misc.pretty_print_table(table)
 
     # Before we can interrogate our new composite fully, we must also set
     # the compositions of any solutions, and also set the state of the
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # Now we can print the rock:
     print('Composite composition')
-    els = burnman.tools.chemistry.sort_element_list_to_IUPAC_order(
+    els = burnman.utils.chemistry.sort_element_list_to_IUPAC_order(
         rock.formula.keys())
     for e in els:
         print(f'{e}: {rock.formula[e]:.3f}')
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         table.append([f'{pressures[i]/1.e9:.3f}',
                       f'{x_fe_ols[i]:.3f}',
                       f'{x_fe_wads[i]:.3f}'])
-    burnman.tools.misc.pretty_print_table(table)
+    burnman.utils.misc.pretty_print_table(table)
 
     # Plot the results
     plt.plot(x_fe_ols, pressures/1.e9, label='ol')
