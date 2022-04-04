@@ -88,12 +88,12 @@ x_an, x_anl = [sol.assemblage.phases[i].molar_fractions[0]
                for i in range(2)]
 
 
-ax[0].plot([x_an, x_an], [1300., 1900.], linestyle='--', color='grey')
-ax[0].plot([x_anl, x_anl], [1300., 1900.], linestyle='--', color='grey')
+ax[0].scatter([x_an], [1600.])
+ax[0].scatter([x_anl], [1600.])
 ax[0].set_ylim(1300., 1900.)
 
-ax[1].plot([x_an, x_an], [-15., 15.], linestyle='--', color='grey')
-ax[1].plot([x_anl, x_anl], [-15., 15.], linestyle='--', color='grey')
+#ax[1].scatter([x_an], [liq.gibbs/1000.])
+#ax[1].scatter([x_anl, x_anl], [-15., 15.],)
 ax[1].set_ylim(-15, 15)
 
 ax[1].plot([0., 1.], [mu_ab/1.e3 - Gs[0, -1], mu_an/1.e3 - Gs[0, 0]],
@@ -101,7 +101,7 @@ ax[1].plot([0., 1.], [mu_ab/1.e3 - Gs[0, -1], mu_an/1.e3 - Gs[0, 0]],
 
 for i in range(2):
     ax[i].legend()
-    ax[i].set_xlabel('$x_{{an}}$ (mol%)')
+    ax[i].set_xlabel('$x_{{an}}$ (mol fraction)')
     ax[i].set_xlim(0., 1.)
 
 ax[0].plot([0., 1.], [1600., 1600.], linestyle=':', color='k',
@@ -110,7 +110,11 @@ ax[0].text(0.1, 1700., 'melt')
 ax[0].text(0.32, 1620., 'melt+plag')
 ax[0].text(0.8, 1500.,  'plag')
 ax[0].set_ylabel('Temperature (K)')
-ax[1].set_ylabel('$\\mathcal{{G}}$ (soln - mech.mix.plag.mbrs; kJ/mol)')
+ax[1].set_ylabel('$\\mathcal{{G}}$ (kJ/mol)')
+
+ax[1].text(0.6, -5, '$\mu$(CaAl$_2$Si$_2$O$_8$)', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+ax[1].text(0.1, -8, '$\mu$(NaAlSi$_3$O$_8$)', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+
 
 fig.set_tight_layout(True)
 fig.savefig('figures/plagioclase_melting.pdf')

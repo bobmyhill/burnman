@@ -106,14 +106,14 @@ fig = plt.figure(figsize=(8, 3))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 fig2 = plt.figure(figsize=(8, 3))
 ax2 = [fig2.add_subplot(1, 2, i) for i in range(1, 3)]
-ax[0].plot(x_ab_fsps, Ts)
-ax[0].plot(x_ab_liqs, Ts)
-ax_all[0].plot(x_ab_fsps, Ts)
-ax_all[0].plot(x_ab_liqs, Ts)
+ax[0].plot(x_ab_fsps, Ts, color='k')
+ax[0].plot(x_ab_liqs, Ts, color='k')
+ax_all[0].plot(x_ab_fsps, Ts, color='k')
+ax_all[0].plot(x_ab_liqs, Ts, color='k')
 ax_all[0].plot(xs_solvus, Ts_solvus)
 
-ax2[0].plot(x_ab_fsps, Ts)
-ax2[0].plot(x_ab_liqs, Ts)
+ax2[0].plot(x_ab_fsps, Ts, color='k')
+ax2[0].plot(x_ab_liqs, Ts, color='k')
 ax[1].plot(x_ab_fsps, H_fsps/1.e3, color='k')
 ax[1].plot(x_ab_liqs, H_liqs/1.e3, color='k')
 
@@ -196,10 +196,20 @@ for i, T in enumerate(Ts):
 
     xHs = np.array(xHs).T
     ln, = ax[1].plot(xHs[0], xHs[1], label=f'{T} K')
-    ln, = ax2[1].plot(x_ab_fsps, G_fsps,
-                      linestyle=':')
-    ln, = ax2[1].plot(x_ab_fsps, G_liqs, label=f'{T} K',
-                      color=ln.get_color())
+
+    if i == 0 or i == 3:
+        if i == 0:
+            ln, = ax2[1].plot(x_ab_fsps, G_fsps, label='solid')
+            ln, = ax2[1].plot(x_ab_fsps, G_liqs,
+                            color=ln.get_color(),
+                            linestyle=':', label=f'melt ({T} K)')
+        else:
+            ln, = ax2[1].plot(x_ab_fsps, G_fsps)
+            ln, = ax2[1].plot(x_ab_fsps, G_liqs, label=f'{T} K',
+                            color=ln.get_color(),
+                            linestyle=':')
+
+        ax2[0].plot([0., 1.], [T, T], color=ln.get_color())
 
 ax[1].legend(ncol=2)
 ax2[1].legend(ncol=2)
@@ -233,7 +243,7 @@ ax[0].set_ylim(1250., 1450.)
 ax2[0].set_ylim(1250., 1450.)
 
 ax[1].set_ylim(-3740., -3500.)
-ax2[1].set_ylim(-4580., -4420.)
+ax2[1].set_ylim(-4550., -4450.)
 
 fig_all.set_tight_layout(True)
 fig.set_tight_layout(True)

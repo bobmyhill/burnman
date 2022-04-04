@@ -44,8 +44,8 @@ gt_ideal = burnman.SolidSolution(name='py-gr',
                                  endmembers=[[py, '[Mg]1'],
                                              [gr, '[Ca]1']])
 
-fig = plt.figure(figsize=(8, 3))
-ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
+fig = plt.figure(figsize=(4, 3))
+ax = [fig.add_subplot(1, 1, 1)]
 
 n_x = 101
 xs = np.linspace(0.0001, 0.99999, n_x)
@@ -54,7 +54,7 @@ G_mech = np.empty(n_x)
 G_ideal = np.empty(n_x)
 G_tot = np.empty(n_x)
 
-for i, T in enumerate([1200., 800.]):
+for T in [0.1, 500., 1000., 1500.]:
 
     gt.set_state(1.e5, T)
     Gpy = gt.endmembers[0][0].gibbs
@@ -62,49 +62,20 @@ for i, T in enumerate([1200., 800.]):
     G_mech = Gpy + xs*(Ggr - Gpy)
 
     for j, x in enumerate(xs):
-        gt.set_state(1.e5, T)
         gt_ideal.set_state(1.e5, T)
-        gt.set_composition([1.-x, x])
         gt_ideal.set_composition([1.-x, x])
-        G_tot[j] = gt.gibbs
-        G_ideal[j] = gt_ideal.gibbs
+        G_ideal[j] = gt_ideal.excess_gibbs
 
-    ax[i].plot(xs, G_mech/1.e3, label='mech', alpha=0.5)
-    ax[i].plot(xs, G_ideal/1.e3, label='ideal', alpha=0.5)
-    ax[i].plot(xs, (G_mech + G_tot - G_ideal)/1.e3,
-               label='non-ideal', alpha=0.5)
-    ax[i].plot(xs, G_tot/1.e3, label='total')
+    ax[0].plot(xs, (G_ideal)/1.e3, label=f'{T:.0f} K')
 
-    gt.set_composition([0.5, 0.5])
-    composition = gt.formula
-    gt1 = copy(gt)
-    gt2 = copy(gt)
-    gt1.set_composition([0.01, 0.99])
-    gt2.set_composition([0.99, 0.01])
-    assemblage = burnman.Composite([gt1, gt2])
-    equality_constraints = [['P', 1.e5],
-                            ['T', T]]
-    sol, prm = equilibrate(composition,
-                           assemblage,
-                           equality_constraints)
-    mus = sol.assemblage.phases[0].partial_gibbs
-    xxs = [sol.assemblage.phases[0].molar_fractions[1],
-           sol.assemblage.phases[1].molar_fractions[1]]
-    Gxs = np.array([sol.assemblage.phases[0].gibbs,
-                    sol.assemblage.phases[1].gibbs])
-    #ax[i].plot([0., 1.], mus/1.e3, label='$\\mu$-tieline')
-    #ax[i].scatter(xxs, Gxs/1.e3, color='red')
+ax[0].set_xlim(0., 1.)
+ax[0].set_xlabel('Composition')
+ax[0].set_ylabel('-$TS_{{conf}}$ (kJ/mol)')
 
-    Gav = (Gpy + Ggr)/2./1000.
-    ax[i].set_xlim(0., 1.)
-    ax[i].set_ylim(Gav - 8., Gav + 8.)
-    ax[i].text(0.05, Gav - 7, f'{T:.0f} K')
-    ax[i].set_xlabel('Composition')
-    ax[i].set_ylabel('$\\mathcal{{G}}$ (kJ/mol)')
+ax[0].legend()
 
-ax[1].legend(ncol=2)
 fig.set_tight_layout(True)
 
-fig.savefig('figures/non_ideal_mixing.pdf')
+fig.savefig('figures/ideal_mixing_energies.pdf')
 
 plt.show()
