@@ -76,7 +76,7 @@ def make_voigt_matrix_inverse(Cs):
     f = np.log(V / V0)
     f2 = 0.5*(np.power(V / V0, -2./3.) - 1.)
     # print(T, V, f)
-    return np.array([T, P, f, KT, dpsidf[0, 0], dpsidf[0, 1], dpsidf[3, 3]])
+    return np.array([T, P, f, 1./betaT, dpsidf[0, 0], dpsidf[0, 1], dpsidf[3, 3]])
 
 
 dpsidf_data = np.empty((per_data.shape[0], per_data.shape[1]-1))
@@ -142,7 +142,11 @@ for idx in range(4):  # only plot 300 K data
                 print(f[i], dpsidf[j][i])
 
         ln, = ax[j+3].plot(f, dpsidf[j], label=f'{T} K')
-    ln, = ax[j+6].plot(f, Pth, label=f'{T} K')
+        
+    ln, = ax[6].plot(V, -dpsidf[1]/dpsidf[0], label=f'{T} K') 
+    ln, = ax[7].plot(V, KT, label=f'{T} K')    
+    ln, = ax[7].plot(V, KT/dpsidf[2], label=f'{T} K', linestyle=':')    
+    ln, = ax[8].plot(f, Pth, label=f'{T} K')
 
 
 labels = ['11', '12', '44']
@@ -166,36 +170,31 @@ plt.show()
 data = np.array(data).T
 
 
-def solved_equation(functionString, data, a_min, b_min):
+def solved_equation(functionString, data, a_fix, b_min):
 
     equation = UserDefined3DFunction(inUserFunctionString=functionString)
     pyeq3.dataConvertorService().ProcessData(data, equation, False)
 
-    equation.lowerCoefficientBounds = [a_min, b_min, b_min, b_min, b_min,
-                                       None, None, None, None]
+    equation.lowerCoefficientBounds = [None, b_min, b_min, b_min, b_min,
+                                       b_min, b_min, b_min, b_min]
     equation.upperCoefficientBounds = [None, None, None,
                                        None, None, None,
                                        None, None, None]
+    equation.fixedCoefficients = [a_fix, None, None, None, None,
+                                  None, None, None, None]
     equation.Solve()
     popt = equation.solvedCoefficients
-    if np.abs(popt[2] - popt[4]) < 1.e-2:
+    if np.abs(popt[2] - popt[4]) < 1.e-2 or np.abs(popt[7] - popt[8]) < 1.e-2:
         print('Recalculating as exponents equal')
-        equation.lowerCoefficientBounds = [
-            a_min, b_min, popt[2]+0.01, b_min, b_min, None, None, None, None]
+        equation.lowerCoefficientBounds = [None, b_min, popt[2]+0.01, b_min,
+                                           b_min, b_min, b_min, popt[7]+0.01,
+                                           b_min]
         equation.upperCoefficientBounds = [None, None,
                                            None, None,
                                            popt[2]-0.01, None,
-                                           None, None, None]
+                                           None, None, popt[7]-0.01]
 
         equation.Solve()
-        # Reset
-        equation.lowerCoefficientBounds = [
-            a_min, b_min, b_min, b_min, b_min, None, None, None, None]
-        equation.upperCoefficientBounds = [None, None,
-                                           None, None,
-                                           None, None,
-                                           None, None,
-                                           None]
     return equation
 
 
@@ -233,16 +232,22 @@ ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 
 for i in range(2):
     functionStringXY = 'a + (b + j*Y)*exp((c+l*Y)*X) + (g+k*Y)*exp((h+m*Y)*X)'
+    functionStringXY = ('a + b*exp(c*X) + g*exp(h*X) + '
+                        'Y*(j*exp(l*X) + k*exp(m*X))')
     if i == 0:
         equation = solved_equation(
-            functionStringXY, data[:, [0, 1, 2]], 0.4, 0.)
+            functionStringXY, data[:, [0, 1, 2]], 1./3., 0.)
     else:
+        equation = solved_equation(
+            functionStringXY, data[:, [0, 1, 3]], 0., -10000.)
+        """
         equation = UserDefined3DFunction(inUserFunctionString=functionStringXY)
         equation.fixedCoefficients = [0., None, None, None, None,
                                       None, None, None, None]
         pyeq3.dataConvertorService().ProcessData(
             data[:, [0, 1, 3]], equation, False)
         equation.Solve()
+        """
 
     print(equation)
 
@@ -257,9 +262,11 @@ for i in range(2):
         ax[i].plot(VoverV0, y, color=cmap(norm(Pth)))
 
     minx = np.exp(np.min(data[:, 0]))
+    #minx = np.min([minx, VoverV0[0]])
     maxx = np.exp(np.max(data[:, 0]))
     rangex = maxx - minx
     miny = np.min(data[:, i+2])
+    #miny = np.min([miny, np.min(y)])
     maxy = np.max(data[:, i+2])
     rangey = maxy - miny
     ax[i].set_xlim(minx - 0.05*rangex, maxx + 0.05*rangex)
