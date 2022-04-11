@@ -10,6 +10,7 @@ orthorhombic_fitting
 """
 
 from __future__ import absolute_import
+from lib2to3.pgen2.token import STAR
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -220,7 +221,101 @@ if run_fitting:
     sol = minimize(orthorhombic_misfit, guesses, method='COBYLA', args=[[i, min]], options={'rhobeg': 0.2, 'maxiter': 10000})
     print(sol)
 
-do_plotting = True
+d = ol_data.T
+TK, PGPa, rho, rhoerr = d[:4]
+C11, C11err = d[4:6]
+C22, C22err = d[6:8]
+C33, C33err = d[8:10]
+C44, C44err = d[10:12]
+C55, C55err = d[12:14]
+C66, C66err = d[14:16]
+C12, C12err = d[16:18]
+C13, C13err = d[18:20]
+C23, C23err = d[20:22]
+print(C12)
+
+O = C12*0.
+CN = [[C11, C12, C13, O, O, O],
+      [C12, C22, C23, O, O, O],
+      [C13, C23, C33, O, O, O],
+      [O, O, O, C44, O, O],
+      [O, O, O, O, C55, O],
+      [O, O, O, O, O, C66]]
+
+CN = np.array(CN).T
+SN = np.linalg.inv(CN)
+betaN = np.sum(SN[:, :3, :3], axis=(1, 2))
+
+if True:
+    
+    m = make_orthorhombic_mineral_from_parameters([ 1.00261177e+00,  9.91759509e-01,  1.00180767e+00,  1.12629568e+00,
+            3.13913957e-01,  4.43835171e-01, -9.38192626e-01,  8.57450038e-01,
+            2.63521201e-01,  3.10992538e-01, -5.84207311e+00,  1.22205974e+01,
+            5.11362234e-01,  7.76039201e-01, -1.00640533e+00,  5.66780847e+00,
+            5.12401782e-01,  1.59529634e+00,  1.23345902e+01, -7.60264507e+00,
+            3.06123818e-01,  6.62862573e-01, -6.29539285e-01,  9.07101981e+00,
+            1.70501045e+00,  1.90725482e+00,  6.48576298e+00,  2.99733967e+00,
+            3.62644594e-01,  1.96838589e+00, -4.97224163e-01,  2.08768703e+01,
+        -2.66242709e+00,  2.32579910e+00, -6.26342959e+00,  1.10758805e+01,
+        -4.99496737e+00,  1.61144010e+00, -1.85034515e+00,  2.32110973e+01,
+        -3.15692901e+00,  2.65209318e+00,  4.39232410e-01,  4.71069329e+00,
+        -6.24379333e+00,  1.55360338e+00, -1.42688476e+00,  1.26449796e+01,
+        -3.69943280e-01,  5.71780041e+00,  6.49141249e+00, -3.81945412e+00,
+        -1.25012075e+00, -1.20402033e-01,  4.38934297e-01, -1.17987749e+00,
+            4.61289178e-01, -2.21403680e-01,  7.81563940e+00,  8.17777878e+00,
+        -1.34030384e-02, -1.01671929e-01,  2.70232982e-01, -2.68143106e+00,
+        -6.93075277e-01, -4.04634113e-01, -3.49178491e+00,  1.09213501e+01,
+            4.91098948e-02])
+    # Start plotting Sij figure
+    fig = plt.figure(figsize=(12, 12))
+    ax = [fig.add_subplot(3, 3, i) for i in range(1, 10)]
+
+    pressures = np.linspace(1.e7, 30.e9, 101)
+    G_iso = np.empty_like(pressures)
+    G_aniso = np.empty_like(pressures)
+    C = np.empty((len(pressures), 6, 6))
+
+    f = np.empty_like(pressures)
+    dXdf = np.empty_like(pressures)
+
+    i_pq = ((1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 4),
+            (5, 5),
+            (6, 6),
+            (1, 2),
+            (1, 3),
+            (2, 3))
+
+    temperatures = [300., 500., 750., 900.]
+    m.set_state(1.e5, 300.)
+    rho0 = m.rho / 1000.
+    for T in temperatures:
+        for i, P in enumerate(pressures):
+            m.set_state(P, T)
+            f[i] = np.log(m.V/m.params['V_0'])
+            C[i] = m.isothermal_compliance_tensor / np.sum(m.isothermal_compliance_tensor[:3][:3])
+
+        for i, (p, q) in enumerate(i_pq):
+            #ln = ax[i].plot(np.exp(f), C[:, p-1, q-1], label=f'{T} K')
+            
+            v1 = [b for i, b in enumerate(rho0/rho) if np.abs(TK[i] - T) < 1.]
+            #v1 = [b for i, b in enumerate(PGPa) if np.abs(TK[i] - T) < 1.]
+            v2 = [b for i, b in enumerate(SN[:,p-1,q-1]/betaN) if np.abs(TK[i] - T) < 1.]
+            ax[i].scatter(v1, v2, label=f'{T} K')
+
+    for i, (p, q) in enumerate(i_pq):
+        ax[i].set_xlabel('$V/V_0$')
+        ax[i].set_ylabel(f'$S_{{N {p}{q}}}/\\beta_N$')
+        ax[i].legend()
+
+    fig.set_tight_layout(True)
+    fig.savefig('olivine_SNijs.pdf')
+    plt.show()
+
+
+do_plotting = False
 if do_plotting:
     if run_fitting:
         m = make_orthorhombic_mineral_from_parameters(sol.x)
