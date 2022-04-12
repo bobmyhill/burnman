@@ -187,12 +187,12 @@ def solved_equation(functionString, data, a_fix, b_min):
     if np.abs(popt[2] - popt[4]) < 1.e-2 or np.abs(popt[7] - popt[8]) < 1.e-2:
         print('Recalculating as exponents equal')
         equation.lowerCoefficientBounds = [None, b_min, popt[2]+0.01, b_min,
-                                           b_min, b_min, b_min, popt[7]+0.01,
+                                           b_min, b_min, b_min, popt[7]+0.00001,
                                            b_min]
         equation.upperCoefficientBounds = [None, None,
                                            None, None,
                                            popt[2]-0.01, None,
-                                           None, None, popt[7]-0.01]
+                                           None, None, popt[7]-0.00001]
 
         equation.Solve()
     return equation
@@ -218,7 +218,7 @@ if False:
 
         print(equation)
 
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(6, 3))
         axes = fig.add_subplot(1, 1, 1)
         pyeq3.Graphics.Graphics2D.ModelScatterConfidenceGraph(equation, axes)
         plt.show()
@@ -227,7 +227,7 @@ if False:
 cmap = plt.get_cmap('viridis')
 norm = plt.Normalize(np.min(data[:, 1]), np.max(data[:, 1]))
 
-fig = plt.figure(figsize=(8, 4))
+fig = plt.figure(figsize=(8, 3))
 ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
 
 for i in range(2):
@@ -290,4 +290,5 @@ cbar = plt.colorbar(pts, cax=cax)
 cbar.set_label('$P_{th}$ (GPa)')
 
 fig.set_tight_layout(True)
+fig.savefig('periclase_model_Karki.pdf')
 plt.show()
