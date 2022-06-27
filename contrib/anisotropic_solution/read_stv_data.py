@@ -1,6 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.linalg import expm
 
+
+def F(Q):
+    a = 0.01
+    b = 0.003
+    z = 0.*Q
+    psidelta = np.array([[a*Q + b/2.*Q*Q, z, z],
+                         [z, -a*Q + b/2.*Q*Q, z],
+                         [z, z, - b*Q*Q]])
+    exps = np.array([expm(p) for p in psidelta.T])
+    return exps
+
+
+Qs = np.linspace(0., 1., 101)
+Fs = F(Qs)
+plt.plot(Qs*Qs, Fs[:, 0, 0])
+plt.plot(Qs*Qs, Fs[:, 1, 1])
+plt.plot(Qs*Qs, Fs[:, 2, 2])
+plt.show()
 
 unit_cell = np.loadtxt('data/Zhang_2021_stishovite_unit_cell.dat')
 
@@ -14,8 +33,8 @@ rho, rhoerr = unit_cell[:, 10:12].T
 
 # plt.plot(P, a/c)
 # plt.show()
-fig = plt.figure(figsize=(8, 4))
-ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
+fig = plt.figure(figsize=(12, 4))
+ax = [fig.add_subplot(1, 3, i) for i in range(1, 4)]
 
 ax[0].scatter(P, a, label='a')
 ax[0].scatter(P, b, label='b')
@@ -45,6 +64,7 @@ C = np.array([[C11, C12, C13, nul, nul, nul],
 
 
 S = np.linalg.inv(C)
+w, v = np.linalg.eig(C)
 
 beta_S = np.sum(np.sum(S[:, :3, :3], axis=1), axis=1)
 ax[1].scatter(P, 1./beta_S, label='K_S')
@@ -69,6 +89,10 @@ ax[1].errorbar(P, C23, xerr=Perr, yerr=C23err, fmt='None')
 ax[1].errorbar(P, C44, xerr=Perr, yerr=C44err, fmt='None')
 ax[1].errorbar(P, C55, xerr=Perr, yerr=C55err, fmt='None')
 ax[1].errorbar(P, C66, xerr=Perr, yerr=C66err, fmt='None')
+
+for i in range(6):
+    ax[2].scatter(P, w[:, i])
+ax[2].set_ylim(0., )
 
 for i in range(2):
     ax[i].legend()
