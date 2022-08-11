@@ -605,6 +605,14 @@ class ElasticSolution(Mineral):
             )
 
     @material_property
+    def isothermal_bulk_modulus_reuss(self):
+        """
+        Returns isothermal bulk modulus of the solution [Pa].
+        Aliased with self.K_T.
+        """
+        return self.isothermal_bulk_modulus
+
+    @material_property
     def adiabatic_bulk_modulus(self):
         """
         Returns adiabatic bulk modulus of the solution [Pa].
@@ -700,17 +708,30 @@ class ElasticSolution(Mineral):
         of the solution [1/K].
         Aliased with self.alpha.
         """
-        alphaKT = sum(
-            [
-                self.endmembers[i][0].isothermal_bulk_modulus
-                * self.endmembers[i][0].alpha
-                * self.molar_fractions[i]
-                for i in range(self.n_endmembers)
-            ]
-        ) + self.solution_model.excess_alpha_K_T(
-            self.molar_volume, self.temperature, self.molar_fractions
-        )
-        return alphaKT / self.isothermal_bulk_modulus
+        try:
+            alphaKT = sum(
+                [
+                    self.endmembers[i][0].isothermal_bulk_modulus
+                    * self.endmembers[i][0].alpha
+                    * self.molar_fractions[i]
+                    for i in range(self.n_endmembers)
+                ]
+            ) + self.solution_model.excess_alpha_K_T(
+                self.molar_volume, self.temperature, self.molar_fractions
+            )
+            return alphaKT / self.isothermal_bulk_modulus
+        except:
+            alphaKT = sum(
+                [
+                    self.endmembers[i][0].isothermal_bulk_modulus_reuss
+                    * self.endmembers[i][0].alpha
+                    * self.molar_fractions[i]
+                    for i in range(self.n_endmembers)
+                ]
+            ) + self.solution_model.excess_alpha_K_T(
+                self.molar_volume, self.temperature, self.molar_fractions
+            )
+            return alphaKT / self.isothermal_bulk_modulus_reuss
 
     @material_property
     def molar_heat_capacity_v(self):

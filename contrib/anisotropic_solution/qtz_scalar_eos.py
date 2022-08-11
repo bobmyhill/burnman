@@ -6,6 +6,7 @@ from scipy.optimize import minimize_scalar
 from slb_qtz import qtz_alpha, qtz_beta, b_BD, c_BD, qtz_ss_scalar
 from slb_qtz import helmholtz_free_energy_alpha, helmholtz_free_energy_beta
 
+from burnman.tools.eos import check_eos_consistency
 
 
 
@@ -27,8 +28,6 @@ sol = qtz_ss_scalar()
 
 sol.set_composition([0.3, 0.7])
 sol.set_state(1.e9, 500.)
-
-from burnman.tools.eos import check_eos_consistency
 
 check_eos_consistency(sol, 1.e9, 500., verbose=True)
 

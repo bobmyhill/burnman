@@ -6,7 +6,7 @@ from scipy.optimize import minimize_scalar
 from slb_qtz import qtz_alpha, qtz_beta, b_BD, c_BD, qtz_ss_anisotropic
 from slb_qtz import helmholtz_free_energy_alpha, helmholtz_free_energy_beta
 
-
+from burnman.tools.eos import check_anisotropic_eos_consistency
 
 
 Raz_d = np.loadtxt('./data/Raz_et_al_2002_quartz_PVT.dat', unpack=True)
@@ -16,7 +16,9 @@ Raz_temperatures = sorted(set(Raz_d[1]))
 
 sol = qtz_ss_anisotropic
 
-
+qtz_ss_anisotropic.set_composition([0.3, 0.7])
+check_anisotropic_eos_consistency(sol, 1.e9, 500., verbose=True)
+exit()
 
 qtz_HP = burnman.minerals.HP_2011_ds62.q()
 
