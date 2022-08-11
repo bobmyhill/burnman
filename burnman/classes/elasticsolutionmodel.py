@@ -132,11 +132,11 @@ class ElasticSolutionModel(object):
             self.excess_partial_entropies(volume, temperature, molar_fractions),
         )
 
-    def excess_enthalpy(self, volume, temperature, molar_fractions):
+    def excess_isothermal_bulk_modulus(self, volume, temperature, molar_amounts):
         """
         Given a list of molar fractions of different phases,
-        compute the excess enthalpy of the solution.
-        The base class implementation assumes that the excess enthalpy is zero.
+        compute the excess isothermal bulk modulus of the solution.
+        The base class implementation assumes that the excess isothermal bulk modulus is zero.
 
         Parameters
         ----------
@@ -151,14 +151,60 @@ class ElasticSolutionModel(object):
 
         Returns
         -------
-        H_excess : float
-            The excess enthalpy of the solution
+        K_T_excess : float
+            The excess isothermal bulk modulus of the solution
         """
-        return (
-            self.excess_helmholtz_energy(volume, temperature, molar_fractions)
-            + temperature * self.excess_entropy(volume, temperature, molar_fractions)
-            - volume * self.excess_pressure(volume, temperature, molar_fractions)
-        )
+        return 0.0
+
+    def excess_alpha_K_T(self, volume, temperature, molar_amounts):
+        """
+        Given a list of molar fractions of different phases,
+        compute the excess product of the volumetric expansivity and
+        isothermal bulk modulus of the solution.
+        The base class implementation assumes that the excess product is zero.
+
+        Parameters
+        ----------
+        volume : float
+            Volume at which to evaluate the solution model. [m^3/mol]
+
+        temperature : float
+            Temperature at which to evaluate the solution. [K]
+
+        molar_fractions : list of floats
+            List of molar fractions of the different endmembers in solution
+
+        Returns
+        -------
+        alpha_K_T_excess : float
+            The excess product of the volumetric expansivity and
+            isothermal bulk modulus  of the solution
+        """
+        return 0.0
+
+    def excess_molar_heat_capacity_v(self, volume, temperature, molar_amounts):
+        """
+        Given a list of molar fractions of different phases,
+        compute the excess isochoric heat capacity of the solution.
+        The base class implementation assumes that the excess isochoric heat capacity is zero.
+
+        Parameters
+        ----------
+        volume : float
+            Volume at which to evaluate the solution model. [m^3/mol]
+
+        temperature : float
+            Temperature at which to evaluate the solution. [K]
+
+        molar_fractions : list of floats
+            List of molar fractions of the different endmembers in solution
+
+        Returns
+        -------
+        C_V_excess : float
+            The excess isochoric heat capacity of the solution
+        """
+        return 0.0
 
     def excess_partial_helmholtz_energies(self, volume, temperature, molar_fractions):
         """
@@ -827,6 +873,41 @@ class ElasticFunctionSolution(ElasticIdealSolution):
                 )
 
         self.pressure_hessian = pressure_hess
+
+    def excess_pressure(self, volume, temperature, molar_amounts):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            return -ag.jacobian(self._excess_helmholtz_function, argnum=0)(
+                volume, temperature, molar_amounts
+            )
+
+    def excess_isothermal_bulk_modulus(self, volume, temperature, molar_amounts):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            return -volume * ag.jacobian(self.excess_pressure, argnum=0)(
+                volume, temperature, molar_amounts
+            )
+
+    def excess_alpha_K_T(self, volume, temperature, molar_amounts):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            return ag.jacobian(self.excess_pressure, argnum=1)(
+                volume, temperature, molar_amounts
+            )
+
+    def excess_entropy(self, volume, temperature, molar_amounts):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            return -ag.jacobian(self._excess_helmholtz_function, argnum=1)(
+                volume, temperature, molar_amounts
+            )
+
+    def excess_molar_heat_capacity_v(self, volume, temperature, molar_amounts):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            return temperature * ag.jacobian(self.excess_entropy, argnum=1)(
+                volume, temperature, molar_amounts
+            )
 
     def excess_partial_helmholtz_energies(self, volume, temperature, molar_fractions):
         ideal_helmholtz = ElasticIdealSolution._ideal_excess_partial_helmholtz(

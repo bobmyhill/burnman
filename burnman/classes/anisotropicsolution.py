@@ -51,13 +51,13 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                  solution_type=None,
                  endmembers=None,
                  energy_interaction=None,
-                 volume_interaction=None,
+                 pressure_interaction=None,
                  entropy_interaction=None,
                  energy_ternary_terms=None,
-                 volume_ternary_terms=None,
+                 pressure_ternary_terms=None,
                  entropy_ternary_terms=None,
                  alphas=None,
-                 excess_gibbs_function=None,
+                 excess_helmholtz_function=None,
                  master_cell_parameters=np.array([1., 1., 1.,
                                                   90., 90., 90]),
                  anisotropic_parameters={},
@@ -69,18 +69,19 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
         """
         Set up matrices to speed up calculations for when P, T, X is defined.
         """
+        self.T_0 = 298.15
         ElasticSolution.__init__(self,
                                  name=name,
                                  solution_type=solution_type,
                                  endmembers=endmembers,
                                  energy_interaction=energy_interaction,
-                                 volume_interaction=volume_interaction,
+                                 pressure_interaction=pressure_interaction,
                                  entropy_interaction=entropy_interaction,
                                  energy_ternary_terms=energy_ternary_terms,
-                                 volume_ternary_terms=volume_ternary_terms,
+                                 pressure_ternary_terms=pressure_ternary_terms,
                                  entropy_ternary_terms=entropy_ternary_terms,
                                  alphas=alphas,
-                                 excess_gibbs_function=excess_gibbs_function,
+                                 excess_helmholtz_function=excess_helmholtz_function,
                                  molar_fractions=molar_fractions)
 
         self.orthotropic = orthotropic
@@ -97,21 +98,49 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
 
         cv = cell_parameters_to_vectors(master_cell_parameters)
         self.cell_vectors_0 = cv
+        self.cell_volume_0 = np.linalg.det(self.cell_vectors_0)
         self.F0s = np.array([np.linalg.solve(self.cell_vectors_0,
                                              mbr[0].cell_vectors_0)
                              for mbr in self.endmembers])
 
     def set_state(self, pressure, temperature):
-
         # Set solution conditions
+        if not hasattr(self, "molar_fractions"):
+            raise Exception('To use this EoS, '
+                            'you must first set the composition')
         ElasticSolution.set_state(self, pressure, temperature)
+
+        # 1) Compute dPthdf|T
+        # relatively large dP needed for accurate estimate of dPthdf
+        ElasticSolution.set_state(self, pressure, temperature)
+        dP = 1.e4 # self.isothermal_bulk_modulus_reuss*1.e-5
+
+        ElasticSolution.set_state(self, pressure-dP/2., temperature)
+        V1 = self.V
+        Pth1 = pressure-dP/2. - ElasticSolution._pressure(self, self.T_0,
+                                                          V1, self.molar_fractions)
+
+        ElasticSolution.set_state(self, pressure+dP/2., temperature)
+        V2 = self.V
+        Pth2 = pressure+dP/2. - ElasticSolution._pressure(self, self.T_0,
+                                                          V2, self.molar_fractions)
+
+        self.dPthdf = (Pth2 - Pth1) / np.log(V2/V1)
+        ElasticSolution.set_state(self, pressure, temperature)
+
+        # 2) Compute other properties needed for anisotropic equation of state
+        V = self.molar_volume
+        f = np.log(V/self.cell_volume_0)
+        self._f = f
+
+        self.Pth = (Pth1 + Pth2)/2.
 
         # Get endmember values of psi and derivatives
         self.Psi_Voigt_mbr = np.array([mbr[0].Psi_Voigt
                                        for mbr in self.endmembers])
-        self.dPsidf_Voigt_mbr = np.array([mbr[0].dPsidf_Voigt_mbr
+        self.dPsidf_Voigt_mbr = np.array([mbr[0].dPsidf_Voigt
                                           for mbr in self.endmembers])
-        self.dPsidPth_Voigt_mbr = np.array([mbr[0].dPsidPth_Voigt_mbr
+        self.dPsidPth_Voigt_mbr = np.array([mbr[0].dPsidPth_Voigt
                                             for mbr in self.endmembers])
 
     def set_composition(self, molar_fractions):
@@ -125,14 +154,15 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
 
     @material_property
     def _Psi_excess_tuple(self):
-        self.psi_excess_function(self.V, self.ddd,
-                                 self.molar_fractions,
-                                 self.anisotropic_params)
+        return self.psi_excess_function(self._f, self.Pth,
+                                        self.molar_fractions,
+                                        self.anisotropic_params)
 
     @material_property
     def Psi_Voigt(self):
         Psi0_mech_full = np.einsum('ijk, i, lm->jklm',
-                                  self.F0s, self.molar_fractions, np.eye(3)/3.)
+                                   self.F0s, self.molar_fractions,
+                                   np.eye(3)/3.)
         Psi0_mech = self._contract_stiffnesses(Psi0_mech_full)
         Psi_mech = (np.einsum('ijk, i->jk',
                               self.Psi_Voigt_mbr,
@@ -155,17 +185,19 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
         return dPsidPth_mech + self._Psi_excess_tuple[2]
 
     @material_property
-    def dPsidX_Voigt(self):
-        dPsidX_mech_full = np.einsum('ijk, lm->ijklm',
-                                     self.F0s, np.eye(3)/3.)
-        dPsidX_mech = np.array([self._contract_stiffnesses(dPsidX)
-                                for dPsidX in dPsidX_mech_full])
-        return dPsidX_mech + self._Psi_excess_tuple[3]
+    def dPsidX(self):
+        dPsidX_mech = np.einsum('ijk, lm->jklmi',
+                                self.F0s, np.eye(3)/3.)
+
+        x = np.array([self._voigt_notation_to_compliance_tensor(A)
+                      for A in self._Psi_excess_tuple[3].T]).T
+
+        return dPsidX_mech + x
 
     @material_property
     def depsdQ(self):
         return np.einsum('ijklm, mn, kl->ijn',
-                         self.dPsidX_Voigt, self.dXdQ, np.eye(3))
+                         self.dPsidX, self.dXdQ, np.eye(3))
 
     @material_property
     def dSdQ(self):
@@ -178,23 +210,15 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                          self._partial_pressures, self.dXdQ)
 
     @material_property
-    def d2FdQ2(self):
+    def d2FdQdQ(self):
         return np.einsum('ij, ik, jl->kl',
                          self._helmholtz_hessian,
                          self.dXdQ,
                          self.dXdQ)
 
     @material_property
-    def unrelaxed_full_stiffness(self):
-        relaxed_bool = self.relaxed
-        self.relaxed = False
-        C_T = self.full_isothermal_stiffness_tensor
-        self.relaxed = relaxed_bool
-        return C_T
-
-    @material_property
     def d2FdQdZ(self):
-        C_T = self.unrelaxed_full_stiffness
+        C_T = self.full_isothermal_stiffness_tensor_unrelaxed
         d2FdQdeps = -self.V*(np.einsum('mn, i->imn', np.eye(3), self.dPdQ)
                              + np.einsum('pqmn, kli, klpq->imn',
                                          dd, self.depsdQ, C_T))
@@ -205,7 +229,7 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
 
     @material_property
     def d2FdQdQ_relaxed(self):
-        C_T = self.unrelaxed_full_stiffness
+        C_T = self.full_isothermal_stiffness_tensor_unrelaxed
         return (self.d2FdQdQ
                 + self.V*np.einsum('kli, klmn, mnj->ij',
                                    self.depsdQ,
@@ -223,7 +247,6 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
         c_eps = self.molar_isometric_heat_capacity_unrelaxed
         V = self.molar_volume
         T = self.temperature
-
         return np.block([[V * CT, V * pi[:, np.newaxis]],
                          [V * pi, -c_eps/T]])
 
@@ -248,7 +271,7 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                 return self._contract_compliances(C_rotated)
 
         else:
-            return super().isothermal_stiffness_tensor
+            return self.isothermal_stiffness_tensor_unrelaxed
 
     @material_property
     def thermal_stress_tensor(self):
@@ -263,14 +286,14 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                 return np.einsum('mi, nj, ij->mn', R, R, pi)
 
         else:
-            return super().thermal_stress_tensor
+            return self.thermal_stress_tensor_unrelaxed
 
     @material_property
     def molar_isometric_heat_capacity(self):
         if self.relaxed:
             return -self.d2FdZdZ_relaxed[6, 6] * self.temperature
         else:
-            return super().molar_isometric_heat_capacity
+            return self.molar_isometric_heat_capacity_unrelaxed
 
     @material_property
     def isothermal_compliance_tensor(self):
@@ -284,7 +307,7 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
         if self.relaxed:
             return np.linalg.inv(self.isothermal_stiffness_tensor)
         else:
-            return super().isothermal_compliance_tensor
+            return self.isothermal_compliance_tensor_unrelaxed
 
     @material_property
     def thermal_expansivity_tensor(self):
@@ -300,4 +323,179 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                                self.thermal_stress_tensor)
             return alpha
         else:
-            return super().thermal_expansivity_tensor
+            return self.thermal_expansivity_tensor_unrelaxed
+
+    @material_property
+    def isothermal_compliance_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        isothermal_compliance_tensor : 2D numpy array
+            The isothermal compliance tensor [1/Pa]
+            in Voigt form (:math:`\\mathbb{S}_{\\text{T} pq}`).
+        """
+        S_T = ((1./self.isothermal_K_RT_unrelaxed)
+               * (self.dPsidf_Voigt + self.dPsidPth_Voigt * self.dPthdf))
+        if self.orthotropic:
+            return S_T
+        else:
+            R = self.rotation_matrix
+            S = self._voigt_notation_to_compliance_tensor(S_T)
+            S_rotated = np.einsum('mi, nj, ok, pl, ijkl->mnop', R, R, R, R, S)
+            return self._contract_compliances(S_rotated)
+
+    @material_property
+    def thermal_expansivity_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        thermal_expansivity_tensor : 2D numpy array
+            The tensor of thermal expansivities [1/K].
+        """
+        a = (self.alpha_unrelaxed
+             * (self.dPsidf_Voigt
+                + self.dPsidPth_Voigt
+                * (self.dPthdf
+                   + self.isothermal_K_RT_unrelaxed)))
+        alpha = np.einsum('ijkl, kl',
+                          self._voigt_notation_to_compliance_tensor(a),
+                          np.eye(3))
+
+        if self.orthotropic:
+            return alpha
+        else:
+            R = self.rotation_matrix
+            return np.einsum('mi, nj, ij->mn', R, R, alpha)
+
+    # Derived properties start here
+    @material_property
+    def isothermal_stiffness_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        isothermal_stiffness_tensor : 2D numpy array
+            The isothermal stiffness tensor [Pa]
+            in Voigt form (:math:`\\mathbb{C}_{\\text{T} pq}`).
+        """
+        return np.linalg.inv(self.isothermal_compliance_tensor_unrelaxed)
+
+    @material_property
+    def full_isothermal_stiffness_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        full_isothermal_stiffness_tensor : 4D numpy array
+            The isothermal stiffness tensor [Pa]
+            in standard form (:math:`\\mathbb{C}_{\\text{T} ijkl}`).
+        """
+        CT = self.isothermal_stiffness_tensor_unrelaxed
+        return self._voigt_notation_to_stiffness_tensor(CT)
+
+    @material_property
+    def full_isothermal_compliance_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        full_isothermal_stiffness_tensor : 4D numpy array
+            The isothermal compliance tensor [1/Pa]
+            in standard form (:math:`\\mathbb{S}_{\\text{T} ijkl}`).
+        """
+        S_Voigt = self.isothermal_compliance_tensor_unrelaxed
+        return self._voigt_notation_to_compliance_tensor(S_Voigt)
+
+    @material_property
+    def full_isentropic_compliance_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        full_isentropic_stiffness_tensor : 4D numpy array
+            The isentropic compliance tensor [1/Pa]
+            in standard form (:math:`\\mathbb{S}_{\\text{N} ijkl}`).
+        """
+        return (self.full_isothermal_compliance_tensor_unrelaxed
+                - np.einsum('ij, kl->ijkl',
+                            self.thermal_expansivity_tensor_unrelaxed,
+                            self.thermal_expansivity_tensor_unrelaxed)
+                * self.V * self.temperature / self.C_p)
+
+    @material_property
+    def isentropic_compliance_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        isentropic_compliance_tensor : 2D numpy array
+            The isentropic compliance tensor [1/Pa]
+            in Voigt form (:math:`\\mathbb{S}_{\\text{N} pq}`).
+        """
+        S_full = self.full_isentropic_compliance_tensor_unrelaxed
+        return self._contract_compliances(S_full)
+
+    @material_property
+    def isentropic_stiffness_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        isentropic_stiffness_tensor : 2D numpy array
+            The isentropic stiffness tensor [Pa]
+            in Voigt form (:math:`\\mathbb{C}_{\\text{N} pq}`).
+        """
+        return np.linalg.inv(self.isentropic_compliance_tensor_unrelaxed)
+
+    @material_property
+    def full_isentropic_stiffness_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        full_isentropic_stiffness_tensor : 4D numpy array
+            The isentropic stiffness tensor [Pa]
+            in standard form (:math:`\\mathbb{C}_{\\text{N} ijkl}`).
+        """
+        C_Voigt = self.isentropic_stiffness_tensor_unrelaxed
+        return self._voigt_notation_to_stiffness_tensor(C_Voigt)
+
+    @material_property
+    def thermal_stress_tensor_unrelaxed(self):
+        """
+        Returns
+        -------
+        thermal stress : 2D numpy array
+            The change in stress with temperature at constant strain.
+        """
+        pi = -np.einsum('ijkl, kl',
+                        self.full_isothermal_stiffness_tensor_unrelaxed,
+                        self.thermal_expansivity_tensor_unrelaxed)
+        return pi
+
+    @material_property
+    def molar_isometric_heat_capacity_unrelaxed(self):
+        """
+        Returns
+        -------
+        molar_isometric_heat_capacity : float
+            The molar heat capacity at constant strain.
+        """
+
+        pi = self.thermal_stress_tensor_unrelaxed
+        pipiV = np.einsum('ij, kl -> ijkl', pi, pi)*self.V
+        indices = np.where(np.abs(pipiV) > 1.e-5)
+        values = ((self.full_isentropic_stiffness_tensor_unrelaxed
+                   - self.full_isothermal_stiffness_tensor_unrelaxed)[indices]
+                  / pipiV[indices])
+        if not np.allclose(values, np.ones_like(values)*values[0],
+                           rtol=1.e-5):
+            """
+            raise Exception('Could not calculate the molar heat '
+                            'capacity at constant strain. '
+                            'There is an inconsistency in the '
+                            'equation of state.')
+            """
+            print('not ok')
+        else:
+            print('ok')
+        C_isometric = self.temperature/values[0]
+
+        return C_isometric
+
+    alpha_unrelaxed = ElasticSolution.thermal_expansivity
+
+    isothermal_K_RT_unrelaxed = ElasticSolution.isothermal_bulk_modulus

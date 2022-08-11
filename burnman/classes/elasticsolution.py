@@ -134,10 +134,8 @@ class ElasticSolution(Mineral):
 
         Mineral.set_state(self, pressure, temperature)
 
-        try:
+        if hasattr(self, "molar_fractions"):
             _ = self.molar_volume
-        except AttributeError:
-            pass
 
     @material_property
     def formula(self):
@@ -432,6 +430,19 @@ class ElasticSolution(Mineral):
             self.molar_volume, self.temperature, self.molar_fractions
         )
 
+    def _pressure(self, temperature, volume, molar_fractions):
+        ptmp = [
+            self.endmembers[i][0].method.pressure(
+                temperature, volume, self.endmembers[i][0].params
+            )
+            for i in range(self.n_endmembers)
+        ]
+
+        press = sum(
+            [ptmp[i] * self.molar_fractions[i] for i in range(self.n_endmembers)]
+        ) + self.solution_model.excess_pressure(volume, temperature, molar_fractions)
+        return press
+
     @material_property
     def molar_volume(self):
         """
@@ -555,29 +566,15 @@ class ElasticSolution(Mineral):
         )
 
     @material_property
-    def excess_enthalpy(self):
-        """
-        Returns excess molar enthalpy [J/mol].
-        Property specific to solutions.
-        """
-        return self.solution_model.excess_enthalpy(
-            self.molar_volume, self.temperature, self.molar_fractions
-        )
-
-    @material_property
     def molar_enthalpy(self):
         """
         Returns molar enthalpy of the solution [J/mol].
         Aliased with self.H.
         """
         return (
-            sum(
-                [
-                    self.solution_model.endmembers[i][0].H * self.molar_fractions[i]
-                    for i in range(self.n_endmembers)
-                ]
-            )
-            + self.excess_enthalpy
+            self.molar_helmholtz
+            + self.temperature * self.molar_entropy
+            + self.pressure * self.molar_volume
         )
 
     @material_property
@@ -586,13 +583,26 @@ class ElasticSolution(Mineral):
         Returns isothermal bulk modulus of the solution [Pa].
         Aliased with self.K_T.
         """
-        return sum(
-            [
-                self.solution_model.endmembers[i][0].isothermal_bulk_modulus
-                * self.molar_fractions[i]
-                for i in range(self.n_endmembers)
-            ]
-        )
+        try:
+            return sum(
+                [
+                    self.endmembers[i][0].isothermal_bulk_modulus
+                    * self.molar_fractions[i]
+                    for i in range(self.n_endmembers)
+                ]
+            ) + self.solution_model.excess_isothermal_bulk_modulus(
+                self.molar_volume, self.temperature, self.molar_fractions
+            )
+        except:
+            return sum(
+                [
+                    self.endmembers[i][0].isothermal_bulk_modulus_reuss
+                    * self.molar_fractions[i]
+                    for i in range(self.n_endmembers)
+                ]
+            ) + self.solution_model.excess_isothermal_bulk_modulus(
+                self.molar_volume, self.temperature, self.molar_fractions
+            )
 
     @material_property
     def adiabatic_bulk_modulus(self):
@@ -692,11 +702,13 @@ class ElasticSolution(Mineral):
         """
         alphaKT = sum(
             [
-                self.solution_model.endmembers[i][0].isothermal_bulk_modulus
-                * self.solution_model.endmembers[i][0].alpha
+                self.endmembers[i][0].isothermal_bulk_modulus
+                * self.endmembers[i][0].alpha
                 * self.molar_fractions[i]
                 for i in range(self.n_endmembers)
             ]
+        ) + self.solution_model.excess_alpha_K_T(
+            self.molar_volume, self.temperature, self.molar_fractions
         )
         return alphaKT / self.isothermal_bulk_modulus
 
@@ -709,10 +721,11 @@ class ElasticSolution(Mineral):
         """
         return sum(
             [
-                self.solution_model.endmembers[i][0].molar_heat_capacity_v
-                * self.molar_fractions[i]
+                self.endmembers[i][0].molar_heat_capacity_v * self.molar_fractions[i]
                 for i in range(self.n_endmembers)
             ]
+        ) + self.solution_model.excess_molar_heat_capacity_v(
+            self.molar_volume, self.temperature, self.molar_fractions
         )
 
     @material_property
