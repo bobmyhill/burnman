@@ -1,4 +1,5 @@
 import autograd.numpy as np
+from numpy import einsum
 import burnman
 
 
@@ -334,10 +335,34 @@ qtz_beta_anisotropic = burnman.AnisotropicMineral(qtz_beta,
                                                   orthotropic=True)
 """
 
-def psi_func_sol(V, Pth, X, params):
+def psi_func_sol(V, Pth, molar_amounts, params):
     nul = np.zeros((6, 6))
-    nul2 = np.zeros((6, 6, 2))
-    return (nul, nul, nul, nul2)
+
+    n_moles = sum(molar_amounts)
+    molar_fractions = molar_amounts / n_moles
+
+
+    Q = (molar_fractions[0] - molar_fractions[1])
+    Qsqr = Q*Q
+
+    e_a = 0.0
+    e_c = -2.*e_a # sum of trace must always equal zero
+
+
+    psi0 = np.zeros((6, 6))
+    psi0[0, 0] = e_a
+    psi0[1, 1] = e_a
+    psi0[2, 2] = e_c
+
+    psi = psi0*(Qsqr - 1.)*n_moles
+    dpsidX = -4.*einsum('ij, k, k->ijk',
+                        psi0,
+                        molar_fractions[::-1],
+                        molar_fractions[::-1])
+
+
+    # Psi, dPsidV, dPsidPth, dPsidX
+    return (psi, nul, nul, dpsidX)
 
 
 
@@ -349,5 +374,5 @@ qtz_ss_anisotropic = burnman.AnisotropicSolution(name='quartz',
                                                  master_cell_parameters=cell_parameters_alpha,
                                                  anisotropic_parameters={},
                                                  psi_excess_function=psi_func_sol,
-                                                 dXdQ=np.array([[-1., 1.]]),
+                                                 dXdQ=np.array([[-1., 1.]]).T,
                                                  relaxed=True)

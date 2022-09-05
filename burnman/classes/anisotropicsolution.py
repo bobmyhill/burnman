@@ -9,18 +9,18 @@ from .anisotropicmineral import contract_stresses
 from .anisotropicmineral import expand_stresses
 from .material import material_property, Material
 from ..utils.unitcell import cell_parameters_to_vectors
+from scipy.linalg import logm
 
 
-dd = (np.einsum('pm, qn->pqmn', np.eye(3), np.eye(3))
-      - np.einsum('pq, mn->pqmn', np.eye(3), np.eye(3))/3.)
+IpmIqn = np.einsum('pm, qn->pqmn', np.eye(3), np.eye(3))
 
 
-class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
+class AnisotropicSolution(AnisotropicMineral):
     """
     A class implementing the anisotropic solution model described
     in :cite:`Myhill2022b`.
-    This class is derived from both ElasticSolution and AnisotropicMineral,
-    and inherits most of the methods from these classes.
+    This class is derived from AnisotropicMineral,
+    and inherits most of the methods from that class.
 
     Instantiation of an AnisotropicSolution is similar to that of an
     ElasticSolution, except that each of the endmembers must be an instance of
@@ -69,9 +69,9 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
         """
         Set up matrices to speed up calculations for when P, T, X is defined.
         """
+        Material.__init__(self)
         self.T_0 = 298.15
-        ElasticSolution.__init__(self,
-                                 name=name,
+        self.scalar_solution = ElasticSolution(name=name,
                                  solution_type=solution_type,
                                  endmembers=endmembers,
                                  energy_interaction=energy_interaction,
@@ -92,44 +92,44 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
             self.dXdQ = np.zeros((self.n_endmembers, 0))
             self.relaxed = False
         else:
-            assert len(dXdQ[0]) == self.n_endmembers
+            assert len(dXdQ) == self.scalar_solution.n_endmembers
             self.dXdQ = dXdQ
             self.relaxed = relaxed
 
         cv = cell_parameters_to_vectors(master_cell_parameters)
         self.cell_vectors_0 = cv
         self.cell_volume_0 = np.linalg.det(self.cell_vectors_0)
-        self.F0s = np.array([np.linalg.solve(self.cell_vectors_0,
-                                             mbr[0].cell_vectors_0)
-                             for mbr in self.endmembers])
+        self.lnF0s = np.array([logm(np.linalg.solve(self.cell_vectors_0,
+                                                    mbr[0].cell_vectors_0))
+                               for mbr in self.scalar_solution.endmembers])
 
     def set_state(self, pressure, temperature):
         # Set solution conditions
-        if not hasattr(self, "molar_fractions"):
+        if not hasattr(self.scalar_solution, "molar_fractions"):
             raise Exception('To use this EoS, '
                             'you must first set the composition')
-        ElasticSolution.set_state(self, pressure, temperature)
+        self.scalar_solution.set_state(pressure, temperature)
 
         # 1) Compute dPthdf|T
         # relatively large dP needed for accurate estimate of dPthdf
-        ElasticSolution.set_state(self, pressure, temperature)
+        self.scalar_solution.set_state(pressure, temperature)
         dP = 1.e4 # self.isothermal_bulk_modulus_reuss*1.e-5
 
-        ElasticSolution.set_state(self, pressure-dP/2., temperature)
-        V1 = self.V
-        Pth1 = pressure-dP/2. - ElasticSolution._pressure(self, self.T_0,
-                                                          V1, self.molar_fractions)
+        self.scalar_solution.set_state(pressure-dP/2., temperature)
+        V1 = self.scalar_solution.V
+        Pth1 = pressure-dP/2. - self.scalar_solution._find_pressure(self.T_0,
+                                                               V1, self.scalar_solution.molar_fractions)
 
-        ElasticSolution.set_state(self, pressure+dP/2., temperature)
-        V2 = self.V
-        Pth2 = pressure+dP/2. - ElasticSolution._pressure(self, self.T_0,
-                                                          V2, self.molar_fractions)
+        self.scalar_solution.set_state(pressure+dP/2., temperature)
+        V2 = self.scalar_solution.V
+        Pth2 = pressure+dP/2. - self.scalar_solution._find_pressure(self.T_0,
+                                                          V2, self.scalar_solution.molar_fractions)
 
         self.dPthdf = (Pth2 - Pth1) / np.log(V2/V1)
-        ElasticSolution.set_state(self, pressure, temperature)
+        self.scalar_solution.set_state(pressure, temperature)
 
         # 2) Compute other properties needed for anisotropic equation of state
-        V = self.molar_volume
+        V = self.scalar_solution.molar_volume
         f = np.log(V/self.cell_volume_0)
         self._f = f
 
@@ -137,33 +137,63 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
 
         # Get endmember values of psi and derivatives
         self.Psi_Voigt_mbr = np.array([mbr[0].Psi_Voigt
-                                       for mbr in self.endmembers])
+                                       for mbr in self.scalar_solution.endmembers])
         self.dPsidf_Voigt_mbr = np.array([mbr[0].dPsidf_Voigt
-                                          for mbr in self.endmembers])
+                                          for mbr in self.scalar_solution.endmembers])
         self.dPsidPth_Voigt_mbr = np.array([mbr[0].dPsidPth_Voigt
-                                            for mbr in self.endmembers])
+                                            for mbr in self.scalar_solution.endmembers])
+
+        Material.set_state(self, pressure, temperature)
+
+
+    def set_state_with_volume(self, volume, temperature):
+        self.scalar_solution.set_state_with_volume(volume, temperature)
+        self.set_state(self.scalar_solution.pressure, temperature)
 
     def set_composition(self, molar_fractions):
 
-        ElasticSolution.set_composition(self, molar_fractions)
+        self.scalar_solution.set_composition(molar_fractions)
+
 
     def set_relaxation(self, relax_bool):
         if self.relaxed is not relax_bool:
             self.relaxed = relax_bool
             Material.reset(self)
 
+
+    @material_property
+    def molar_fractions(self):
+        return self.scalar_solution.molar_fractions
+
+    @material_property
+    def partial_gibbs(self):
+        return self.scalar_solution.partial_gibbs
+
+    @material_property
+    def molar_gibbs(self):
+        return self.scalar_solution.molar_gibbs
+
+    @material_property
+    def molar_volume(self):
+        return self.scalar_solution.V
+
+    @material_property
+    def molar_entropy(self):
+        return self.scalar_solution.S
+
     @material_property
     def _Psi_excess_tuple(self):
-        return self.psi_excess_function(self._f, self.Pth,
-                                        self.molar_fractions,
-                                        self.anisotropic_params)
+        psi_xs = self.psi_excess_function(self._f, self.Pth,
+                                          self.molar_fractions,
+                                          self.anisotropic_params)
+        return psi_xs
 
     @material_property
     def Psi_Voigt(self):
         Psi0_mech_full = np.einsum('ijk, i, lm->jklm',
-                                   self.F0s, self.molar_fractions,
+                                   self.lnF0s, self.molar_fractions,
                                    np.eye(3)/3.)
-        Psi0_mech = self._contract_stiffnesses(Psi0_mech_full)
+        Psi0_mech = self._contract_compliances(Psi0_mech_full)
         Psi_mech = (np.einsum('ijk, i->jk',
                               self.Psi_Voigt_mbr,
                               self.molar_fractions)
@@ -187,7 +217,7 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
     @material_property
     def dPsidX(self):
         dPsidX_mech = np.einsum('ijk, lm->jklmi',
-                                self.F0s, np.eye(3)/3.)
+                                self.lnF0s, np.eye(3)/3.)
 
         x = np.array([self._voigt_notation_to_compliance_tensor(A)
                       for A in self._Psi_excess_tuple[3].T]).T
@@ -202,22 +232,35 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
     @material_property
     def dSdQ(self):
         return np.einsum('i, ij->j',
-                         self._partial_entropies, self.dXdQ)
+                         self.scalar_solution._partial_entropies, self.dXdQ)
 
     @material_property
     def dPdQ(self):
         return np.einsum('i, ij->j',
-                         self._partial_pressures, self.dXdQ)
+                         self.scalar_solution._partial_pressures, self.dXdQ)
+
+    @material_property
+    def dFdQ(self):
+        return np.einsum('i, ij->j',
+                         self.scalar_solution._partial_helmholtz,
+                         self.dXdQ)
 
     @material_property
     def d2FdQdQ(self):
         return np.einsum('ij, ik, jl->kl',
-                         self._helmholtz_hessian,
+                         self.scalar_solution._helmholtz_hessian,
                          self.dXdQ,
                          self.dXdQ)
 
     @material_property
     def d2FdQdZ(self):
+        beta_T = np.einsum('ijkl, kl', 
+                           self.full_isothermal_compliance_tensor_unrelaxed,
+                           np.eye(3))
+        beta_RT = np.einsum('ij, ij', 
+                            beta_T,
+                            np.eye(3))
+        dd = IpmIqn - np.einsum('pq, mn->pqmn', beta_T/beta_RT, np.eye(3))
         C_T = self.full_isothermal_stiffness_tensor_unrelaxed
         d2FdQdeps = -self.V*(np.einsum('mn, i->imn', np.eye(3), self.dPdQ)
                              + np.einsum('pqmn, kli, klpq->imn',
@@ -265,13 +308,18 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                 return C_T
             else:
                 R = self.rotation_matrix
-                C = self._voigt_notation_to_compliance_tensor(C_T)
+                C = self._voigt_notation_to_stiffness_tensor(C_T)
                 C_rotated = np.einsum('mi, nj, ok, pl, ijkl->mnop',
                                       R, R, R, R, C)
-                return self._contract_compliances(C_rotated)
+                return self._contract_stiffnesses(C_rotated)
 
         else:
             return self.isothermal_stiffness_tensor_unrelaxed
+
+    @material_property
+    def full_isothermal_stiffness_tensor(self):
+        CT = self.isothermal_stiffness_tensor
+        return self._voigt_notation_to_stiffness_tensor(CT)
 
     @material_property
     def thermal_stress_tensor(self):
@@ -308,6 +356,33 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
             return np.linalg.inv(self.isothermal_stiffness_tensor)
         else:
             return self.isothermal_compliance_tensor_unrelaxed
+
+    @material_property
+    def full_isothermal_compliance_tensor(self):
+        S_Voigt = self.isothermal_compliance_tensor
+        return self._voigt_notation_to_compliance_tensor(S_Voigt)
+
+    @material_property
+    def full_isentropic_stiffness_tensor(self):
+        return (self.full_isothermal_stiffness_tensor
+                + (self.molar_volume * self.temperature
+                   * np.einsum('ij, kl', self.thermal_stress_tensor, self.thermal_stress_tensor)
+                   / self.molar_isometric_heat_capacity))
+
+    @material_property
+    def isentropic_stiffness_tensor(self):
+        C_full = self.full_isentropic_stiffness_tensor
+        return self._contract_stiffnesses(C_full)
+
+
+    @material_property
+    def isentropic_compliance_tensor(self):
+        return np.linalg.inv(self.isentropic_stiffness_tensor)
+
+    @material_property
+    def full_isentropic_compliance_tensor(self):
+        S_Voigt = self.isentropic_compliance_tensor
+        return self._voigt_notation_to_compliance_tensor(S_Voigt)
 
     @material_property
     def thermal_expansivity_tensor(self):
@@ -416,7 +491,7 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                 - np.einsum('ij, kl->ijkl',
                             self.thermal_expansivity_tensor_unrelaxed,
                             self.thermal_expansivity_tensor_unrelaxed)
-                * self.V * self.temperature / self.C_p)
+                * self.V * self.temperature / self.molar_heat_capacity_p_unrelaxed)
 
     @material_property
     def isentropic_compliance_tensor_unrelaxed(self):
@@ -490,12 +565,89 @@ class AnisotropicSolution(ElasticSolution, AnisotropicMineral):
                             'equation of state.')
             """
             print('not ok')
-        else:
-            print('ok')
+
         C_isometric = self.temperature/values[0]
 
         return C_isometric
 
-    alpha_unrelaxed = ElasticSolution.thermal_expansivity
+    @material_property
+    def molar_heat_capacity_p_unrelaxed(self):
+        """
+        Returns molar heat capacity at constant pressure
+        of the solution [J/K/mol].
+        Aliased with self.C_p.
+        """
+        return (self.molar_heat_capacity_v_unrelaxed
+                + self.molar_volume * self.temperature
+                * self.alpha_unrelaxed * self.alpha_unrelaxed
+                * self.isothermal_K_RT_unrelaxed)
+    
+    @material_property
+    def isothermal_bulk_modulus_voigt(self):
+        return np.sum(self.isothermal_stiffness_tensor[:3,:3])
 
-    isothermal_K_RT_unrelaxed = ElasticSolution.isothermal_bulk_modulus
+    @material_property
+    def isothermal_bulk_modulus_reuss(self):
+        return 1./np.sum(self.isothermal_compliance_tensor[:3,:3])
+
+    @material_property
+    def isothermal_bulk_modulus(self):
+        """
+        Anisotropic minerals do not have a single isothermal bulk modulus.
+        This function returns a NotImplementedError. Users should instead
+        consider either using isothermal_bulk_modulus_reuss,
+        isothermal_bulk_modulus_voigt,
+        or directly querying the elements in the isothermal_stiffness_tensor.
+        """
+        raise NotImplementedError("isothermal_bulk_modulus is not "
+                                  "sufficiently explicit for an "
+                                  "anisotropic mineral. Did you mean "
+                                  "isothermal_bulk_modulus_reuss?")
+    
+    @material_property
+    def thermal_expansivity(self):
+        return np.trace(self.thermal_expansivity_tensor)
+
+    @material_property
+    def molar_heat_capacity_p(self):
+        """
+        Returns
+        -------
+        molar_heat_capacity_p : float
+            The molar isobaric heat capacity.
+        """
+
+        alpha = self.thermal_expansivity_tensor
+        aaV = np.einsum('ij, kl -> ijkl', alpha, alpha)*self.V
+        indices = np.where(np.abs(aaV) > 1.e-30)
+        values = ((self.full_isentropic_compliance_tensor
+                   - self.full_isothermal_compliance_tensor)[indices]
+                  / aaV[indices])
+        if not np.allclose(values, np.ones_like(values)*values[0],
+                           rtol=1.e-5):
+            #raise Exception('Could not calculate the molar heat '
+            #                'capacity at constant strain. '
+            #                'There is an inconsistency in the '
+            #                'equation of state.')
+            print('C_p inconsistency')
+        C_p = -self.temperature/values[0]
+        return C_p
+
+    @material_property
+    def molar_heat_capacity_v(self):
+        return (self.molar_heat_capacity_p - self.molar_volume * self.temperature \
+                * self.thermal_expansivity * self.thermal_expansivity \
+                * self.isothermal_bulk_modulus_reuss)
+
+
+    @material_property
+    def alpha_unrelaxed(self):
+        return self.scalar_solution.thermal_expansivity
+
+    @material_property
+    def isothermal_K_RT_unrelaxed(self):
+        return self.scalar_solution.isothermal_bulk_modulus
+
+    @material_property
+    def molar_heat_capacity_v_unrelaxed(self):
+        return self.scalar_solution.molar_heat_capacity_v

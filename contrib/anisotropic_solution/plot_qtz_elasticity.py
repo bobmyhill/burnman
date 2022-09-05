@@ -47,6 +47,15 @@ C = np.array([[C11, C12, C13, C14, nul, nul],
               [nul, nul, nul, nul, C44, C14],
               [nul, nul, nul, nul, C14, 0.5*(C11 - C12)]]).T
 
+
+S = np.linalg.inv(C).T
+
+beta_RT = np.sum(S[:3,:3], axis=(0, 1))
+K_RT = 1./beta_RT 
+plt.plot(TC, K_RT)
+plt.show()
+exit()
+
 #for i in range(6):
 #    for j in range(6):
 #        plt.scatter(TC, C[:, i, j])

@@ -426,6 +426,36 @@ class AnisotropicMineral(Mineral, AnisotropicMaterial):
         return 1.0 / self.isentropic_bulk_modulus_voigt
 
     @material_property
+    def isothermal_compressibility_voigt(self):
+        """
+        Returns
+        -------
+        isothermal_compressibility_voigt : float
+            The Voigt bound on the isothermal compressibility in [1/Pa].
+        """
+        return 1.0 / self.isothermal_bulk_modulus_voigt
+
+    @material_property
+    def isentropic_compressibility_reuss(self):
+        """
+        Returns
+        -------
+        isentropic_compressibility_reuss : float
+            The Reuss bound on the isentropic compressibility in [1/Pa].
+        """
+        return 1.0 / self.isentropic_bulk_modulus_reuss
+
+    @material_property
+    def isentropic_compressibility_voigt(self):
+        """
+        Returns
+        -------
+        isentropic_compressibility_voigt : float
+            The Voigt bound on the isentropic compressibility in [1/Pa].
+        """
+        return 1.0 / self.isentropic_bulk_modulus_voigt
+
+    @material_property
     def isothermal_compliance_tensor(self):
         """
         Returns

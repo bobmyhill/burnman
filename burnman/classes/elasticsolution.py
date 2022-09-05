@@ -137,6 +137,33 @@ class ElasticSolution(Mineral):
         if hasattr(self, "molar_fractions"):
             _ = self.molar_volume
 
+    def set_state_with_volume(self, volume, temperature):
+        """
+        This function acts similarly to set_state, but takes volume and
+        temperature as input to find the pressure.
+
+        Parameters
+        ----------
+        volume : float
+            The desired molar volume of the mineral [m^3].
+        temperature : float
+            The desired temperature of the mineral [K].
+        """
+        self._ptmp = [
+            self.endmembers[i][0].method.pressure(
+                temperature, volume, self.endmembers[i][0].params
+            )
+            for i in range(self.n_endmembers)
+        ]
+
+        pressure = sum(
+            [self._ptmp[i] * self.molar_fractions[i] for i in range(self.n_endmembers)]
+        ) + self.solution_model.excess_pressure(
+            volume, temperature, self.molar_fractions
+        )
+
+        self.set_state(pressure, temperature)
+
     @material_property
     def formula(self):
         """
@@ -430,7 +457,7 @@ class ElasticSolution(Mineral):
             self.molar_volume, self.temperature, self.molar_fractions
         )
 
-    def _pressure(self, temperature, volume, molar_fractions):
+    def _find_pressure(self, temperature, volume, molar_fractions):
         ptmp = [
             self.endmembers[i][0].method.pressure(
                 temperature, volume, self.endmembers[i][0].params
