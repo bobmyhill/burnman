@@ -57,6 +57,8 @@ def create(method):
             return mgd.MGD3()
         elif method == "slb3":
             return slb.SLB3()
+        elif method == "slb4":
+            return slb.SLB4()
         elif method == "murnaghan":
             return murnaghan.Murnaghan()
         elif method == "bm2":

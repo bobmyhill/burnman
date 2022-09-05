@@ -20,6 +20,7 @@ except ImportError:
 
 
 from . import birch_murnaghan as bm
+from . import birch_murnaghan_4th as bm4
 from . import debye
 from . import equation_of_state as eos
 from ..utils.math import bracket
@@ -54,6 +55,27 @@ def _delta_pressure(x, pressure, temperature, V_0, T_0, Debye_0, n, a1_ii,
     return ((1. / 3.)
             * (pow(1. + 2. * f, 5. / 2.)) * ((b_iikk * f)
                                              + (0.5 * b_iikkmm * f * f))
+            + gr * (E_th - E_th_ref) / x - pressure)  # EQ 21
+
+
+@jit
+def _delta_pressure_fourth(x, pressure, temperature, V_0, T_0, Debye_0, n, a1_ii,
+                           a2_iikk, b_iikk, b_iikkmm, b_iikkmmoo):
+
+    f = 0.5 * (pow(V_0 / x, 2. / 3.) - 1.)
+    nu_o_nu0_sq = 1. + a1_ii * f + 1. / 2. * a2_iikk * f * f
+    debye_temperature = Debye_0 * np.sqrt(nu_o_nu0_sq)
+    E_th = debye.thermal_energy(
+        temperature, debye_temperature, n)  # thermal energy at temperature T
+    E_th_ref = debye.thermal_energy(
+        T_0, debye_temperature, n)  # thermal energy at reference temperature
+    nu_o_nu0_sq = 1. + a1_ii * f + (1. / 2.) * a2_iikk * f * f  # EQ 41
+    gr = 1. / 6. / nu_o_nu0_sq * (2. * f + 1.) * (a1_ii + a2_iikk * f)
+
+    return ((1. / 3.)
+            * (pow(1. + 2. * f, 5. / 2.)) * ((b_iikk * f)
+                                             + (0.5 * b_iikkmm * f * f)
+                                             + (1./6. * b_iikkmmoo * f * f * f))
             + gr * (E_th - E_th_ref) / x - pressure)  # EQ 21
 
 
@@ -443,3 +465,194 @@ class SLB2(SLBBase):
 
     def __init__(self):
         self.order = 2
+
+
+class SLB4(SLBBase):
+
+    """
+    Finite strain-Mie-Grueneisen-Debye equation of state
+    detailed in :cite:`Stixrude2005`, with the static EoS expanded
+    to fourth order in strain. Thermal terms are expanded to third order.
+    Shear modulus currently not implemented.
+    """
+
+    def volume(self, pressure, temperature, params):
+        """
+        Returns molar volume. :math:`[m^3]`
+        """
+        T_0 = params['T_0']
+        Debye_0 = params['Debye_0']
+        V_0 = params['V_0']
+        dV = 1.e-2 * params['V_0']
+        n = params['n']
+
+        a1_ii = 6. * params['grueneisen_0']  # EQ 47
+        a2_iikk = (-12. * params['grueneisen_0']
+                   + 36. * pow(params['grueneisen_0'], 2.)
+                   - 18. * params['q_0'] * params['grueneisen_0'])  # EQ 47
+
+        b_iikk = 9. * params['K_0']  # EQ 28
+        b_iikkmm = 27. * params['K_0'] * (params['Kprime_0'] - 4.)  # EQ 29
+        b_iikkmmoo = 81. * params['K_0'] * (params['K_0'] * params['Kprime_prime_0'] 
+                                            + params['Kprime_0'] * (params['Kprime_0'] - 7.)
+                                            + 143./9.)  # EQ 30
+
+        # Finding the volume at a given pressure requires a
+        # root-finding scheme. Here we use brentq to find the root.
+
+        # Root-finding using brentq requires bounds to be specified.
+        # We do this using a bracketing function.
+        args = (pressure, temperature, V_0, T_0,
+                Debye_0, n, a1_ii, a2_iikk, b_iikk, b_iikkmm, b_iikkmmoo)
+
+        try:
+            # The first attempt to find a bracket for
+            # root finding uses V_0 as a starting point
+            sol = bracket(_delta_pressure_fourth, V_0, dV, args)
+        except Exception:
+            # At high temperature, the naive bracketing above may
+            # try a volume guess that exceeds the point at which the
+            # bulk modulus goes negative at that temperature.
+            # In this case, we try a more nuanced approach by
+            # first finding the volume at which the bulk modulus goes
+            # negative, and then either (a) raising an exception if the
+            # desired pressure is less than the pressure at that volume,
+            # or (b) using that pressure to create a better bracket for
+            # brentq.
+            def _K_T(V, T, params):
+                return self.isothermal_bulk_modulus(0., T, V, params)
+
+            sol_K_T = bracket(_K_T, V_0, dV,
+                              args=(temperature, params))
+            V_crit = opt.brentq(_K_T, sol_K_T[0], sol_K_T[1],
+                                args=(temperature, params))
+            P_min = self.pressure(temperature, V_crit, params)
+            if P_min > pressure:
+                raise Exception('The desired pressure is not achievable '
+                                'at this temperature. The minimum pressure '
+                                f'achievable is {P_min:.2e} Pa.')
+            else:
+                try:
+                    sol = bracket(_delta_pressure_fourth, V_crit - dV,
+                                  dV, args)
+                except Exception:
+                    raise Exception('Cannot find a volume, perhaps you are '
+                                    'outside of the range of validity for '
+                                    'the equation of state?')
+
+        return opt.brentq(_delta_pressure_fourth, sol[0], sol[1], args=args)
+
+    def pressure(self, temperature, volume, params):
+        """
+        Returns the pressure of the mineral at a given temperature and volume
+        [Pa]
+        """
+        debye_T = self._debye_temperature(params['V_0'] / volume, params)
+        gr = self.grueneisen_parameter(
+            0.0, temperature, volume, params)  # does not depend on pressure
+        # thermal energy at temperature T
+        E_th = debye.thermal_energy(temperature, debye_T, params['n'])
+        # thermal energy at reference temperature
+        E_th_ref = debye.thermal_energy(params['T_0'], debye_T, params['n'])
+
+        b_iikk = 9. * params['K_0']  # EQ 28
+        b_iikkmm = 27. * params['K_0'] * (params['Kprime_0'] - 4.)  # EQ 29
+        b_iikkmmoo = 81. * params['K_0'] * (params['K_0'] * params['Kprime_prime_0'] 
+                                            + params['Kprime_0'] * (params['Kprime_0'] - 7.)
+                                            + 143./9.)  # EQ 30
+        
+        f = 0.5 * (pow(params['V_0'] / volume, 2. / 3.) - 1.)  # EQ 24
+        P = (1. / 3.) * (pow(1. + 2. * f, 5. / 2.)) \
+            * ((b_iikk * f) + (0.5 * b_iikkmm * pow(f, 2.))
+               + (1./6. * b_iikkmmoo * pow(f, 3.)))\
+            + gr * (E_th - E_th_ref) / volume  # EQ 21
+
+        return P
+
+    def grueneisen_parameter(self, pressure, temperature, volume, params):
+        """
+        Returns grueneisen parameter :math:`[unitless]`
+        """
+        return _grueneisen_parameter_fast(params['V_0'], volume,
+                                          params['grueneisen_0'],
+                                          params['q_0'])
+
+    def isothermal_bulk_modulus(self, pressure, temperature, volume, params):
+        """
+        Returns isothermal bulk modulus :math:`[Pa]`
+        """
+        T_0 = params['T_0']
+        debye_T = self._debye_temperature(params['V_0'] / volume, params)
+        gr = self.grueneisen_parameter(pressure, temperature, volume, params)
+
+        # thermal energy at temperature T
+        E_th = debye.thermal_energy(temperature, debye_T, params['n'])
+        # thermal energy at reference temperature
+        E_th_ref = debye.thermal_energy(T_0, debye_T, params['n'])
+
+        # heat capacity at temperature T
+        C_v = debye.molar_heat_capacity_v(temperature, debye_T, params['n'])
+        # heat capacity at reference temperature
+        C_v_ref = debye.molar_heat_capacity_v(T_0, debye_T, params['n'])
+
+        q = self.volume_dependent_q(params['V_0'] / volume, params)
+
+        K = bm4.bulk_modulus_fourth(volume, params) \
+            + (gr + 1. - q) * (gr / volume) * (E_th - E_th_ref) \
+            - (pow(gr, 2.) / volume) * (C_v * temperature - C_v_ref * T_0)
+
+        return K
+
+    def helmholtz_free_energy(self, pressure, temperature, volume, params):
+        """
+        Returns the Helmholtz free energy at the pressure and temperature
+        of the mineral [J/mol]
+        """
+        x = params['V_0'] / volume
+        f = 1. / 2. * (pow(x, 2. / 3.) - 1.)
+        Debye_T = self._debye_temperature(params['V_0'] / volume, params)
+
+        F_quasiharmonic = (debye.helmholtz_free_energy(temperature,
+                                                       Debye_T,
+                                                       params['n'])
+                           - debye.helmholtz_free_energy(params['T_0'],
+                                                         Debye_T,
+                                                         params['n']))
+
+        b_iikk = 9. * params['K_0']  # EQ 28
+        b_iikkmm = 27. * params['K_0'] * (params['Kprime_0'] - 4.)  # EQ 29
+        b_iikkmmoo = 81. * params['K_0'] * (params['K_0'] * params['Kprime_prime_0'] 
+                                            + params['Kprime_0'] * (params['Kprime_0'] - 7.)
+                                            + 143./9.)  # EQ 30
+
+        F = (params['F_0'] + 0.5 * b_iikk * f * f * params['V_0']
+             + (1. / 6.) * params['V_0'] * b_iikkmm * f * f * f
+             + (1. / 24.) * b_iikkmmoo * f * f * f * f * params['V_0']
+             + F_quasiharmonic)
+        return F
+
+    def shear_modulus(self, pressure, temperature, volume, params):
+        """
+        Returns shear modulus. :math:`[Pa]`
+        """
+        raise NotImplementedError('shear modulus for SLB4 not yet implemented')
+
+    def validate_parameters(self, params):
+        """
+        Check for existence and validity of the parameters
+        """
+        if 'T_0' not in params:
+            params['T_0'] = 300.
+
+        # If eta_s_0 is not included this is presumably deliberate,
+        # as we can model density and bulk modulus just fine without it,
+        # so just add it to the dictionary as nan
+        # The same goes for the standard state Helmholtz free energy
+        if 'eta_s_0' not in params:
+            params['eta_s_0'] = float('nan')
+        if 'F_0' not in params:
+            params['F_0'] = float('nan')
+
+        # First, let's check the EoS parameters for Tref
+        SLBBase.validate_parameters(SLBBase(), params)
+        bm4.BM4.validate_parameters(bm4.BM4(), params)
