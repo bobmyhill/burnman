@@ -1,5 +1,6 @@
-# Pressure (bar)	Temperature ( C)	V (cm3)	dV/V0 (%)	dlx/lx0 (%)	dlz/lz0 (%)
-# Note V0 is taken to be 22.688 from Robie, not the current data. Ditto for x and z.	
+P_bar	T_C	V_cm3	dV_V0_pct	dx_x0_pct	dz_z0_pct
+# Note V0 is taken to be 22.688 from Robie, not the current data.
+# Ditto for x and z.	
 # Note that anomalous behaviour in x and z is seen above 2000 bar at 25 C				
 3000	25	22.5163	-0.7567	-0.289	-0.1806
 3000	100	22.5881	-0.4405	-0.1673	-0.1065
