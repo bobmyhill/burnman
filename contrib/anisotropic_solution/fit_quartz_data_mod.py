@@ -435,9 +435,9 @@ for i in range(11):
 
 
 fig1.set_tight_layout(True)
-fig1.savefig("quartz_data.pdf")
+fig1.savefig("figures/quartz_data.pdf")
 fig2.set_tight_layout(True)
-fig2.savefig("quartz_data_2.pdf")
+fig2.savefig("figures/quartz_data_2.pdf")
 fig3.set_tight_layout(True)
-fig3.savefig("quartz_data_3.pdf")
+fig3.savefig("figures/quartz_data_3.pdf")
 plt.show()

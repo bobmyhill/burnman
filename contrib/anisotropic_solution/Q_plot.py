@@ -210,5 +210,5 @@ for i in range(2, 3):
 # cbar = fig.colorbar(t, ax=ax[2])
 # cbar.set_label("T (K)", rotation=0)
 fig.set_tight_layout(True)
-fig.savefig("Q_plot.pdf")
+fig.savefig("figures/Q_plot.pdf")
 plt.show()

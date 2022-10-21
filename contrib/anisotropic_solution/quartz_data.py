@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from data_tables import *
 
 
 def tilt_regular(theta):
@@ -21,51 +22,6 @@ def tilt_distorted(c_over_a, x, z):
         np.arctan(2.0 * np.sqrt(3.0) / 9.0 * c_over_a * (6.0 * z - 1.0) / x)
     )
 
-
-Antao = pd.read_csv(
-    "data/Antao_2016_quartz_structure_1bar.dat", delim_whitespace=True, comment="#"
-)
-Bachheimer = pd.read_csv(
-    "data/Bachheimer_Dolino_1975_quartz_Q.dat", delim_whitespace=True, comment="#"
-)
-Hazen = pd.read_csv(
-    "data/Hazen_et_al_1989_quartz_cell.dat", delim_whitespace=True, comment="#"
-)
-Gronvold = pd.read_csv(
-    "data/Gronvold_et_al_1989_quartz_Cp.dat", delim_whitespace=True, comment="#"
-)
-Richet = pd.read_csv(
-    "data/Richet_et_al_1992_quartz_Cp.dat", delim_whitespace=True, comment="#"
-)
-Jorgensen = pd.read_csv(
-    "data/Jorgensen_1978_quartz_tilts_high_pressure.dat",
-    delim_whitespace=True,
-    comment="#",
-)
-Scheidl = pd.read_csv(
-    "data/Scheidl_et_al_2016_quartz_cell.dat", delim_whitespace=True, comment="#"
-)
-Raz = pd.read_csv(
-    "data/Raz_et_al_2002_quartz_PVT.dat", delim_whitespace=True, comment="#"
-)
-
-Carpenter_neutron = pd.read_csv(
-    "data/Carpenter_1998_quartz_unit_cell_neutron.dat",
-    delim_whitespace=True,
-    comment="#",
-)
-
-Carpenter_XRD = pd.read_csv(
-    "data/Carpenter_1998_quartz_unit_cell_XRD.dat", delim_whitespace=True, comment="#"
-)
-
-Ogata = pd.read_csv(
-    "data/Ogata_et_al_1987_quartz_cell.dat", delim_whitespace=True, comment="#"
-)
-
-Lakshtanov = pd.read_csv(
-    "data/Lakshtanov_et_al_2007_Cijs_quartz.dat", delim_whitespace=True, comment="#"
-)
 
 L = Lakshtanov
 # Make bigger than needed to index from 1
@@ -101,34 +57,6 @@ S = np.linalg.inv(C)
 
 # Get the Reuss bulk modulus
 K_S = 1.0 / np.sum(S[:, :3, :3], axis=(1, 2))
-
-c_Antao = "red"
-c_Bachheimer = "orange"
-c_Hazen = "yellow"
-c_Gronvold = "green"
-c_Richet = "pink"
-c_Jorgensen = "magenta"
-c_Scheidl = "purple"
-c_Raz = "navy"
-c_Raz_3 = "black"
-c_Carpenter_neutron = "blue"
-c_Carpenter_XRD = "cyan"
-c_Ogata = "maroon"
-c_Lakshtanov = "maroon"
-
-l_Antao = "Antao"
-l_Bachheimer = "Bachheimer"
-l_Hazen = "Hazen"
-l_Gronvold = "Gronvold"
-l_Richet = "Richet"
-l_Jorgensen = "Jorgensen"
-l_Scheidl = "Scheidl"
-l_Raz = "Raz"
-l_Raz_3 = "Raz (3 kbar)"
-l_Carpenter_neutron = "Carpenter (N)"
-l_Carpenter_XRD = "Carpenter (X)"
-l_Ogata = "Ogata"
-l_Lakshtanov = "Lakshtanov"
 
 fig1 = plt.figure(figsize=(10, 12))
 fig2 = plt.figure(figsize=(10, 8))
@@ -300,13 +228,15 @@ ax[i["V_tilt"]].scatter(
     Jorgensen["V"], Jorgensen["tilt"], c=c_Jorgensen, label=l_Jorgensen
 )
 
-
-# !!!! 1 BAR DATA ON V-TILT FIGURE
-ax[i["V_tilt"]].scatter(Antao["V"], Antao["tilt"], c=c_Antao, label=l_Antao)
 ax[i["V_tilt"]].scatter(Ogata["V"], Ogata["tilt"], c=c_Ogata, label=l_Ogata)
 
 Hazen_tilt = tilt_distorted(Hazen["c"] / Hazen["a"], Hazen["x"], Hazen["z"])
 ax[i["V_tilt"]].scatter(Hazen["V"], Hazen_tilt, c=c_Hazen, label=l_Hazen)
+
+
+# !!!! 1 BAR DATA ON V-TILT FIGURE
+ax[i["V_tilt"]].scatter(Antao["V"], Antao["tilt"], c=c_Antao, label=l_Antao)
+
 
 ax[i["T_V"]].errorbar(
     Antao["T_K"], Antao["V"], yerr=Antao["unc_V"], linestyle="None", c=c_Antao
@@ -404,9 +334,9 @@ for i in range(11):
 
 
 fig1.set_tight_layout(True)
-fig1.savefig("quartz_data.pdf")
+fig1.savefig("figures/quartz_data.pdf")
 fig2.set_tight_layout(True)
-fig2.savefig("quartz_data_2.pdf")
+fig2.savefig("figures/quartz_data_2.pdf")
 fig3.set_tight_layout(True)
-fig3.savefig("quartz_data_3.pdf")
+fig3.savefig("figures/quartz_data_3.pdf")
 plt.show()

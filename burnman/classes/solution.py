@@ -414,6 +414,8 @@ class Solution(Mineral):
             )
         )
 
+    isothermal_bulk_modulus_reuss = isothermal_bulk_modulus
+
     @material_property
     def adiabatic_bulk_modulus(self):
         """
