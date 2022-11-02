@@ -168,7 +168,7 @@ labels["Lakshtanov"] = "Lakshtanov"
 colours["Wang"] = "Wang"
 
 
-def get_K_S(dataset):
+def get_S(dataset):
     L = dataset
     # Make bigger than needed to index from 1
     C = np.zeros((7, 7, len(L["C11"])))
@@ -200,52 +200,27 @@ def get_K_S(dataset):
 
     # Invert
     S = np.linalg.inv(C)
+    return S * 1.0e9
 
+
+def K_S(S):
     # Get the Reuss bulk modulus
-    K_S = 1.0 / np.sum(S[:, :3, :3], axis=(1, 2))
-    return K_S * 1.0e9
+    return 1.0 / np.sum(S[:, :3, :3], axis=(1, 2))
 
 
-def get_beta_S(dataset):
-    L = dataset
-    # Make bigger than needed to index from 1
-    C = np.zeros((7, 7, len(L["C11"])))
-
-    C[1, 1] = L["C11"].to_numpy()
-    C[1, 2] = L["C12"].to_numpy()
-    C[1, 3] = L["C13"].to_numpy()
-    C[1, 4] = L["C14"].to_numpy()
-    C[3, 3] = L["C33"].to_numpy()
-    C[4, 4] = L["C44"].to_numpy()
-    C[6, 6] = (C[1, 1] - C[1, 2]) / 2.0
-
-    # Add dependent upper triangular elements
-    C[2, 2] = C[1, 1]
-    C[2, 3] = C[1, 3]
-    C[2, 4] = -C[1, 4]
-    C[5, 5] = C[4, 4]
-    C[5, 6] = C[1, 4]
-
-    # Clip to correct size
-    C = C[1:, 1:]
-
-    # Make symmetric
-    C = (
-        np.einsum("ijk->kij", C)
-        + np.einsum("jik->kij", C)
-        - np.einsum("ijk, ij->kij", C, np.eye(6))
-    )
-
-    # Invert
-    S = np.linalg.inv(C)
-
+def calc_beta_S(S):
     # Get the isentropic compressibility tensor
     beta_S = np.sum(S[:, :, :3], axis=(2))
-    return beta_S * 1.0e-9
+    return beta_S
 
 
 for ds in [data["Lakshtanov"], data["Wang"]]:
-    ds["K_S"] = get_K_S(ds)
-    beta_S = get_beta_S(ds)
-    ds["beta_S11"] = beta_S[:, 0]
-    ds["beta_S33"] = beta_S[:, 2]
+    S = get_S(ds)
+    ds["K_S"] = K_S(S)
+    beta_S = calc_beta_S(S)
+    ds["beta_S1"] = beta_S[:, 0]
+    ds["beta_S3"] = beta_S[:, 2]
+    ds["S12"] = S[:, 0, 1]
+    ds["S13"] = S[:, 0, 2]
+    ds["S14"] = S[:, 0, 3]
+    ds["S44"] = S[:, 3, 3]
