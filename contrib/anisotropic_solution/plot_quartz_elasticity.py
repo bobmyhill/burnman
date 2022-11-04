@@ -2,48 +2,105 @@ import matplotlib.pyplot as plt
 import numpy as np
 import string
 from data_tables import data
-from quartz_model import make_anisotropic_model_4
+from quartz_model import (
+    make_anisotropic_model_4,
+    make_anisotropic_model_5,
+    equilibrium_Q,
+)
+from burnman.utils.anisotropy import contract_compliances
 
 #    a11, a33, a44, a14 = args[0:4]
 #    b11, b33, b44, b14 = args[4:8]
 #    c44, c14 = args[8:10]
 #    d11, d33, d44, d14 = args[10:14]
 
-# 6342
+
+# 5238
 args = [
-    3.08023469e-02,
-    7.11196588e-01,
-    1.43134903e00,
-    -9.41929127e-02,
-    -1.43295172e00,
-    1.20198198e-02,
-    -7.29519270e-02,
-    -1.24960228e00,
-    2.35467349e-02,
-    1.87706618e-02,
-    3.69723158e-02,
-    -1.16882690e-01,
-    -6.42735902e-01,
-    5.63749967e-01,
-    4.35422899e-02,
-    -2.47530735e-02,
-    7.97487126e-03,
-    2.20609966e-02,
-    -1.12603343e-02,
-    -9.38895870e-05,
-    3.01706139e-01,
-    -3.31787168e-02,
-    -7.12771915e-01,
-    7.93822184e-03,
-    -2.51231281e-03,
-    8.46341094e-05,
-    -5.43208946e-01,
-    -3.81465199e-03,
-    5.31775526e-04,
+    -4.41413951e-01,
+    8.01640333e-01,
+    1.51285308e00,
+    -2.43434388e-03,
+    -2.28445678e00,
+    1.50825700e-01,
+    2.94153157e-02,
+    -9.46031419e00,
+    5.37303170e-03,
+    3.22659916e-02,
+    -1.19700530e-01,
+    -1.12143669e-01,
+    -9.44354466e-01,
+    4.51094817e-01,
+    2.14961826e-01,
+    -2.12340655e-02,
+    3.59672487e-01,
+    -3.29118453e-02,
+    -4.91200424e-03,
+    -6.52961965e-03,
+    3.01520115e-01,
+    -2.60152302e-02,
+    -6.94684348e-01,
+    9.29285883e-03,
+    -3.11614913e-03,
+    -7.03987125e-05,
+    -5.43785736e-01,
+    -1.61745972e-03,
+    6.74159701e-03,
+]
+
+
+"""
+    a11, a33, a44, a14 = args[0:4]
+    b11, b33, b44, b14 = args[4:8]
+    c44, c14 = args[8:10]
+    d11, d33, d44, d14 = args[10:14]
+    e11, e33, e44 = args[14:17]
+    f11, f33, f44 = args[17:20]
+"""
+
+args2 = [
+    -3.84561803e-01,
+    7.38299245e-01,
+    1.5674533e00,  #
+    -4.95936133e-02 * 8.0,
+    -2.32624286e00,
+    6.42776707e-02,
+    2.35100601e-01,  #
+    5.54699868e00 * 4.0,
+    3.89844677e-01,  #
+    1.0e-0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.01387550e-01,
+    -4.43459975e-02,
+    -1e-1,  #
+    0.0,
+    3.95126381e-02,
+    -1.64471070e-02,
+    0.0,  #
 ]
 
 
 qtz_a = make_anisotropic_model_4(args)
+m = qtz_a
+
+
+def get_dPsidf(P, T):
+    m.equilibrate(P, T)
+    dTdP = m.isentropic_thermal_gradient
+    dP = 1.0e4
+
+    m.equilibrate(P - dP / 2.0, T - dTdP * dP / 2.0)
+    Psi0 = m.Psi
+    f0 = np.log(m.V)
+    m.equilibrate(P + dP / 2.0, T + dTdP * dP / 2.0)
+    Psi1 = m.Psi
+    f1 = np.log(m.V)
+
+    return contract_compliances(Psi1 - Psi0) / (f1 - f0)
+
 
 if False:
     a = qtz_a.scalar_solution.endmembers[0][0]
@@ -110,22 +167,24 @@ if False:
 
 
 if True:
-    temperatures = np.linspace(1.0, 1400.0, 100)
-    CS = np.empty((len(temperatures), 6, 6))
-    KS = np.empty(len(temperatures))
-    KT = np.empty(len(temperatures))
-    KTest = np.empty(len(temperatures))
+    temperatures = np.linspace(300.0, 1300.0, 100)
+    SS = np.empty((len(temperatures), 6, 6))
+    betaS = np.empty(len(temperatures))
+    betaT = np.empty(len(temperatures))
+    betaTest = np.empty(len(temperatures))
     V = np.empty(len(temperatures))
     cell_parameters = np.empty((len(temperatures), 6))
+    Q_active_sq = np.empty(len(temperatures))
 
     for i, T in enumerate(temperatures):
         if i % 100 == 0:
             print(T)
         qtz_a.equilibrate(1.0e5, T)
-
-        CS[i] = qtz_a.isentropic_stiffness_tensor
-        KS[i] = qtz_a.isentropic_bulk_modulus_reuss
-        KT[i] = qtz_a.isothermal_bulk_modulus_reuss
+        Qs = equilibrium_Q(1.0e5, T)
+        Q_active_sq[i] = Qs[0] * Qs[0] if Qs[0] > 0.0 else -Qs[1] * Qs[1]
+        SS[i] = qtz_a.isentropic_compliance_tensor
+        betaS[i] = qtz_a.isentropic_compressibility_reuss
+        betaT[i] = qtz_a.isothermal_compressibility_reuss
         V[i] = qtz_a.V
         cell_parameters[i] = qtz_a.cell_parameters
 
@@ -133,7 +192,7 @@ if True:
         qtz_a.equilibrate(1.0e5 + dP, T)
         # qtz_a.set_state(1.0e5 + dP, T)
         V2 = qtz_a.V
-        KTest[i] = -((V2 + V[i]) / 2.0) * dP / (V2 - V[i])
+        betaTest[i] = 1.0 / (-((V2 + V[i]) / 2.0) * dP / (V2 - V[i]))
 
         # print(1.0 - np.linalg.det(qtz_a.cell_vectors) / qtz_a.V)
 
@@ -159,13 +218,47 @@ if True:
     plt.legend()
     plt.show()
 
-    for (i, j) in [(1, 1), (3, 3), (4, 4), (1, 2), (1, 3), (1, 4)]:
-        plt.plot(temperatures, CS[:, i - 1, j - 1] / 1.0e9, label=f"$C_{{S{i}{j}}}$")
-        plt.scatter(data["Lakshtanov"]["T_K"], data["Lakshtanov"][f"C{i}{j}"])
+    L_Qs = [
+        equilibrium_Q(P_GPa * 1.0e9, T)
+        for P_GPa, T in zip(data["Lakshtanov"]["P_GPa"], data["Lakshtanov"]["T_K"])
+    ]
+    L_Qs.extend(
+        [
+            equilibrium_Q(P_GPa * 1.0e9, T)
+            for P_GPa, T in zip(data["Wang"]["P_GPa"], data["Wang"]["T_K"])
+        ]
+    )
+    L_Q_active_sq = np.array([Q[0] * Q[0] if Q[0] > 0 else -Q[1] * Q[1] for Q in L_Qs])
 
-    plt.plot(temperatures, KS / 1.0e9, label="$K_S$")
-    plt.plot(temperatures, KT / 1.0e9, label="$K_T$")
-    plt.plot(temperatures, KTest / 1.0e9, linestyle="--", label="$K_T est$")
+    dPsidf = [
+        get_dPsidf(P_GPa * 1.0e9, T)
+        for P_GPa, T in zip(data["Lakshtanov"]["P_GPa"], data["Lakshtanov"]["T_K"])
+    ]
+    dPsidf.extend(
+        [
+            get_dPsidf(P_GPa * 1.0e9, T)
+            for P_GPa, T in zip(data["Wang"]["P_GPa"], data["Wang"]["T_K"])
+        ]
+    )
+
+    dPsidf = np.array(dPsidf)
+
+    for (i, j) in [(1, 1), (3, 3), (4, 4), (1, 2), (1, 3), (1, 4)]:
+        plt.plot(Q_active_sq, SS[:, i - 1, j - 1] / betaS, label=f"$S_{{S{i}{j}}}$")
+
+        beta_ratio = np.concatenate(
+            (
+                data["Lakshtanov"][f"S{i}{j}"] * data["Lakshtanov"]["K_S"],
+                data["Wang"][f"S{i}{j}"] * data["Wang"]["K_S"],
+            )
+        )
+        plt.scatter(L_Q_active_sq, beta_ratio)
+
+        plt.scatter(L_Q_active_sq, dPsidf[:, i - 1, j - 1], marker="+")
+
+    plt.plot(Q_active_sq, betaS * 0.0 + 1.0, label="$\\beta_S$")
+    plt.plot(Q_active_sq, betaT / betaS, label="$\\beta_T$")
+    plt.plot(Q_active_sq, betaTest / betaS, linestyle="--", label="$\\beta_T est$")
 
     plt.legend()
     plt.show()

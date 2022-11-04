@@ -29,14 +29,14 @@ Ps_K = (
 )
 betaS11_K = np.concatenate(
     (
-        data["Lakshtanov"]["beta_S11"].to_numpy(),
-        data["Wang"]["beta_S11"].to_numpy(),
+        data["Lakshtanov"]["beta_S1"].to_numpy(),
+        data["Wang"]["beta_S1"].to_numpy(),
     )
 )
 betaS33_K = np.concatenate(
     (
-        data["Lakshtanov"]["beta_S33"].to_numpy(),
-        data["Wang"]["beta_S33"].to_numpy(),
+        data["Lakshtanov"]["beta_S3"].to_numpy(),
+        data["Wang"]["beta_S3"].to_numpy(),
     )
 )
 V_K = np.concatenate(
@@ -219,17 +219,17 @@ if True:
     sol = minimize(
         misfit,
         [
-            3.02253035e-01,
+            3.02253027e-01,
             2.87273312e00,
             -9.75274172e00,
-            -2.79316527e-03,
-            -6.15824452e-04,
-            6.58568117e-04,
-            -2.04603219e-02,
-            -1.42522528e-02,
-            2.59462196e-01,
+            -2.79316407e-03,
+            -6.15831383e-04,
+            6.58566838e-04,
+            -2.04603234e-02,
+            -1.42522536e-02,
+            2.59462199e-01,
         ],
-        args=(1.0e-2, [1.0e5]),
+        args=(1.0e-4, [1.0e5]),
     )
     print("trying basin hopping")
     store = [sol.fun, deepcopy(sol.x)]
@@ -247,13 +247,15 @@ if True:
     x = sol.x
 else:
     x = [
-        3.44552173e-01,
-        -1.13315130e-01,
-        1.07795628e-01,
-        -3.91321772e-03,
-        1.58623000e-03,
-        -4.15582828e-04,
-        1.09888347e00,
+        3.02276161e-01,
+        2.78273058e00,
+        -8.86626017e00,
+        -2.97357175e-03,
+        -5.50793786e-04,
+        6.79575848e-04,
+        -2.12598726e-02,
+        -1.49051977e-02,
+        2.75266172e-01,
     ]
 
 a_over_c_mod = a_over_c(V, Pths / 1.0e9, Q1sqrs, Q2sqrs, *x)

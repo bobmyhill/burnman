@@ -793,3 +793,120 @@ def make_anisotropic_model_4(args):
     qtz_a.equilibrate = equilibrate_m(qtz_a)
 
     return qtz_a
+
+
+def make_anisotropic_model_5(args):
+    """
+    Psi_11ij delta_ij =
+      a0
+        + a1 * f
+        + a2 * (np.exp(d1 * f) - 1)
+        + a3 * Pth
+        + a4 * (Q1sqr - 1.)
+        + a5 * (Q2sqr - 1.)
+        + a6 * (Q1sqr - 1.) * f
+        + a7 * (Q2sqr - 1.) * f
+        )
+    """
+
+    a11, a33, a44, a14 = args[0:4]
+    b11, b33, b44, b14 = args[4:8]
+    c44, c14 = args[8:10]
+    d11, d33, d44, d14 = args[10:14]
+    e11, e33, e44 = args[14:17]
+    f11, f33, f44 = args[17:21]
+    # a0, a1, a2, a3, a4, a5, a6, a7, d
+    ac = [
+        3.02276161e-01,
+        2.78273058e00,
+        -8.86626017e00,
+        -2.97357175e-03,
+        -5.50793786e-04,
+        6.79575848e-04,
+        -2.12598726e-02,
+        -1.49051977e-02,
+        2.75266172e-01,
+    ]
+
+    a_0 = np.exp(ac[0]) / np.exp(1.0 - 2.0 * (ac[0]))
+    c_0 = 1.0
+    f = np.cbrt(alpha.params["V_0"] / (np.sqrt(3.0) / 2.0) / (a_0 * a_0 * c_0))
+    cell_parameters_alpha = np.array([a_0 * f, a_0 * f, c_0 * f, 90.0, 90.0, 120.0])
+
+    alpha1_params = {
+        "a": make_array(1.0, ac[1], a11, a33, a44, a14),
+        "b_1": make_array(0.0, ac[2], b11, b33, b44, b14),
+        "c_1": make_power_array(ac[-1], c44, c14),
+        "d": make_array(0.0, ac[3], d11, d33, d44, d14),
+    }
+
+    alpha2_params = {
+        "a": make_array(1.0, ac[1], a11, a33, a44, -a14),
+        "b_1": make_array(0.0, ac[2], b11, b33, b44, -b14),
+        "c_1": make_power_array(ac[-1], c44, c14),
+        "d": make_array(0.0, ac[3], d11, d33, d44, -d14),
+    }
+
+    alpha1 = AnisotropicMineral(
+        alpha,
+        cell_parameters=cell_parameters_alpha,
+        anisotropic_parameters=alpha1_params,
+        psi_function=psi_func_mbr,
+        orthotropic=True,
+    )
+
+    alpha2 = AnisotropicMineral(
+        alpha,
+        cell_parameters=cell_parameters_alpha,
+        anisotropic_parameters=alpha2_params,
+        psi_function=psi_func_mbr,
+        orthotropic=True,
+    )
+
+    model = PolynomialSolution(
+        endmembers=[[alpha1, ""], [alpha1, ""], [alpha2, ""]],
+        ESV_interactions=ESV_terms,
+        interaction_endmembers=[alpha, beta],
+        endmember_coefficients_and_interactions=mbr_terms,
+    )
+
+    qtz = Solution(name="qtz", solution_model=model)
+    qtz.equilibrate = equilibrate_m(qtz)
+
+    eps_Q0 = ac[4] * np.diag([1.0, 1.0, -2.0])
+    eps_Q1 = ac[5] * np.diag([1.0, 1.0, -2.0])
+    aniso_mbr_terms = transform_terms(2, [0, 1, 2], eps_Q0)
+    aniso_mbr_terms.extend(transform_terms(2, [0, 2, 1], eps_Q1))
+    a = np.zeros((6, 6, 3, 3))
+    for term in aniso_mbr_terms:
+        a[:, :, term[3], term[4]] = a[:, :, term[3], term[4]] + contract_compliances(
+            np.einsum("ij, kl->ijkl", np.array(term[:3]), np.eye(3) / 3.0)
+        )
+
+    Psi_Q0 = make_array(0.0, ac[6], e11, e33, e44, 0.0)
+    Psi_Q1 = make_array(0.0, ac[7], f11, f33, f44, 0.0)
+    aniso_Psi_terms = transform_terms(2, [0, 1, 2], Psi_Q0)
+    aniso_Psi_terms.extend(transform_terms(2, [0, 2, 1], Psi_Q1))
+    c = np.zeros((6, 6, 3, 3))
+    for term in aniso_Psi_terms:
+        c[:, :, term[6], term[7]] = c[:, :, term[6], term[7]] + np.array(term[:6])
+
+    params = {
+        "a": a,
+        "c": c,
+        "lnV_0": np.log(alpha1.params["V_0"]),
+    }
+
+    qtz_a = AnisotropicSolution(
+        name="qtz",
+        scalar_solution=qtz,
+        anisotropic_parameters=params,
+        psi_excess_function=psi_xs_func,
+        dXdQ=np.array([[1.0, -1.0, 0.0], [1.0, 0.0, -1.0]]).T,
+        orthotropic=True,
+        relaxed=True,
+    )
+
+    qtz_a.equilibrate = equilibrate_m(qtz_a)
+
+    return qtz_a

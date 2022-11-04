@@ -200,7 +200,7 @@ def get_S(dataset):
 
     # Invert
     S = np.linalg.inv(C)
-    return S * 1.0e9
+    return S / 1.0e9
 
 
 def K_S(S):
@@ -220,7 +220,9 @@ for ds in [data["Lakshtanov"], data["Wang"]]:
     beta_S = calc_beta_S(S)
     ds["beta_S1"] = beta_S[:, 0]
     ds["beta_S3"] = beta_S[:, 2]
+    ds["S11"] = S[:, 0, 0]
+    ds["S33"] = S[:, 2, 2]
+    ds["S44"] = S[:, 3, 3]
     ds["S12"] = S[:, 0, 1]
     ds["S13"] = S[:, 0, 2]
     ds["S14"] = S[:, 0, 3]
-    ds["S44"] = S[:, 3, 3]
