@@ -38,6 +38,8 @@ assemblage.set_state(1.e5, 1473.15)
 
 xans = np.linspace(0.999, 0.001, 101)
 xanls = np.empty_like(xans)
+Hls = np.empty_like(xans)
+Hss = np.empty_like(xans)
 Ts = np.empty_like(xans)
 
 for i, x in enumerate(xans):
@@ -54,10 +56,15 @@ for i, x in enumerate(xans):
     xanls[i] = sol.assemblage.phases[1].molar_fractions[0]
     Ts[i] = sol.assemblage.temperature
 
-fig = plt.figure(figsize=(8, 3))
-ax = [fig.add_subplot(1, 2, i) for i in range(1, 3)]
+    Hss[i] = sol.assemblage.phases[0].H
+    Hls[i] = sol.assemblage.phases[1].H
+
+fig = plt.figure(figsize=(8, 6))
+ax = [fig.add_subplot(2, 2, i) for i in range(1, 4)]
 ax[0].plot(xans, Ts, label='plag composition')
 ax[0].plot(xanls, Ts, label='melt composition')
+ax[2].plot(xans, Hss, label='plag enthalpy')
+ax[2].plot(xanls, Hls, label='melt enthalpy')
 
 
 xans = np.linspace(1., 0., 101)
