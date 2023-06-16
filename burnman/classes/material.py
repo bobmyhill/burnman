@@ -130,13 +130,11 @@ class Material(object):
 
     def to_string(self):
         """
-        Returns a human-readable name of this material. The default implementation will return the name of the class,
+        Returns a human-readable name of this material.
+        The default implementation will return the name of the class,
         which is a reasonable default.
 
-        Returns
-        -------
-        name : string
-            Name of this material.
+        :returns: A string containing the name of the material.
         """
         return "'" + self.name + "'"
 
@@ -152,7 +150,8 @@ class Material(object):
 
     def print_minerals_of_current_state(self):
         """
-        Print a human-readable representation of this Material at the current P, T as a list of minerals.
+        Print a human-readable representation of this Material at the current
+        P, T as a list of minerals.
         This requires set_state() has been called before.
         """
         (minerals, fractions) = self.unroll()
@@ -167,12 +166,11 @@ class Material(object):
         """
         Set the material to the given pressure and temperature.
 
-        Parameters
-        ----------
-        pressure : float
-            The desired pressure in [Pa].
-        temperature : float
-            The desired temperature in [K].
+        :param pressure: The desired pressure in [Pa].
+        :type pressure: float
+
+        :param temperature: The desired temperature in [K].
+        :type temperature: float
         """
         if not hasattr(self, "_pressure"):
             raise Exception(
