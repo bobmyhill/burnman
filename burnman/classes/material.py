@@ -134,7 +134,8 @@ class Material(object):
         The default implementation will return the name of the class,
         which is a reasonable default.
 
-        :returns: A string containing the name of the material.
+        :returns: A human-readable name of the material.
+        :rtype: string
         """
         return "'" + self.name + "'"
 
@@ -192,19 +193,19 @@ class Material(object):
         from the material classes, but instead finds the pressure using the
         brentq root-finding method.
 
-        Parameters
-        ----------
-        volume : float
-            The desired molar volume of the mineral [m^3].
-        temperature : float
-            The desired temperature of the mineral [K].
-        pressure_guesses : list of floats (default: [5.e9, 10.e9])
-            The initial low and high guesses for bracketing of
-            the pressure [Pa].
+        :param volume: The desired molar volume of the mineral [m^3].
+        :type volume: float
+
+        :param temperature: The desired temperature of the mineral [K].
+        :type temperature: float
+
+        :param pressure_guesses: A list of floats denoting the initial
+            low and high guesses for bracketing of the pressure [Pa].
             These guesses should preferably bound the correct pressure,
             but do not need to do so. More importantly,
             they should not lie outside the valid region of
-            the equation of state.
+            the equation of state. Defaults to [5.e9, 10.e9].
+        :type pressure_guesses: list
         """
 
         def _delta_volume(pressure, volume, temperature):
@@ -247,40 +248,33 @@ class Material(object):
         then operate on this list of minerals. Note that the return value of this function may depend on the current
         state (temperature, pressure).
 
-        Notes
-        -----
-        Needs to be implemented in derived classes.
+        .. note:: Needs to be implemented in derived classes.
 
-        Returns
-        -------
-        fractions : list of float
-            List of molar fractions, should sum to 1.0.
-        minerals : list of :class:`burnman.Mineral`
-            List of minerals.
+        :returns: A list of molar fractions which should sum to 1.0, and a list of :class:`burnman.Mineral` objects
+        containing the minerals in the material.
+        :rtype: tuple
         """
         raise NotImplementedError("need to implement unroll() in derived class!")
 
     def evaluate(self, vars_list, pressures, temperatures):
         """
-        Returns an array of material properties requested through a list of strings at given pressure and temperature
-        conditions. At the end it resets the set_state to the original values.
+        Returns an array of material properties requested through a list of strings
+        at given pressure and temperature conditions.
+        At the end it resets the set_state to the original values.
         The user needs to call set_method() before.
 
-        Parameters
-        ----------
-        vars_list : list of strings
-            Variables to be returned for given conditions
-        pressures : ndlist or ndarray of float
-            n-dimensional array of pressures in [Pa].
-        temperatures : ndlist or ndarray of float
-            n-dimensional array of temperatures in [K].
+        :param vars_list: Variables to be returned for given conditions
+        :type vars_list: list of strings
 
-        Returns
-        -------
-        output : array of array of float
-            Array returning all variables at given pressure/temperature values. output[i][j] is property vars_list[j]
-            and temperatures[i] and pressures[i].
+        :param pressures: ndlist or ndarray of float of pressures in [Pa].
+        :type pressures: :class:`numpy.array`, n-dimensional
 
+        :param temperatures: ndlist or ndarray of float of temperatures in [K].
+        :type temperatures: :class:`numpy.array`, n-dimensional
+
+        :returns: Array returning all variables at given pressure/temperature values.
+        output[i][j] is property vars_list[j] for temperatures[i] and pressures[i].
+        :rtype: :class:`numpy.array`, n-dimensional
         """
         old_pressure = self.pressure
         old_temperature = self.temperature
@@ -309,15 +303,10 @@ class Material(object):
         """
         Returns current pressure that was set with :func:`~burnman.Material.set_state`.
 
+        .. note:: Aliased with :func:`~burnman.Material.P`.
 
-        Notes
-        -----
-        - Aliased with :func:`~burnman.Material.P`.
-
-        Returns
-        -------
-        pressure : float
-            Pressure in [Pa].
+        :returns: Pressure in [Pa].
+        :rtype: float
         """
         return self._pressure
 
@@ -326,14 +315,10 @@ class Material(object):
         """
         Returns current temperature that was set with :func:`~burnman.Material.set_state`.
 
-        Notes
-        -----
-        - Aliased with :func:`~burnman.Material.T`.
+        .. note:: Aliased with :func:`~burnman.Material.T`.
 
-        Returns
-        -------
-        temperature : float
-            Temperature in [K].
+        :returns: Temperature in [K].
+        :rtype: float
         """
         return self._temperature
 
@@ -342,15 +327,11 @@ class Material(object):
         """
         Returns the molar internal energy of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.energy`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.energy`.
 
-        Returns
-        -------
-        molar_internal_energy : float
-            The internal energy in [J/mol].
+        :returns: The internal energy in [J/mol].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement molar_internal_energy() in derived class!"
@@ -361,15 +342,11 @@ class Material(object):
         """
         Returns the molar Gibbs free energy of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.gibbs`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.gibbs`.
 
-        Returns
-        -------
-        molar_gibbs : float
-            Gibbs free energy in [J/mol].
+        :returns: Gibbs free energy in [J/mol].
+        :rtype: float
         """
         raise NotImplementedError("need to implement molar_gibbs() in derived class!")
 
@@ -378,15 +355,11 @@ class Material(object):
         """
         Returns the molar Helmholtz free energy of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.helmholtz`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.helmholtz`.
 
-        Returns
-        -------
-        molar_helmholtz : float
-            Helmholtz free energy in [J/mol].
+        :returns: Helmholtz free energy in [J/mol].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement molar_helmholtz() in derived class!"
@@ -397,14 +370,10 @@ class Material(object):
         """
         Returns molar mass of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
+        .. note:: Needs to be implemented in derived classes.
 
-        Returns
-        -------
-        molar_mass : float
-            Molar mass in [kg/mol].
+        :returns: Molar mass in [kg/mol].
+        :rtype: float
         """
         raise NotImplementedError("need to implement molar_mass() in derived class!")
 
@@ -413,15 +382,11 @@ class Material(object):
         """
         Returns molar volume of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.V`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.V`.
 
-        Returns
-        -------
-        molar_volume : float
-            Molar volume in [m^3/mol].
+        :returns: Molar volume in [m^3/mol].
+        :rtype: float
         """
         raise NotImplementedError("need to implement molar_volume() in derived class!")
 
@@ -430,15 +395,11 @@ class Material(object):
         """
         Returns the density of this material.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.rho`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.rho`.
 
-        Returns
-        -------
-        density : float
-            The density of this material in [kg/m^3].
+        :returns: The density of this material in [kg/m^3].
+        :rtype: float
         """
         raise NotImplementedError("need to implement density() in derived class!")
 
@@ -447,15 +408,11 @@ class Material(object):
         """
         Returns molar entropy of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.S`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.S`.
 
-        Returns
-        -------
-        molar_entropy : float
-            Entropy in [J/K/mol].
+        :returns: Entropy in [J/K/mol].
+        :rtype: float
         """
         raise NotImplementedError("need to implement molar_entropy() in derived class!")
 
@@ -464,15 +421,11 @@ class Material(object):
         """
         Returns molar enthalpy of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.H`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.H`.
 
-        Returns
-        -------
-        molar_enthalpy : float
-            Enthalpy in [J/mol].
+        :returns: Enthalpy in [J/mol].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement molar_enthalpy() in derived class!"
@@ -483,15 +436,11 @@ class Material(object):
         """
         Returns isothermal bulk modulus of the material.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.K_T`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.K_T`.
 
-        Returns
-        -------
-        isothermal_bulk_modulus : float
-            Bulk modulus in [Pa].
+        :returns: Isothermal bulk modulus in [Pa].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement isothermal_bulk_moduls() in derived class!"
@@ -502,15 +451,11 @@ class Material(object):
         """
         Returns the adiabatic bulk modulus of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.K_S`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.K_S`.
 
-        Returns
-        -------
-        adiabatic_bulk_modulus : float
-            Adiabatic bulk modulus in [Pa].
+        :returns: Adiabatic bulk modulus in [Pa].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement adiabatic_bulk_modulus() in derived class!"
@@ -521,15 +466,11 @@ class Material(object):
         """
         Returns isothermal compressibility of the mineral (or inverse isothermal bulk modulus).
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.beta_T`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.beta_T`.
 
-        Returns
-        -------
-        (K_T)^-1 : float
-            Compressibility in [1/Pa].
+        :returns: Isothermal compressibility in [1/Pa].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement compressibility() in derived class!"
@@ -541,15 +482,11 @@ class Material(object):
         Returns adiabatic compressibility of the mineral (or inverse adiabatic bulk modulus).
 
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.beta_S`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.beta_S`.
 
-        Returns
-        -------
-        adiabatic_compressibility : float
-            adiabatic compressibility in [1/Pa].
+        :returns: Adiabatic compressibility in [1/Pa].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement compressibility() in derived class!"
@@ -560,15 +497,11 @@ class Material(object):
         """
         Returns shear modulus of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.beta_G`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.beta_G`.
 
-        Returns
-        -------
-        shear_modulus : float
-            Shear modulus in [Pa].
+        :returns: Shear modulus in [Pa].
+        :rtype: float
         """
         raise NotImplementedError("need to implement shear_modulus() in derived class!")
 
@@ -577,15 +510,11 @@ class Material(object):
         """
         Returns P wave speed of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.v_p`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.v_p`.
 
-        Returns
-        -------
-        p_wave_velocity : float
-            P wave speed in [m/s].
+        :returns: P wave speed in [m/s].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement p_wave_velocity() in derived class!"
@@ -596,15 +525,11 @@ class Material(object):
         """
         Returns bulk sound speed of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.v_phi`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.v_phi`.
 
-        Returns
-        -------
-        bulk sound velocity: float
-            Sound velocity in [m/s].
+        :returns: Bulk sound velocity in [m/s].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement bulk_sound_velocity() in derived class!"
@@ -615,15 +540,11 @@ class Material(object):
         """
         Returns shear wave speed of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.v_s`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.v_s`.
 
-        Returns
-        -------
-        shear_wave_velocity : float
-            Wave speed in [m/s].
+        :returns: Shear wave speed in [m/s].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement shear_wave_velocity() in derived class!"
@@ -634,15 +555,11 @@ class Material(object):
         """
         Returns the grueneisen parameter of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.gr`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.gr`.
 
-        Returns
-        -------
-        gr : float
-            Grueneisen parameters [unitless].
+        :returns: Grueneisen parameter [unitless].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement grueneisen_parameter() in derived class!"
@@ -653,15 +570,11 @@ class Material(object):
         """
         Returns thermal expansion coefficient of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.alpha`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.alpha`.
 
-        Returns
-        -------
-        alpha : float
-            Thermal expansivity in [1/K].
+        :returns: Thermal expansivity in [1/K].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement thermal_expansivity() in derived class!"
@@ -672,15 +585,11 @@ class Material(object):
         """
         Returns molar heat capacity at constant volume of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.C_v`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.C_v`.
 
-        Returns
-        -------
-        molar_heat_capacity_v : float
-            Heat capacity in [J/K/mol].
+        :returns: Isochoric heat capacity in [J/K/mol].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement molar_heat_capacity_v() in derived class!"
@@ -691,15 +600,11 @@ class Material(object):
         """
         Returns molar heat capacity at constant pressure of the mineral.
 
-        Notes
-        -----
-        - Needs to be implemented in derived classes.
-        - Aliased with :func:`~burnman.Material.C_p`.
+        .. note:: Needs to be implemented in derived classes.
+        Aliased with :func:`~burnman.Material.C_p`.
 
-        Returns
-        -------
-        molar_heat_capacity_p : float
-            Heat capacity in [J/K/mol].
+        :returns: Isobaric heat capacity in [J/K/mol].
+        :rtype: float
         """
         raise NotImplementedError(
             "need to implement molar_heat_capacity_p() in derived class!"
