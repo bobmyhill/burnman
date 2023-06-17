@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for the Earth and Planetary Sciences
+# This file is part of BurnMan - a thermoelastic and thermodynamic toolkit
+# for the Earth and Planetary Sciences
 # Copyright (C) 2012 - 2017 by the BurnMan team, released under the GNU
 # GPL v2 or later.
 
@@ -73,7 +74,8 @@ def material_property(func):
         def get(self, obj):
             if not hasattr(obj, "_cached"):
                 raise Exception(
-                    "The material_property decorator could not find class member _cached. "
+                    "The material_property decorator could not find "
+                    "class member _cached. "
                     "Did you forget to call Material.__init__(self) in __init___?"
                 )
             cache_array = getattr(obj, "_cached")
@@ -122,9 +124,7 @@ class Material(object):
         """
         Set the averaging method. See :doc:`averaging` for details.
 
-        Notes
-        -----
-        Needs to be implemented in derived classes.
+        .. note:: Needs to be implemented in derived classes.
         """
         raise NotImplementedError("need to implement set_method() in derived class!")
 
@@ -467,7 +467,8 @@ class Material(object):
     @material_property
     def isothermal_compressibility(self):
         """
-        Returns isothermal compressibility of the mineral (or inverse isothermal bulk modulus).
+        Returns isothermal compressibility of the mineral
+        (or inverse isothermal bulk modulus).
 
         .. note:: Needs to be implemented in derived classes.
             Aliased with :func:`~burnman.Material.beta_T`.
@@ -482,7 +483,8 @@ class Material(object):
     @material_property
     def adiabatic_compressibility(self):
         """
-        Returns adiabatic compressibility of the mineral (or inverse adiabatic bulk modulus).
+        Returns adiabatic compressibility of the mineral
+        (or inverse adiabatic bulk modulus).
 
 
         .. note:: Needs to be implemented in derived classes.
