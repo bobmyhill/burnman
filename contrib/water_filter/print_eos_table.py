@@ -1,23 +1,30 @@
-from model_parameters import mg_wadsleyite_params, fe_wadsleyite_params, majorite_params, water_params
+ordered_properties = [
+    ("name", "name"),
+    ("formula", "formula"),
+    ("n", "n"),
+    ("Pref", "$P\\textsubscript{ref} (Pa)$"),
+    ("molar_mass", "mass (kg/mol)"),
+    ("T_0", "$T\\textsubscript{ref}$ (K)"),
+    ("T_einstein", "$T\\textsubscript{ein}$ (K)"),
+    ("H_Pref", "$\\mathcal{H}(P\\textsubscript{ref}, T\\textsubscript{ref})$ (J/mol)"),
+    ("S_Pref", "$S(P\\textsubscript{ref}, T\\textsubscript{ref})$ (J/K/mol)"),
+    ("V_0", "$V_0$ (m$^3$/mol)"),
+    ("K_0", "$K_0$ (Pa)"),
+    ("Kprime_0", "$K'_0$"),
+    ("Kdprime_0", "$K''_0$ (/Pa)"),
+    ("a_0", "$a_0$ (/K)"),
+    ("Cp_Pref", ["J/K/mol", "J/K$^2$/mol", "JK/mol", "JK$^{-1/2}$/mol"]),
+]
 
-ordered_properties = [('name', 'name'),
-                      ('formula', 'formula'),
-                      ('n', 'n'),
-                      ('Pref', '$P\\textsubscript{ref} (Pa)$'),
-                      ('molar_mass', 'mass (kg/mol)'),
-                      ('T_0', '$T\\textsubscript{ref}$ (K)'),
-                      ('T_einstein', '$T\\textsubscript{ein}$ (K)'),
-                      ('H_Pref', '$\\mathcal{H}(P\\textsubscript{ref}, T\\textsubscript{ref})$ (J/mol)'),
-                      ('S_Pref', '$S(P\\textsubscript{ref}, T\\textsubscript{ref})$ (J/K/mol)'),
-                      ('V_0', '$V_0$ (m$^3$/mol)'),
-                      ('K_0', '$K_0$ (Pa)'),
-                      ('Kprime_0', "$K'_0$"),
-                      ('Kdprime_0', "$K''_0$ (/Pa)"),
-                      ('a_0', '$a_0$ (/K)'),
-                      ('Cp_Pref', ['J/K/mol', 'J/K$^2$/mol', 'JK/mol', 'JK$^{-1/2}$/mol'])]
+possible_elements = ["Fe", "Mg", "Si", "H", "O"]
 
-possible_elements = ['Fe', 'Mg', 'Si', 'H', 'O']
-
+"""
+from model_parameters import (
+    mg_wadsleyite_params,
+    fe_wadsleyite_params,
+    majorite_params,
+    water_params,
+)
 mins = [mg_wadsleyite_params, fe_wadsleyite_params, majorite_params, water_params]
 print('\\hline')
 for (prp, prpname) in ordered_properties:
@@ -53,3 +60,4 @@ for (prp, prpname) in ordered_properties:
         print('\\\\', end='\n')
     if prp == 'name':
         print('\\hline')
+"""

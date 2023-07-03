@@ -13,7 +13,7 @@ try:
 
     if "NUMBA_DISABLE_JIT" in os.environ and int(os.environ["NUMBA_DISABLE_JIT"]) == 1:
         raise ImportError("NOOOO!")
-    from numba import njit
+    from numba import jit
 except ImportError:
 
     def jit(fn):
