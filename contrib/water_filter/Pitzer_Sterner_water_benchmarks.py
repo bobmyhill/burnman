@@ -4,14 +4,14 @@ import sys
 sys.path.insert(1, os.path.abspath("../.."))
 
 import numpy as np
-from scipy.optimize import brentq
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from burnman import Mineral
 from burnman.minerals.Pitzer_Sterner_1994 import H2O_Pitzer_Sterner
+from burnman.tools.eos import check_eos_consistency
 
 H2O = H2O_Pitzer_Sterner()
+check_eos_consistency(H2O, tol=1.0e-3, verbose=True, including_shear_properties=False)
 
 """
 rho in Pitzer and Sterner (1994) is the inverse of the molar_volume
@@ -25,11 +25,10 @@ rho in Pitzer and Sterner (1994) is the inverse of the molar_volume
 Tc = 647  # K
 Pc = 22.064e6 / 1.0e6  # MPa
 zc = 0.229  # from paper
-rhoc = Pc / (zc * 8.31446 * Tc)
+rhoc1 = Pc / (zc * 8.31446 * Tc)
 
 rhoc = 3.22e2  # kg/m^3
-
-print(H2O.method.pressure(Tc, 1.0e-6 / 0.01787, H2O.params))
+print(f"{Pc}, {H2O.method.pressure(Tc, 1.0e-6 / rhoc1, H2O.params)/1.e6:.3f} MPa")
 
 PS1994_Fig1 = mpimg.imread("data/Pitzer_Sterner_1994_Fig_1.png")
 PS1994_Fig2a = mpimg.imread("data/Pitzer_Sterner_1994_Fig2a.png")
@@ -51,7 +50,7 @@ for T in [Tc, 1600.0]:
     plt.plot(densities / rhoc, reduced_pressures, label=f"{T} K")
 plt.legend()
 plt.ylim(0, 25)
-plt.xlabel("Reduced densities ($\\rho / \\rho_c$; GPa)")
+plt.xlabel("Reduced densities ($\\rho / \\rho_c$)")
 plt.ylabel("Reduced pressures ($PV / (RT)$)")
 plt.show()
 

@@ -1,6 +1,6 @@
 # This file is part of BurnMan - a thermoelastic and thermodynamic toolkit for
 # the Earth and Planetary Sciences
-# Copyright (C) 2012 - 2021 by the BurnMan team, released under the GNU
+# Copyright (C) 2012 - 2023 by the BurnMan team, released under the GNU
 # GPL v2 or later.
 
 from __future__ import absolute_import
@@ -30,6 +30,18 @@ class PitzerSterner(eos.EquationOfState):
                 + ci[3]
                 + ci[4] * temperature
                 + ci[5] * np.power(temperature, 2)
+            )
+        return cs
+
+    def _compute_dcdTs(self, c_coeffs, temperature):
+        cs = np.empty(10)
+        for i, ci in enumerate(c_coeffs):
+            cs[i] = (
+                -4.0 * ci[0] * np.power(temperature, -5.0)
+                - 2.0 * ci[1] * np.power(temperature, -3.0)
+                - ci[2] * np.power(temperature, -2.0)
+                + ci[4]
+                + 2.0 * ci[5] * temperature
             )
         return cs
 
@@ -83,19 +95,30 @@ class PitzerSterner(eos.EquationOfState):
         """
         Returns grueneisen parameter :math:`[unitless]`
         """
-        return NotImplementedError()
+        K_T = self.isothermal_bulk_modulus(0.0, temperature, volume, params)
+        alpha = self.thermal_expansivity(0.0, temperature, volume, params)
+        C_v = self.molar_heat_capacity_v(0.0, temperature, volume, params)
+        return alpha * K_T * volume / C_v
 
     def isothermal_bulk_modulus(self, pressure, temperature, volume, params):
         """
         Returns isothermal bulk modulus :math:`[Pa]`
         """
-        return NotImplementedError()
+        dV = volume * 1.0e-5
+        dPdV = (
+            self.pressure(temperature, volume + dV / 2.0, params)
+            - self.pressure(temperature, volume - dV / 2.0, params)
+        ) / dV
+        return -volume * dPdV
 
     def adiabatic_bulk_modulus(self, pressure, temperature, volume, params):
         """
         Returns adiabatic bulk modulus. :math:`[Pa]`
         """
-        return NotImplementedError()
+        K_T = self.isothermal_bulk_modulus(0.0, temperature, volume, params)
+        alpha = self.thermal_expansivity(0.0, temperature, volume, params)
+        gamma = self.grueneisen_parameter(0.0, temperature, volume, params)
+        return K_T * (1.0 + alpha * gamma * temperature)
 
     def shear_modulus(self, pressure, temperature, volume, params):
         """
@@ -108,23 +131,37 @@ class PitzerSterner(eos.EquationOfState):
         """
         Returns heat capacity at constant volume. :math:`[J/K/mol]`
         """
-        return NotImplementedError()
+        dT = 0.01
+        dSdT = (
+            self.entropy(0.0, temperature + dT / 2.0, volume, params)
+            - self.entropy(0.0, temperature - dT / 2.0, volume, params)
+        ) / dT
+        return temperature * dSdT
 
     def molar_heat_capacity_p(self, pressure, temperature, volume, params):
         """
         Returns heat capacity at constant pressure. :math:`[J/K/mol]`
         """
-        return NotImplementedError()
+        C_v = self.molar_heat_capacity_v(0.0, temperature, volume, params)
+        K_S = self.adiabatic_bulk_modulus(0.0, temperature, volume, params)
+        K_T = self.isothermal_bulk_modulus(0.0, temperature, volume, params)
+        return C_v * K_S / K_T
 
     def thermal_expansivity(self, pressure, temperature, volume, params):
         """
         Returns thermal expansivity. :math:`[1/K]`
         """
-        return NotImplementedError()
+        dT = 0.01
+        dPdT = (
+            self.pressure(temperature + dT / 2.0, volume, params)
+            - self.pressure(temperature - dT / 2.0, volume, params)
+        ) / dT
+        K_T = self.isothermal_bulk_modulus(0.0, temperature, volume, params)
+        return dPdT / K_T
 
     def gibbs_free_energy(self, pressure, temperature, volume, params):
         """
-        Returns the Gibbs free energy at the pressure and temperature
+        Returns the Gibbs free energy at the volume and temperature
         of the mineral [J/mol]
         """
         G = (
@@ -135,7 +172,7 @@ class PitzerSterner(eos.EquationOfState):
 
     def molar_internal_energy(self, pressure, temperature, volume, params):
         """
-        Returns the internal energy at the pressure and temperature
+        Returns the internal energy at the volume and temperature
         of the mineral [J/mol]
         """
         return self.helmholtz_free_energy(pressure, temperature, volume, params) + (
@@ -144,21 +181,69 @@ class PitzerSterner(eos.EquationOfState):
 
     def entropy(self, pressure, temperature, volume, params):
         """
-        Returns the entropy at the pressure and temperature
-        of the mineral [J/K/mol]
+        Returns the entropy at the volume and temperature
+        of the mineral [J/mol]
         """
-        dT = 0.1
-        F0 = self.helmholtz_free_energy(
-            pressure, temperature - dT / 2.0, volume, params
+        # convert volume in m^3/mol to specific density in mol/cm^3
+        rho_sp = 1.0e-6 / volume
+        c = self._compute_cs(params["c_coeffs"], temperature)
+
+        g = (
+            c[1]
+            + c[2] * rho_sp
+            + c[3] * np.power(rho_sp, 2.0)
+            + c[4] * np.power(rho_sp, 3.0)
+            + c[5] * np.power(rho_sp, 4.0)
         )
-        F1 = self.helmholtz_free_energy(
-            pressure, temperature + dT / 2.0, volume, params
+
+        reduced_F = (
+            np.log(rho_sp)
+            + c[0] * rho_sp
+            + (1.0 / g - 1.0 / c[1])
+            - (c[6] / c[7]) * (np.exp(-c[7] * rho_sp) - 1.0)
+            - (c[8] / c[9]) * (np.exp(-c[9] * rho_sp) - 1)
         )
-        return -(F1 - F0) / dT
+
+        dcdT = self._compute_dcdTs(params["c_coeffs"], temperature)
+
+        dgdT = (
+            dcdT[1]
+            + dcdT[2] * rho_sp
+            + dcdT[3] * np.power(rho_sp, 2.0)
+            + dcdT[4] * np.power(rho_sp, 3.0)
+            + dcdT[5] * np.power(rho_sp, 4.0)
+        )
+        h1 = (
+            np.exp(-c[7] * rho_sp)
+            * (
+                c[7]
+                * (-(np.exp(c[7] * rho_sp) - 1.0) * dcdT[6] - rho_sp * c[6] * dcdT[7])
+                + c[6] * (np.exp(c[7] * rho_sp) - 1) * dcdT[7]
+            )
+        ) / (c[7] * c[7])
+        h2 = (
+            np.exp(-c[9] * rho_sp)
+            * (
+                c[9]
+                * (-(np.exp(c[9] * rho_sp) - 1.0) * dcdT[8] - rho_sp * c[8] * dcdT[9])
+                + c[8] * (np.exp(c[9] * rho_sp) - 1) * dcdT[9]
+            )
+        ) / (c[9] * c[9])
+
+        reduced_dFdT = (
+            +dcdT[0] * rho_sp - dgdT / (g * g) + dcdT[1] / (c[1] * c[1]) - h1 - h2
+        )
+
+        S_debye = params["Cv_0"] * np.log(temperature) + debye.entropy(
+            temperature, params["Debye_0"], n=params["Debye_n"]
+        )
+
+        S = -constants.gas_constant * (reduced_F + reduced_dFdT * temperature) + S_debye
+        return S
 
     def enthalpy(self, pressure, temperature, volume, params):
         """
-        Returns the enthalpy at the pressure and temperature
+        Returns the enthalpy at the volume and temperature
         of the mineral [J/mol]
         """
 
@@ -169,7 +254,7 @@ class PitzerSterner(eos.EquationOfState):
 
     def helmholtz_free_energy(self, pressure, temperature, volume, params):
         """
-        Returns the Helmholtz free energy at the pressure and temperature
+        Returns the Helmholtz free energy at the volume and temperature
         of the mineral [J/mol]
         """
         # convert volume in m^3/mol to specific density in mol/cm^3

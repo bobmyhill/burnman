@@ -142,6 +142,8 @@ def check_eos_consistency(
                 )
             )
 
+            print(eq)
+
     return eos_is_consistent
 
 
