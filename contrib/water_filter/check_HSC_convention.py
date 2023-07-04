@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os.path
 import sys
-sys.path.insert(1, os.path.abspath('../..'))
+
+sys.path.insert(1, os.path.abspath("../.."))
 
 import burnman
 from burnman.minerals import SLB_2011, HP_2011_ds62
@@ -28,14 +29,14 @@ CuO      79.5450    135.7250
 Cr2O3   151.9900    358.8110
 """
 
-G_per_Barin = -609268.
+G_per_Barin = -609268.0
 
 per_SLB = SLB_2011.periclase()
 per_HP = HP_2011_ds62.per()
 
-per_SLB.set_state(1.e5, 298.15)
-per_HP.set_state(1.e5, 298.15)
+per_SLB.set_state(1.0e5, 298.15)
+per_HP.set_state(1.0e5, 298.15)
 
 
-print(G_per_Barin + 135.2550*298.15, per_SLB.gibbs, per_HP.gibbs + 135.2550*298.15)
+print(G_per_Barin + 135.2550 * 298.15, per_SLB.gibbs, per_HP.gibbs + 135.2550 * 298.15)
 print(G_per_Barin, per_SLB.S, per_HP.S)

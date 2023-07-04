@@ -6,24 +6,27 @@ import matplotlib.pyplot as plt
 
 
 def fn_RTlng_Mg2SiO4(temperatures, Tm, b, R, W):
-    a = -W/((b - 1.)**2*Tm*temperatures)
-    return a*((temperatures - Tm)*(temperatures - Tm) + (1. - b**2)*Tm*(temperatures - Tm))
+    a = -W / ((b - 1.0) ** 2 * Tm * temperatures)
+    return a * (
+        (temperatures - Tm) * (temperatures - Tm)
+        + (1.0 - b**2) * Tm * (temperatures - Tm)
+    )
 
 
 b = 0.5
 Tm = 2560
 W = -90000
 R = 8.31446
-temperatures = np.linspace(b*Tm, 2560, 1001)
+temperatures = np.linspace(b * Tm, 2560, 1001)
 
 lnRTg_Mg2SiO4 = fn_RTlng_Mg2SiO4(temperatures, Tm, b, R, W)
-p_H2OL = np.sqrt(lnRTg_Mg2SiO4/W)
+p_H2OL = np.sqrt(lnRTg_Mg2SiO4 / W)
 plt.plot(temperatures, p_H2OL)
 
 
-plt.xlabel('Temperature')
-plt.ylabel('proportions')
-plt.xlim(0., Tm+100.)
+plt.xlabel("Temperature")
+plt.ylabel("proportions")
+plt.xlim(0.0, Tm + 100.0)
 plt.show()
 
 """
