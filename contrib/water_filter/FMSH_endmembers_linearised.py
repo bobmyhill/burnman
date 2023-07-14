@@ -1,10 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import os.path
-import sys
-
-sys.path.insert(1, os.path.abspath("../.."))
-
 import burnman
 from burnman.minerals import SLB_2011, DKS_2013_liquids
 from burnman.minerals.Pitzer_Sterner_1994 import H2O_Pitzer_Sterner
@@ -16,14 +11,18 @@ S_el_H2O = 233.2550
 
 
 # Master endmembers
+# H2O taken directly from Pitzer and Sterner
 H2OL = H2O_Pitzer_Sterner()
 
+# Majorite with a small amount of Fe-component
+# (Mg0.9Fe0.1)SiO3 ...
 maj = burnman.CombinedMineral(
     [SLB_2011.mg_majorite(), SLB_2011.almandine(), SLB_2011.pyrope()],
     [1.0 / 4.0, 0.1 / 3.0, -0.1 / 3.0],
     name="maj",
 )
 
+# Wadsleyite (fo90)
 wad = burnman.CombinedMineral(
     [SLB_2011.mg_wadsleyite(), SLB_2011.fe_wadsleyite()], [0.9, 0.1], name="wadsleyite"
 )
@@ -101,11 +100,13 @@ if make_new:
 
     exit()
 
+
+# Olivine, ringwoodite and "lower mantleite" (all fo90)
 fo = burnman.CombinedMineral([wad], [1.0], [-16982.0, 4.6, 1.89e-6], name="forsterite")
 ring = burnman.CombinedMineral([wad], [1.0], [7060.0, -4.8, -8.12e-7], name="ring")
 lm = burnman.CombinedMineral([wad], [1.0], [77858.0, -0.645, -3.53e-6], name="bdg+per")
 
-
+# Liquid (fo90)
 Mg2SiO4L = burnman.CombinedMineral([wad], [1.0], [0.0, 0.0, 0.0], name="liquid")
 
 Mg2SiO4L.property_modifiers = [
@@ -122,8 +123,9 @@ Mg2SiO4L.property_modifiers = [
     ]
 ]
 
+# Hydrous olivine, wadsleyite and ringwoodite (all fo90)
 H2MgSiO4fo = burnman.CombinedMineral(
-    [H2OL, maj], [1.0, 1.0], [27500.0 + 1500.0 * 15.0 + 12.0e9 * 2e-6, 15.0, -2e-6]
+    [H2OL, maj], [1.0, 1.0], [27500.0 + 1500.0 * 15.0 + 12.0e9 * 2e-6, 15.0, -2.0e-6]
 )
 
 # No clear pressure trend in Demouchy wad data

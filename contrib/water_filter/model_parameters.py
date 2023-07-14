@@ -2,7 +2,8 @@ import numpy as np
 
 R = 8.31446  # gas constant
 
-liq_sp = {"H_poly": -94000.0, "S_poly": -75.0, "r": 4.0}  # 4 oxygens per Mg2SiO4
+# 4 oxygens per Mg2SiO4
+liq_sp = {"H_poly": -94000.0, "S_poly": -75.0, "r": 4.0}
 
 # See calculate_KD_energies.py for derivation of feESV params
 olfeESV = np.array([1.94536022e04, 0.00000000e00, 3.00000000e-07])

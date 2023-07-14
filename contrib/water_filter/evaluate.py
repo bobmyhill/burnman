@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from FMSH_melt_model import equilibrate
 
-from endmember_eos import thermodynamic_properties
-from model_parameters import Mg2SiO4_params, Fe2SiO4_params
-from model_parameters import MgSiO3_params, H2O_params
+from FMSH_melt_model import equilibrate
 from FMSH_melt_model import stable_phases
 from FMSH_melt_model import melt_excess_volume, solid_excess_volume
 from FMSH_melt_model import one_phase_eqm, two_phase_eqm
+from endmember_eos import thermodynamic_properties
+from model_parameters import Mg2SiO4_params, Fe2SiO4_params
+from model_parameters import MgSiO3_params, H2O_params
 
 
 def evaluate(
@@ -80,11 +80,7 @@ def evaluate(
         X_Mg2SiO4_bulk + X_Fe2SiO4_bulk + X_MgSiO3_bulk + X_H2O_bulk - 1.0
     ) < 1.0e-12
 
-    dT = 0.1
-    dP = 10.0
-    if f_tr > 0.5:
-        dT = -0.1
-        dP = -10.0
+    dT, dP = (0.1, 10.0) if f_tr > 0.5 else (-0.1, -10.0)
 
     # Not correctly centered, but this won't make a big difference.
     if len(phases) == 1:
@@ -467,10 +463,11 @@ if __name__ == "__main__":
         ax[4].set_ylim(0.0, 3.5e-10)
         ax[5].set_ylim(000.0, 3000.0)
         fig.suptitle(
-            f"{T} K, modified H$_2$O EoS (-1.5 GPa, -2.5e-6 m$^3$/mol) and anhydrous liquidus (-300 K)"
+            f"{T} K, modified H$_2$O EoS (-1.5 GPa, -2.5e-6 m$^3$/mol) "
+            "and anhydrous liquidus (-300 K)"
         )
         fig.tight_layout()
-        fig.savefig(
-            f"output_figures/model_properties_{c[0]}_{c[1]}_{c[2]}_{c[3]}_{T}_K.pdf"
-        )
+        stub = "output_figures/model_properties"
+        outfile = f"{stub}_{c[0]}_{c[1]}_{c[2]}_{c[3]}_{T}_K.pdf"
+        fig.savefig(outfile)
     plt.show()

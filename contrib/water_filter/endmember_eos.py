@@ -118,10 +118,14 @@ def __intCpoverTdT(temperature, params):
 
 def thermodynamic_properties(pressure, temperature, params):
     """
-    Returns the gibbs free energy, the entropy, the volume and the density as a function of pressure, temperature and the mineral parameters
-    The changes between this equation of state and the Holland and Powell thermal equation of state are as follows:
-    1) The reference pressure for all of the volumetric parameters is strictly [0 Pa]
-    2) The reference pressure for all of the thermal parameters (including H, S) is params['Pref'], given in [Pa]
+    Returns the gibbs free energy, the entropy, the volume and the density as
+    a function of pressure, temperature and the mineral parameters
+    The changes between this equation of state and the Holland and Powell
+    thermal equation of state are as follows:
+    1) The reference pressure for all of the volumetric parameters
+       is strictly [0 Pa]
+    2) The reference pressure for all of the thermal parameters
+       (including H, S) is params['Pref'], given in [Pa]
     """
 
     a, b, c = tait_constants(params)
@@ -131,14 +135,16 @@ def thermodynamic_properties(pressure, temperature, params):
         temperature, params["T_einstein"], params["n"]
     ) / molar_heat_capacity_v(params["T_0"], params["T_einstein"], params["n"])
 
-    # Integrate the gibbs free energy along the isobaric path from (Pref, T_ref) to (Pref, T_final)
+    # Integrate the gibbs free energy along the isobaric path
+    # from (Pref, T_ref) to (Pref, T_final)
     G_Pref_Tf = (
         params["H_Pref"]
         + __intCpdT(temperature, params)
         - temperature * (params["S_Pref"] + __intCpoverTdT(temperature, params))
     )
 
-    # Integrate the gibbs free energy along the isothermal path from (Pref, T_final) to (P_final, T_final)
+    # Integrate the gibbs free energy along the isothermal path
+    # from (Pref, T_final) to (P_final, T_final)
     if pressure != params["Pref"]:  # EQ 13
         intVdP = params["V_0"] * (
             (pressure - params["Pref"]) * (1.0 - a)
@@ -209,10 +215,13 @@ def thermodynamic_properties(pressure, temperature, params):
     x = params["T_einstein"] / temperature
     dSdT = dSdT0 + dintVdpdT * (1 - 2.0 / x + 2.0 / (np.exp(x) - 1.0)) * x / temperature
 
+    # S and C_p below are molar quantities.
+    # Divide through by molar mass to get J/K/kg.
+
     heat_capacity_p = Cp_ref + temperature * dSdT
     return {
         "gibbs": gibbs,  # molar
-        "S": entropy,  # S here is a molar quantity. Divide through by molar mass to get J/K/kg.
+        "S": entropy,  # molar
         "V": volume,  # molar
         "rho": density,
         "alpha": thermal_expansivity,
@@ -221,9 +230,6 @@ def thermodynamic_properties(pressure, temperature, params):
         "dVdT": volume * thermal_expansivity,
         "dSdT": heat_capacity_p / temperature,
         "molar_C_p": heat_capacity_p,
-        "C_p_per_kilogram": heat_capacity_p
-        / params[
-            "molar_mass"
-        ],  # C_p is a molar quantity. Divide through by molar mass to get J/K/kg.
+        "C_p_per_kilogram": heat_capacity_p / params["molar_mass"],
         "molar_mass": params["molar_mass"],
     }

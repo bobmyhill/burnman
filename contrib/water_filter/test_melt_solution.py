@@ -1,16 +1,16 @@
-import os.path
-import sys
-
-sys.path.insert(1, os.path.abspath("../.."))
-
-import numpy as np
-from scipy.optimize import brentq
-import matplotlib.pyplot as plt
-
 from burnman import Mineral, Solution
 from burnman.classes.solutionmodel import IdealSolution
 from burnman.minerals.Pitzer_Sterner_1994 import H2O_Pitzer_Sterner
 from model_parameters import Mg2SiO4_params, Fe2SiO4_params
+import numpy as np
+from model_parameters import R, ol, wad, ring, lm, melt
+from model_parameters import olwad, wadring, ringlm
+from model_parameters import liq_sp
+from scipy.special import expi
+
+
+def _li(x):
+    return expi(np.log(x))
 
 
 class melt_half_solid(Solution):
@@ -46,6 +46,58 @@ melt_modifiers = {
     "b": 2.64753089e-11,
     "c": 1.18703511e00,
 }
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+
+def V_quick(pressure):
+    """
+    This is the same as the linlog function
+    f = params["b"] * pressure + params["c"]
+    dGdP = params["delta_V"] + params["a"] / np.log(f)
+
+    G = (
+        params["delta_E"]
+        - (temperature) * params["delta_S"]
+        + (pressure) * params["delta_V"]
+        + params["a"] / params["b"] * (_li(f) - _li(params["c"]))
+    )
+    """
+    f = melt_modifiers["b"] * pressure + melt_modifiers["c"]
+    return melt_modifiers["delta_V"] + melt_modifiers["a"] / np.log(f)
+
+
+def V_quicker(pressure, a, b, c):
+    """
+    A simpler version of the linlog function
+    """
+    return a / (pressure + b) + c
+
+
+def G_quicker(pressure, a, b, c, G0):
+    """
+    A simpler version of the linlog function
+    """
+    return a * np.log(pressure / b + 1.0) + c * pressure + G0
+
+
+pressures = np.linspace(1.0e9, 13.0e9, 101)
+"""
+popt, pcov = curve_fit(
+    V_quicker,
+    pressures,
+    V_quick(pressures),
+    [1.00250593e05, 7.13877676e09, -2.14329378e-06],
+)
+print(popt)
+
+pressures = np.linspace(1.0e5, 13.0e9, 101)
+plt.plot(pressures, V_quick(pressures))
+plt.plot(pressures, V_quicker(pressures, *popt), linestyle=":")
+plt.show()
+
 fo_liq.property_modifiers = [["linlog", melt_modifiers]]
 fa_liq.property_modifiers = [["linlog", melt_modifiers]]
 
@@ -72,3 +124,41 @@ print(melt.rho)
 print(melt.molar_mass)
 print(melt.solution_model)
 print(melt.endmembers[0][0]._property_modifiers["dGdP"])
+"""
+
+from model_parameters import melt
+
+
+def li_f(P):
+    """
+    Computes the melting temperature of a solid at a given pressure
+    This solid may be metastable.
+    """
+    f = melt["b"] * P + melt["c"]
+    return _li(f)
+
+
+def dli_fdP(P):
+    f = melt["b"] * P + melt["c"]
+    return melt["c"]/np.log(f)
+
+def li_f_cheap(pressure, a, b, c, G0):
+    """
+    Computes the melting temperature of a solid at a given pressure
+    This solid may be metastable.
+    """
+    a, b, c = [4.57e10, 7.13e9, -0.517]
+    return a * np.log(pressure / b + 1.0) + c * pressure + G0
+
+
+popt, pcov = curve_fit(
+    V_quicker,
+    pressures,
+    li_f(pressures),
+    [4.57e10, 7.13e9, -0.517],
+)
+print(popt)
+pressures = np.linspace(1.0e5, 25.0e9, 101)
+plt.plot(pressures, dli_fdP(pressures))
+plt.plot(pressures, V_quicker(pressures, *popt), linestyle=":")
+plt.show()

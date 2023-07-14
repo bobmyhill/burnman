@@ -1,9 +1,8 @@
 from sympy.solvers import solve
-from sympy import Symbol, simplify, log
+from sympy import Symbol
 import numpy as np
 
-import matplotlib.pyplot as plt
-from MSH_endmembers import *
+from MSH_endmembers import fo, H2MgSiO4fo, H2OL, Mg2SiO4L
 from burnman.minerals import HGP_2018_ds633
 
 hen = HGP_2018_ds633.hen()
@@ -28,11 +27,13 @@ if solve_melting_equations:
     p_H2OL = Symbol("p_H2OL")
 
     # Approximate alpha(MgSiO3_en) = 1 (i.e. pure enstatite)
-    # y = gamma_H2OL * np.exp(-(G_H2MgSiO4fo(P, T) - G_MgSiO3en(P, T) - G_H2OL(P, T)) / (R*T))
+    # y = gamma_H2OL * np.exp(-(G_H2MgSiO4fo(P, T)
+    # - G_MgSiO3en(P, T) - G_H2OL(P, T)) / (R*T))
     y = Symbol("y")
 
     # Approximate gamma(Mg2SiO4_fo) = 1
-    # z = gamma_Mg2SiO4L * np.exp(-(G_Mg2SiO4fo(P, T) - G_Mg2SiO4L(P, T)) / (R*T))
+    # z = gamma_Mg2SiO4L * np.exp(-(G_Mg2SiO4fo(P, T)
+    # - G_Mg2SiO4L(P, T)) / (R*T))
     z = Symbol("z")
 
     f = Symbol("f")
@@ -57,7 +58,8 @@ if solve_melting_equations:
 
     transition_constraint = x_fo1 - f * (x_fo0 + x_fo1)
 
-    # The solve needs to be a square matrix, even if there is a non-trivial nullspace
+    # The solve needs to be a square matrix,
+    # even if there is a non-trivial nullspace
     equations = (
         bulk_constraint_1,
         bulk_constraint_2,
@@ -77,7 +79,8 @@ if solve_melting_equations:
     equilibrium_constraint_1 = p_H2OL * y - p_H2MgSiO4fo
     equilibrium_constraint_2 = p_Mg2SiO4L * z - p_Mg2SiO4fo
 
-    # The solve needs to be a square matrix, even if there is a non-trivial nullspace
+    # The solve needs to be a square matrix,
+    # even if there is a non-trivial nullspace
     equations = (
         bulk_constraint_1,
         bulk_constraint_2,

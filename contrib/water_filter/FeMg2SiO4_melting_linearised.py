@@ -3,21 +3,15 @@ from __future__ import print_function
 import os.path
 import sys
 
-sys.path.insert(1, os.path.abspath("../.."))
-
-import burnman
-from burnman.minerals import DKS_2013_liquids, DKS_2013_solids, SLB_2011
-from burnman import constants
 import numpy as np
 
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 from scipy.optimize import fsolve
 
 import matplotlib.pyplot as plt
 
-from FMSH_endmembers_linearised import *
+from FMSH_endmembers_linearised import fo, wad, ring, lm, Mg2SiO4L
 
 
 def eqm_T(T, mins, fs=[1.0, 1.0]):
@@ -136,8 +130,9 @@ pressures = np.linspace(1.0e5, 30.0e9, 101)
 T = 2073
 temperatures = pressures * 0.0 + T
 for m in mins:
+    label = f"{m.name}, {T} K".replace("_", " ")
     rhos = m.evaluate(["density"], pressures, temperatures)[0]
-    ax[1].plot(pressures / 1.0e9, rhos, label=f"{m.name}, {T} K".replace("_", " "))
+    ax[1].plot(pressures / 1.0e9, rhos, label=label)
 
 
 """

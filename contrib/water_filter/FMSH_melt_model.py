@@ -3,7 +3,6 @@ from model_parameters import R, ol, wad, ring, lm, melt
 from model_parameters import olwad, wadring, ringlm
 from model_parameters import liq_sp
 from scipy.special import expi
-import matplotlib.pyplot as plt
 
 
 def _li(x):

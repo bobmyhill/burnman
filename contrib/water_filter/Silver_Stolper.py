@@ -1,13 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from FMSH_melt_model import melting_temperature, ax_melt
+from model_parameters import ol, melt
 
-# import matplotlib.image as mpimg
-
-from FMSH_melt_model import ax_melt
-
-
+# Tm = melting_temperature(ol, 13.0e9) -> note that this will produce a lower melting point
+# because the model is based on fo90.
 Tm = 2550.0
-Delta_Sf = 100.3 - 4.6
+Delta_Sf = melt["S"] - ol["S"]
 
 data = np.genfromtxt(
     "data/13GPa_fo-H2O.dat", dtype=[float, float, float, (np.unicode_, 16)]

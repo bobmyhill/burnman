@@ -1,8 +1,3 @@
-import os.path
-import sys
-
-sys.path.insert(1, os.path.abspath("../.."))
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
