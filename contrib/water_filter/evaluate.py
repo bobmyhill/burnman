@@ -423,14 +423,15 @@ if __name__ == "__main__":
 
         fig = plt.figure(figsize=(12, 6))
         ax = [fig.add_subplot(2, 3, i) for i in range(1, 7)]
+        ax = [ax[0], ax[3], ax[1], ax[2], ax[4], ax[5]]
         ax[0].plot(pressures / 1.0e9, porosity, label="porosity")
-        ax[0].plot(pressures / 1.0e9, X_H2O_solids, label="X_H2O solid")
+        ax[0].plot(pressures / 1.0e9, X_H2O_solids, label="$X_{H_2O}$ solid")
         # ax[0].plot(pressures/1.e9, X_Mg2SiO4_solids, label='X_Mg2SiO4 solid')
         # ax[0].plot(pressures/1.e9, X_Fe2SiO4_solids, label='X_Fe2SiO4 solid')
-        ax[0].plot(pressures / 1.0e9, X_H2O_melts, label="X_H2O melt")
+        ax[0].plot(pressures / 1.0e9, X_H2O_melts, label="$X_{H_2O}$ melt")
         # ax[0].plot(pressures/1.e9, X_Mg2SiO4_melts, label='X_Mg2SiO4 melt')
         # ax[0].plot(pressures/1.e9, X_Fe2SiO4_melts, label='X_Fe2SiO4 melt')
-        ax[0].plot(pressures / 1.0e9, KD, label="K_D")
+        ax[0].plot(pressures / 1.0e9, KD, label="$K_D$")
         # ax[1].plot(pressures/1.e9, S_xs_solid, label='S_xs_solid')
         # ax[1].plot(pressures/1.e9, S_xs_melt, label='S_xs_melt')
         # ax[2].plot(pressures/1.e9, V_xs_solid, label='V_xs_solid')
