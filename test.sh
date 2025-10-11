@@ -29,6 +29,7 @@ $PYTHON -m pipdeptree -p burnman -d 1 2> /dev/null
 pycddlib_version=`pip freeze | grep "pycddlib=" | awk -F"==" '{print $2}'`
 if [ ! -z "${pycddlib_version}" ]
 then echo "└── pycddlib [optional, installed: ${pycddlib_version}]"
+$PYTHON -m pip uninstall -q -y pycddlib-standalone
 fi
 pycddlib_version=`pip freeze | grep "pycddlib-standalone=" | awk -F"==" '{print $2}'`
 if [ ! -z "${pycddlib_version}" ]
