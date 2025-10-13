@@ -8,11 +8,10 @@ import importlib
 import warnings
 import numpy as np
 from ..utils.chemistry import process_solution_chemistry
-from .solutionmodel import _ideal_activities_fct
 from .solutionmodel import _non_ideal_hessian_fct, _non_ideal_interactions_fct
 from .solutionmodel import _non_ideal_hessian_subreg
 from .solutionmodel import _non_ideal_interactions_subreg
-from .solutionmodel import logish, inverseish
+from .solutionmodel import IdealSolution
 from .. import constants
 
 try:
@@ -269,12 +268,9 @@ class ElasticIdealSolution(ElasticSolutionModel):
 
         self._calculate_endmember_configurational_entropies()
 
-    def _calculate_endmember_configurational_entropies(self):
-        S_conf = -(
-            constants.gas_constant
-            * (self.endmember_noccupancies * logish(self.endmember_occupancies)).sum(-1)
-        )
-        self.endmember_configurational_entropies = S_conf
+    _calculate_endmember_configurational_entropies = (
+        IdealSolution._calculate_endmember_configurational_entropies
+    )
 
     def excess_partial_helmholtz_energies(self, volume, temperature, molar_fractions):
         return self._ideal_excess_partial_helmholtz(temperature, molar_fractions)
@@ -296,19 +292,7 @@ class ElasticIdealSolution(ElasticSolutionModel):
     def pressure_hessian(self, volume, temperature, molar_fractions):
         return np.zeros((len(molar_fractions), len(molar_fractions)))
 
-    def configurational_entropy(self, molar_fractions):
-        site_noccupancies = np.einsum(
-            "i, ij", molar_fractions, self.endmember_noccupancies
-        )
-        site_multiplicities = np.einsum(
-            "i, ij", molar_fractions, self.site_multiplicities
-        )
-        site_occupancies = site_noccupancies * inverseish(site_multiplicities)
-        conf_entropy = -(
-            constants.gas_constant
-            * (site_noccupancies * logish(site_occupancies)).sum(-1)
-        )
-        return conf_entropy
+    configurational_entropy = IdealSolution.configurational_entropy
 
     def _ideal_excess_partial_helmholtz(self, temperature, molar_fractions):
         return -(
@@ -325,56 +309,9 @@ class ElasticIdealSolution(ElasticSolutionModel):
         )
         return hessian
 
-    def _log_ideal_activities(self, molar_fractions):
-        site_noccupancies = np.einsum(
-            "i, ij", molar_fractions, self.endmember_noccupancies
-        )
-        site_multiplicities = np.einsum(
-            "i, ij", molar_fractions, self.site_multiplicities
-        )
-
-        lna = np.einsum(
-            "ij, j->i",
-            self.endmember_noccupancies,
-            logish(site_noccupancies) - logish(site_multiplicities),
-        )
-
-        normalisation_constants = (
-            self.endmember_configurational_entropies / constants.gas_constant
-        )
-        return lna + normalisation_constants
-
-    def _log_ideal_activity_derivatives(self, molar_fractions):
-        site_noccupancies = np.einsum(
-            "i, ij", molar_fractions, self.endmember_noccupancies
-        )
-        site_multiplicities = np.einsum(
-            "i, ij", molar_fractions, self.site_multiplicities
-        )
-
-        dlnadp = np.einsum(
-            "pj, qj, j->pq",
-            self.endmember_noccupancies,
-            self.endmember_noccupancies,
-            inverseish(site_noccupancies),
-        ) - np.einsum(
-            "pj, qj, j->pq",
-            self.endmember_noccupancies,
-            self.site_multiplicities,
-            inverseish(site_multiplicities),
-        )
-
-        return dlnadp
-
-    def _ideal_activities(self, molar_fractions):
-        return _ideal_activities_fct(
-            molar_fractions,
-            self.endmember_noccupancies,
-            self.n_endmembers,
-            self.n_occupancies,
-            self.site_multiplicities,
-            self.endmember_configurational_entropies,
-        )
+    _log_ideal_activities = IdealSolution._log_ideal_activities
+    _log_ideal_activity_derivatives = IdealSolution._log_ideal_activity_derivatives
+    _ideal_activities = IdealSolution._ideal_activities
 
 
 class ElasticAsymmetricRegularSolution(ElasticIdealSolution):
