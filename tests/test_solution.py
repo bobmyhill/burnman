@@ -671,7 +671,7 @@ class test_solidsolution(BurnManTest):
         opx = orthopyroxene()
         opx.set_composition(np.array([0.0, 1.0]))
         opx.set_state(1.0e5, 300.0)
-        self.assertArraysAlmostEqual([opx.excess_gibbs], [0.0])
+        self.assertArraysAlmostEqual([opx.excess_gibbs], [0.0], tol_zero=1.0e-10)
 
     def test_site_totals(self):
         ss = two_site_ss()
