@@ -105,28 +105,11 @@ def _non_ideal_interactions_subreg(p, n_endmembers, Wijk):
     return Wint
 
 
-def logish(x, eps=1.0e-7):
+def inverseish(x):
     """
-    2nd order series expansion of log(x) about eps:
-    log(eps) - sum_k=1^infty (f_eps)^k / k
-    Prevents infinities at x=0
+    Approximates 1/x, but prevents infinities at x=0
     """
-    f_eps = 1.0 - x / eps
-    mask = x > eps
-    ln = np.where(x <= eps, np.log(eps) - f_eps - f_eps * f_eps / 2.0, 0.0)
-    ln[mask] = np.log(x[mask])
-    return ln
-
-
-def inverseish(x, eps=1.0e-5):
-    """
-    1st order series expansion of 1/x about eps: 2/eps - x/eps/eps
-    Prevents infinities at x=0
-    """
-    mask = x > eps
-    oneoverx = np.where(x <= eps, 2.0 / eps - x / eps / eps, 0.0)
-    oneoverx[mask] = 1.0 / x[mask]
-    return oneoverx
+    return 1.0 / (x + np.finfo(float).eps)
 
 
 def dpdn(molar_amounts, n, ones, eye):
@@ -486,11 +469,14 @@ class IdealSolution(SolutionModel):
             "k, kj", molar_fractions, self.site_multiplicities
         )
 
-        lna = np.einsum(
-            "lj, j->l",
+        lna = xlogy(
             self.endmember_noccupancies,
-            logish(site_noccupancies) - logish(site_multiplicities),
-        )
+            (
+                (site_noccupancies + np.finfo(float).eps)
+                * inverseish(site_multiplicities)
+            )[np.newaxis, :],
+        ).sum(-1)
+
         normalisation_constants = (
             self.endmember_configurational_entropies / constants.gas_constant
         )
