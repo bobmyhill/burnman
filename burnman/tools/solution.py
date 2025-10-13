@@ -5,6 +5,7 @@
 
 
 import numpy as np
+from scipy.special import xlogy
 from ..classes.combinedmineral import CombinedMineral
 from ..classes.solution import Solution
 from ..classes.solutionmodel import (
@@ -12,7 +13,6 @@ from ..classes.solutionmodel import (
     SymmetricRegularSolution,
     AsymmetricRegularSolution,
     SubregularSolution,
-    logish,
 )
 from ..utils.chemistry import site_occupancies_to_strings
 from ..utils.math import complete_basis
@@ -274,7 +274,7 @@ def transform_solution_to_new_basis(
         solution.solution_model.sites, new_multiplicities, new_occupancies
     )
 
-    S_conf = -R * (new_noccs * logish(new_occupancies)).sum(-1)
+    S_conf = -R * xlogy(new_noccs, new_occupancies).sum(-1)
 
     # Create endmembers
     endmembers = []
