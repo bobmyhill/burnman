@@ -6,6 +6,7 @@
 
 import importlib
 import numpy as np
+from scipy.special import xlogy
 from ..utils.chemistry import process_solution_chemistry
 from .. import constants
 import warnings
@@ -424,7 +425,7 @@ class IdealSolution(SolutionModel):
     def _calculate_endmember_configurational_entropies(self):
         S_conf = -(
             constants.gas_constant
-            * (self.endmember_noccupancies * logish(self.endmember_occupancies)).sum(-1)
+            * xlogy(self.endmember_noccupancies, self.endmember_occupancies).sum(-1)
         )
         self.endmember_configurational_entropies = S_conf
 
@@ -457,8 +458,7 @@ class IdealSolution(SolutionModel):
         )
         site_occupancies = site_noccupancies * inverseish(site_multiplicities)
         conf_entropy = -(
-            constants.gas_constant
-            * (site_noccupancies * logish(site_occupancies)).sum(-1)
+            constants.gas_constant * xlogy(site_noccupancies, site_occupancies).sum(-1)
         )
         return conf_entropy
 
@@ -483,11 +483,11 @@ class IdealSolution(SolutionModel):
             "i, ij", molar_fractions, self.endmember_noccupancies
         )
         site_multiplicities = np.einsum(
-            "i, ij", molar_fractions, self.site_multiplicities
+            "k, kj", molar_fractions, self.site_multiplicities
         )
 
         lna = np.einsum(
-            "ij, j->i",
+            "lj, j->l",
             self.endmember_noccupancies,
             logish(site_noccupancies) - logish(site_multiplicities),
         )
