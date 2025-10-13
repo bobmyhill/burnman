@@ -424,13 +424,7 @@ class IdealSolution(SolutionModel):
     def _calculate_endmember_configurational_entropies(self):
         S_conf = -(
             constants.gas_constant
-            * (
-                self.endmember_noccupancies
-                * (
-                    logish(self.endmember_noccupancies)
-                    - logish(self.site_multiplicities)
-                )
-            ).sum(-1)
+            * (self.endmember_noccupancies * logish(self.endmember_occupancies)).sum(-1)
         )
         self.endmember_configurational_entropies = S_conf
 

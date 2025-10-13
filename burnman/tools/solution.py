@@ -274,7 +274,7 @@ def transform_solution_to_new_basis(
         solution.solution_model.sites, new_multiplicities, new_occupancies
     )
 
-    S_conf = -R * (new_noccs * (logish(new_noccs) - logish(new_multiplicities))).sum(-1)
+    S_conf = -R * (new_noccs * logish(new_occupancies)).sum(-1)
 
     # Create endmembers
     endmembers = []
