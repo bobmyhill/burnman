@@ -68,7 +68,9 @@ for i in range(3):
 output_codes = []
 output = []
 
-print("Warning: Calculations struggle to converge at edges of binary (as problem is ill-posed).")
+print(
+    "Warning: Calculations struggle to converge at edges of binary (as problem is ill-posed)."
+)
 for m1, m2, x_fe_m1 in [
     [ol, wad, np.linspace(0.0, x_fe_mbr[0], 20)],
     [ol, rw, np.linspace(x_fe_mbr[0], 1.0, 20)],
