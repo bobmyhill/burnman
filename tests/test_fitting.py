@@ -13,7 +13,7 @@ from burnman.optimize.nonlinear_fitting import (
     nonlinear_least_squares_fit,
     nonlinear_least_squares_fit_differential_evolution,
     calculate_jacobian,
-    find_mle
+    find_mle,
 )
 from burnman.utils.misc import attribute_function, pretty_string_values
 from burnman.optimize.composition_fitting import fit_composition_to_solution
