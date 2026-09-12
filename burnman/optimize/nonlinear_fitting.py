@@ -7,6 +7,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy.stats import t, norm, genextreme
+from scipy.optimize import differential_evolution
 import copy
 
 from ..utils.math import unit_normalize
@@ -215,6 +216,8 @@ def nonlinear_least_squares_fit(
     max_lm_iterations=100,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=42,
     verbose=False,
 ):
     """
@@ -268,7 +271,7 @@ def nonlinear_least_squares_fit(
 
         After this function has been performed, the following attributes are added to model:
 
-        - n_dof [int] - Degrees of freedom of the system.
+        - dof [int] - Degrees of freedom of the system.
         - data_mle [2D numpy array] - Maximum likelihood estimates of the observed data points
             on the best-fit curve.
         - jacobian [2D numpy array] - d(weighted_residuals)/d(parameter).
@@ -282,12 +285,23 @@ def nonlinear_least_squares_fit(
     This function is available as ``burnman.nonlinear_least_squares_fit``.
     """
     model.validate()
+
     n_data = len(model.data)
     n_params = len(model.get_params())
     model.dof = n_data - n_params
 
     if not hasattr(model, "flags"):
         model.flags = [None] * n_data
+
+    if first_run_differential_evolution:
+        nonlinear_least_squares_fit_differential_evolution(
+            model,
+            param_tolerance=param_tolerance,
+            param_priors=param_priors,
+            param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+            seed=differential_evolution_seed,
+            polish=False,  # We will polish the result with LM iterations below
+        )
 
     with_param_priors = False
     if param_priors is not None and param_prior_inv_cov_matrix is not None:
@@ -305,24 +319,24 @@ def nonlinear_least_squares_fit(
         # parameters (does not update parameter values)
         model.data_mle, model.weighted_residuals, model.weights = find_mle(model)
 
-        # Step 2: Build data terms
+        # Step 3: Build data terms
         current_params = model.get_params()
         J = model.jacobian  # d weighted residuals / d params
         r = model.weighted_residuals
         JTJ = J.T @ J
         JTr = J.T @ r
 
-        # Step 3: Add Gaussian prior if defined
+        # Step 4: Add Gaussian prior if defined
         if with_param_priors:
             prior_residual = current_params - param_priors
             JTJ += param_prior_inv_cov_matrix
             JTr += param_prior_inv_cov_matrix @ prior_residual
 
-        # Step 4: Apply Levenberg-Marquardt update rule
+        # Step 5: Apply Levenberg-Marquardt update rule
         A = JTJ + lmbda * np.diag(np.diag(JTJ))
         delta_beta = np.linalg.solve(A, JTr)
 
-        # Step 5: Update parameters and compute fractional change
+        # Step 6: Update parameters and compute fractional change
         new_params = current_params - delta_beta
         model.set_params(new_params)
 
@@ -354,15 +368,18 @@ def nonlinear_least_squares_fit(
                 print(f"Iteration {n_it}: max param change = {max_f:.2e}")
             if max_f < param_tolerance:
                 break
-        except Exception:
+        except Exception as err:
             raise Exception(
                 f"During non-linear fitting, Iteration {n_it} produced an "
                 "exception. This is probably due to numerical failure of "
                 "the input model. "
                 "Consider imposing bounds on fitting or priors on your "
                 "parameter values to prevent this behaviour."
-            )
+                "Current parameter values are: "
+                f"{model.get_params()}"
+            ) from err
 
+    # Update the model attributes (WSS, popt) with the final results
     J = model.jacobian
     r = model.weighted_residuals
     model.WSS = r @ r
@@ -374,9 +391,11 @@ def nonlinear_least_squares_fit(
         model.WSS += prior_residual @ param_prior_inv_cov_matrix @ prior_residual
         JTJ += param_prior_inv_cov_matrix
 
+    # Also compute the covariance matrix of the optimized parameters,
+    # the goodness of fit, and the noise variance
     model.pcov = np.linalg.inv(JTJ) * model.WSS / model.dof
     model.goodness_of_fit = model.WSS / model.dof
-    model.noise_variance = r @ np.diag(1.0 / model.weights) @ r / model.dof
+    model.noise_variance = np.sum(r**2 / model.weights) / model.dof
 
     if verbose:
         print(
@@ -386,6 +405,106 @@ def nonlinear_least_squares_fit(
         )
         print("\nOptimized parameter values:\n", model.popt)
         print("\nParameter covariance matrix:\n", model.pcov)
+
+
+def nonlinear_least_squares_fit_differential_evolution(
+    model,
+    param_tolerance=1.0e-7,
+    param_priors=None,
+    param_prior_inv_cov_matrix=None,
+    polish=False,
+    seed=None,
+):
+    """
+    Function to compute the "best-fit" parameters for a model
+    by nonlinear least squares fitting using differential evolution.
+
+    This function is intended to be used as a first step in the
+    fitting process, especially when there might be
+    multiple local minima and/or the initial parameter guesses
+    are far from the optimal values. This function does not compute
+    the covariance matrix of the optimized parameters.
+    It is recommended to be followed by a call to
+    `nonlinear_least_squares_fit` for further refinement.
+
+    :param model: Model with fitting interface.
+    :type model: FittableModel
+
+    :param param_tolerance: Convergence tolerance, as used by scipy.optimize.differential_evolution.
+    :type param_tolerance: float
+
+    :param param_priors: Prior values for the parameters.
+    :type param_priors: 1D numpy array
+
+    :param param_prior_inv_cov_matrix: Inverse of the 1 sigma uncertainties for the prior values of the parameters.
+    :type param_prior_inv_cov_matrix: 2D numpy array (square)
+
+    :param polish: If True, perform a final local optimization using the Levenberg-Marquardt algorithm after differential evolution.
+    :type polish: bool
+
+    :param seed: The random seed to use for the differential evolution algorithm.
+    :type seed: int
+
+    :modifies: model — Sets optimized parameters, covariance matrix, weighted residuals, Jacobian, and noise estimates.
+    :type model: FittableModel
+
+    .. note:: The object passed as model must have the following attributes:
+        - `bounds`: A list of tuples specifying the lower and upper bounds for each parameter.
+
+        Other required attributes and methods are the same as those for `nonlinear_least_squares_fit`.
+    """
+
+    if not hasattr(model, "bounds"):
+        raise Exception(
+            "Model must have bounds attribute if differential evolution"
+            "is chosen as a solver strategy. "
+            "Please set model.bounds to a list of tuples specifying the "
+            "lower and upper bounds for each parameter."
+        )
+
+    # normalise the bounds to [0, 1] for the neighbourhood search
+    bounds = np.array(model.bounds)
+    bounds01 = np.array([[0.0, 1.0] for _ in range(len(bounds))])
+
+    scale_factors = bounds[:, 1] - bounds[:, 0]
+    n_params = len(scale_factors)
+
+    with_param_priors = False
+    if param_priors is not None and param_prior_inv_cov_matrix is not None:
+        assert len(param_priors) == n_params
+        assert param_prior_inv_cov_matrix.shape == (n_params, n_params)
+        with_param_priors = True
+
+    def weighted_L2_misfit(scaled_param_values):
+        # scale the parameters back to their original range
+        param_values = scaled_param_values * scale_factors + bounds[:, 0]
+        model.set_params(param_values)
+        try:
+            model.data_mle, model.weighted_residuals, model.weights = find_mle(model)
+        except ValueError:
+            # Some parameter combinations tried during the global search may be
+            # physically invalid (e.g. no volume solution exists for the EOS
+            # at some data point). Penalize these instead of letting the
+            # exception propagate and crash differential_evolution.
+            return 1.0e10
+        r = model.weighted_residuals
+        WSS = r @ r
+
+        if with_param_priors:
+            prior_residual = param_values - param_priors
+            WSS += prior_residual @ param_prior_inv_cov_matrix @ prior_residual
+
+        return WSS
+
+    # Use differential evolution to find the minimum of the weighted_L2_misfit function
+    result = differential_evolution(
+        weighted_L2_misfit, bounds01, tol=param_tolerance, seed=seed, polish=polish
+    )
+    result.x = (
+        result.x * scale_factors + bounds[:, 0]
+    )  # scale the parameters back to their original range
+    model.set_params(result.x)
+    model.WSS = result.fun
 
 
 def confidence_prediction_bands(model, x_array, confidence_interval, f, flag=None):
