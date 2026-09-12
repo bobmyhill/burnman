@@ -100,7 +100,10 @@ class MineralFit(NonLinearModel):
             self.delta_params = self.get_params() * 1.0e-5 + 1.0e-10
         else:
             self.delta_params = delta_params
+
         self.bounds = bounds
+        if bounds is not None:
+            self.bounds = np.array(bounds)
 
     def set_params(self, param_values):
         i = 0
@@ -176,6 +179,8 @@ def fit_PTp_data(
     max_lm_iterations=50,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=None,
     verbose=True,
 ):
     """
@@ -273,6 +278,8 @@ def fit_PTp_data(
         param_tolerance=param_tolerance,
         param_priors=param_priors,
         param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+        first_run_differential_evolution=first_run_differential_evolution,
+        differential_evolution_seed=differential_evolution_seed,
         verbose=verbose,
     )
 
@@ -319,6 +326,8 @@ def fit_PTV_data(
     max_lm_iterations=50,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=None,
     verbose=True,
 ):
     """
@@ -337,6 +346,8 @@ def fit_PTV_data(
         max_lm_iterations=max_lm_iterations,
         param_priors=param_priors,
         param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+        first_run_differential_evolution=first_run_differential_evolution,
+        differential_evolution_seed=differential_evolution_seed,
         verbose=verbose,
     )
 
@@ -446,6 +457,8 @@ def fit_VTp_data(
     max_lm_iterations=50,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=None,
     verbose=True,
 ):
     """
@@ -543,6 +556,8 @@ def fit_VTp_data(
         param_tolerance=param_tolerance,
         param_priors=param_priors,
         param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+        first_run_differential_evolution=first_run_differential_evolution,
+        differential_evolution_seed=differential_evolution_seed,
         verbose=verbose,
     )
 
@@ -589,6 +604,8 @@ def fit_VTP_data(
     max_lm_iterations=50,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=None,
     verbose=True,
 ):
     """
@@ -607,6 +624,8 @@ def fit_VTP_data(
         max_lm_iterations=max_lm_iterations,
         param_priors=param_priors,
         param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+        first_run_differential_evolution=first_run_differential_evolution,
+        differential_evolution_seed=differential_evolution_seed,
         verbose=verbose,
     )
 
@@ -788,6 +807,8 @@ def fit_XPTp_data(
     max_lm_iterations=50,
     param_priors=None,
     param_prior_inv_cov_matrix=None,
+    first_run_differential_evolution=False,
+    differential_evolution_seed=None,
     verbose=True,
 ):
     """
@@ -893,6 +914,8 @@ def fit_XPTp_data(
         param_tolerance=param_tolerance,
         param_priors=param_priors,
         param_prior_inv_cov_matrix=param_prior_inv_cov_matrix,
+        first_run_differential_evolution=first_run_differential_evolution,
+        differential_evolution_seed=differential_evolution_seed,
         verbose=verbose,
     )
 
