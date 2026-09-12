@@ -231,7 +231,10 @@ def nonlinear_least_squares_fit(
     :param model: Model with fitting interface.
     :type model: FittableModel
 
-    :param lm_damping: Damping factor for Levenberg-Marquardt updates.
+    :param lm_damping: Initial damping factor for the Levenberg-Marquardt
+        updates. This is adapted automatically during fitting: increased
+        whenever a step fails to reduce the objective function, and
+        decreased whenever a step succeeds.
     :type lm_damping: float
 
     :param param_tolerance: Convergence tolerance based on fractional parameter change.
@@ -309,10 +312,25 @@ def nonlinear_least_squares_fit(
         assert param_prior_inv_cov_matrix.shape == (n_params, n_params)
         with_param_priors = True
 
-    def _update_beta(lmbda):
-        # Performs a single Levenberg-Marquardt iteration
+    def _weighted_sum_of_squares(weighted_residuals, param_values):
+        WSS = weighted_residuals @ weighted_residuals
+        if with_param_priors:
+            prior_residual = param_values - param_priors
+            WSS += prior_residual @ param_prior_inv_cov_matrix @ prior_residual
+        return WSS
+
+    # lmbda is adapted as fitting proceeds: increased whenever a step fails
+    # to reduce the objective function, decreased whenever it succeeds. This
+    # is the classic Levenberg-Marquardt trust-region behaviour, and (unlike
+    # a fixed damping factor) prevents the iteration from settling into a
+    # stable oscillation around a minimum on poorly-conditioned problems.
+    lm_damping_factor = 10.0
+    max_damping_attempts = 30
+    lmbda = lm_damping
+
+    def _update_beta():
+        nonlocal lmbda
         # Step 1: Compute Jacobian matrix of weighted residuals
-        # Note that if lmbda = 0, this is a simple Gauss-Newton iteration
         calculate_jacobian(model)
 
         # Step 2: Compute MLE projections and residuals given the current
@@ -322,40 +340,69 @@ def nonlinear_least_squares_fit(
         # Step 3: Build data terms
         current_params = model.get_params()
         J = model.jacobian  # d weighted residuals / d params
-        r = model.weighted_residuals
+        WSS_current = _weighted_sum_of_squares(model.weighted_residuals, current_params)
         JTJ = J.T @ J
-        JTr = J.T @ r
+        JTr = J.T @ model.weighted_residuals
 
         # Step 4: Add Gaussian prior if defined
         if with_param_priors:
             prior_residual = current_params - param_priors
-            JTJ += param_prior_inv_cov_matrix
-            JTr += param_prior_inv_cov_matrix @ prior_residual
+            JTJ = JTJ + param_prior_inv_cov_matrix
+            JTr = JTr + param_prior_inv_cov_matrix @ prior_residual
 
-        # Step 5: Apply Levenberg-Marquardt update rule
-        A = JTJ + lmbda * np.diag(np.diag(JTJ))
-        delta_beta = np.linalg.solve(A, JTr)
+        diag_JTJ = np.diag(np.diag(JTJ))
 
-        # Step 6: Update parameters and compute fractional change
-        new_params = current_params - delta_beta
-        model.set_params(new_params)
+        # Step 5: Apply the Levenberg-Marquardt update rule, increasing the
+        # damping until the proposed step actually reduces the objective
+        # function (if lmbda = 0 and the first attempt succeeds, this is a
+        # simple Gauss-Newton iteration).
+        for _ in range(max_damping_attempts):
+            A = JTJ + lmbda * diag_JTJ
+            delta_beta = np.linalg.solve(A, JTr)
+            model.set_params(current_params - delta_beta)
+            # set_params may modify the step to satisfy bounds on the problem
+            new_params = model.get_params()
 
-        # set_params may modify the step to satisfy bounds on the problem
-        # We therefore need to get the params before
-        # calculating the fractional change.
-        new_params = model.get_params()
+            # In case the new_params object returns a very small value,
+            # modify to avoid a pointless comparison:
+            mod_params = np.where(
+                np.abs(new_params) < param_tolerance, param_tolerance, new_params
+            )
+            frac_delta_beta = (current_params - new_params) / mod_params
+            max_f = np.max(np.abs(frac_delta_beta))
 
-        # In case the new_params object returns a very small value,
-        # modify to avoid a pointless comparison:
-        mod_params = np.where(
-            np.abs(new_params) < param_tolerance, param_tolerance, new_params
-        )
-        return (current_params - new_params) / mod_params
+            _, weighted_residuals_new, _ = find_mle(model)
+            WSS_new = _weighted_sum_of_squares(weighted_residuals_new, new_params)
+
+            if WSS_new < WSS_current or max_f < param_tolerance:
+                # Accept the step (either a genuine improvement, or a step
+                # so small that current_params is already at the minimum to
+                # within numerical precision) and relax the damping.
+                lmbda = lmbda / lm_damping_factor
+                break
+
+            # Reject the step: revert to the previous parameters and
+            # increase the damping before trying again.
+            model.set_params(current_params)
+            lmbda = lmbda * lm_damping_factor if lmbda > 0.0 else 1.0e-3
+            if verbose:
+                print(
+                    f"  step rejected (WSS {WSS_current:.6g} -> "
+                    f"{WSS_new:.6g}), increasing damping to {lmbda:.2e}"
+                )
+        else:
+            raise ValueError(
+                "Could not find a parameter update that reduces the "
+                "objective function, even after increasing the "
+                f"Levenberg-Marquardt damping {max_damping_attempts} times."
+            )
+
+        return frac_delta_beta
 
     for n_it in range(max_lm_iterations):
         try:
-            # update the parameters with a LM iteration
-            f_delta_beta = _update_beta(lm_damping)
+            # update the parameters with an (adaptively-damped) LM iteration
+            f_delta_beta = _update_beta()
             max_f = np.max(np.abs(f_delta_beta))
 
             if np.isnan(max_f):
@@ -366,18 +413,30 @@ def nonlinear_least_squares_fit(
 
             if verbose:
                 print(f"Iteration {n_it}: max param change = {max_f:.2e}")
+                print(f"Current parameter values: {model.get_params()}")
             if max_f < param_tolerance:
                 break
-        except Exception as err:
+            elif n_it == max_lm_iterations - 1:
+                raise Exception(
+                    f"Error: Maximum number of iterations ({max_lm_iterations}) "
+                    "reached before convergence."
+                )
+            model.n_iterations = n_it + 1
+
+        except Exception:
             raise Exception(
                 f"During non-linear fitting, Iteration {n_it} produced an "
-                "exception. This is probably due to numerical failure of "
+                "exception. This may be due to numerical failure of "
                 "the input model. "
-                "Consider imposing bounds on fitting or priors on your "
-                "parameter values to prevent this behaviour."
                 "Current parameter values are: "
                 f"{model.get_params()}"
-            ) from err
+            )
+
+    # Refresh the Jacobian and weighted residuals with the
+    # converged parameters to make them consistent with the
+    # final parameter values.
+    calculate_jacobian(model)
+    model.data_mle, model.weighted_residuals, model.weights = find_mle(model)
 
     # Update the model attributes (WSS, popt) with the final results
     J = model.jacobian

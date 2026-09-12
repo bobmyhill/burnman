@@ -12,6 +12,8 @@ from burnman.optimize.nonlinear_fitting import (
     NonLinearModel,
     nonlinear_least_squares_fit,
     nonlinear_least_squares_fit_differential_evolution,
+    calculate_jacobian,
+    find_mle
 )
 from burnman.utils.misc import attribute_function, pretty_string_values
 from burnman.optimize.composition_fitting import fit_composition_to_solution
@@ -840,6 +842,60 @@ class test_fitting(BurnManTest):
 
         # Verify that the differential evolution result is significantly better
         self.assertLess(misfit_2, misfit_1)
+
+    def test_fit_leaves_jacobian_and_residuals_consistent_with_popt(self):
+        """
+        After fitting, the Jacobian and weighted residuals should correspond to
+        the final parameters in model.popt.
+        """
+        i, x, Wx, y, Wy = np.loadtxt(
+            f"{path}/../burnman/data/" "input_fitting/Pearson_York.dat", unpack=True
+        )
+        data = np.array([x, y]).T
+        cov = np.array([[1.0 / Wx, 0.0 * Wx], [0.0 * Wy, 1.0 / Wy]]).T
+
+        class m(NonLinearModel):
+            def __init__(self, data, cov, guessed_params, delta_params):
+                self.data = data
+                self.data_covariances = cov
+                self.set_params(guessed_params)
+                self.delta_params = delta_params
+                self.mle_tolerances = np.array([1.0e-1] * len(data[:, 0]))
+
+            def set_params(self, param_values):
+                self.params = param_values
+
+            def get_params(self):
+                return self.params
+
+            def function(self, x, flag):
+                return np.array([x[0], self.params[0] * x[0] + self.params[1]])
+
+            def normal(self, x, flag):
+                n = np.array([self.params[0], -1.0])
+                return n / np.linalg.norm(n)
+
+        guessed_params = np.array([-0.5, 5.5])
+        delta_params = np.array([1.0e-3, 1.0e-3])
+        fitted_curve = m(data, cov, guessed_params, delta_params)
+        nonlinear_least_squares_fit(model=fitted_curve, param_tolerance=1.0e-5)
+
+        popt = np.copy(fitted_curve.popt)
+        cached_jacobian = np.copy(fitted_curve.jacobian)
+        cached_residuals = np.copy(fitted_curve.weighted_residuals)
+
+        # Recompute the Jacobian and weighted residuals from scratch at
+        # the (unchanged) converged parameters, and check they match
+        # the values left behind by the fit exactly.
+        calculate_jacobian(fitted_curve)
+        fresh_jacobian = np.copy(fitted_curve.jacobian)
+        _, fresh_residuals, _ = find_mle(fitted_curve)
+
+        self.assertArraysAlmostEqual(fitted_curve.get_params(), popt)
+        self.assertArraysAlmostEqual(cached_residuals, fresh_residuals)
+        self.assertArraysAlmostEqual(
+            cached_jacobian.flatten(), fresh_jacobian.flatten()
+        )
 
 
 if __name__ == "__main__":
