@@ -10,16 +10,16 @@ from burnman import Layer
 
 
 def make_simple_planet():
-    core = Layer("core", np.linspace(0.0e3, 3480.0e3, 10))
+    core = Layer("core", np.linspace(0.0e3, 3480.0e3, 65))
     core.set_material(burnman.minerals.other.Liquid_Fe_Anderson())
     core.set_temperature_mode(
         "user-defined", temperatures=300.0 * np.ones_like(core.radii)
     )
 
-    mantle = Layer("mantle", np.linspace(3480.0e3, 6371.0e3, 10))
+    mantle = Layer("mantle", np.linspace(3480.0e3, 6371.0e3, 65))
     mantle.set_material(burnman.minerals.SLB_2011.mg_bridgmanite())
     mantle.set_temperature_mode("adiabatic", temperature_top=1200)
-    myplanet = Planet("earth_like", [core, mantle])
+    myplanet = Planet("earth_like", [core, mantle], max_delta=1e-11)
     myplanet.make()
     return myplanet, core, mantle
 
@@ -31,7 +31,12 @@ class test_planet(BurnManTest):
         assert myplanet.get_layer_by_radius(2000.0e3) == core
         assert myplanet.get_layer_by_radius(4000.0e3) == mantle
         assert myplanet.get_layer_by_radius(5000.0e3) == mantle
-        self.assertFloatEqual(myplanet.pressure[0], 445219931774.84, tol=1.0e-4)
+        self.assertFloatEqual(
+            myplanet.pressure[0],
+            # Independent coupled hydrostatic boundary-value reference.
+            445231466723.2055,
+            tol=1.0e-7,
+        )
 
     def test_sort_layers(self):
         myplanet, core, mantle = make_simple_planet()
