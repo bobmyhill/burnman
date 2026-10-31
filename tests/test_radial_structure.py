@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 
 import burnman
 from burnman.classes.material import Material, material_property
+from burnman.classes.layer import _radial_spline
 from burnman import constants
 
 
@@ -21,6 +22,12 @@ class UniformMaterial(Material):
         return self.value
 
 
+class PressureStepMaterial(Material):
+    @material_property
+    def density(self):
+        return 8000.0 if self.pressure >= 1e9 else 4000.0
+
+
 def uniform_layer(name, inner, outer, density, n=65):
     layer = burnman.Layer(name, np.linspace(inner, outer, n))
     layer.set_material(UniformMaterial(density))
@@ -29,6 +36,107 @@ def uniform_layer(name, inner, outer, density, n=65):
 
 
 class RadialStructure(unittest.TestCase):
+    def test_radial_spline_bounds_density_jumps(self):
+        for x in (
+            np.linspace(0.0, 1.0, 17),
+            np.array([0.0, 0.05, 0.2, 0.3, 0.45, 0.47, 0.6, 0.85, 1.0]),
+        ):
+            for interface in (0.0, 0.45, 0.99):
+                for sign in (-1.0, 1.0):
+                    for radius_scale, density_scale in ((1.0, 1e-6), (1e6, 1.0)):
+                        with self.subTest(
+                            x=x,
+                            interface=interface,
+                            sign=sign,
+                            radius_scale=radius_scale,
+                            density_scale=density_scale,
+                        ):
+                            r = x * radius_scale
+                            rho = density_scale * (
+                                6000.0
+                                + sign * np.where(x <= interface, 2000.0, -2000.0)
+                            )
+                            spline = _radial_spline(r, rho)
+                            assert_allclose(spline(r), rho, rtol=1e-14)
+                            points = r[:-1, None] + np.diff(r)[:, None] * np.linspace(
+                                0.0, 1.0, 257
+                            )
+                            interpolated = spline(points)
+                            tolerance = 128.0 * np.finfo(float).eps * max(rho)
+                            self.assertTrue(
+                                np.all(
+                                    interpolated
+                                    >= np.minimum(rho[:-1], rho[1:])[:, None]
+                                    - tolerance
+                                )
+                            )
+                            self.assertTrue(
+                                np.all(
+                                    interpolated
+                                    <= np.maximum(rho[:-1], rho[1:])[:, None]
+                                    + tolerance
+                                )
+                            )
+
+    def test_radial_spline_preserves_smooth_profiles_and_extrema(self):
+        for x in (np.linspace(0.0, 1.0, 9), np.array([0.0, 0.1, 0.25, 0.4, 0.8, 1.0])):
+            for profile in (
+                lambda r: 4000.0 + 0.0 * r,
+                lambda r: 8000.0 - 4000.0 * r**2,
+                lambda r: 8000.0 - 4000.0 * r**3,
+                lambda r: 8000.0 - 4000.0 * (r - 0.53) ** 2,
+                lambda r: 4000.0 + 4000.0 * (r - 0.53) ** 2,
+            ):
+                with self.subTest(x=x, profile=profile):
+                    spline = _radial_spline(x * 1e6, profile(x))
+                    points = np.linspace(0.0, 1.0, 1001)
+                    assert_allclose(spline(points * 1e6), profile(points), rtol=1e-14)
+
+    def test_density_jump_uses_consistent_radial_integrals(self):
+        from scipy.integrate import quad
+
+        layer = burnman.Layer("density jump", np.linspace(1e6, 2e6, 65))
+        layer.set_material(PressureStepMaterial())
+        layer.set_temperature_mode("user-defined", temperatures=np.full(65, 300.0))
+        with self.assertWarns(UserWarning):
+            layer.set_pressure_mode(
+                "user-defined", pressures=np.linspace(2e9, 0.0, 65), gravity_bottom=5.0
+            )
+        layer.make()
+        rho = _radial_spline(layer.radii, layer.density)
+        gravity = layer.gravity
+        g = _radial_spline(layer.radii, gravity)
+
+        def integral(function):
+            return quad(
+                function,
+                layer.inner_radius,
+                layer.outer_radius,
+                points=layer.radii,
+                epsabs=0.0,
+                epsrel=1e-11,
+                limit=200,
+            )[0]
+
+        assert_allclose(
+            layer.mass, 4 * np.pi * integral(lambda r: rho(r) * r**2), rtol=1e-13
+        )
+        assert_allclose(
+            layer.moment_of_inertia,
+            8 * np.pi / 3 * integral(lambda r: rho(r) * r**4),
+            rtol=1e-13,
+        )
+        assert_allclose(
+            gravity[-1] * layer.outer_radius**2,
+            5.0 * layer.inner_radius**2 + constants.G * layer.mass,
+            rtol=1e-14,
+        )
+        pressure = layer._compute_pressure(layer.density, gravity, 1e5)
+        assert_allclose(
+            pressure[0], 1e5 + integral(lambda r: rho(r) * g(r)), rtol=1e-13
+        )
+        self.assertTrue(np.all(np.diff(pressure) < 0.0))
+
     def test_reference_core_eos_volume_precision(self):
         from burnman.eos.birch_murnaghan import (
             pressure_fourth_order,

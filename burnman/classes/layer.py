@@ -4,7 +4,7 @@
 # GPL v2 or later.
 
 import numpy as np
-from scipy.interpolate import CubicSpline, interp1d
+from scipy.interpolate import CubicSpline, PPoly, interp1d
 from scipy.optimize import fsolve
 from burnman import constants
 from .geotherm import adiabatic_profile
@@ -13,6 +13,42 @@ import warnings
 from .material import Material, material_property
 
 _gauss_nodes, _gauss_weights = np.polynomial.legendre.leggauss(4)
+
+
+def _radial_spline(radii, values):
+    """Limit cubic overshoot on monotone stencils with linear interpolation.
+
+    Neighbouring slope reversals protect supported smooth extrema. The test
+    cannot classify every unsampled extremum or locate a density interface.
+    """
+    values = np.asarray(values, dtype=float)
+    spline = CubicSpline(radii, values)
+    radii = spline.x
+    tolerance = (
+        64.0 * np.finfo(float).eps * np.maximum(np.abs(values[:-1]), np.abs(values[1:]))
+    )
+    delta = np.diff(values)
+    delta = np.where(np.abs(delta) <= tolerance, 0.0, delta)
+    neighbours = np.array(
+        [np.r_[delta[0], delta[:-1]], delta, np.r_[delta[1:], delta[-1]]]
+    )
+    monotone = (neighbours.min(axis=0) >= 0.0) | (neighbours.max(axis=0) <= 0.0)
+
+    extrema = spline.derivative().roots(extrapolate=False)
+    extrema = extrema[np.isfinite(extrema)]
+    intervals = np.clip(
+        np.searchsorted(radii, extrema, side="right") - 1, 0, len(delta) - 1
+    )
+    low = np.minimum(values[intervals], values[intervals + 1])
+    high = np.maximum(values[intervals], values[intervals + 1])
+    overshoot = (spline(extrema) < low - tolerance[intervals]) | (
+        spline(extrema) > high + tolerance[intervals]
+    )
+    limited = np.unique(intervals[overshoot & monotone[intervals]])
+    spline.c[:2, limited] = 0.0
+    spline.c[2, limited] = np.diff(values)[limited] / np.diff(radii)[limited]
+    spline.c[3, limited] = values[limited]
+    return PPoly(spline.c, radii)
 
 
 def _spline_integrals(radii, *splines, power=0):
@@ -48,6 +84,12 @@ class Layer(object):
     although the evaluate() function can take a newly defined depthlist
     and values are interpolated between these (sufficient sampling of the layer
     is needed for this to be accurate).
+
+    Radial integration uses cubic interpolation, with a local linear fallback
+    for overshoot where neighbouring samples are monotone. Extrema indicated
+    by neighbouring slope reversals are retained. True density discontinuities
+    should be separate layer boundaries; the fallback suppresses ringing but
+    does not locate unresolved interfaces.
     """
 
     def __init__(self, name=None, radii=None, verbose=False):
@@ -395,7 +437,7 @@ class Layer(object):
         Used by _evaluate_eos()
         """
         # Interpolate exact EOS samples, without an implicit smoothing budget.
-        rho = CubicSpline(self.radii, density)
+        rho = _radial_spline(self.radii, density)
         enclosed = (
             gravity_bottom * self.radii[0] ** 2
             + np.r_[
@@ -412,21 +454,21 @@ class Layer(object):
 
     def _compute_pressure(self, density, gravity, pressure_top):
         """Integrate dP/dr = -rho*g from the upper boundary."""
-        rho = CubicSpline(self.radii, density)
-        g = CubicSpline(self.radii, gravity)
+        rho = _radial_spline(self.radii, density)
+        g = _radial_spline(self.radii, gravity)
         increments = _spline_integrals(self.radii, rho, g)
         return pressure_top + np.r_[np.cumsum(increments[::-1])[::-1], 0.0]
 
     @property
     def mass(self):
         """Mass of the layer [kg], using the same density profile as gravity."""
-        rho = CubicSpline(self.radii, self.density)
+        rho = _radial_spline(self.radii, self.density)
         return 4.0 * np.pi * np.sum(_spline_integrals(self.radii, rho, power=2))
 
     @property
     def moment_of_inertia(self):
         """Axial moment of inertia of the layer [kg m^2]."""
-        rho = CubicSpline(self.radii, self.density)
+        rho = _radial_spline(self.radii, self.density)
         return 8.0 * np.pi / 3.0 * np.sum(_spline_integrals(self.radii, rho, power=4))
 
     @property
